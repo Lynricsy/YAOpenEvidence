@@ -235,7 +235,7 @@ uv run --directory backend yaoe import-answers
 | `db` | 数据库能否执行 `SELECT 1` |
 | `redis` | Redis 能否响应 `PING` |
 | `llm` | LLM `/models` 是否可达并包含 `LLM_MODEL` |
-| `kb` | `kb/info.json` 与索引条目是否存在，并报告 embedder、维度和条目数 |
+| `kb` | 索引头（`kb/index.npz`，旧布局为 `kb/info.json`）是否存在且非空，并报告 embedder、维度和条目数 |
 | `ranks` | `data/journal_ranks/` 下是否加载到期刊分区表 |
 
 任一项失败时 `status` 为 `degraded`。只有 `db` 或 `redis` 失败才返回 HTTP `503`；LLM、KB 或分区表失败时仍返回 HTTP `200`，因为只读浏览等能力仍可使用。

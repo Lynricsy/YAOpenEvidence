@@ -6,9 +6,9 @@ Layout (all under the project root):
   library/<pmid>/paragraphs.json   [{id, sec, page, text}]
   library/<pmid>/facts.json        atomic knowledge units [{fact, pid, quote, kind, ...}]
   library/<pmid>/meta.json         bibliographic record (title, journal, year, quartile, source ...)
-  kb/meta.jsonl                    one line per indexed item (fact or paragraph) with paper metadata
-  kb/vectors.npy                   float32 matrix aligned with meta.jsonl
-  kb/info.json                     {"embedder": ..., "dim": ...}
+  kb/index.npz                     整份向量索引（向量矩阵 + 每条元数据 + embedder 信息）
+                                   一个文件、一次 rename 换代；旧的三文件布局
+                                   （meta.jsonl / vectors.npy / info.json）仍可读，保存时自动迁移
 
 Embedding backend: sentence-transformers model at $EMBED_MODEL (default models/BAAI/bge-m3) on the
 freest GPU; if the model or library is missing, falls back to a hashed bag-of-words vector (works
@@ -299,14 +299,86 @@ class Embedder:
         return v / n if n else v
 
 
+# ====================================================================== index container
+INDEX_FILE = "index.npz"
+LEGACY_FILES = ("meta.jsonl", "vectors.npy", "info.json")
+
+
+def _blob(obj: object) -> np.ndarray:
+    """把 JSON 塞进 npz：存成 uint8 数组，读写都不碰 pickle。"""
+    return np.frombuffer(json.dumps(obj, ensure_ascii=False).encode("utf-8"), dtype=np.uint8)
+
+
+def _unblob(arr: np.ndarray) -> object:
+    return json.loads(bytes(arr).decode("utf-8"))
+
+
+def write_index(path: str, meta: list[dict], vecs: Optional[np.ndarray], info: dict) -> None:
+    """原子写整代索引：写 `<path>.tmp`，fsync，再一次 os.replace 换上去。
+
+    失败时清掉半成品 tmp——它不会被任何读者看到（读者只认 `path`），但留着
+    会让人误以为索引坏了。
+    """
+    dim = int(info.get("dim") or 0) or (int(vecs.shape[1]) if vecs is not None and len(vecs) else 0)
+    payload = vecs if vecs is not None else np.zeros((0, dim), dtype=np.float32)
+    stamped = {**info, "items": len(meta)}
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "wb") as f:
+            np.savez(f, vectors=payload, meta=_blob(meta), info=_blob(stamped))
+            f.flush()
+            os.fsync(f.fileno())           # rename 是原子的，但内容得先真的落盘
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.remove(tmp)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def read_index(path: str) -> tuple[list[dict], Optional[np.ndarray], dict]:
+    with np.load(path) as z:
+        meta = _unblob(z["meta"])
+        info = _unblob(z["info"])
+        vecs = z["vectors"]
+    return meta, (vecs if len(vecs) else None), info
+
+
+def index_info(kb_dir: str = KB_DIR) -> Optional[dict]:
+    """只读索引头（embedder / dim / items），不加载向量矩阵——给健康检查用。"""
+    path = os.path.join(kb_dir, INDEX_FILE)
+    if os.path.exists(path):
+        with np.load(path) as z:
+            return _unblob(z["info"])
+    meta_path, _, info_path = (os.path.join(kb_dir, n) for n in LEGACY_FILES)
+    if not os.path.exists(info_path):
+        return None
+    with open(info_path, encoding="utf-8") as f:
+        info = json.load(f)
+    items = 0
+    if os.path.exists(meta_path):
+        with open(meta_path, encoding="utf-8") as f:
+            items = sum(1 for line in f if line.strip())
+    return {**info, "items": items}
+
+
 # ====================================================================== store
 class KnowledgeStore:
+    """向量库。整份索引是**一个文件**（`kb/index.npz`）。
+
+    早先的三文件布局（meta.jsonl / vectors.npy / info.json）无法原子更新：
+    逐个 os.replace，中途崩溃就会留下「新向量 + 旧元数据」，两者长度往往仍然
+    相等（重建只是改变了条目顺序），于是 row i 的向量配到别人的论文上——
+    静默错配，比缺索引危险得多。一个文件 + 一次 rename 让「换代」要么全成、
+    要么全不成。
+    """
+
     def __init__(self, kb_dir: str = KB_DIR, embedder: Optional[Embedder] = None):
         self.dir = kb_dir
         os.makedirs(kb_dir, exist_ok=True)
-        self.meta_path = os.path.join(kb_dir, "meta.jsonl")
-        self.vec_path = os.path.join(kb_dir, "vectors.npy")
-        self.info_path = os.path.join(kb_dir, "info.json")
+        self.index_path = os.path.join(kb_dir, INDEX_FILE)
+        self._legacy = tuple(os.path.join(kb_dir, n) for n in LEGACY_FILES)
         self._embedder = embedder
         self.meta: list[dict] = []
         self.vecs: Optional[np.ndarray] = None
@@ -320,13 +392,23 @@ class KnowledgeStore:
         return self._embedder
 
     def _load(self) -> None:
-        if os.path.exists(self.meta_path):
-            with open(self.meta_path, encoding="utf-8") as f:
+        if os.path.exists(self.index_path):
+            self.meta, self.vecs, self.info = read_index(self.index_path)
+            return
+        self._load_legacy()
+
+    def _load_legacy(self) -> None:
+        """读旧的三文件布局，让已有 kb/ 无需先重建也能用；下一次保存即完成迁移。"""
+        meta_path, vec_path, info_path = self._legacy
+        self.meta, self.vecs = [], None
+        self.info = {"embedder": None, "dim": None}
+        if os.path.exists(meta_path):
+            with open(meta_path, encoding="utf-8") as f:
                 self.meta = [json.loads(l) for l in f if l.strip()]
-        if os.path.exists(self.vec_path):
-            self.vecs = np.load(self.vec_path)
-        if os.path.exists(self.info_path):
-            with open(self.info_path, encoding="utf-8") as f:
+        if os.path.exists(vec_path):
+            self.vecs = np.load(vec_path)
+        if os.path.exists(info_path):
+            with open(info_path, encoding="utf-8") as f:
                 self.info = json.load(f)
         if self.vecs is not None and len(self.meta) != len(self.vecs):
             log(f"[kb] WARNING meta/vector length mismatch ({len(self.meta)} vs {len(self.vecs)}); run `reindex`")
@@ -366,25 +448,17 @@ class KnowledgeStore:
         return len(items)
 
     def _save(self) -> None:
-        """原子写：先写 .tmp 再 os.replace。
+        """把整代索引写成一个文件，再一次 os.replace 换上去。
 
-        顺序是 vectors → meta → info：worker 落库时 API 进程可能同时在读，
-        任何时刻读到的三个文件都必须是自洽的一代快照。
+        只有一次 rename，所以读者要么看到上一代、要么看到这一代，不存在
+        「向量已换、元数据没换」的中间态（那会让向量对错论文）。
         """
-        if self.vecs is not None:
-            tmp = self.vec_path + ".tmp"          # np.save 会补 .npy 后缀，故显式指定文件名
-            with open(tmp, "wb") as f:
-                np.save(f, self.vecs)
-            os.replace(tmp, self.vec_path)
-        tmp = self.meta_path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            for m in self.meta:
-                f.write(json.dumps(m, ensure_ascii=False) + "\n")
-        os.replace(tmp, self.meta_path)
-        tmp = self.info_path + ".tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self.info, f)
-        os.replace(tmp, self.info_path)
+        write_index(self.index_path, self.meta, self.vecs, self.info)
+        for path in self._legacy:          # 迁移完成：旧布局留着只会误导读者
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
 
     def search(self, query: str, top_k: int = 8, kind: str = "", pmids: Optional[set[str]] = None) -> list[dict]:
         if self.vecs is None or not len(self.meta):
@@ -408,7 +482,8 @@ class KnowledgeStore:
         kinds: dict[str, int] = {}
         for m in self.meta:
             kinds[m["kind"]] = kinds.get(m["kind"], 0) + 1
-        return {"items": len(self.meta), "papers": len(self.indexed_pmids()), "by_kind": kinds, **self.info}
+        # 计算值优先于快照里记的 items：后者只是给健康检查省一次全量加载
+        return {**self.info, "items": len(self.meta), "papers": len(self.indexed_pmids()), "by_kind": kinds}
 
 
 # ====================================================================== library (persistent per-paper files)
@@ -445,13 +520,9 @@ def reindex(emit: Callable[[dict], None] = lambda e: None,
             should_cancel: Callable[[], bool] = lambda: False) -> tuple[int, int]:
     """从 library/ 重建 kb/（换 embedder 后必须做）。返回 (入库条目数, 论文数)。
 
-    先在同一文件系统上的临时目录里**完整**构建，成功后再 os.replace 提升到
-    kb/。原来的做法是先删线上三个索引文件再逐篇写，一旦崩溃、超时或被取消，
-    留下的就是空的或半成品索引，而 API 正在读同一份 kb/。
-
-    提升顺序 vectors → meta → info 与 `_save` 一致：读侧 `_load` 会把两者
-    截到 min(len)，因此中间态最坏也只是「少几条」，不会 meta 与向量错位；
-    KbService 靠 meta.jsonl 的 mtime 触发重载，故 meta 必须晚于 vectors。
+    先在同一文件系统上的临时目录里**完整**构建，成功后把整代索引一次
+    os.replace 换上去。原来的做法是先删线上索引再逐篇写，一旦崩溃、超时或
+    被取消，留下的就是空的或半成品索引，而 API 正在读同一份 kb/。
 
     `emit` 收结构化进度事件（供 HTTP worker 推给 SSE），`should_cancel` 在
     逐篇边界轮询。
@@ -485,19 +556,21 @@ def reindex(emit: Callable[[dict], None] = lambda e: None,
 
 
 def _promote_index(staging: str, n_items: int) -> None:
-    """把构建好的索引换到线上；library 为空时如实清空线上索引。"""
-    names = ("vectors.npy", "meta.jsonl", "info.json")
+    """换代：一次 rename。library 为空时如实清空线上索引（含旧布局残留）。"""
+    live = os.path.join(KB_DIR, INDEX_FILE)
     if not n_items:
-        for fn in names:
+        for path in (live, *(os.path.join(KB_DIR, n) for n in LEGACY_FILES)):
             try:
-                os.remove(os.path.join(KB_DIR, fn))
+                os.remove(path)
             except FileNotFoundError:
                 pass
         return
-    for fn in names:
-        src = os.path.join(staging, fn)
-        if os.path.exists(src):
-            os.replace(src, os.path.join(KB_DIR, fn))
+    os.replace(os.path.join(staging, INDEX_FILE), live)
+    for name in LEGACY_FILES:              # 迁移完成，旧布局不再是事实来源
+        try:
+            os.remove(os.path.join(KB_DIR, name))
+        except FileNotFoundError:
+            pass
 
 
 def main() -> None:

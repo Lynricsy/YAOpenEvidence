@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import threading
 
-from knowledge_store import KnowledgeStore
+from knowledge_store import INDEX_FILE, KnowledgeStore
 from picos_paths import KB_DIR
 from starlette.concurrency import run_in_threadpool
 
@@ -12,8 +12,9 @@ from starlette.concurrency import run_in_threadpool
 class KbService:
     """共享 KnowledgeStore，避免为每次请求重复加载昂贵的 Embedder。
 
-    worker 会原子替换索引文件，因此用 meta.jsonl 的 mtime 感知新索引，同时
-    在原实例上重载，保留已经加载的 Embedder。
+    worker 会用一次 rename 换掉整份索引（kb/index.npz），因此按该文件的 mtime
+    感知新索引，并在原实例上重载，保留已经加载的 Embedder。旧的三文件布局
+    仍受支持，此时退回看 meta.jsonl。
     """
 
     def __init__(self) -> None:
@@ -22,15 +23,17 @@ class KbService:
         self._lock = threading.Lock()
 
     @staticmethod
-    def _meta_mtime() -> float:
-        try:
-            return os.path.getmtime(os.path.join(KB_DIR, "meta.jsonl"))
-        except FileNotFoundError:
-            return 0.0
+    def _index_mtime() -> float:
+        for name in (INDEX_FILE, "meta.jsonl"):
+            try:
+                return os.path.getmtime(os.path.join(KB_DIR, name))
+            except FileNotFoundError:
+                continue
+        return 0.0
 
     def get_store(self) -> KnowledgeStore:
         with self._lock:
-            mtime = self._meta_mtime()
+            mtime = self._index_mtime()
             if self._store is None:
                 self._store = KnowledgeStore()
                 self._mtime = mtime

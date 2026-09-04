@@ -7,8 +7,6 @@ db 或 redis 挂了才返回 503——LLM 或 kb 不可用时 API 仍能提供�
 from __future__ import annotations
 
 import datetime as dt
-import json
-import os
 
 import httpx
 from fastapi import APIRouter, Request, Response
@@ -17,6 +15,7 @@ from starlette.concurrency import run_in_threadpool
 
 import ask
 import journal_rank as jr
+import knowledge_store as ks
 from picos_paths import KB_DIR
 
 from .. import __version__
@@ -41,17 +40,13 @@ def _check_db() -> dict:
 
 
 def _check_kb() -> dict:
-    info_path = os.path.join(KB_DIR, "info.json")
-    if not os.path.exists(info_path):
-        return {"ok": False, "detail": "kb/info.json missing (knowledge base empty)"}
-    with open(info_path, encoding="utf-8") as f:
-        info = json.load(f)
-    meta_path = os.path.join(KB_DIR, "meta.jsonl")
-    items = 0
-    if os.path.exists(meta_path):
-        with open(meta_path, encoding="utf-8") as f:
-            items = sum(1 for line in f if line.strip())
-    return {"ok": items > 0, "detail": f"embedder={info.get('embedder')} dim={info.get('dim')} items={items}"}
+    """只读索引头（不加载向量矩阵）：探针不该为了报个数字去读几 MB。"""
+    info = ks.index_info(KB_DIR)
+    if info is None:
+        return {"ok": False, "detail": "no kb index (knowledge base empty)"}
+    items = int(info.get("items") or 0)
+    return {"ok": items > 0,
+            "detail": f"embedder={info.get('embedder')} dim={info.get('dim')} items={items}"}
 
 
 def _check_ranks() -> dict:

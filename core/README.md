@@ -114,7 +114,7 @@ PICOSGpt/
 ├── AGENTS.md                Codex 的系统指令（检索工作流 + 回答格式）
 ├── answers/                 每次问答的输出
 ├── library/                 持久保存的每篇文献（全文 + 段落 + 原子知识）
-├── kb/                      向量知识库（meta.jsonl + vectors.npy）
+├── kb/                      向量知识库（index.npz：整份索引一个文件，换代靠一次 rename）
 ├── data/journal_ranks/      期刊分区表
 ├── models/                  embedding 模型（bge-m3，不入库，见 §6.1 重建）
 ├── pdfs/                    本地 PDF（手动放入或 paywall 下载）
@@ -176,10 +176,10 @@ python -c "from huggingface_hub import snapshot_download as d; \
 ```
 
 - 目标路径固定为 `<项目根>/models/BAAI/bge-m3`（`knowledge_store.py` 的 `EMBED_MODEL` 默认值，可用同名环境变量覆盖）。
-- 末级目录名必须正好是 `bge-m3`：`Embedder` 的后端名取自 `os.path.basename(model_path)`，要与 `kb/info.json` 的 `"embedder": "bge-m3"` 一致。
+- 末级目录名必须正好是 `bge-m3`：`Embedder` 的后端名取自 `os.path.basename(model_path)`，要与索引里记的 `"embedder": "bge-m3"` 一致。
 - 排除 `onnx/`：`onnx/model.onnx_data` 单独 2.27G，与 `pytorch_model.bin` 是同一模型的另一份格式，`SentenceTransformer` 只读 `.bin`。排除后约 2.2G。
 - 无 GPU 无需改代码，`Embedder` 只在 `torch.cuda.is_available()` 为真时才切 GPU。
-- **装完必须验证**：缺模型或缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)，而现有 `kb/vectors.npy` 是 1024 维，`search` 会在矩阵乘处维度报错。
+- **装完必须验证**：缺模型或缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)，而现有索引里的向量是 1024 维，`search` 会在矩阵乘处维度报错。
 
 ```bash
 python -c "from knowledge_store import Embedder; e=Embedder(); print(e.name, e.dim)"

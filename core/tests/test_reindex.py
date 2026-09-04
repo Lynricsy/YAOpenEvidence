@@ -1,7 +1,8 @@
-"""kb 重建的崩溃安全性：失败或取消都不能动到线上索引。
+"""kb 索引的换代原子性：失败或取消都不能动到线上索引，也不能读到混代。
 
-重建的输入是 library/、输出是 kb/，而 API 正在读同一份 kb/。所以重建必须
-「先在别处建好、成功后再换上去」，这组测试盯的就是这个不变量。
+重建的输入是 library/、输出是 kb/，而 API 正在读同一份 kb/。所以整份索引是
+一个文件、一次 rename：读者要么看到上一代、要么看到这一代。这组测试盯的就是
+这个不变量——尤其是「新向量配旧元数据」这种长度相等、静默错配的中间态。
 """
 from __future__ import annotations
 
@@ -100,3 +101,78 @@ def test_reindex_of_empty_library_clears_index(kb: Path):
 
     assert ks.reindex() == (0, 0)
     assert _live(kb) == {"items": 0, "papers": 0, "by_kind": {}, "embedder": None, "dim": None}
+
+
+def _pmids(kb_dir: Path) -> set[str]:
+    store = ks.KnowledgeStore(kb_dir=str(kb_dir))
+    return {m.get("pmid") for m in store.meta}
+
+
+def test_failed_promote_keeps_previous_generation(kb: Path, monkeypatch):
+    """换代那一步失败后，重新实例化仍读到完整的上一代，而不是两代混合。"""
+    before_pmids = _pmids(kb)
+    before = _live(kb)
+    shutil.rmtree(Path(ks.LIB_DIR) / "39133485")        # 新一代只剩另一篇
+
+    real_replace = ks.os.replace
+
+    def fail_on_promote(src, dst):
+        if str(dst).endswith(ks.INDEX_FILE):
+            raise OSError("power loss during rename")
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(ks.os, "replace", fail_on_promote)
+    with pytest.raises(OSError):
+        ks.reindex()
+    monkeypatch.undo()
+
+    assert _pmids(kb) == before_pmids, "读到的必须整代是旧的，不能缺篇也不能混代"
+    assert _live(kb) == before
+    assert _staging_leftovers(kb) == []
+
+
+def test_failed_snapshot_write_keeps_previous_generation(kb: Path, monkeypatch):
+    """写快照途中崩溃（写到一半的 tmp）不影响线上索引，也不留半成品。"""
+    before = _live(kb)
+    calls = {"n": 0}
+    real_savez = ks.np.savez
+
+    def die_midway(f, **arrays):
+        calls["n"] += 1
+        real_savez(f, **arrays)             # 先写点东西进去，模拟半成品
+        if calls["n"] >= 2:
+            raise OSError("disk full")
+
+    monkeypatch.setattr(ks.np, "savez", die_midway)
+    with pytest.raises(OSError):
+        ks.reindex()
+    monkeypatch.undo()
+
+    assert _live(kb) == before
+    assert list(Path(kb).glob("*.tmp")) == []
+    assert _staging_leftovers(kb) == []
+
+
+def test_index_is_a_single_file(kb: Path):
+    """多文件布局无法原子更新，因此线上索引必须只有一个权威文件。"""
+    assert sorted(p.name for p in kb.iterdir()) == [ks.INDEX_FILE]
+
+
+def test_legacy_three_file_layout_is_read_then_migrated(tmp_path, monkeypatch):
+    """已有部署的 kb/ 是旧布局，必须能直接读，并在下一次保存时自动迁移。"""
+    kb_dir = tmp_path / "kb"
+    kb_dir.mkdir()
+    meta = [{"pmid": "1", "kind": "fact", "pid": 1, "text": "legacy fact"}]
+    (kb_dir / "meta.jsonl").write_text(json.dumps(meta[0], ensure_ascii=False) + "\n", encoding="utf-8")
+    ks.np.save(kb_dir / "vectors.npy", ks.np.zeros((1, 4), dtype="float32"))
+    (kb_dir / "info.json").write_text(json.dumps({"embedder": "hash-bow-v1", "dim": 4}), encoding="utf-8")
+
+    store = ks.KnowledgeStore(kb_dir=str(kb_dir))
+    assert store.stats()["items"] == 1
+    assert store.stats()["embedder"] == "hash-bow-v1"
+    assert ks.index_info(str(kb_dir))["items"] == 1     # 探针也认旧布局
+
+    store._save()
+    assert (kb_dir / ks.INDEX_FILE).exists()
+    assert sorted(p.name for p in kb_dir.iterdir()) == [ks.INDEX_FILE]
+    assert ks.KnowledgeStore(kb_dir=str(kb_dir)).meta == meta
