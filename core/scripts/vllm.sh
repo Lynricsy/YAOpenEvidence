@@ -3,12 +3,14 @@
 set -e
 SIZE="${1:-14b}"; GPU="${2:-2}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV=/data/anaconda3/envs/clarify
+ENV="${PICOSGPT_ENV:-$ROOT/.venv}"
 case "$SIZE" in
-  14b) MODEL=/data1/clarify/qwen14b; NAME=Qwen3-14B; EXTRA="--reasoning-parser qwen3";;
-  4b)  MODEL=/data1/clarify/qwen4b;  NAME=Qwen3-4B;  EXTRA="";;
+  14b) MODEL="${QWEN3_14B:-$ROOT/models/Qwen/Qwen3-14B}"; NAME=Qwen3-14B; EXTRA="--reasoning-parser qwen3";;
+  4b)  MODEL="${QWEN3_4B:-$ROOT/models/Qwen/Qwen3-4B}";   NAME=Qwen3-4B;  EXTRA="";;
   *) echo "unknown size $SIZE"; exit 1;;
 esac
+[ -x "$ENV/bin/vllm" ] || { echo "找不到 vllm: $ENV/bin/vllm（需 NVIDIA GPU 环境；可设 PICOSGPT_ENV 指向装有 vllm 的环境）"; exit 1; }
+[ -e "$MODEL" ] || { echo "找不到模型: $MODEL（可设 QWEN3_14B / QWEN3_4B 指向权重目录）"; exit 1; }
 export PATH="$ENV/bin:$PATH"
 export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES="$GPU"
 mkdir -p "$ROOT/logs"

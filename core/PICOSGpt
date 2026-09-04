@@ -19,9 +19,11 @@
 #   ./PICOSGpt test                   不经过模型，直接测试文献检索工具
 set -e
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV=/data/anaconda3/envs/clarify
+ENV="${PICOSGPT_ENV:-$ROOT/.venv}"                     # 可用 PICOSGPT_ENV 指向 conda 环境
 PY="$ENV/bin/python"
+[ -x "$PY" ] || { echo "找不到 Python 环境: $PY"; echo "按 README §6.1 创建，或设 PICOSGPT_ENV=<环境目录>"; exit 1; }
 export PATH="$HOME/.local/bin:$ENV/bin:$PATH"
+export PYTHONPATH="$ROOT/vendor${PYTHONPATH:+:$PYTHONPATH}"   # vendor 自带 pypdf / playwright
 export LOCAL_QWEN_KEY="${LOCAL_QWEN_KEY:-sk-123456}"   # 需与 litellm_config.yaml 的 master_key 一致
 # export S2_API_KEY=""                                 # 可选：Semantic Scholar key
 cd "$ROOT"
@@ -51,7 +53,7 @@ case "$cmd" in
     echo "--- tmux ---";          tmux list-windows -t PICOSGpt 2>&1 || true
     echo "--- vLLM    :8000 ---"; curl -s -m 3 http://127.0.0.1:8000/v1/models | python3 -c "import sys,json;print([m['id'] for m in json.load(sys.stdin)['data']])" 2>/dev/null || echo "not ready"
     echo "--- LiteLLM :4000 ---"; curl -s -m 3 -H "Authorization: Bearer $LOCAL_QWEN_KEY" http://127.0.0.1:4000/v1/models | python3 -c "import sys,json;print([m['id'] for m in json.load(sys.stdin)['data']])" 2>/dev/null || echo "not ready"
-    echo "--- GPU ---";           nvidia-smi --query-gpu=index,memory.used,memory.total --format=csv,noheader
+    echo "--- GPU ---";           nvidia-smi --query-gpu=index,memory.used,memory.total --format=csv,noheader 2>/dev/null || echo "无 NVIDIA GPU（vLLM 不可用；kb 子命令不需要）"
     ;;
   logs)    exec tmux attach -t PICOSGpt ;;
   ask)
@@ -73,10 +75,10 @@ case "$cmd" in
       exec codex
     fi
     ;;
-  paywall) PYTHONPATH="$ROOT/vendor" exec "$PY" paywall_fetch.py "$@" ;;
+  paywall) exec "$PY" paywall_fetch.py "$@" ;;
   kb)      exec "$PY" knowledge_store.py "$@" ;;
-  rank)    PYTHONPATH="$ROOT/vendor" exec "$PY" journal_rank.py "$@" ;;
-  verify)  exec python3 verify_citations.py "$@" ;;
+  rank)    exec "$PY" journal_rank.py "$@" ;;
+  verify)  exec "$PY" verify_citations.py "$@" ;;
   test)    exec "$PY" test_mcp.py "$@" ;;
   help|-h|--help) usage ;;
   *) echo "未知命令: $cmd"; echo; usage; exit 1 ;;

@@ -16,7 +16,7 @@ Codex CLI ──(Responses API)──> LiteLLM :4000 ──> vLLM :8000
 ## 1. 快速开始（演示流程）
 
 ```bash
-cd /data1/qyy/smk
+cd <项目根>              # 本仓库为 core/
 ./PICOSGpt start          # 启动 vLLM + LiteLLM（tmux 后台，模型加载约 1–3 分钟）
 ./PICOSGpt status         # 等到 vLLM 和 LiteLLM 都列出模型名
 ./PICOSGpt ask "SGLT2抑制剂对HFpEF患者有什么获益？"
@@ -150,8 +150,10 @@ scp sd_state.json* tx@10.107.231.69:/data1/qyy/smk/
 
 ## 6. 环境与配置
 
-- conda 环境 `clarify`（vllm 0.27 / litellm 1.98 / mcp 1.29）；Codex CLI 在 `~/.local/bin/codex`
-- 模型：`/data1/clarify/qwen14b`（Qwen3-14B）、`/data1/clarify/qwen4b`
+- Python 环境：默认 `<项目根>/.venv`，用 `PICOSGPT_ENV` 可指向任意 conda/venv 目录（`PICOSGpt` 与 `scripts/*.sh` 共用此变量，缺失时直接报错退出）
+- `vendor/` 由 `PICOSGpt` 统一加进 `PYTHONPATH`，无需在环境里另装 pypdf / playwright
+- Qwen3 权重：默认 `<项目根>/models/Qwen/Qwen3-14B`、`.../Qwen3-4B`，可用 `QWEN3_14B` / `QWEN3_4B` 覆盖；`vllm`、`litellm` 需装在 `PICOSGPT_ENV` 指向的环境里（vLLM 需 NVIDIA GPU）
+- Codex CLI 在 `~/.local/bin/codex`
 - `LOCAL_QWEN_KEY` 需等于 `litellm_config.yaml` 的 `master_key`（`PICOSGpt` 已默认设置）
 - 可选 API key：`S2_API_KEY`（Semantic Scholar，无 key 时基本 429，会自动退到 PubMed）、`NCBI_API_KEY`（PubMed 3→10 req/s）
 - Codex 配置 `~/.codex/config.toml` 要点：
@@ -184,7 +186,7 @@ python knowledge_store.py stats
 python knowledge_store.py search "SGLT2 HFpEF 心衰住院"
 ```
 
-> `./PICOSGpt kb` 走的是 `PICOSGpt` 里硬编码的 `ENV=/data/anaconda3/envs/clarify`，**不会**使用上面新建的环境。若装在别处，直接用该环境的解释器调 `knowledge_store.py`，或同步修改 `PICOSGpt` 的 `ENV`。
+> 装在默认的 `<项目根>/.venv` 时，`./PICOSGpt kb ...` 直接可用；装在别处则设 `PICOSGPT_ENV=<环境目录>`。
 
 ## 7. 排错
 
