@@ -28,7 +28,9 @@ import json
 import math
 import os
 import re
+import shutil
 import sys
+import tempfile
 from typing import Callable, Optional
 
 import numpy as np
@@ -435,33 +437,67 @@ def format_hits(hits: list[dict]) -> str:
     return "\n".join(lines) if lines else "(knowledge base is empty)"
 
 
-def reindex(emit: Callable[[dict], None] = lambda e: None) -> tuple[int, int]:
+class ReindexCancelled(Exception):
+    """重建被协作式取消（在逐篇边界抛出）。线上索引不受影响。"""
+
+
+def reindex(emit: Callable[[dict], None] = lambda e: None,
+            should_cancel: Callable[[], bool] = lambda: False) -> tuple[int, int]:
     """从 library/ 重建 kb/（换 embedder 后必须做）。返回 (入库条目数, 论文数)。
 
-    `emit` 收结构化进度事件，供 HTTP worker 推给 SSE；CLI 传默认值即静默。
+    先在同一文件系统上的临时目录里**完整**构建，成功后再 os.replace 提升到
+    kb/。原来的做法是先删线上三个索引文件再逐篇写，一旦崩溃、超时或被取消，
+    留下的就是空的或半成品索引，而 API 正在读同一份 kb/。
+
+    提升顺序 vectors → meta → info 与 `_save` 一致：读侧 `_load` 会把两者
+    截到 min(len)，因此中间态最坏也只是「少几条」，不会 meta 与向量错位；
+    KbService 靠 meta.jsonl 的 mtime 触发重载，故 meta 必须晚于 vectors。
+
+    `emit` 收结构化进度事件（供 HTTP worker 推给 SSE），`should_cancel` 在
+    逐篇边界轮询。
     """
-    for fn in ("meta.jsonl", "vectors.npy", "info.json"):
-        p = os.path.join(KB_DIR, fn)
-        if os.path.exists(p):
-            os.remove(p)
-    store = KnowledgeStore()
-    dirs = sorted(glob_dirs())
-    emit({"type": "stage", "stage": "reindex", "status": "started", "detail": {"papers": len(dirs)}})
-    n, done = 0, 0
-    for i, d in enumerate(dirs, 1):
-        try:
-            with open(os.path.join(d, "meta.json"), encoding="utf-8") as f: meta = json.load(f)
-            with open(os.path.join(d, "paragraphs.json"), encoding="utf-8") as f: paras = json.load(f)
-            with open(os.path.join(d, "facts.json"), encoding="utf-8") as f: facts = json.load(f)
-        except FileNotFoundError:
-            continue
-        n += store.add_paper(meta, paras, facts, replace=False)
-        done += 1
-        emit({"type": "progress", "stage": "reindex", "current": i, "total": len(dirs),
-              "pmid": str(meta.get("pmid") or ""), "title": str(meta.get("title") or "")})
-    emit({"type": "stage", "stage": "reindex", "status": "finished",
-          "detail": {"items": n, "papers": done}})
-    return n, done
+    os.makedirs(KB_DIR, exist_ok=True)
+    staging = tempfile.mkdtemp(prefix=".kb-reindex-", dir=os.path.dirname(os.path.abspath(KB_DIR)))
+    try:
+        store = KnowledgeStore(kb_dir=staging)
+        dirs = sorted(glob_dirs())
+        emit({"type": "stage", "stage": "reindex", "status": "started", "detail": {"papers": len(dirs)}})
+        n, done = 0, 0
+        for i, d in enumerate(dirs, 1):
+            if should_cancel():
+                raise ReindexCancelled(f"cancelled after {done}/{len(dirs)} papers")
+            try:
+                with open(os.path.join(d, "meta.json"), encoding="utf-8") as f: meta = json.load(f)
+                with open(os.path.join(d, "paragraphs.json"), encoding="utf-8") as f: paras = json.load(f)
+                with open(os.path.join(d, "facts.json"), encoding="utf-8") as f: facts = json.load(f)
+            except FileNotFoundError:
+                continue
+            n += store.add_paper(meta, paras, facts, replace=False)
+            done += 1
+            emit({"type": "progress", "stage": "reindex", "current": i, "total": len(dirs),
+                  "pmid": str(meta.get("pmid") or ""), "title": str(meta.get("title") or "")})
+        _promote_index(staging, n)
+        emit({"type": "stage", "stage": "reindex", "status": "finished",
+              "detail": {"items": n, "papers": done}})
+        return n, done
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def _promote_index(staging: str, n_items: int) -> None:
+    """把构建好的索引换到线上；library 为空时如实清空线上索引。"""
+    names = ("vectors.npy", "meta.jsonl", "info.json")
+    if not n_items:
+        for fn in names:
+            try:
+                os.remove(os.path.join(KB_DIR, fn))
+            except FileNotFoundError:
+                pass
+        return
+    for fn in names:
+        src = os.path.join(staging, fn)
+        if os.path.exists(src):
+            os.replace(src, os.path.join(KB_DIR, fn))
 
 
 def main() -> None:

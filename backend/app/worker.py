@@ -164,8 +164,22 @@ async def run_kb_reindex_job(ctx: dict, job_id: str) -> None:
     def emit(event: dict) -> None:
         _publish(ctx, job_id, event)
 
+    def should_cancel() -> bool:
+        return events.is_cancel_requested(ctx["redis_sync"], job_id)
+
     try:
-        items, papers = await asyncio.to_thread(ks.reindex, emit)
+        items, papers = await asyncio.to_thread(ks.reindex, emit, should_cancel)
+    except ks.ReindexCancelled:
+        # 线上索引没被动过：重建全程在临时目录里进行
+        _terminate(ctx, job_id, "cancelled")
+        return
+    except (asyncio.TimeoutError, asyncio.CancelledError):
+        # CancelledError 是 BaseException，不会落进下面的 except Exception；
+        # 不显式处理的话这行会永远停在 running
+        await events.request_cancel(ctx["redis_async"], job_id, settings.events_ttl_s)
+        _terminate(ctx, job_id, "failed",
+                   {"code": "timeout", "message": f"job exceeded {settings.job_timeout_s}s"})
+        raise
     except Exception as e:  # noqa: BLE001
         logger.exception("kb reindex job %s failed", job_id)
         _terminate(ctx, job_id, "failed", {"code": "internal_error", "message": f"{type(e).__name__}: {e}"})

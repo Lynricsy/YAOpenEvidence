@@ -1,15 +1,17 @@
 """worker 状态机：成功 / 业务失败 / 排队期间被取消，以及事件流的终态。"""
 from __future__ import annotations
 
+import asyncio
 import json
 
 import pytest
 
 import ask
+import knowledge_store as ks
 from app.db import SessionLocal
 from app.models import Answer, Job
 from app.services import events
-from app.worker import run_ask_job
+from app.worker import run_ask_job, run_kb_reindex_job
 
 from .conftest import make_job
 
@@ -115,6 +117,55 @@ async def test_progress_events_land_in_job_row(worker_ctx, sync_redis, monkeypat
 
     kinds = [k for k, _ in _stream(sync_redis, job_id)]
     assert kinds == ["progress", "succeeded"]
+
+
+async def test_reindex_job_succeeds_with_counts(worker_ctx, sync_redis, monkeypatch):
+    job_id, _ = make_job(kind="kb_reindex", answer=False)
+    monkeypatch.setattr(ks, "reindex", lambda emit, should_cancel: (12, 3))
+
+    await run_kb_reindex_job(worker_ctx, job_id)
+
+    with SessionLocal() as db:
+        job = db.get(Job, job_id)
+        assert job.status == "succeeded"
+        assert job.result == {"items": 12, "papers": 3}
+    assert _stream(sync_redis, job_id)[-1] == ("succeeded", {"items": 12, "papers": 3})
+
+
+async def test_reindex_job_cancelled_midway_is_terminal(worker_ctx, sync_redis, monkeypatch):
+    """运行中取消必须落到 cancelled；否则 DELETE 返回 204 就是在骗客户端。"""
+    job_id, _ = make_job(kind="kb_reindex", answer=False)
+
+    def cancelled(emit, should_cancel):
+        raise ks.ReindexCancelled("cancelled after 1/3 papers")
+
+    monkeypatch.setattr(ks, "reindex", cancelled)
+    await run_kb_reindex_job(worker_ctx, job_id)
+
+    with SessionLocal() as db:
+        job = db.get(Job, job_id)
+        assert job.status == "cancelled"
+        assert job.finished_at is not None
+    assert _stream(sync_redis, job_id)[-1][0] == "cancelled"
+
+
+async def test_reindex_job_timeout_does_not_stay_running(worker_ctx, sync_redis, monkeypatch):
+    """CancelledError 是 BaseException：不显式处理会让任务永远停在 running。"""
+    job_id, _ = make_job(kind="kb_reindex", answer=False)
+
+    def timed_out(emit, should_cancel):
+        raise asyncio.CancelledError()
+
+    monkeypatch.setattr(ks, "reindex", timed_out)
+    with pytest.raises(asyncio.CancelledError):
+        await run_kb_reindex_job(worker_ctx, job_id)
+
+    with SessionLocal() as db:
+        job = db.get(Job, job_id)
+        assert job.status == "failed"
+        assert job.error["code"] == "timeout"
+    assert _stream(sync_redis, job_id)[-1][0] == "failed"
+    assert sync_redis.exists(events.cancel_key(job_id)), "超时后要置取消标记，让还在跑的线程自己退出"
 
 
 @pytest.mark.parametrize("options, expected", [
