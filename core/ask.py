@@ -28,7 +28,7 @@ import httpx
 import journal_rank as jr
 import knowledge_store as ks
 import picos_paths
-import semantic_scholar_mcp as lit  # (reuse the MCP tool implementations)
+import literature as lit
 from picos_paths import ANSWERS_DIR
 
 try:
@@ -176,11 +176,11 @@ def epmc_search(query: str, limit: int, fulltext_only: bool, flt: Filters) -> li
 
 def pubmed_search(query: str, limit: int, flt: Filters) -> list[dict]:
     params = {"db": "pubmed", "term": query, "retmax": limit, "sort": "relevance", "retmode": "json", **flt.pubmed_year_params()}
-    r = lit._ncbi("esearch.fcgi", params)
+    r = lit.ncbi_get("esearch.fcgi", params)
     if r is None:
         return []
     ids = r.json().get("esearchresult", {}).get("idlist") or []
-    recs = lit._pubmed_fetch_records(ids)
+    recs = lit.pubmed_fetch_records(ids)
     return [{"pmid": p["pmid"], "pmcid": p["pmc"], "doi": p["doi"], "title": p["title"], "year": p["year"],
              "journal": p["journal"], "issn": p.get("issn", ""),
              "authors": ", ".join(p["authors"][:3]) + (" et al." if len(p["authors"]) > 3 else ""),
@@ -243,7 +243,7 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int) -> dict:
     paras: list[dict] = []
     source = "abstract"
     if p.get("pmcid"):
-        secs = lit._epmc_fulltext_paragraphs(p["pmcid"])
+        secs = lit.epmc_fulltext_paragraphs(p["pmcid"])
         if secs:
             keep = [(t, ps) for t, ps in secs if not any(t.lower().startswith(s) for s in SKIP_SECS)]
             paras = ks.paragraphs_from_sections(keep)
@@ -259,7 +259,7 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int) -> dict:
                         with open(fn, "wb") as f:
                             for chunk in r.iter_bytes():
                                 f.write(chunk)
-                        t = lit._pdf_text(fn, max_chars * 2)
+                        t = lit.pdf_text(fn, max_chars * 2)
                         if not t.startswith("ERROR"):
                             paras = ks.paragraphs_from_pdf_text(t)
                             source = "pdf" if paras else "abstract"
@@ -270,13 +270,13 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int) -> dict:
         ok, note = paywall_fetch.download_pdf(p["doi"], fn, PAYWALL_STATE)
         log(f"  institutional {'OK ' if ok else 'no '} DOI:{p['doi']} — {note}")
         if ok:
-            t = lit._pdf_text(fn, max_chars * 2)
+            t = lit.pdf_text(fn, max_chars * 2)
             if not t.startswith("ERROR") and len(t) > 2000:
                 paras = ks.paragraphs_from_pdf_text(t)
                 source = "inst" if paras else "abstract"
     if not paras:
         if not p.get("abstract") and pmid:
-            recs = lit._pubmed_fetch_records([pmid])
+            recs = lit.pubmed_fetch_records([pmid])
             if recs:
                 p["abstract"] = recs[0]["abstract"]
                 p["types"] = recs[0]["types"]

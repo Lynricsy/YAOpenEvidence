@@ -74,7 +74,7 @@ def paragraphs_from_sections(secs: list[tuple[str, list[str]]]) -> list[dict]:
 
 
 def paragraphs_from_pdf_text(text: str) -> list[dict]:
-    """Text produced by _pdf_text ('--- page N ---' markers). Paragraph = blank-line block or ~1000-char chunk."""
+    """Text produced by literature.pdf_text ('--- page N ---' markers). Paragraph = blank-line block or ~1000-char chunk."""
     out = []
     for m in re.finditer(r"--- page (\d+) ---\n(.*?)(?=\n--- page \d+ ---|\Z)", text, re.S):
         page, body = int(m.group(1)), m.group(2)
