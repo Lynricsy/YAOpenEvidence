@@ -1,0 +1,124 @@
+"""run_ask 流水线的契约：事件流、引用定位、落盘产物、失败与取消。
+
+上游检索与 LLM 都换成确定性替身，但引文核实（verify_citations）用的是
+真实段落文本，所以 `[n¶pid]` 里的 pid 是真算出来的，不是桩里写死的。
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+import ask
+import knowledge_store as ks
+from tests.fake_llm import fake_llm
+
+FIX = Path(__file__).parent / "fixtures" / "paper_39133485"
+
+
+def _meta() -> dict:
+    return json.loads((FIX / "meta.json").read_text(encoding="utf-8"))
+
+
+def _paras() -> list[dict]:
+    return json.loads((FIX / "paragraphs.json").read_text(encoding="utf-8"))
+
+
+def _candidate() -> dict:
+    m = _meta()
+    return {"pmid": m["pmid"], "pmcid": m["pmcid"], "doi": m["doi"], "title": m["title"], "year": m["year"],
+            "journal": m["journal"], "issn": m["issn"], "authors": m["authors"], "cited": 0,
+            "types": [], "abstract": "", "rank": None, "quartile": "", "zone": 0}
+
+
+@pytest.fixture
+def pipeline(monkeypatch, tmp_path):
+    """把流水线的外部依赖换成替身，输出目录隔到 tmp_path。"""
+    answers = tmp_path / "answers"
+    answers.mkdir()
+    monkeypatch.setattr(ask, "ANSWERS_DIR", str(answers))
+    monkeypatch.setattr(ask, "llm", lambda system, user, **kw: fake_llm(system, user))
+
+    def _search_all(queries, n_papers, flt, *, emit=ask.print_emit):
+        flt.candidates = flt.kept = 1
+        return [_candidate()]
+
+    def _fetch(p, outdir, max_chars, *, emit=ask.print_emit):
+        paras = _paras()
+        p["paras"], p["source"] = paras, "pmc"
+        p["text"] = ks.numbered_text(paras)[:max_chars]
+        p["md_file"] = f"{p['pmid']}.md"
+        p["fulltext_md"] = ks.anchored_markdown(paras)
+        Path(outdir, p["md_file"]).write_text(p["fulltext_md"], encoding="utf-8")
+        Path(outdir, f"{p['pmid']}_paragraphs.json").write_text(
+            json.dumps(paras, ensure_ascii=False), encoding="utf-8")
+        return p
+
+    monkeypatch.setattr(ask, "search_all", _search_all)
+    monkeypatch.setattr(ask, "fetch_fulltext", _fetch)
+    return answers
+
+
+def test_run_ask_produces_located_citations_and_files(pipeline):
+    events: list[dict] = []
+    res = ask.run_ask(ask.AskOptions(question="替西帕肽相比 GLP-1 RA 有什么获益？", papers=1, use_kb=False,
+                                     use_paywall=False, workers=1),
+                      run_id="testrun", emit=events.append)
+
+    # 正文用裸标记，链接只出现在渲染稿里：前端自己决定跳转目标
+    assert "[1¶2]" in res.body_md
+    assert "](" not in res.body_md
+    assert "[1¶2](testrun_papers/39133485.md#p2)" in res.answer_md
+
+    assert res.used_n == [1]
+    assert res.n_fulltext == 1
+    assert res.citations[0]["n"] == 1
+    assert res.citations[0]["pid"] == 2
+    assert res.citations[0]["from_marker"] is True
+    assert res.citations[0]["quotes"], "被引段落应带上核实过的引文"
+    assert res.citations[0]["text"].startswith("In this cohort study")
+
+    assert Path(pipeline, "testrun.md").exists()
+    papers_dir = Path(pipeline, "testrun_papers")
+    assert json.loads(Path(papers_dir, "39133485_paragraphs.json").read_text(encoding="utf-8"))
+    assert Path(papers_dir, "39133485_notes.md").exists()
+    cites = json.loads(Path(papers_dir, "39133485_citations.json").read_text(encoding="utf-8"))
+    assert any(c["verified"] and c["pid"] == 2 for c in cites)
+
+    stages = [(e["stage"], e["status"]) for e in events if e["type"] == "stage"]
+    assert ("queries", "started") in stages and ("synthesize", "finished") in stages
+    search_done = next(e for e in events if e["type"] == "stage" and e["stage"] == "search" and e["status"] == "finished")
+    assert len(search_done["detail"]["papers"]) == 1
+    assert search_done["detail"]["papers"][0]["pmid"] == "39133485"
+    read_done = next(e for e in events if e["type"] == "stage" and e["stage"] == "read" and e["status"] == "finished")
+    assert read_done["detail"] == {"relevant": 1, "total": 1}
+    assert {"type": "progress", "stage": "read", "current": 1, "total": 1,
+            "pmid": "39133485", "title": _meta()["title"]} in events
+
+
+def test_run_ask_cancels_before_writing_answer(pipeline):
+    with pytest.raises(ask.PipelineCancelled):
+        ask.run_ask(ask.AskOptions(question="任意问题", papers=1, use_kb=False, use_paywall=False, workers=1),
+                    run_id="cancelled", emit=lambda e: None, should_cancel=lambda: True)
+    assert not Path(pipeline, "cancelled.md").exists()
+
+
+def test_run_ask_without_candidates_raises_no_papers(pipeline, monkeypatch):
+    monkeypatch.setattr(ask, "search_all", lambda queries, n, flt, *, emit=ask.print_emit: [])
+    with pytest.raises(ask.NoPapers) as e:
+        ask.run_ask(ask.AskOptions(question="任意问题", papers=1, use_kb=False, use_paywall=False),
+                    run_id="empty", emit=lambda ev: None)
+    assert e.value.code == "no_papers"
+    assert not Path(pipeline, "empty.md").exists()
+
+
+def test_llm_unavailable_raises_instead_of_empty_string(monkeypatch):
+    """LLM 三次重试全失败必须抛错，而不是返回空串让空答案一路落盘。"""
+    monkeypatch.setattr(ask, "LLM_BASE", "http://127.0.0.1:1/v1")   # 拒连端口
+    monkeypatch.setattr(ask.time, "sleep", lambda *_: None)
+    warnings: list[dict] = []
+    with pytest.raises(ask.LLMUnavailable):
+        ask.llm("sys", "user", emit=warnings.append)
+    assert len(warnings) == 3
+    assert all(w["level"] == "warning" for w in warnings)

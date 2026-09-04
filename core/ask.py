@@ -22,6 +22,8 @@ import json
 import os
 import re
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 
 import httpx
 
@@ -44,12 +46,47 @@ LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3-14b")
 UNPAYWALL_EMAIL = os.environ.get("UNPAYWALL_EMAIL", "picosgpt@example.com")
 
 
-def log(msg: str) -> None:
-    print(f"[{dt.datetime.now():%H:%M:%S}] {msg}", flush=True)
+# ------------------------------------------------------------------ 事件与异常
+Emit = Callable[[dict], None]
+
+
+def print_emit(event: dict) -> None:
+    """CLI 的事件消费者：把结构化事件打回原来的 stdout 行格式。"""
+    kind = event.get("type")
+    if kind == "log":
+        print(f"[{dt.datetime.now():%H:%M:%S}] {event['message']}", flush=True)
+    elif kind == "stage":
+        print(f"[{dt.datetime.now():%H:%M:%S}] {event['stage']} {event['status']}", flush=True)
+    elif kind == "progress":
+        print(f"[{dt.datetime.now():%H:%M:%S}]   {event['stage']} {event['current']}/{event['total']} "
+              f"PMID:{event.get('pmid') or ''}", flush=True)
+
+
+class PipelineError(Exception):
+    """流水线的可预期失败：调用方据 .code 决定对外错误码。"""
+
+    code = "internal_error"
+
+
+class NoPapers(PipelineError):
+    code = "no_papers"
+
+
+class NothingRelevant(PipelineError):
+    code = "nothing_relevant"
+
+
+class LLMUnavailable(PipelineError):
+    code = "llm_unavailable"
+
+
+class PipelineCancelled(Exception):
+    """协作式取消：在阶段边界与逐篇边界抛出。"""
 
 
 # ------------------------------------------------------------------ LLM
-def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, temperature: float = 0.2) -> str:
+def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, temperature: float = 0.2,
+        *, emit: Emit = print_emit) -> str:
     body = {
         "model": LLM_MODEL,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
@@ -57,6 +94,7 @@ def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, tem
         "temperature": temperature,
         "chat_template_kwargs": {"enable_thinking": think},
     }
+    last = ""
     for attempt in range(3):
         try:
             r = httpx.post(f"{LLM_BASE}/chat/completions", json=body,
@@ -65,9 +103,11 @@ def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, tem
             txt = r.json()["choices"][0]["message"]["content"] or ""
             return re.sub(r"<think>.*?</think>", "", txt, flags=re.S).strip()
         except Exception as e:  # noqa: BLE001
-            log(f"LLM error ({e}); retry {attempt+1}")
+            last = str(e)
+            emit({"type": "log", "level": "warning", "message": f"LLM error ({e}); retry {attempt+1}"})
             time.sleep(3)
-    return ""
+    # 返回空串会让后续阶段静默产出空答案；让调用方看到真实原因
+    raise LLMUnavailable(f"LLM unavailable after 3 attempts: {last}")
 
 
 # ------------------------------------------------------------------ filters
@@ -80,7 +120,7 @@ class Filters:
         if year:
             m = re.fullmatch(r"\s*(\d{4})\s*(?:[-~至:]\s*(\d{4}))?\s*", year)
             if not m:
-                raise SystemExit(f"--year must be YYYY or YYYY-YYYY, got {year!r}")
+                raise ValueError(f"year must be YYYY or YYYY-YYYY, got {year!r}")
             self.y0, self.y1 = int(m.group(1)), int(m.group(2) or m.group(1))
         elif years:
             self.y0, self.y1 = now - years + 1, now
@@ -88,6 +128,8 @@ class Filters:
         self.journals = [j.strip().lower() for j in re.split(r"[,，;]", journal) if j.strip()]
         self.keep_unranked = keep_unranked
         self.dropped: dict[str, int] = {"year": 0, "quartile": 0, "unranked": 0, "journal": 0}
+        self.candidates = 0      # search_all 填：去重后的候选数
+        self.kept = 0            # search_all 填：过滤后剩余数（未截断到 --papers）
 
     @property
     def active(self) -> bool:
@@ -139,11 +181,11 @@ class Filters:
 
 
 # ------------------------------------------------------------------ 1. queries
-def make_queries(question: str) -> tuple[list[str], str]:
+def make_queries(question: str, *, emit: Emit = print_emit) -> tuple[list[str], str]:
     sysmsg = ("You are a medical librarian. Convert the user's question into PubMed search queries. "
               "Return ONLY JSON: {\"english_question\": str, \"queries\": [str, str, str]}. "
               "Queries must be English, 3-8 words, use synonyms/MeSH-like terms, no boolean operators, no quotes.")
-    out = llm(sysmsg, question, max_tokens=400)
+    out = llm(sysmsg, question, max_tokens=400, emit=emit)
     m = re.search(r"\{.*\}", out, re.S)
     try:
         js = json.loads(m.group(0))
@@ -194,7 +236,7 @@ def rank_key(p: dict) -> tuple:
     return (quality, zone_bonus, 1 if p.get("pmcid") else 0, p.get("cited", 0), p.get("year", ""))
 
 
-def search_all(queries: list[str], n_papers: int, flt: Filters) -> list[dict]:
+def search_all(queries: list[str], n_papers: int, flt: Filters, *, emit: Emit = print_emit) -> list[dict]:
     seen: dict[str, dict] = {}
     # a filter shrinks the pool, so fetch a bigger candidate set first
     n_pm, n_ep = (30, 25) if flt.active else (10, 8)
@@ -213,8 +255,11 @@ def search_all(queries: list[str], n_papers: int, flt: Filters) -> list[dict]:
     for p in cands:
         flt.annotate(p)
     kept = [p for p in cands if flt.keep(p)]
-    log(f"candidates: {len(cands)} found, {len(kept)} pass filters "
-        f"(dropped: " + ", ".join(f"{k} {v}" for k, v in flt.dropped.items() if v) + ")" if flt.active else f"candidates: {len(cands)}")
+    flt.candidates, flt.kept = len(cands), len(kept)
+    emit({"type": "log", "level": "info",
+          "message": (f"candidates: {len(cands)} found, {len(kept)} pass filters (dropped: "
+                      + ", ".join(f"{k} {v}" for k, v in flt.dropped.items() if v) + ")")
+                     if flt.active else f"candidates: {len(cands)}"})
     papers = sorted(kept, key=rank_key, reverse=True)
     return papers[:n_papers]
 
@@ -237,7 +282,7 @@ SKIP_SECS = ("references", "associated data", "supporting information", "supplem
              "acknowledgments", "funding", "conflict of interest", "competing interests", "author contributions")
 
 
-def fetch_fulltext(p: dict, outdir: str, max_chars: int) -> dict:
+def fetch_fulltext(p: dict, outdir: str, max_chars: int, *, emit: Emit = print_emit) -> dict:
     """Fill p['paras'] (numbered paragraphs), p['text'] (model-facing numbered text) and p['source']."""
     pmid = p["pmid"]
     paras: list[dict] = []
@@ -268,7 +313,8 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int) -> dict:
     if not paras and p.get("doi") and paywall_fetch and os.path.exists(PAYWALL_STATE) and p.get("_paywall_ok"):
         fn = os.path.join(outdir, f"{pmid or 'paper'}.pdf")
         ok, note = paywall_fetch.download_pdf(p["doi"], fn, PAYWALL_STATE)
-        log(f"  institutional {'OK ' if ok else 'no '} DOI:{p['doi']} — {note}")
+        emit({"type": "log", "level": "info",
+              "message": f"  institutional {'OK ' if ok else 'no '} DOI:{p['doi']} — {note}"})
         if ok:
             t = lit.pdf_text(fn, max_chars * 2)
             if not t.startswith("ERROR") and len(t) > 2000:
@@ -294,6 +340,9 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int) -> dict:
     p["fulltext_md"] = header + ks.anchored_markdown(paras)
     with open(os.path.join(outdir, p["md_file"]), "w", encoding="utf-8") as f:
         f.write(p["fulltext_md"])
+    # 段落单独落盘：--no-kb 时 library/ 里不会有这篇，answers/<id>_papers/ 必须自包含
+    with open(os.path.join(outdir, f"{pmid or 'paper'}_paragraphs.json"), "w", encoding="utf-8") as f:
+        json.dump(paras, f, ensure_ascii=False, indent=1)
     return p
 
 
@@ -318,13 +367,13 @@ Rules: never add information that is not in the text; write "Not reported" for a
 if the paper is not relevant say Relevance 0 and stop."""
 
 
-def read_paper(i: int, p: dict, question_en: str) -> dict:
+def read_paper(i: int, p: dict, question_en: str, *, emit: Emit = print_emit) -> dict:
     if not p.get("text"):
         p["notes"] = "### Relevance (0-3)\n0 (no text available)"
         p["cites"] = []
         return p
     user = f"QUESTION: {question_en}\n\nPAPER [{i}] {p['title']} ({p['year']}, {p['journal']}) — source: {p['source']}\n\n{p['text']}"
-    p["notes"] = llm(READ_SYS, user, max_tokens=2000)
+    p["notes"] = llm(READ_SYS, user, max_tokens=2000, emit=emit)
     m = re.search(r"Relevance.*?(\d)", p["notes"], re.S)
     p["relevance"] = int(m.group(1)) if m else 1
     p["cites"] = ks.verify_citations(p["notes"], p["paras"])
@@ -355,10 +404,10 @@ One row per paper with Relevance >= 1; keep each cell concise (<= 25 words); wri
 Do NOT write the reference list; it will be appended automatically."""
 
 
-def synthesize(question: str, papers: list[dict]) -> str:
+def synthesize(question: str, papers: list[dict], *, emit: Emit = print_emit) -> str:
     notes = "\n\n".join(f"[{p['n']}] {p['title']} ({p['year']}) — {p['journal']} {jr.label(p.get('rank'))} — text source: {p['source']}\n"
                         f"{p.get('notes_for_synthesis') or p['notes']}" for p in papers)
-    return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}", max_tokens=2800, think=True)
+    return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}", max_tokens=2800, think=True, emit=emit)
 
 
 def _short_authors(a: str) -> str:
@@ -380,8 +429,14 @@ MARK_GROUP_RE = re.compile(r"\[((?:\d{1,2}¶\d{1,4}\??|\d{1,2})(?:\s*[,，;]\s*(
 MARK_RE = re.compile(r"(\d{1,2})¶(\d{1,4})(\??)")
 
 
-def link_markers(body: str, by_n: dict[int, dict], papers_dir_rel: str) -> tuple[str, list[tuple[int, int]]]:
-    """Turn [3¶12] / [3¶26, 3¶29] / [2¶4, 5] into clickable links to paragraph anchors; collect (n, pid) pairs."""
+def resolve_markers(body: str, by_n: dict[int, dict],
+                    papers_dir_rel: str | None) -> tuple[str, list[tuple[int, int]]]:
+    """归一化正文里的 [3¶12] / [3¶26, 3¶29] / [2¶4, 5] 标记，并收集 (n, pid)。
+
+    `papers_dir_rel` 为 None 时输出裸标记 `[n¶pid]`（HTTP 场景：前端自己决定跳哪儿）；
+    给了相对目录就输出指向段落锚点的 Markdown 链接（CLI 场景：answers/<id>.md 可直接点）。
+    未知段落一律降级为 `[n]`。
+    """
     used: list[tuple[int, int]] = []
 
     def _one(tok: str) -> str:
@@ -394,6 +449,8 @@ def link_markers(body: str, by_n: dict[int, dict], papers_dir_rel: str) -> tuple
             return f"[{n}]"  # unknown paragraph: degrade to a plain paper citation
         if (n, pid) not in used:
             used.append((n, pid))
+        if papers_dir_rel is None:
+            return f"[{n}¶{pid}]"
         return f"[{n}¶{pid}]({papers_dir_rel}/{p['md_file']}#p{pid})"
 
     def _group(m: re.Match) -> str:
@@ -404,15 +461,17 @@ def link_markers(body: str, by_n: dict[int, dict], papers_dir_rel: str) -> tuple
     return MARK_GROUP_RE.sub(_group, body), used
 
 
-def location_appendix(used: list[tuple[int, int]], by_n: dict[int, dict], papers_dir_rel: str) -> str:
-    """'原文定位' section: for every cited paragraph show where it is and the verified quote / paragraph text."""
-    lines = ["**原文定位 / Source passages**（点击 ¶ 链接可跳到原文段落；完整核实清单见各篇 `_citations.json`）"]
+def cited_passages(used: list[tuple[int, int]], by_n: dict[int, dict]) -> list[dict]:
+    """把「正文引到的段落」摊平成结构化清单（附录渲染与 HTTP 响应共用同一份）。
+
+    只被 `[n]` 引用的论文没有段落标记，此时兜底取该篇核实过的 key-finding 段落，
+    保证每篇都能定位到原文。`from_marker` 区分这两种来源。
+    """
     by_paper: dict[int, list[int]] = {}
     for n, pid in used:
         by_paper.setdefault(n, [])
         if pid not in by_paper[n]:
             by_paper[n].append(pid)
-    # papers cited only as [n]: show the 3 key-finding quotes the reader verified, so every paper is locatable
     for n, p in by_n.items():
         if by_paper.get(n):
             continue
@@ -420,26 +479,264 @@ def location_appendix(used: list[tuple[int, int]], by_n: dict[int, dict], papers
         for c in ([c for c in vc if c.get("key_finding")] + [c for c in vc if not c.get("key_finding")])[:3]:
             if c["pid"] not in by_paper.setdefault(n, []):
                 by_paper[n].append(c["pid"])
+    out: list[dict] = []
+    marked = set(used)
     for n in sorted(by_paper):
         p = by_n[n]
         paras = {q["id"]: q for q in p["paras"]}
-        lines.append(f"\n[{n}] {p['title'][:100]} — {p['journal']} ({p['year']}) 〔{p['source']}〕")
         for pid in sorted(by_paper[n]):
             q = paras.get(pid)
             if not q:
                 continue
-            quotes = [c["quote"] for c in p.get("cites", []) if c["verified"] and c["pid"] == pid]
-            loc = q["sec"] + (f", p.{q['page']}" if q.get("page") else "")
-            link = f"{papers_dir_rel}/{p['md_file']}#p{pid}"
-            if quotes:
-                for qu in quotes[:2]:
-                    lines.append(f"- [¶{pid}]({link}) {loc}: “{qu}”")
-            else:
-                lines.append(f"- [¶{pid}]({link}) {loc}: {q['text'][:220]}{'…' if len(q['text']) > 220 else ''}")
-        bad = [c for c in p.get("cites", []) if not c["verified"]]
+            out.append({"n": n, "pmid": p.get("pmid", ""), "pid": pid, "sec": q["sec"], "page": q.get("page"),
+                        "text": q["text"],
+                        "quotes": [c["quote"] for c in p.get("cites", []) if c["verified"] and c["pid"] == pid],
+                        "from_marker": (n, pid) in marked})
+    return out
+
+
+def location_appendix(passages: list[dict], by_n: dict[int, dict], papers_dir_rel: str) -> str:
+    """'原文定位' section: for every cited paragraph show where it is and the verified quote / paragraph text."""
+    lines = ["**原文定位 / Source passages**（点击 ¶ 链接可跳到原文段落；完整核实清单见各篇 `_citations.json`）"]
+
+    def _warn(n: int) -> None:
+        bad = [c for c in by_n[n].get("cites", []) if not c["verified"]]
         if bad:
-            lines.append(f"- ⚠ {len(bad)} 条模型引文未能在原文中核实（见 {p['pmid'] or 'paper'}_citations.json）")
+            lines.append(f"- ⚠ {len(bad)} 条模型引文未能在原文中核实（见 {by_n[n]['pmid'] or 'paper'}_citations.json）")
+
+    cur: int | None = None
+    for it in passages:
+        n = it["n"]
+        p = by_n[n]
+        if n != cur:
+            if cur is not None:
+                _warn(cur)
+            cur = n
+            lines.append(f"\n[{n}] {p['title'][:100]} — {p['journal']} ({p['year']}) 〔{p['source']}〕")
+        loc = it["sec"] + (f", p.{it['page']}" if it.get("page") else "")
+        link = f"{papers_dir_rel}/{p['md_file']}#p{it['pid']}"
+        if it["quotes"]:
+            for qu in it["quotes"][:2]:
+                lines.append(f"- [¶{it['pid']}]({link}) {loc}: “{qu}”")
+        else:
+            lines.append(f"- [¶{it['pid']}]({link}) {loc}: {it['text'][:220]}{'…' if len(it['text']) > 220 else ''}")
+    if cur is not None:
+        _warn(cur)
     return "\n".join(lines)
+
+
+# ------------------------------------------------------------------ 6. pipeline
+@dataclass(frozen=True)
+class AskOptions:
+    question: str
+    papers: int = 8
+    max_chars: int = 28000
+    workers: int = 4
+    use_paywall: bool = True
+    years: int = 0
+    year: str = ""
+    quartile: str = ""
+    journal: str = ""
+    keep_unranked: bool = False
+    use_kb: bool = True
+    kb_hits: int = 0
+
+
+@dataclass
+class AskResult:
+    run_id: str
+    question: str
+    question_en: str
+    queries: list[str]
+    filters_label: str
+    papers: list[dict]            # 流水线内部的 paper dict（含 paras/cites/facts 等中间产物）
+    used_n: list[int]             # relevance > 0 的编号
+    body_md: str                  # 综合稿正文，引用为裸标记 [n¶pid]
+    answer_md: str                # 完整渲染稿（含链接、参考文献、原文定位），即 answers/<id>.md
+    citations: list[dict]
+    kb_hits: list[dict]
+    out_path: str
+    papers_dir: str
+    n_fulltext: int
+
+
+def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_emit,
+            should_cancel: Callable[[], bool] = lambda: False) -> AskResult:
+    """整条问答流水线。CLI 与 HTTP worker 共用；进度通过 `emit` 推出，取消通过 `should_cancel` 轮询。
+
+    失败用异常表达（NoPapers / NothingRelevant / LLMUnavailable / PipelineCancelled），
+    不再像 CLI 那样打印一行然后 return —— 调用方需要据此决定 HTTP 状态与任务终态。
+    """
+    def _check() -> None:
+        if should_cancel():
+            raise PipelineCancelled()
+
+    def _stage(stage: str, status: str, **detail) -> None:
+        emit({"type": "stage", "stage": stage, "status": status, "detail": detail})
+
+    run_id = run_id or dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    flt = Filters(opts.years, opts.year, opts.quartile, opts.journal, opts.keep_unranked)
+    tables = jr.load()
+    if flt.zones and not tables:
+        emit({"type": "log", "level": "warning",
+              "message": "--quartile given but no ranking table in data/journal_ranks/ (run: python journal_rank.py download)"})
+    papers_dir_rel = f"{run_id}_papers"
+    outdir = os.path.join(ANSWERS_DIR, papers_dir_rel)
+    os.makedirs(outdir, exist_ok=True)
+
+    emit({"type": "log", "level": "info", "message": f"Q: {opts.question}"})
+    emit({"type": "log", "level": "info",
+          "message": f"filters: {flt.describe()}" + (f"   ranking tables: {', '.join(tables)}" if tables else "")})
+
+    _check()
+    _stage("queries", "started")
+    queries, q_en = make_queries(opts.question, emit=emit)
+    emit({"type": "log", "level": "info", "message": f"queries: {queries}"})
+    _stage("queries", "finished", queries=queries, question_en=q_en)
+
+    _check()
+    _stage("search", "started", queries=queries)
+    papers = search_all(queries, opts.papers, flt, emit=emit)
+    for i, p in enumerate(papers, 1):
+        p["n"] = i
+    for p in papers:
+        emit({"type": "log", "level": "info",
+              "message": (f"  - {p['title'][:80]} ({p['year']}) {p['journal'][:30]} "
+                          f"〔{jr.label(p.get('rank'))}〕 PMID:{p['pmid']} {'PMC✔' if p.get('pmcid') else ''}")})
+    _stage("search", "finished", candidates=flt.candidates, kept=flt.kept, dropped=dict(flt.dropped),
+           papers=[{"n": p["n"], "pmid": p["pmid"], "title": p["title"], "year": p["year"],
+                    "journal": p["journal"], "rank_label": jr.label(p.get("rank")), "pmcid": p.get("pmcid", "")}
+                   for p in papers])
+    if not papers:
+        raise NoPapers("no papers pass the filters; relax years/quartile/journal or keep unranked journals")
+
+    _check()
+    _stage("fulltext", "started", total=len(papers))
+    emit({"type": "log", "level": "info", "message": "downloading full texts (open access) ..."})
+    with cf.ThreadPoolExecutor(opts.workers) as ex:
+        futs = {ex.submit(fetch_fulltext, p, outdir, opts.max_chars, emit=emit): p for p in papers}
+        for k, fut in enumerate(cf.as_completed(futs), 1):
+            p = futs[fut]
+            fut.result()
+            emit({"type": "progress", "stage": "fulltext", "current": k, "total": len(papers),
+                  "pmid": p["pmid"], "title": p["title"]})
+            _check()
+    if paywall_fetch and os.path.exists(PAYWALL_STATE) and opts.use_paywall:
+        todo = [p for p in papers if p["source"] == "abstract" and p.get("doi")][:PAYWALL_MAX]
+        if todo:
+            emit({"type": "log", "level": "info",
+                  "message": f"institutional access: trying {len(todo)} paywalled paper(s) serially (polite delay) ..."})
+            for p in todo:  # serial on purpose: one browser at a time, delay between requests
+                _check()
+                p["_paywall_ok"] = True
+                fetch_fulltext(p, outdir, opts.max_chars, emit=emit)
+    elif opts.use_paywall:
+        emit({"type": "log", "level": "info",
+              "message": "institutional access: skipped (no sd_state.json — run paywall_fetch.py login to enable)"})
+    for p in papers:
+        emit({"type": "log", "level": "info",
+              "message": f"  {p['source']:8s} {len(p['paras']):4d} paragraphs {len(p['text']):6d} chars  PMID:{p['pmid']}"})
+    n_fulltext = sum(p["source"] != "abstract" for p in papers)
+    _stage("fulltext", "finished", fulltext=n_fulltext, total=len(papers),
+           sources={p["n"]: p["source"] for p in papers})
+
+    _check()
+    _stage("read", "started", total=len(papers))
+    emit({"type": "log", "level": "info", "message": "reading papers with the model ..."})
+    with cf.ThreadPoolExecutor(opts.workers) as ex:
+        futs = {ex.submit(read_paper, p["n"], p, q_en, emit=emit): p for p in papers}
+        for k, fut in enumerate(cf.as_completed(futs), 1):
+            p = futs[fut]
+            fut.result()
+            emit({"type": "progress", "stage": "read", "current": k, "total": len(papers),
+                  "pmid": p["pmid"], "title": p["title"]})
+            _check()
+    for p in papers:
+        with open(os.path.join(outdir, f"{p['pmid'] or 'paper'}_notes.md"), "w", encoding="utf-8") as f:
+            f.write(p["notes"])
+        with open(os.path.join(outdir, f"{p['pmid'] or 'paper'}_citations.json"), "w", encoding="utf-8") as f:
+            json.dump(p.get("cites", []), f, ensure_ascii=False, indent=1)
+        nv = sum(c["verified"] for c in p.get("cites", []))
+        emit({"type": "log", "level": "info",
+              "message": (f"  [{p['n']}] relevance {p.get('relevance', '?')}  "
+                          f"quotes verified {nv}/{len(p.get('cites', []))}  PMID:{p['pmid']}")})
+    used = [p for p in papers if p.get("relevance", 1) > 0]
+    emit({"type": "log", "level": "info", "message": f"relevant papers: {len(used)}/{len(papers)}"})
+    _stage("read", "finished", relevant=len(used), total=len(papers))
+
+    store = None
+    if opts.use_kb:
+        _check()
+        _stage("kb", "started", total=len(papers))
+        emit({"type": "log", "level": "info", "message": "extracting atomic knowledge + indexing into kb/ ..."})
+        store = ks.KnowledgeStore()
+        facts_by_n: dict[int, list[dict]] = {}
+        with cf.ThreadPoolExecutor(opts.workers) as ex:   # LLM calls in parallel; store.add_paper is done serially below
+            futs = {ex.submit(ks.extract_facts, p["paras"],
+                              lambda s, u, mt: llm(s, u, max_tokens=mt, emit=emit), q_en): p
+                    for p in papers if p.get("paras")}
+            for k, fut in enumerate(cf.as_completed(futs), 1):
+                p = futs[fut]
+                facts_by_n[p["n"]] = fut.result()
+                emit({"type": "progress", "stage": "kb", "current": k, "total": len(futs),
+                      "pmid": p["pmid"], "title": p["title"]})
+                _check()
+        for p in papers:
+            facts = facts_by_n.get(p["n"], [])
+            p["facts"] = facts
+            with open(os.path.join(outdir, f"{p['pmid'] or 'paper'}_facts.json"), "w", encoding="utf-8") as f:
+                json.dump(facts, f, ensure_ascii=False, indent=1)
+            meta = {k: p.get(k) for k in ("pmid", "doi", "pmcid", "title", "year", "journal", "issn", "quartile", "authors", "source", "types")}
+            meta.update({"indexed_at": dt.datetime.now().isoformat(timespec="seconds"), "n_paragraphs": len(p["paras"]), "n_facts": len(facts)})
+            p["library_dir"] = ks.save_to_library(meta, p["paras"], facts, p["fulltext_md"])
+            try:
+                n_items = store.add_paper(meta, p["paras"], facts)
+            except Exception as e:  # noqa: BLE001
+                emit({"type": "log", "level": "warning", "message": f"  kb index failed for PMID:{p['pmid']}: {e}"})
+                n_items = 0
+            nv = sum(f["verified"] for f in facts)
+            emit({"type": "log", "level": "info",
+                  "message": (f"  [{p['n']}] {len(facts)} facts ({nv} located) + {len(p['paras'])} paragraphs "
+                              f"-> kb ({n_items} items)  library/{os.path.basename(p['library_dir'])}")})
+        st = store.stats()
+        emit({"type": "log", "level": "info",
+              "message": f"kb now holds {st['items']} items from {st['papers']} papers (embedder: {st.get('embedder')})"})
+        _stage("kb", "finished", items=st["items"], papers=st["papers"])
+
+    if not used:
+        raise NothingRelevant("nothing relevant found in the retrieved papers")
+
+    _check()
+    _stage("synthesize", "started", papers=len(used))
+    emit({"type": "log", "level": "info", "message": "synthesizing answer ..."})
+    by_n = {p["n"]: p for p in used}
+    raw_body = synthesize(opts.question, used, emit=emit)
+    body_md, used_marks = resolve_markers(raw_body, by_n, None)
+    linked_body, _ = resolve_markers(raw_body, by_n, papers_dir_rel)
+    citations = cited_passages(used_marks, by_n)
+    refs = "\n".join(ref_line(p, papers_dir_rel) for p in used)
+    n_full = sum(p["source"] != "abstract" for p in used)
+    kb_note, hits = "", []
+    if store is not None and opts.kb_hits:
+        hits = store.search(q_en, top_k=opts.kb_hits, kind="fact", pmids=None)
+        hits = [h for h in hits if h.get("pmid") not in {p["pmid"] for p in used}]
+        if hits:
+            kb_note = "\n\n**知识库相关事实（来自以往检索，未纳入本次综合）**\n" + "\n".join(
+                f"- {h['text']} — {h.get('title', '')[:80]} ({h.get('year')}) PMID:{h.get('pmid')} ¶{h.get('pid')}" for h in hits)
+    answer = (f"# Q: {opts.question}\n\n筛选条件：{flt.describe()}　|　阅读 {len(used)} 篇（{n_full} 篇全文）\n\n{linked_body}\n\n"
+              f"**参考文献 / References**（{n_full}/{len(used)} 篇读了全文）\n{refs}\n\n"
+              f"{location_appendix(citations, by_n, papers_dir_rel)}{kb_note}\n\n"
+              f"*This is a literature summary for research/educational use, not medical advice.*\n")
+    out = os.path.join(ANSWERS_DIR, f"{run_id}.md")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(answer)
+    emit({"type": "log", "level": "info",
+          "message": f"saved: {out}\nfull texts + notes + facts: {outdir}"})
+    _stage("synthesize", "finished", chars=len(answer))
+    return AskResult(run_id=run_id, question=opts.question, question_en=q_en, queries=queries,
+                     filters_label=flt.describe(), papers=papers, used_n=[p["n"] for p in used],
+                     body_md=body_md, answer_md=answer, citations=citations, kb_hits=hits,
+                     out_path=out, papers_dir=outdir, n_fulltext=n_full)
 
 
 # ------------------------------------------------------------------ main
@@ -462,105 +759,18 @@ def main() -> None:
     k.add_argument("--kb-hits", type=int, default=0, help="also feed the top-N knowledge-base hits from earlier runs into the synthesis (0 = off)")
     args = ap.parse_args()
 
-    flt = Filters(args.years, args.year, args.quartile, args.journal, args.keep_unranked)
-    tables = jr.load()
-    if flt.zones and not tables:
-        log("WARNING: --quartile given but no ranking table in data/journal_ranks/ (run: python journal_rank.py download)")
-    ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    outdir = os.path.join(ANSWERS_DIR, f"{ts}_papers")
-    papers_dir_rel = f"{ts}_papers"
-    os.makedirs(outdir, exist_ok=True)
-
-    log(f"Q: {args.question}")
-    log(f"filters: {flt.describe()}" + (f"   ranking tables: {', '.join(tables)}" if tables else ""))
-    queries, q_en = make_queries(args.question)
-    log(f"queries: {queries}")
-
-    papers = search_all(queries, args.papers, flt)
-    for p in papers:
-        log(f"  - {p['title'][:80]} ({p['year']}) {p['journal'][:30]} 〔{jr.label(p.get('rank'))}〕 PMID:{p['pmid']} {'PMC✔' if p.get('pmcid') else ''}")
-    if not papers:
-        log("no papers pass the filters; relax --years/--quartile/--journal or add --keep-unranked")
-        return
-
-    log("downloading full texts (open access) ...")
-    with cf.ThreadPoolExecutor(args.workers) as ex:
-        papers = list(ex.map(lambda p: fetch_fulltext(p, outdir, args.max_chars), papers))
-    if paywall_fetch and os.path.exists(PAYWALL_STATE) and not args.no_paywall:
-        todo = [p for p in papers if p["source"] == "abstract" and p.get("doi")][:PAYWALL_MAX]
-        if todo:
-            log(f"institutional access: trying {len(todo)} paywalled paper(s) serially (polite delay) ...")
-            for p in todo:  # serial on purpose: one browser at a time, delay between requests
-                p["_paywall_ok"] = True
-                fetch_fulltext(p, outdir, args.max_chars)
-    elif not args.no_paywall:
-        log("institutional access: skipped (no sd_state.json — run paywall_fetch.py login to enable)")
-    for p in papers:
-        log(f"  {p['source']:8s} {len(p['paras']):4d} paragraphs {len(p['text']):6d} chars  PMID:{p['pmid']}")
-
-    log("reading papers with the model ...")
-    for i, p in enumerate(papers, 1):
-        p["n"] = i
-    with cf.ThreadPoolExecutor(args.workers) as ex:
-        papers = list(ex.map(lambda ip: read_paper(ip[0], ip[1], q_en), [(p["n"], p) for p in papers]))
-    for p in papers:
-        with open(os.path.join(outdir, f"{p['pmid'] or 'paper'}_notes.md"), "w", encoding="utf-8") as f:
-            f.write(p["notes"])
-        with open(os.path.join(outdir, f"{p['pmid'] or 'paper'}_citations.json"), "w", encoding="utf-8") as f:
-            json.dump(p.get("cites", []), f, ensure_ascii=False, indent=1)
-        nv = sum(c["verified"] for c in p.get("cites", []))
-        log(f"  [{p['n']}] relevance {p.get('relevance', '?')}  quotes verified {nv}/{len(p.get('cites', []))}  PMID:{p['pmid']}")
-    used = [p for p in papers if p.get("relevance", 1) > 0]
-    log(f"relevant papers: {len(used)}/{len(papers)}")
-
-    store = None
-    if not args.no_kb:
-        log("extracting atomic knowledge + indexing into kb/ ...")
-        store = ks.KnowledgeStore()
-        with cf.ThreadPoolExecutor(args.workers) as ex:   # LLM calls in parallel; store.add_paper is done serially below
-            facts_done = list(ex.map(lambda p: (p, ks.extract_facts(p["paras"], lambda s, u, mt: llm(s, u, max_tokens=mt), q_en) if p.get("paras") else []), papers))
-        for p, facts in facts_done:
-            p["facts"] = facts
-            with open(os.path.join(outdir, f"{p['pmid'] or 'paper'}_facts.json"), "w", encoding="utf-8") as f:
-                json.dump(facts, f, ensure_ascii=False, indent=1)
-            meta = {k: p.get(k) for k in ("pmid", "doi", "pmcid", "title", "year", "journal", "issn", "quartile", "authors", "source", "types")}
-            meta.update({"indexed_at": dt.datetime.now().isoformat(timespec="seconds"), "n_paragraphs": len(p["paras"]), "n_facts": len(facts)})
-            p["library_dir"] = ks.save_to_library(meta, p["paras"], facts, p["fulltext_md"])
-            try:
-                n_items = store.add_paper(meta, p["paras"], facts)
-            except Exception as e:  # noqa: BLE001
-                log(f"  kb index failed for PMID:{p['pmid']}: {e}"); n_items = 0
-            nv = sum(f["verified"] for f in facts)
-            log(f"  [{p['n']}] {len(facts)} facts ({nv} located) + {len(p['paras'])} paragraphs -> kb ({n_items} items)  library/{os.path.basename(p['library_dir'])}")
-        st = store.stats()
-        log(f"kb now holds {st['items']} items from {st['papers']} papers (embedder: {st.get('embedder')})")
-
-    if not used:
-        log("nothing relevant found; aborting")
-        return
-
-    log("synthesizing answer ...")
-    by_n = {p["n"]: p for p in used}
-    body = synthesize(args.question, used)
-    body, used_marks = link_markers(body, by_n, papers_dir_rel)
-    refs = "\n".join(ref_line(p, papers_dir_rel) for p in used)
-    n_full = sum(p["source"] != "abstract" for p in used)
-    kb_note = ""
-    if store is not None and args.kb_hits:
-        hits = store.search(q_en, top_k=args.kb_hits, kind="fact", pmids=None)
-        hits = [h for h in hits if h.get("pmid") not in {p["pmid"] for p in used}]
-        if hits:
-            kb_note = "\n\n**知识库相关事实（来自以往检索，未纳入本次综合）**\n" + "\n".join(
-                f"- {h['text']} — {h.get('title', '')[:80]} ({h.get('year')}) PMID:{h.get('pmid')} ¶{h.get('pid')}" for h in hits)
-    answer = (f"# Q: {args.question}\n\n筛选条件：{flt.describe()}　|　阅读 {len(used)} 篇（{n_full} 篇全文）\n\n{body}\n\n"
-              f"**参考文献 / References**（{n_full}/{len(used)} 篇读了全文）\n{refs}\n\n"
-              f"{location_appendix(used_marks, by_n, papers_dir_rel)}{kb_note}\n\n"
-              f"*This is a literature summary for research/educational use, not medical advice.*\n")
-    out = os.path.join(ANSWERS_DIR, f"{ts}.md")
-    with open(out, "w", encoding="utf-8") as f:
-        f.write(answer)
-    print("\n" + "=" * 80 + "\n" + answer)
-    log(f"saved: {out}\nfull texts + notes + facts: {outdir}")
+    try:
+        opts = AskOptions(question=args.question, papers=args.papers, max_chars=args.max_chars,
+                          workers=args.workers, use_paywall=not args.no_paywall, years=args.years,
+                          year=args.year, quartile=args.quartile, journal=args.journal,
+                          keep_unranked=args.keep_unranked, use_kb=not args.no_kb, kb_hits=args.kb_hits)
+        res = run_ask(opts)
+    except ValueError as e:
+        raise SystemExit(str(e)) from e
+    except PipelineError as e:
+        print(str(e), flush=True)
+        raise SystemExit(1) from e
+    print("\n" + "=" * 80 + "\n" + res.answer_md)
 
 
 if __name__ == "__main__":
