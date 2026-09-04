@@ -114,7 +114,7 @@ PICOSGpt/
 ├── library/                 持久保存的每篇文献（全文 + 段落 + 原子知识）
 ├── kb/                      向量知识库（meta.jsonl + vectors.npy）
 ├── data/journal_ranks/      期刊分区表
-├── models/                  embedding 模型（bge-m3，从 modelscope 下载）
+├── models/                  embedding 模型（bge-m3，不入库，见 §6.1 重建）
 ├── pdfs/                    本地 PDF（手动放入或 paywall 下载）
 ├── logs/                    服务日志
 └── vendor/                  项目自带的 Python 依赖（pypdf / playwright），不污染 conda 环境
@@ -157,6 +157,31 @@ scp sd_state.json* tx@10.107.231.69:/data1/qyy/smk/
 - Codex 配置 `~/.codex/config.toml` 要点：
   - `model = "qwen3-14b"`, `model_provider = "local-qwen"`, `base_url = http://127.0.0.1:4000/v1`, `wire_api = "responses"`
   - `[mcp_servers.semantic_scholar] default_tools_approval_mode = "approve"` —— 否则 `codex exec` 下 MCP 调用会被拒，模型会凭记忆编参考文献
+
+### 6.1 embedding 环境（`kb` 子命令，纯 CPU 可用）
+
+`models/` 与 `.venv/` 都不入库（2.2G 权重 + 虚拟环境），换机器后按下面重建：
+
+```bash
+uv venv .venv --python 3.12          # torch 目前没有 3.14 轮子，必须 3.12
+uv pip install --python .venv/bin/python torch --index-url https://download.pytorch.org/whl/cpu
+uv pip install --python .venv/bin/python sentence-transformers
+.venv/bin/python -c "from huggingface_hub import snapshot_download as d; \
+  d('BAAI/bge-m3', local_dir='models/BAAI/bge-m3', \
+    ignore_patterns=['onnx/*','*.onnx','*.onnx_data'])"
+```
+
+- 排除 `onnx/`：`onnx/model.onnx_data` 单独 2.27G，与 `pytorch_model.bin` 是同一模型的另一份格式，`SentenceTransformer` 只读 `.bin`。排除后约 2.2G。
+- 目录名必须正好是 `models/BAAI/bge-m3`：`Embedder` 的后端名取自 `os.path.basename(model_path)`，要与 `kb/info.json` 的 `"embedder": "bge-m3"` 一致。
+- 无显卡无需改代码，`Embedder` 只在 `torch.cuda.is_available()` 为真时才切 GPU。
+- **装完必须验证**，缺模型/缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)，而现有 `kb/vectors.npy` 是 1024 维，`search` 会在矩阵乘处维度报错：
+
+```bash
+.venv/bin/python -c "from knowledge_store import Embedder; e=Embedder(); print(e.name, e.dim)"
+# 必须打印: bge-m3 1024   （打印 hash-bow-v1 4096 就是没加载上）
+.venv/bin/python knowledge_store.py stats
+.venv/bin/python knowledge_store.py search "SGLT2 HFpEF 心衰住院"
+```
 
 ## 7. 排错
 

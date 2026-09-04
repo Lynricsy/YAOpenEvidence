@@ -1,1 +1,7 @@
 vendor/playwright/driver/node
+
+# embedding 模型权重（2.2G，从 HuggingFace 重下：见 README）
+models/
+
+# 本机 Python 3.12 虚拟环境（torch CPU + sentence-transformers）
+.venv/
