@@ -47,6 +47,16 @@ def cmd_migrate(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_import_answers(_args: argparse.Namespace) -> int:
+    from .db import SessionLocal
+    from .services.answers import import_legacy_answers
+
+    with SessionLocal() as db:
+        n = import_legacy_answers(db)
+    print(f"imported {n} legacy answer(s)")
+    return 0
+
+
 def cmd_export_openapi(args: argparse.Namespace) -> int:
     from .main import create_app
 
@@ -72,6 +82,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     m = sub.add_parser("migrate", help="alembic upgrade head")
     m.set_defaults(fn=cmd_migrate)
+
+    i = sub.add_parser("import-answers", help="index existing answers/<ts>.md files into the DB")
+    i.set_defaults(fn=cmd_import_answers)
 
     e = sub.add_parser("export-openapi", help="dump the OpenAPI document")
     e.add_argument("path", nargs="?", default=str(BACKEND_DIR / "openapi.json"))

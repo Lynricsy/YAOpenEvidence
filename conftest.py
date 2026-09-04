@@ -11,6 +11,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -23,6 +24,28 @@ _TMP = tempfile.mkdtemp(prefix="yaoe-test-")
 os.environ["PICOSGPT_DATA"] = _TMP
 os.environ["EMBED_MODEL"] = "/nonexistent"          # 强制 Embedder 退化为 hash-bow（无需 2G 权重）
 os.environ.setdefault("YAOE_REDIS_URL", "redis://127.0.0.1:6379/15")
+
+
+def assert_test_redis(url: str) -> str:
+    """测试会 FLUSHDB，所以只允许打本机的高位 db。
+
+    `YAOE_REDIS_URL` 是从环境继承的：如果开发机上它指着真实实例（几乎总是
+    db 0），无条件 flush 就把别人的数据清了。宁可让测试启动失败。
+    """
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    try:
+        db = int((parsed.path or "/0").lstrip("/") or 0)
+    except ValueError:
+        db = 0
+    if host not in ("127.0.0.1", "localhost", "::1", "redis") or db < 10:
+        raise RuntimeError(
+            f"refusing to run tests against {url!r}: 测试会 FLUSHDB，"
+            "请把 YAOE_REDIS_URL 指向本机的 db>=10（例如 redis://127.0.0.1:6379/15）")
+    return url
+
+
+os.environ["YAOE_REDIS_URL"] = assert_test_redis(os.environ["YAOE_REDIS_URL"])
 os.environ["YAOE_DATABASE_URL"] = f"sqlite:///{_TMP}/var/test.sqlite3"
 os.environ["YAOE_API_KEYS_FILE"] = f"{_TMP}/api_keys.toml"
 os.environ.setdefault("LLM_BASE", "http://127.0.0.1:4999/v1")   # 不存在的端口：测试不该真调 LLM

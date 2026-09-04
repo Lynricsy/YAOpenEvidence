@@ -18,7 +18,7 @@ from . import __version__
 from .auth import load_api_keys
 from .config import settings
 from .errors import register_handlers
-from .routers import health
+from .routers import answers, health, jobs, journals, kb, literature, papers
 from .schemas.common import Problem
 
 logger = logging.getLogger("yaoe")
@@ -36,12 +36,14 @@ YAOpenEvidence 医学文献证据问答 API。
 async def lifespan(app: FastAPI):
     from arq.connections import RedisSettings, create_pool
     from redis.asyncio import from_url
+    from .services.kb import KbService
 
     app.state.settings = settings
     app.state.auth_disabled = settings.auth_disabled
     app.state.principals = load_api_keys(settings.api_keys_file, auth_disabled=settings.auth_disabled)
     app.state.arq = await create_pool(RedisSettings.from_dsn(settings.redis_url))
     app.state.redis = from_url(settings.redis_url)
+    app.state.kb = KbService()
     tables = jr.load()          # 分区表 11MB CSV，预热避免首个请求慢
     logger.info("ranking tables: %s", tables or "none")
     try:
@@ -70,6 +72,6 @@ def create_app() -> FastAPI:
         )
     register_handlers(app)
     problem_response = {"default": {"model": Problem, "description": "Problem Details (RFC 9457)"}}
-    for module in (health,):
+    for module in (health, answers, jobs, papers, kb, journals, literature):
         app.include_router(module.router, prefix="/v1", responses=problem_response)
     return app

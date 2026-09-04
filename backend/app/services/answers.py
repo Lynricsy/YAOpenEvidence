@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import os
 
 from sqlalchemy import select
@@ -15,6 +16,19 @@ from ..models import Answer
 from ..schemas.answers import AnswerCreate
 
 LEGACY_TS_FORMAT = "%Y%m%d_%H%M%S"
+
+
+def read_json(path: str, default=None):  # noqa: ANN001, ANN201
+    """读 JSON 文件；缺文件或内容坏掉都退回 `default`。
+
+    每篇论文的附属文件（facts/citations/paragraphs）在不同选项下可能不存在，
+    调用方需要区分「没有」和「读坏了」时再自己判断 default。
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, NotADirectoryError, json.JSONDecodeError):
+        return default
 
 
 def to_ask_options(opts: AnswerCreate | dict) -> AskOptions:

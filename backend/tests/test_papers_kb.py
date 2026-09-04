@@ -1,0 +1,86 @@
+"""文献库、知识库与期刊分区端点的消费者行为。"""
+from __future__ import annotations
+
+from .conftest import ADMIN_KEY, READ_KEY, auth
+
+
+def test_papers_list_and_paragraph(client):
+    response = client.get("/v1/papers", headers=auth(READ_KEY))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
+    assert body["items"][0]["key"] == "39133485"
+    assert body["items"][0]["n_paragraphs"] == 49
+
+    response = client.get("/v1/papers/39133485/paragraphs/2", headers=auth(READ_KEY))
+    assert response.status_code == 200
+    assert response.json()["text"].startswith("In this cohort study")
+
+
+def test_missing_paragraph_is_problem(client):
+    response = client.get("/v1/papers/39133485/paragraphs/9999", headers=auth(READ_KEY))
+    assert response.status_code == 404
+    assert response.headers["content-type"] == "application/problem+json"
+    assert response.json()["code"] == "not_found"
+
+
+def test_paper_key_cannot_escape_library(client):
+    response = client.get("/v1/papers/..%2Fx", headers=auth(READ_KEY))
+    assert response.status_code == 404
+    assert response.json()["code"] == "not_found"
+
+
+def test_paper_fulltext(client):
+    response = client.get("/v1/papers/39133485/fulltext", headers=auth(READ_KEY))
+    assert response.status_code == 200
+    assert "text/markdown" in response.headers["content-type"]
+    assert '<a id="p2">' in response.text
+
+
+def test_kb_search_and_stats(client):
+    response = client.get("/v1/kb/search", params={"q": "tirzepatide mortality"},
+                          headers=auth(READ_KEY))
+    assert response.status_code == 200
+    assert response.json()["items"]
+    assert response.json()["items"][0]["pmid"] == "39133485"
+
+    response = client.get("/v1/kb/search", params={"q": "x", "kind": "fact"},
+                          headers=auth(READ_KEY))
+    assert response.status_code == 200
+    assert all(item["kind"] == "fact" for item in response.json()["items"])
+
+    response = client.get("/v1/kb/stats", headers=auth(READ_KEY))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["items"] > 0
+    assert body["papers"] == 1
+    assert body["embedder"] == "hash-bow-v1"
+
+
+def test_kb_reindex_requires_admin_and_enqueues(client, arq):
+    response = client.post("/v1/kb/reindex", headers=auth(READ_KEY))
+    assert response.status_code == 403
+
+    response = client.post("/v1/kb/reindex", headers=auth(ADMIN_KEY))
+    assert response.status_code == 202
+    body = response.json()
+    assert body["kind"] == "kb_reindex"
+    assert body["status"] == "queued"
+    job_id = body["id"]
+    assert arq.calls == [("run_kb_reindex_job", (job_id,), {"_job_id": job_id})]
+
+
+def test_journal_rank(client):
+    response = client.get("/v1/journals/rank", params={"title": "Lancet"},
+                          headers=auth(READ_KEY))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["found"] is True
+    assert body["rank"]["quartile"] == "Q1"
+    assert body["rank"]["zone"] == 1
+
+
+def test_journal_rank_requires_query(client):
+    response = client.get("/v1/journals/rank", headers=auth(READ_KEY))
+    assert response.status_code == 422
+    assert response.json()["code"] == "validation_error"
