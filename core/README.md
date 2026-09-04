@@ -158,30 +158,33 @@ scp sd_state.json* tx@10.107.231.69:/data1/qyy/smk/
   - `model = "qwen3-14b"`, `model_provider = "local-qwen"`, `base_url = http://127.0.0.1:4000/v1`, `wire_api = "responses"`
   - `[mcp_servers.semantic_scholar] default_tools_approval_mode = "approve"` —— 否则 `codex exec` 下 MCP 调用会被拒，模型会凭记忆编参考文献
 
-### 6.1 embedding 环境（`kb` 子命令，纯 CPU 可用）
+### 6.1 embedding 环境（`kb` 子命令，无 GPU 亦可）
 
-`models/` 与 `.venv/` 都不入库（2.2G 权重 + 虚拟环境），换机器后按下面重建：
+`models/`（约 2.2G 权重）与虚拟环境均不入库，需按下面安装。任选 conda/venv/uv，只要满足 **Python 3.12**（torch 尚无 3.13+ 轮子）：
 
 ```bash
-uv venv .venv --python 3.12          # torch 目前没有 3.14 轮子，必须 3.12
-uv pip install --python .venv/bin/python torch --index-url https://download.pytorch.org/whl/cpu
-uv pip install --python .venv/bin/python sentence-transformers
-.venv/bin/python -c "from huggingface_hub import snapshot_download as d; \
+cd <项目根>                            # 即 knowledge_store.py 所在目录
+python -m pip install torch --index-url https://download.pytorch.org/whl/cpu   # 有 GPU 则装对应 CUDA 版
+python -m pip install sentence-transformers
+python -c "from huggingface_hub import snapshot_download as d; \
   d('BAAI/bge-m3', local_dir='models/BAAI/bge-m3', \
     ignore_patterns=['onnx/*','*.onnx','*.onnx_data'])"
 ```
 
+- 目标路径固定为 `<项目根>/models/BAAI/bge-m3`（`knowledge_store.py` 的 `EMBED_MODEL` 默认值，可用同名环境变量覆盖）。
+- 末级目录名必须正好是 `bge-m3`：`Embedder` 的后端名取自 `os.path.basename(model_path)`，要与 `kb/info.json` 的 `"embedder": "bge-m3"` 一致。
 - 排除 `onnx/`：`onnx/model.onnx_data` 单独 2.27G，与 `pytorch_model.bin` 是同一模型的另一份格式，`SentenceTransformer` 只读 `.bin`。排除后约 2.2G。
-- 目录名必须正好是 `models/BAAI/bge-m3`：`Embedder` 的后端名取自 `os.path.basename(model_path)`，要与 `kb/info.json` 的 `"embedder": "bge-m3"` 一致。
-- 无显卡无需改代码，`Embedder` 只在 `torch.cuda.is_available()` 为真时才切 GPU。
-- **装完必须验证**，缺模型/缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)，而现有 `kb/vectors.npy` 是 1024 维，`search` 会在矩阵乘处维度报错：
+- 无 GPU 无需改代码，`Embedder` 只在 `torch.cuda.is_available()` 为真时才切 GPU。
+- **装完必须验证**：缺模型或缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)，而现有 `kb/vectors.npy` 是 1024 维，`search` 会在矩阵乘处维度报错。
 
 ```bash
-.venv/bin/python -c "from knowledge_store import Embedder; e=Embedder(); print(e.name, e.dim)"
+python -c "from knowledge_store import Embedder; e=Embedder(); print(e.name, e.dim)"
 # 必须打印: bge-m3 1024   （打印 hash-bow-v1 4096 就是没加载上）
-.venv/bin/python knowledge_store.py stats
-.venv/bin/python knowledge_store.py search "SGLT2 HFpEF 心衰住院"
+python knowledge_store.py stats
+python knowledge_store.py search "SGLT2 HFpEF 心衰住院"
 ```
+
+> `./PICOSGpt kb` 走的是 `PICOSGpt` 里硬编码的 `ENV=/data/anaconda3/envs/clarify`，**不会**使用上面新建的环境。若装在别处，直接用该环境的解释器调 `knowledge_store.py`，或同步修改 `PICOSGpt` 的 `ENV`。
 
 ## 7. 排错
 
