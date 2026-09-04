@@ -1,0 +1,28 @@
+[project]
+name = "yaopenevidence"
+version = "0.1.0"
+description = "YAOpenEvidence — 医学文献证据问答（CLI 内核 + REST/SSE 后端）"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["core", "backend"]
+
+[tool.uv.sources]
+picosgpt-core = { workspace = true }
+yaoe-backend = { workspace = true }
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "httpx>=0.27"]
+
+[tool.pytest.ini_options]
+testpaths = ["core/tests", "backend/tests"]
+asyncio_mode = "auto"
+addopts = "--import-mode=importlib"
+pythonpath = ["backend"]

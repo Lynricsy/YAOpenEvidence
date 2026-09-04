@@ -1,0 +1,68 @@
+x-app: &app
+  build: { context: ., target: runtime }
+  image: yaoe:local
+  env_file: [{ path: .env, required: false }]
+  environment:
+    PICOSGPT_DATA: /data
+    YAOE_REDIS_URL: redis://redis:6379/0
+    YAOE_DATABASE_URL: sqlite:////data/var/api.sqlite3
+    YAOE_API_KEYS_FILE: /config/api_keys.toml
+    LLM_BASE: ${LLM_BASE:-http://host.docker.internal:4000/v1}
+    LLM_MODEL: ${LLM_MODEL:-qwen3-14b}
+    LOCAL_QWEN_KEY: ${LOCAL_QWEN_KEY:-sk-123456}
+    NCBI_API_KEY: ${NCBI_API_KEY:-}
+    S2_API_KEY: ${S2_API_KEY:-}
+  volumes:
+    - ./core/answers:/data/answers
+    - ./core/library:/data/library
+    - ./core/kb:/data/kb
+    - ./core/data:/data/data
+    - ./core/models:/data/models:ro
+    - ./core/pdfs:/data/pdfs
+    - ./var:/data/var
+    - ./backend/api_keys.toml:/config/api_keys.toml:ro
+  extra_hosts: ["host.docker.internal:host-gateway"]
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redis-data:/data]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 10 }
+
+  migrate:
+    <<: *app
+    command: ["yaoe", "migrate"]
+
+  api:
+    <<: *app
+    ports: ["${YAOE_PORT:-8765}:8765"]
+    depends_on:
+      redis: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8765/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  worker:
+    <<: *app
+    command: ["yaoe", "worker"]
+    depends_on:
+      redis: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+
+  test:
+    profiles: [test]
+    build: { context: ., target: test }
+    image: yaoe:test
+    environment:
+      PICOSGPT_DATA: /tmp/yaoe-data
+      YAOE_REDIS_URL: redis://redis:6379/15
+    depends_on:
+      redis: { condition: service_healthy }
+    command: ["pytest", "-q"]
+
+volumes:
+  redis-data:

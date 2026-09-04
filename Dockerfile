@@ -1,0 +1,22 @@
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PROJECT_ENVIRONMENT=/app/.venv PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+COPY core/pyproject.toml core/
+COPY backend/pyproject.toml backend/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --all-packages --no-dev --no-install-workspace
+COPY core/ core/
+COPY backend/ backend/
+
+FROM base AS runtime
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --all-packages --no-dev
+ENV PATH=/app/.venv/bin:$PATH PICOSGPT_DATA=/data
+WORKDIR /app/backend
+CMD ["yaoe", "serve", "--host", "0.0.0.0", "--port", "8765"]
+
+FROM base AS test
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --all-packages
+ENV PATH=/app/.venv/bin:$PATH PICOSGPT_DATA=/data
+WORKDIR /app
+CMD ["pytest", "-q"]

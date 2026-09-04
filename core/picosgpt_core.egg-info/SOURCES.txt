@@ -1,0 +1,14 @@
+README.md
+ask.py
+journal_rank.py
+knowledge_store.py
+paywall_fetch.py
+pyproject.toml
+semantic_scholar_mcp.py
+spider_auth.py
+verify_citations.py
+picosgpt_core.egg-info/PKG-INFO
+picosgpt_core.egg-info/SOURCES.txt
+picosgpt_core.egg-info/dependency_links.txt
+picosgpt_core.egg-info/requires.txt
+picosgpt_core.egg-info/top_level.txt
