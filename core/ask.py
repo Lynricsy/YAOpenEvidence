@@ -21,27 +21,26 @@ import datetime as dt
 import json
 import os
 import re
-import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import httpx  # noqa: E402
+import httpx
 
-import semantic_scholar_mcp as lit  # noqa: E402  (reuse the MCP tool implementations)
-import journal_rank as jr  # noqa: E402
-import knowledge_store as ks  # noqa: E402
+import journal_rank as jr
+import knowledge_store as ks
+import picos_paths
+import semantic_scholar_mcp as lit  # (reuse the MCP tool implementations)
+from picos_paths import ANSWERS_DIR
 
 try:
     import paywall_fetch  # noqa: E402  institutional-access downloader (SPIDER_PROJECT login state)
 except Exception:  # noqa: BLE001  (playwright missing etc.)
     paywall_fetch = None
-PAYWALL_STATE = os.environ.get("SD_STATE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "sd_state.json"))
+PAYWALL_STATE = os.environ.get("SD_STATE_PATH") or os.path.join(picos_paths.DATA_ROOT, "sd_state.json")
 PAYWALL_MAX = int(os.environ.get("PAYWALL_MAX_PER_RUN", "5"))
 
 LLM_BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:4000/v1")
 LLM_KEY = os.environ.get("LOCAL_QWEN_KEY", "sk-123456")
 LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3-14b")
-ROOT = os.path.dirname(os.path.abspath(__file__))
 UNPAYWALL_EMAIL = os.environ.get("UNPAYWALL_EMAIL", "picosgpt@example.com")
 
 
@@ -468,7 +467,7 @@ def main() -> None:
     if flt.zones and not tables:
         log("WARNING: --quartile given but no ranking table in data/journal_ranks/ (run: python journal_rank.py download)")
     ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    outdir = os.path.join(ROOT, "answers", f"{ts}_papers")
+    outdir = os.path.join(ANSWERS_DIR, f"{ts}_papers")
     papers_dir_rel = f"{ts}_papers"
     os.makedirs(outdir, exist_ok=True)
 
@@ -557,7 +556,7 @@ def main() -> None:
               f"**参考文献 / References**（{n_full}/{len(used)} 篇读了全文）\n{refs}\n\n"
               f"{location_appendix(used_marks, by_n, papers_dir_rel)}{kb_note}\n\n"
               f"*This is a literature summary for research/educational use, not medical advice.*\n")
-    out = os.path.join(ROOT, "answers", f"{ts}.md")
+    out = os.path.join(ANSWERS_DIR, f"{ts}.md")
     with open(out, "w", encoding="utf-8") as f:
         f.write(answer)
     print("\n" + "=" * 80 + "\n" + answer)

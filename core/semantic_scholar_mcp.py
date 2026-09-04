@@ -13,9 +13,6 @@ import time
 import xml.etree.ElementTree as ET
 from typing import Any, Optional
 
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "vendor"))
-
 import httpx
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations

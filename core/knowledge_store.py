@@ -33,10 +33,9 @@ from typing import Callable, Optional
 
 import numpy as np
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-LIB_DIR = os.path.join(ROOT, "library")
-KB_DIR = os.path.join(ROOT, "kb")
-EMBED_MODEL = os.environ.get("EMBED_MODEL", os.path.join(ROOT, "models", "BAAI", "bge-m3"))
+from picos_paths import KB_DIR, LIB_DIR, MODELS_DIR
+
+EMBED_MODEL = os.environ.get("EMBED_MODEL") or os.path.join(MODELS_DIR, "BAAI", "bge-m3")
 HASH_DIM = 4096
 
 
@@ -365,13 +364,25 @@ class KnowledgeStore:
         return len(items)
 
     def _save(self) -> None:
-        with open(self.meta_path, "w", encoding="utf-8") as f:
+        """原子写：先写 .tmp 再 os.replace。
+
+        顺序是 vectors → meta → info：worker 落库时 API 进程可能同时在读，
+        任何时刻读到的三个文件都必须是自洽的一代快照。
+        """
+        if self.vecs is not None:
+            tmp = self.vec_path + ".tmp"          # np.save 会补 .npy 后缀，故显式指定文件名
+            with open(tmp, "wb") as f:
+                np.save(f, self.vecs)
+            os.replace(tmp, self.vec_path)
+        tmp = self.meta_path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             for m in self.meta:
                 f.write(json.dumps(m, ensure_ascii=False) + "\n")
-        if self.vecs is not None:
-            np.save(self.vec_path, self.vecs)
-        with open(self.info_path, "w", encoding="utf-8") as f:
+        os.replace(tmp, self.meta_path)
+        tmp = self.info_path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(self.info, f)
+        os.replace(tmp, self.info_path)
 
     def search(self, query: str, top_k: int = 8, kind: str = "", pmids: Optional[set[str]] = None) -> list[dict]:
         if self.vecs is None or not len(self.meta):

@@ -29,8 +29,7 @@ import re
 import sys
 from typing import Optional
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(ROOT, "data", "journal_ranks")
+from picos_paths import RANK_DIR as DATA_DIR
 
 _BY_ISSN: dict[str, dict] = {}
 _BY_TITLE: dict[str, dict] = {}
@@ -211,7 +210,7 @@ def label(info: Optional[dict]) -> str:
 # ---------------------------------------------------------------- download (SCImago via Playwright)
 def download_scimago(year: int, dest_dir: str = DATA_DIR) -> str:
     """Fetch the SCImago journal-rank CSV for `year` through a headless browser (Cloudflare-protected site)."""
-    sys.path.insert(0, os.path.join(ROOT, "vendor"))
+    # playwright 由 core[paywall] extra 提供；CLI 场景 PICOSGpt 已 export PYTHONPATH=vendor
     from playwright.sync_api import sync_playwright  # type: ignore
 
     os.makedirs(dest_dir, exist_ok=True)
