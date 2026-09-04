@@ -1,0 +1,200 @@
+[
+ {
+  "fact": "Semaglutide significantly improved maximum walking distance (MWD) regardless of diabetes duration (ETR of 1.15 vs. 1.13 for <10 vs. ≥10 years, P = 0.80).",
+  "fact_zh": "司美格鲁肽显著改善最大步行距离（MWD），无论糖尿病病程如何（<10年与≥10年的ETR分别为1.15 vs. 1.13，P = 0.80）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Semaglutide significantly improved MWD regardless of diabetes duration (ETR of 1.15 vs. 1.13 for <10 vs. ≥10 years, P = 0.80)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide significantly improved MWD regardless of BMI (1.12 vs. 1.16 for <30 vs. ≥30 kg/m 2 , P = 0.58).",
+  "fact_zh": "司美格鲁肽显著改善MWD，无论BMI如何（<30 vs. ≥30 kg/m 2 的ETR分别为1.12 vs. 1.16，P = 0.58）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Semaglutide significantly improved MWD regardless of BMI (1.12 vs. 1.16 for <30 vs. ≥30 kg/m 2 , P = 0.58)",
+  "score": 0.74,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide significantly improved MWD regardless of HbA 1c (1.13 for <7% and ≥7%, P = 0.99).",
+  "fact_zh": "司美格鲁肽显著改善MWD，无论HbA 1c如何（<7%和≥7%的ETR均为1.13，P = 0.99）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Semaglutide significantly improved MWD regardless of HbA 1c (1.13 for <7% and ≥7%, P = 0.99)",
+  "score": 0.68,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide also improved pain-free walking distance (PFWD) across subgroups (P > 0.1 for all interactions).",
+  "fact_zh": "司美格鲁肽还改善了各亚组的无痛步行距离（PFWD）（所有交互作用的P > 0.1）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Semaglutide also improved PFWD across subgroups (P > 0.1 for all interactions)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide improved walking function in people with PAD and type 2 diabetes, including individuals without obesity and those with well-controlled HbA 1c .",
+  "fact_zh": "司美格鲁肽改善了患有外周动脉疾病（PAD）和2型糖尿病患者的步行功能，包括无肥胖者和HbA 1c控制良好的患者。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Semaglutide improved walking function in people with PAD and type 2 diabetes, including individuals without obesity and those with well-controlled HbA 1c.",
+  "score": 0.94,
+  "verified": true
+ },
+ {
+  "fact": "The median baseline characteristics were as follows: diabetes duration of 12.2 years, HbA 1c of 7.1%, and BMI of 28.7 kg/m 2 .",
+  "fact_zh": "基线中位数特征如下：糖尿病病程为12.2年，HbA 1c为7.1%，BMI为28.7 kg/m 2。",
+  "kind": "population",
+  "pid": 16,
+  "sec": "Results / Summary of Baseline Type 2 Diabetes Characteristics",
+  "page": null,
+  "quote": "The median baseline characteristics were as follows: diabetes duration of 12.2 years, HbA 1c of 7.1%, and BMI of 28.7 kg/m 2.",
+  "score": 0.92,
+  "verified": true
+ },
+ {
+  "fact": "35.1% of participants used sodium–glucose cotransporter 2 inhibitors and 31.7% used insulin.",
+  "fact_zh": "35.1%的参与者使用了钠-葡萄糖共转运蛋白2抑制剂，31.7%使用了胰岛素。",
+  "kind": "population",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "35.1% used sodium–glucose cotransporter 2 inhibitors and 31.7% used insulin.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide significantly increased MWD with an ETR of 1.14 (95% CI: 1.06–1.22; P = 0.0005) compared with placebo at week 52.",
+  "fact_zh": "与安慰剂相比，司美格鲁肽在第52周显著增加了MWD，ETR为1.14（95% CI：1.06–1.22；P = 0.0005）。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Results / Effect of Type 2 Diabetes Characteristics on MWD on CLT Among Participants in the STRIDE Trial",
+  "page": null,
+  "quote": "Semaglutide significantly increased MWD with an ETR of 1.14 (95% CI: 1.06–1.22; P = 0.0005) compared with placebo at week 52.",
+  "score": 0.92,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide improved MWD, with an ETR of 1.12 (95% CI: 1.02–1.26) for BMI <30 and 1.16 (95% CI: 1.04–1.23) in those with BMI ≥30 (P = 0.58 for interaction).",
+  "fact_zh": "司美格鲁肽改善了MWD，BMI <30的ETR为1.12（95% CI：1.02–1.26），BMI ≥30的ETR为1.16（95% CI：1.04–1.23）（交互作用P = 0.58）。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Results / Effect of Type 2 Diabetes Characteristics on MWD on CLT Among Participants in the STRIDE Trial",
+  "page": null,
+  "quote": "Semaglutide improved MWD, with an ETR of 1.12 (95% CI: 1.02–1.26) for BMI <30 and 1.16 (95% CI: 1.04–1.23) in those with BMI ≥30 (P = 0.58 for interaction).",
+  "score": 0.89,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide significantly increased PFWD, with an ETR of 1.15 (95% CI: 1.06–1.24; P = 0.0007) among participants who adhered to treatment without initiation of rescue.",
+  "fact_zh": "司美格鲁肽显著增加了PFWD，ETR为1.15（95% CI：1.06–1.24；P = 0.0007），在未启动补救治疗的依从治疗参与者中。",
+  "kind": "finding",
+  "pid": 23,
+  "sec": "Results / Effect of Type 2 Diabetes Characteristics on the Pain-Free Treadmill Walking Distance of Participants in the STRIDE Trial",
+  "page": null,
+  "quote": "Semaglutide significantly increased PFWD, with an ETR of 1.15 (95% CI: 1.06–1.24; P = 0.0007) among participants who adhered to treatment without initiation of rescue.",
+  "score": 0.85,
+  "verified": true
+ },
+ {
+  "fact": "The estimated treatment difference in body weight change from baseline between semaglutide and placebo was −4.09 kg (95% CI: −4.79 to −3.40; P < 0.0001) in the overall cohort.",
+  "fact_zh": "总体队列中，司美格鲁肽与安慰剂在基线体重变化上的估计治疗差异为−4.09 kg（95% CI：−4.79至−3.40；P < 0.0001）。",
+  "kind": "finding",
+  "pid": 25,
+  "sec": "Results / Effect of Semaglutide on Body Weight and HbA 1c in Relation to MWD",
+  "page": null,
+  "quote": "The estimated treatment difference in body weight change from baseline between semaglutide and placebo was −4.09 kg (95% CI: −4.79 to −3.40; P < 0.0001) in the overall cohort.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The estimated treatment difference in HbA 1c between semaglutide and placebo at week 52 was −0.99% (95% CI: −1.14 to −0.84; P < 0.0001) in the overall cohort.",
+  "fact_zh": "总体队列中，司美格鲁肽与安慰剂在第52周HbA 1c上的估计治疗差异为−0.99%（95% CI：−1.14至−0.84；P < 0.0001）。",
+  "kind": "finding",
+  "pid": 26,
+  "sec": "Results / Effect of Semaglutide on Body Weight and HbA 1c in Relation to MWD",
+  "page": null,
+  "quote": "The estimated treatment difference in HbA 1c between semaglutide and placebo at week 52 was −0.99% (95% CI: −1.14 to −0.84; P < 0.0001) in the overall cohort.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Changes in MWD and BMI were weakly correlated in both the semaglutide (r = −0.126; P = 0.031) and placebo (r = −0.141; P = 0.014) groups.",
+  "fact_zh": "在司美格鲁肽（r = −0.126；P = 0.031）和安慰剂（r = −0.141；P = 0.014）组中，MWD和BMI的变化呈弱相关。",
+  "kind": "finding",
+  "pid": 28,
+  "sec": "Results / Effect of Semaglutide on Body Weight and HbA 1c in Relation to MWD",
+  "page": null,
+  "quote": "Changes in MWD and BMI were weakly correlated in both the semaglutide (r = −0.126; P = 0.031) and placebo (r = −0.141; P = 0.014) groups.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "No significant correlation was observed between changes in MWD and HbA 1c in either the semaglutide (r = −0.041; P = 0.49) or placebo (r = 0.067; P = 0.25) groups.",
+  "fact_zh": "在司美格鲁肽（r = −0.041；P = 0.49）或安慰剂（r = 0.067；P = 0.25）组中，MWD和HbA 1c的变化之间未观察到显著相关性。",
+  "kind": "finding",
+  "pid": 28,
+  "sec": "Results / Effect of Semaglutide on Body Weight and HbA 1c in Relation to MWD",
+  "page": null,
+  "quote": "No significant correlation was observed between changes in MWD and HbA 1c in either the semaglutide (r = −0.041; P = 0.49) or placebo (r = 0.067; P = 0.25) groups.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The rates of adverse events, serious adverse events, gastrointestinal (GI) disorders, and hypoglycemic events during the on-treatment observation period were generally comparable across subgroups.",
+  "fact_zh": "在治疗期间，各亚组的不良事件、严重不良事件、胃肠道（GI）疾病和低血糖事件的发生率总体上是可比的。",
+  "kind": "safety",
+  "pid": 31,
+  "sec": "Results / Safety",
+  "page": null,
+  "quote": "The rates of adverse events, serious adverse events, gastrointestinal (GI) disorders, and hypoglycemic events during the on-treatment observation period were generally comparable across subgroups.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "A higher percentage of participants in the BMI <30 kg/m 2 subgroup experienced GI disorders (25.1% with semaglutide vs. 4.6% with placebo) compared with the BMI ≥30 kg/m 2 subgroup (12.7% with semaglutide vs. 8.2% with placebo).",
+  "fact_zh": "BMI <30 kg/m 2亚组中，接受司美格鲁肽的参与者胃肠道（GI）疾病发生率更高（25.1% vs. 安慰剂4.6%），与BMI ≥30 kg/m 2亚组（司美格鲁肽12.7% vs. 安慰剂8.2%）相比。",
+  "kind": "safety",
+  "pid": 31,
+  "sec": "Results / Safety",
+  "page": null,
+  "quote": "A higher percentage of participants in the BMI <30 kg/m 2 subgroup experienced GI disorders (25.1% with semaglutide vs. 4.6% with placebo) compared with the BMI ≥30 kg/m 2 subgroup (12.7% with semaglutide vs. 8.2% with placebo).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The STRIDE trial was not designed to assess semaglutide’s interaction with diabetes characteristics, making this a secondary, exploratory analysis.",
+  "fact_zh": "STRIDE试验并未设计用于评估司美格鲁肽与糖尿病特征的相互作用，因此这是一个次要的探索性分析。",
+  "kind": "limitation",
+  "pid": 39,
+  "sec": "Conclusions",
+  "page": null,
+  "quote": "The STRIDE trial was not designed to assess semaglutide’s interaction with diabetes characteristics, making this a secondary, exploratory analysis.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The analyses may be underpowered to detect interaction effects in smaller subgroups, such as insulin users; thus, nonsignificant interaction P values should not be interpreted as definitive evidence of uniform treatment effects.",
+  "fact_zh": "分析可能不足以检测较小亚组（如胰岛素使用者）中的交互作用效应；因此，非显著的交互作用P值不应被解释为统一治疗效应的明确证据。",
+  "kind": "limitation",
+  "pid": 39,
+  "sec": "Conclusions",
+  "page": null,
+  "quote": "The analyses may be underpowered to detect interaction effects in smaller subgroups, such as insulin users; thus, nonsignificant interaction P values should not be interpreted as definitive evidence of uniform treatment effects.",
+  "score": 1.0,
+  "verified": true
+ }
+]

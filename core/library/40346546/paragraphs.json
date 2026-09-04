@@ -1,0 +1,506 @@
+[
+ {
+  "id": 1,
+  "sec": "Abstract",
+  "page": null,
+  "text": "Clinical trials have established the prognostic benefits of sodium‒glucose cotransporter 2 (SGLT2) inhibitors in patients with type 2 diabetes mellitus (T2DM) and heart failure (HF) with preserved ejection fraction (HFpEF), although the underlying mechanisms are not clearly understood. The purpose of this study was to determine the effects of the SGLT2 inhibitor empagliflozin on functional capacity, left ventricular (LV) diastolic function/filling pressure, and cardiac reserves in patients with HFpEF and T2DM."
+ },
+ {
+  "id": 2,
+  "sec": "Abstract",
+  "page": null,
+  "text": "In the present prospective single-center trial, we enrolled 70 diabetic patients with stable HF according to the New York Heart Association functional class II–III criteria, an LV ejection fraction ≥ 50%, and increased LV filling pressure at rest and/or during exercise (determined by echocardiography). The patients were randomly assigned in an open-label fashion to the empagliflozin group (10 mg a day, n = 35) or the control group (n = 35) for 6 months. Echocardiography (at rest and during exercise), the 6-min walk test distance (6MWD), blood levels of N-terminal pro-brain natriuretic peptide (NT-proBNP), and the profibrotic biomarker sST2 were analysed at baseline and 6 months after randomization. The primary endpoint was the change in the 6MWD, and the secondary endpoints included the change in the left atrial (LA) volume index, early mitral inflow to mitral annulus relaxation velocity (E/e′) ratio both at rest and during exercise, key cardiac reserves and biomarkers in the blood from baseline to 6 months."
+ },
+ {
+  "id": 3,
+  "sec": "Abstract",
+  "page": null,
+  "text": "After 6 months of empagliflozin therapy, the 6MWTD significantly increased, whereas the LA volume index and the E/e′ ratio both at rest and during exercise decreased compared with those of the control group (P < 0.05 for all). LV diastolic, LA reservoir and contractile, and chronotropic reserves also improved in the empagliflozin group compared with those in the control group (P < 0.05 for all). Furthermore, treatment with empagliflozin led to improvements in NT-proBNP and ST2 blood levels compared with those in the control group (P < 0.05 for both)."
+ },
+ {
+  "id": 4,
+  "sec": "Abstract",
+  "page": null,
+  "text": "In diabetic patients with HFpEF, empagliflozin treatment improved exercise capacity, which appeared to be the result of favourable effects on LV diastolic dysfunction and key cardiac reserves: LV diastolic, LA reservoir and contractile, and chronotropic. These haemodynamic mechanisms may underline the benefits of SGLT2 inhibitors in large-scale HFpEF trials."
+ },
+ {
+  "id": 5,
+  "sec": "Abstract",
+  "page": null,
+  "text": "URL: https://www.clinicaltrials.gov . Unique Identifier NCT03753087 ."
+ },
+ {
+  "id": 6,
+  "sec": "Abstract",
+  "page": null,
+  "text": "The online version contains supplementary material available at 10.1186/s12933-025-02756-y."
+ },
+ {
+  "id": 7,
+  "sec": "Research insights",
+  "page": null,
+  "text": "What is currently known about this topic? The coexistence of T2DM and HFpEF is associated with worse clinical outcomes Clinical trials established prognostic benefits of SGLT2 inhibitors in diabetic patients with HFpEF The underlying mechanisms are not clearly understood"
+ },
+ {
+  "id": 8,
+  "sec": "Research insights",
+  "page": null,
+  "text": "What is the key research question? What cardiac mechanisms of empagliflozin contribute to favourable clinical outcomes in T2DM and HFpEF?"
+ },
+ {
+  "id": 9,
+  "sec": "Research insights",
+  "page": null,
+  "text": "What is new? We explore cardiac and haemodynamic effects of empagliflozin in patients with diabetes and HFpEF We are the first to detect an improvement in cardiac reserves with empagliflozin in T2DM and HFpEF"
+ },
+ {
+  "id": 10,
+  "sec": "Research insights",
+  "page": null,
+  "text": "How might this study influence clinical practice? Findings provide evidence for multicomponent clinical and hemodynamic improvement with empagliflozin"
+ },
+ {
+  "id": 11,
+  "sec": "Introduction",
+  "page": null,
+  "text": "Heart failure with preserved ejection fraction (HFpEF) accounts for more than half of all heart failure (HF) cases and is associated with substantial morbidity and mortality, reduced functional capacity, and limited therapeutic options [ 1 ]. Accumulating evidence indicates that coronary microvascular inflammation induced by metabolic stress, primarily obesity and type 2 diabetes mellitus (T2DM), may play a key role in the pathogenesis of HFpEF. T2DM is an independent risk factor for the development of HFpEF [ 2 ], and the coexistence of these conditions is associated with worse clinical outcomes [ 3 ]. T2DM contributes to the development of HFpEF through comorbidities such as coronary artery disease and arterial hypertension, as well as directly through diabetic cardiomyopathy and its metabolic mechanisms, resulting in endothelial dysfunction, oxidative stress, reduced nitric oxide bioavailability, left ventricular (LV) concentric remodelling, interstitial fibrosis , and diastolic dysfunction (DD) [ 4 ]."
+ },
+ {
+  "id": 12,
+  "sec": "Introduction",
+  "page": null,
+  "text": "The cardinal clinical manifestation of HFpEF is exercise intolerance that leads to impairment in physical functioning and poor quality of life. This problem is particularly important in HFpEF patients with T2DM due to the presence of concomitant obesity, neurological and musculoskeletal comorbidities, such as peripheral neuropathy, and poor glucose metabolism with increased stiffness of vessels in the heart and lungs [ 5 ]. Patients with T2DM and concomitant cardiac diseases have a significant reduction in the 6MWTD [ 6 , 7 ], and diabetic patients with HFpEF have a lower peak oxygen uptake (VO 2peak ) and submaximal exercise capacity [ 8 ] compared with those without T2DM. Thus, the elimination of HF symptoms and improvement of daily activities such as exercise capacity remains an unmet medical need in diabetic patients with HFpEF."
+ },
+ {
+  "id": 13,
+  "sec": "Introduction",
+  "page": null,
+  "text": "The pivotal role of T2DM in the development and progression of HFpEF requires therapeutic approaches that can target both metabolic and cardiovascular aspects of the disease. While many hypoglycemic medications have neutral or even negative effects on HF, sodium‒glucose cotransporter-2 (SGLT2) inhibitors have been demonstrated to reduce the risk of HF exacerbation or cardiovascular death and improve quality of life in diabetic patients with HFpEF [ 9 ]. There is increasing recognition of various pleiotropic effects of SGLT2 inhibitors beyond their simple hypoglycemic effects, including direct cardiac effects, despite the apparent absence of SGLT2 expression in the heart [ 10 ]. In experimental studies, SGLT2 empagliflozin improved LV relaxation and reduced myocardial inflammation, oxidative stress, hypertrophy and fibrosis [ 11 – 14 ]. However, potential cardiac and haemodynamic mechanisms of empagliflozin that may explain or contribute to beneficial clinical observations are not fully understood."
+ },
+ {
+  "id": 14,
+  "sec": "Introduction",
+  "page": null,
+  "text": "In patients with HFpEF, the main cause of poor exercise tolerance is increased LV filling pressure secondary to LVDD. Depressed reserve capacity in multiple organism domains involving cardiac reserves also makes a significant contribution, which can be caused by cardiometabolic stress, including T2DM [ 15 ]. To date, no studies have evaluated the effects of SGLT2 inhibition on cardiac reserves in patients with HFpEF. We therefore hypothesized that empagliflozin would improve exercise tolerance via improvements in LVDD/filling pressure and cardiac reserves in diabetic patients with HFpEF."
+ },
+ {
+  "id": 15,
+  "sec": "Methods / Study population",
+  "page": null,
+  "text": "This was a single-centre, randomized, parallel-group, open study. We recruited ambulatory subjects aged ≥ 40 years with type 2 diabetes mellitus (T2DM), stable heart failure of New York Heart Association (NYHA) functional class II–III, preserved LV ejection fraction (≥ 50%), and elevated LV filling pressure that was verified at rest or during exercise via echocardiography [ 16 ]. All the participants had received stable glucose-lowering therapy for at least 3 months prior to enrolment and had a glycated hemoglobin level of at least 6.5% and no more than 10.0%."
+ },
+ {
+  "id": 16,
+  "sec": "Methods / Study population",
+  "page": null,
+  "text": "The exclusion criteria included previous SGLT2 inhibitor therapy, type 1 diabetes, uncontrolled hyperglycemia with glucose > 11 mmol/L after an overnight fast, a history of severe hypoglycemia, an estimated glomerular filtration rate (eGFR) CKD-EPI (Chronic Kidney Disease Epidemiology Collaboration) < 30 mL/min/1.73 m 2 , liver disease (serum levels of alanine amininotransferase, aspartate aminotransferase, or alkaline phosphatase above 3 × upper limit of normal), significant untreated stenoses of epicardial coronary arteries or evidence of myocardial ischemia during stress echocardiography, inability to complete exercise, inadequate acoustic windows, chronic atrial flutter/fibrillation, left bundle branch block, significant left-sided structural valve disease, hypertrophic cardiomyopathy, infiltrative or inflammatory myocardial diseases, pericardial disease, or noncardiac conditions precluding participation. This study was approved by the Ethics Committee of the Institute of Clinical Cardiology and complied with the Declaration of Helsinki. All patients provided written informed consent before study enrollment. The trial is registered at ClinicalTrials.gov Identifier: NCT03753087 ."
+ },
+ {
+  "id": 17,
+  "sec": "Methods / Study design",
+  "page": null,
+  "text": "A total of 126 subjects with HFpEF and T2DM were screened between March 2019 and September 2021. Thirty-six subjects did not meet the inclusion/exclusion criteria, and 20 subjects refused to participate in the active phase of the study. Thus, 70 participants meeting the inclusion/exclusion criteria were included in the final cohort (Fig. 1 ). Fig. 1 Flow chart of patient enrolment. T2DM, type 2 diabetes mellitus; HFpEF, heart failure with preserved ejection fraction"
+ },
+ {
+  "id": 18,
+  "sec": "Methods / Study design",
+  "page": null,
+  "text": "The participants were randomly assigned in an open-label fashion to receive the SGLT2 inhibitor empagliflozin (10 mg a day; n = 35) or to a control group (conventional antidiabetic therapy other than SGLT2 inhibitors, n = 35) at a 1:1 ratio for 6 months. Enrollment in the study (2019–first half of 2020) preceded the routine use of SGLT2 inhibitors for HFpEF. Both the participants and the investigators were informed of the treatment allocation. Patients had to be on stable glucose-lowering medical therapy with no changes in therapy within 30 days prior to enrollment. Basic cardiovascular medical therapy had been stable for at least 3 months before randomization and during the follow-up period, except for increasing the dose of diuretics if dyspnoea worsened (see below for more details). In addition to pharmacological recommendations, all participants were advised on lifestyle modifications and dietary changes such as avoiding large volumes of fluid intake, exercise and healthy diet with weight loss [ 17 ]. In addition, counselling and educational interventions were provided through scheduled visits and by telephone."
+ },
+ {
+  "id": 19,
+  "sec": "Methods / Study design",
+  "page": null,
+  "text": "Such measures enabled most study participants to be maintained on these non-medication measures as well as to be highly adherent to empagliflozin and other medications."
+ },
+ {
+  "id": 20,
+  "sec": "Methods / Study design",
+  "page": null,
+  "text": "The assessment of quality of life using the Minnesota Living with Heart Failure Questionnaire (MLHFQ; range is 0 to 105; higher scores indicate worse HF–related quality of life), six-minute walk test distance (6MWTD), echocardiography (at rest and during bicycle supine exercise), and blood analyses for biomarkers were performed at baseline and 6 months after randomization. In order to minimize potential measurement bias, we restricted access to patient allocation to investigators who performed key methods such as 6MWTD, echocardiography/diastolic stress test and blood tests."
+ },
+ {
+  "id": 21,
+  "sec": "Methods / Echocardiography",
+  "page": null,
+  "text": "Echocardiography was performed on a Vivid E95 ultrasound system (GE Healthcare, Horton, Norway). Ventricular dimensions, wall thickness, chamber volumes, and the LV ejection fraction were determined in accordance with the current guidelines [ 18 ]. LV diastolic function was assessed by measuring pulsed Doppler mitral peak E-wave and A-wave velocities (in early and late diastole, respectively), E velocity deceleration time (DT), average tissue Doppler–derived mitral annular relaxation and late diastolic velocities (e′ and a′, respectively), the mitral E/e′ ratio, the left atrial maximum volume index (LAVI), and the tricuspid regurgitation (TR) velocity via continuous-wave Doppler [ 16 ]. The severity of LV diastolic dysfunction (DD) was determined according to the 2016 ASE criteria for the grading of LVDD [ 16 ]. Elevated LV filling pressure at rest was verified if grade II–III LV DD was revealed [ 16 ]."
+ },
+ {
+  "id": 22,
+  "sec": "Methods / Echocardiography",
+  "page": null,
+  "text": "Pulmonary haemodynamic/right ventricular (RV) assessment included RV systolic function (M-mode tricuspid annular plane systolic excursion [TAPSE]), pulmonary artery systolic pressure (PASP) with the estimation of peak TR velocity and right atrial (RA) pressure on the basis of inferior vena cava size and its collapse, and the time to peak velocity of the RV outflow velocity curve (acceleration time, AcT RVOT ) as a measure of pulmonary vascular resistance [ 18 ]."
+ },
+ {
+  "id": 23,
+  "sec": "Methods / Echocardiography",
+  "page": null,
+  "text": "The analyses of left heart strain variables via 2-dimensional speckle-tracking echocardiography (LV global longitudinal strain [GLS] and LA global longitudinal strain) were performed offline via the dedicated ultrasound software package (Echo-Pac version 203, GE Healthcare) at frame rates ranging from 50 to 80 frames/s. Ventricular end-diastole was determined as the time reference to define the zero baseline for LA strain curves; LA strain was calculated as the average strain in 6 segments of the LA in a nonforeshortened apical four-chamber view to calculate reservoir (LASr) strain. GLS was measured as the average of the systolic strain obtained from all the LV segments in the apical 4- and 2-chamber and long-axis views. An abnormal LASr was defined as < 23% [ 19 ]."
+ },
+ {
+  "id": 24,
+  "sec": "Methods / Echocardiography",
+  "page": null,
+  "text": "All echocardiographic measures represent the mean of ≥ 3 beats."
+ },
+ {
+  "id": 25,
+  "sec": "Methods / Diastolic stress test (DST)",
+  "page": null,
+  "text": "Patients exercised supine cycle ergometry at 60 rpm starting with a 3-min period of low-level 25 Watts (W) workload followed by 25-W increments in 3-min stages to the maximal tolerated levels or until the patient developed limiting symptoms. During the test, the changes in LV filling pressures (the mitral E/e′ ratio and TR velocity), as well as some cardiac reserves, such as LV systolic (changes in GLS and mitral s′ velocity from rest to maximal exercise), RV systolic (changes in TAPSE from rest to maximal exercise), diastolic (changes in mitral e′ velocity from rest to maximal exercise), LA (changes in LASr and mitral a′ velocity from rest to maximal exercise), and preload (changes in mitral E velocity from rest to maximal exercise) reserves, were analysed."
+ },
+ {
+  "id": 26,
+  "sec": "Methods / Diastolic stress test (DST)",
+  "page": null,
+  "text": "We used the average value between multiple beats (≥ 5 consecutive heart cycles) to minimize measurement error due to respiration variation during exercise. Elevated LV filling pressure at exercise was verified if exercise-induced elevations in average E/e′ > 14 and TR velocity > 2.8 m/s during DST were observed [ 16 ]."
+ },
+ {
+  "id": 27,
+  "sec": "Methods / Biomarkers",
+  "page": null,
+  "text": "Blood levels of biomarkers of myocardial stress (N-terminal pro-brain natriuretic peptide [NT-proBNP]), inflammation (high-sensitivity C-reactive protein [hsCRP]), and extracellular matrix homeostasis (soluble interleukin-1 receptor-like 1 [sST2]) were analysed at baseline and 6 months after randomization."
+ },
+ {
+  "id": 28,
+  "sec": "Methods / Biomarkers",
+  "page": null,
+  "text": "Blood samples were taken into tubes without anticoagulant (to obtain serum) or with citrate anticoagulant (to obtain plasma) by venous puncture after a 20-min supine resting period. The samples were immediately centrifuged and stored below 80 °C. Soluble ST2 and hsCRP were assayed in the serum, whereas NT-proBNP was assayed in the plasma. NT-proBNP levels were measured via an automated electrochemiluminescence immunoassay (Roche Diagnostics, Germany). The hsCRP concentration was detected via laser microscale nephelometry via a BN ProSpec laser light scattering system (Behring, Germany); an ELISA kit for sST2 (Critical Diagnostics, USA) was used."
+ },
+ {
+  "id": 29,
+  "sec": "Methods / Study endpoints",
+  "page": null,
+  "text": "The primary endpoint was the change in the 6MWTD after 6 months of treatment. The secondary objectives included changes in exercise duration during cycle ergometry; the LA volume index; the mitral E/e′ ratio both at rest and during exercise; cardiac reserves (LV diastolic, LA reservoir and contractile, LV contractile, RV contractile, and chronotropic); and biomarkers in the blood from baseline to 6 months."
+ },
+ {
+  "id": 30,
+  "sec": "Methods / Statistical analysis",
+  "page": null,
+  "text": "The change in the 6MWTD, the primary endpoint, was used to estimate the sample size needed to achieve adequate statistical power for the current study. In accordance with our preliminary findings, we considered the average difference between the empagliflozin and control groups before and after the study, which was at least 25 m, to be meaningful. From our previous study, we expected the standard deviation of the differences to be 36 m [ 20 ], and for an α of 0.05 (two sided), a sample size of 34 patients for each group was required to achieve a power of 80%."
+ },
+ {
+  "id": 31,
+  "sec": "Methods / Statistical analysis",
+  "page": null,
+  "text": "Statistical analysis was performed via standard software (MedCalc, version 19.5.3). Normally distributed data are presented as the means ± standard deviations; nonnormally distributed data are presented as medians and interquartile ranges (IQRs). Categorical variables are reported as numbers and percentages of observations. For normally distributed variables, one-way analysis of variance was applied to the change from baseline, and for nonnormally distributed variables, the Wilcoxon test was applied. The differences in parameters at baseline and after treatment between the empagliflozin and control groups were tested via Student’s t test for normally distributed variables, the Mann–Whitney U test for nonnormally distributed variables and the chi-square test for categorical variables. The treatment effects are presented via point estimates and 95% confidence intervals (CIs). Partial correlation coefficients, adjusted for age and sex, were calculated to assess the relationships between continuously distributed variables. A value of P < 0.05 was considered statistically significant."
+ },
+ {
+  "id": 32,
+  "sec": "Results / Patient baseline characteristics (Table 1 ) and compliance",
+  "page": null,
+  "text": "Table 1 Baseline characteristics of patients with HFpEF"
+ },
+ {
+  "id": 33,
+  "sec": "Results / Patient baseline characteristics (Table 1 ) and compliance",
+  "page": null,
+  "text": "The mean age of the patients was 67.1 years, and 63% were women. Two-thirds of the participants had class II NYHA, and one-third had class III NYHA. The study subjects were mainly obese (median body mass index [BMI] was 34.4, calculated as weight in kilograms divided by height in meters squared), with multiple comorbidities, including apart from T2DM, long-standing hypertension (more than half with concentric LV hypertrophy), paroxysmal atrial fibrillation, and chronic kidney disease. Forty-six percent of patients had elevated LV filling pressure at rest (grade II-III DD); the remaining patients had normal LV filling pressure at rest (grade I DD) but LV filling pressure elevation during DST [ 16 ]. Left atrial dilation (71%) and pulmonary hypertension (50%) were quite common among the study participants."
+ },
+ {
+  "id": 34,
+  "sec": "Results / Patient baseline characteristics (Table 1 ) and compliance",
+  "page": null,
+  "text": "The groups were comparable in demographic and haemodynamic characteristics and current medical treatment. Most patients were taking renin‒angiotensin system blockers, beta-blockers, loop diuretics, statins and metformin; 40% of patients were taking dipeptidyl peptidase-4 inhibitors, and a quarter of patients were taking insulins."
+ },
+ {
+  "id": 35,
+  "sec": "Results / Patient baseline characteristics (Table 1 ) and compliance",
+  "page": null,
+  "text": "No patient from either group was lost to follow-up. Two patients in the Empagliflozin group had mild urinary tract infections, which did not require discontinuation of the study drug. One patient in the Empagliflozin group and another two in the control group required diuretic potentiation because of worsening dyspnoea."
+ },
+ {
+  "id": 36,
+  "sec": "Results / Patient baseline characteristics (Table 1 ) and compliance",
+  "page": null,
+  "text": "There were no differences in creatinine blood level changes between the empagliflozin and control groups (Table 2 )."
+ },
+ {
+  "id": 37,
+  "sec": "Results / Patient baseline characteristics (Table 1 ) and compliance",
+  "page": null,
+  "text": "Table 2 Dynamics of clinical and resting echocardiographic measures in the study groups during the follow-up period Variable Empagliflozin (n = 35) Control (n = 35) Difference between groups (95% CI) P Value Baseline Δ from baseline (95% CI) Baseline Δ from baseline (95% CI) Clinical variables 6MWTD, m 380 ± 74 16 (8, 24) 360 ± 74 3 (− 6, 12) − 13 (− 25, − 1) 0.033 Bicycle exercise duration, s 461 (351–542) 66 (33, 99) 386 (295–577) 9 (− 5, 29) − 54 (− 84, − 17) 0.003 MLHFQ score, units 45 (23–56) − 4 (− 6, − 2) 38 (22–43) 1 (− 2, 3) 4 (1, 8) 0.010 Weight, kg 95.3 (81.3–108.8) − 1.0 (− 1.5, 0.0) 92.0 (79.3–102.0) 0.0 (− 0.5, 0.5) 1.0 (0.0, 2.0) 0.031 Systolic BP, mm Hg 137 (125–140) − 3 (− 4, − 1) 138 (130–140) 0 (− 4, 2) 2 (− 2, 4) 0.27 Diastolic BP, mm Hg 80 (75–89) − 2 (− 3, 0) 80 (78–85) − 1 (− 3, 2) 0 (− 1, 3) 0.45 Creatinine, μmol/L 84 (75–98) 2 (− 0.4, 4) 81 (70–94) 0 (− 1, 1) − 1 (− 4, 1) 0.16 HbA1c, % 7.3 (6.7–8.1) − 0.2 (− 0.6, 0.1) 7.4 (6.9–8.3) 0.1 (− 0.4, 0.5) 0.1 (− 0.1, 0.5) 0.068 Echocardiographic variables LV mass index, g/m 2 100.6 ± 24.4 − 3.3 (− 7.6, 1.0) 105.7 ± 26.2 − 0.6 (− 3.5, 2.4) − 2.8 (− 7.9, 2.3) 0.28 LA volume index, mL/m 2 37.8 ± 7.7 − 2.9 (− 4.2, − 1.6) 39.8 ± 8.6 0.4 (− 0.9, 1.7) 3.4 (1.6, 5.1) < 0.001 LASr, % 22.0 ± 5.2 1.2 (0.2, 2.2) 21.4 ± 4.6 − 0.3 (− 1.2, 0.6) − 1.5 (− 2.9, − 0.2) 0.027 LV EDV, mL 87.9 ± 23.1 − 0.3 (− 4.7, 4.2) 91.3 ± 16.6 − 0.5 (− 2.5, 1.6) − 0.2 (− 5.0, 4.6) 0.93 LV ejection fraction, % 62.2 ± 5.1 0.4 (− 1.1, 1.9) 60.0 ± 5.5 − 0.2 (− 1.7, 1.3) − 0.1 (− 2.5, 1.4) 0.58 LV GLS, % 18.6 ± 2.9 0.1 (− 0.6, 0.8) 18.9 ± 3.4 − 0.5 (− 0.9, − 0.01) − 0.5 (− 1.4, 0.3) 0.22 e′, cm/s 6.6 ± 1.4 0.4 (0.1, 0.8) 6.4 ± 1.2 − 0.1 (− 0.4, 0.1) − 0.6 (− 1.1, − 0.1) 0.016 E/e′ ratio 12.8 ± 3.2 − 1.4 (− 2.0, − 1.0) 13.1 ± 2.8 0.3 (− 0.2, 0.9) 1.8 (1.1, 2.6) < 0.001 Estimated PASP, mm Hg 35.7 ± 7.9 − 4.2 (− 7.0, − 1.5) 37.6 ± 12.2 1.1 (− 1.1, 3.4) 5.4 (1.9, 9.0) 0.003 TAPSE, cm 2.1 ± 0.4 0.1 (0.03, 0.2) 2.2 ± 0.3 − 0.1 (− 0.2, 0.0) − 0.2 (− 0.3, − 0.1) < 0.001 TAPSE/PASP 0.60 ± 0.17 0.12 (0.05–0.19) 0.66 ± 0.22 − 0.05 (− 0.10, − 0.01) − 0.17 (− 0.25, − 0.09) < 0.001 AcT RVOT , ms 95 ± 16 6 (2, 9) 94 ± 19 1 (− 5, 7) − 5 (− 11, 1) 0.12 Baseline data are presented as the mean ± standard deviation for continuous normally distributed variables and the median (25–75th percentile) for nonnormally distributed continuous variables; the dynamics of variables are presented as the mean change from the baseline values (95% confidence interval) BP Blood pressure, E Early inflow velocity, e′ Averaged annulus relaxation velocity, EDV End-diastolic volume, EF Ejection fraction, GLS Global longitudinal strain, HbA1c Glycosylated haemoglobin, LASr Left atrial strain during the reservoir phase, LA Left atrial, LV Left ventricular, MLHFQ Minnesota Living with Heart Failure Questionnaire, PASP Pulmonary artery systolic pressure, TAPSE Tricuspid annular plane systolic excursion, 6-MWTD 6-min walk test distance"
+ },
+ {
+  "id": 38,
+  "sec": "Results / Clinical variables",
+  "page": null,
+  "text": "After 6 months of therapy, the 6MWTD, the primary endpoint, increased by 16 (95% CI 8–24) m in the Empagliflozin group but only by 3 (95% CI–6–12) m in the control group ( P = 0.033 for between-group differences; Fig. 2 a). In the Empagliflozin group, a slightly greater proportion of patients had a prominent increase in the 6MWTD (≥ 15 m) than did the control group (n = 19 [54%] vs. n = 14 [40%], respectively, P = 0.23), and a significantly smaller proportion of patients had a ≥ 15 m reduction in the 6MWTD (n = 2 [6%] vs. n = 13 [37%], respectively, P = 0.002). Fig. 2 Individual and mean changes from baseline (95% CI) in the 6-min walk distance a bicycle exercise duration b and the Minnesota Living with Heart Failure Questionnaire (MLHFQ) total score c in both study groups. Individual changes are represented by circles, the squares indicate the means, and the error bars indicate the 95% CIs"
+ },
+ {
+  "id": 39,
+  "sec": "Results / Clinical variables",
+  "page": null,
+  "text": "After 6 months of therapy, the exercise duration during the incremental bicycle test increased by 66 (95% CI 33–99) s in the Empagliflozin group and only by 7 (95% CI–10–26) s in the control group ( P = 0.002 for between-group differences; Fig. 2 b). An improvement in MLHFQ total score was revealed only in the empagliflozin group (a reduction by 4 [95% CI–6––2] units vs. an increase by 1 [95% CI–2–3] units in the control group; P = 0.007 for between-group differences; Fig. 2 c)."
+ },
+ {
+  "id": 40,
+  "sec": "Results / Clinical variables",
+  "page": null,
+  "text": "The study groups did not differ in terms of changes in systemic blood pressure (BP) or heart rate, but the intragroup influence of empagliflozin on BP was significant, with a reduction in systolic BP by 3 (95% CI–4 to–1) mm Hg and diastolic BP by 2 (95% CI–3 to 0) mm Hg (for both P < 0.05 compared with baseline, Table 2 )."
+ },
+ {
+  "id": 41,
+  "sec": "Results / Clinical variables",
+  "page": null,
+  "text": "After 6 months, a decrease in body weight was observed in the empagliflozin group but not in the control group ( P = 0.027 for intergroup differences; Fig. 2 d)."
+ },
+ {
+  "id": 42,
+  "sec": "Results / Resting echocardiographic parameters",
+  "page": null,
+  "text": "After 6 months, the empagliflozin group showed a significant decrease in key parameters associated with the LV filling pressure: the mean change in the mitral E/e′ ratio was − 1.4 (95% CI − 2.0 to − 1.0); in the LA volume index, it was − 2.9 (95% CI − 4.2 to − 1.6) mL/m 2 ; and in the PASP, it was − 4.2 (95% CI − 7.0 to − 1.5) mm Hg (for all P < 0.01, Fig. 3 ). These parameters did not change in the control group, which resulted in significant between-group differences (for all P < 0.01). A mild but significant correlation was found between the change in the E/e' ratio achieved during treatment and the change in the 6MWTD in the Empagliflozin group (r = − 0.38; P = 0.024), underscoring the importance of a reduction in the LV filling pressure for functional improvement in HFpEF patients. Fig. 3 Individual and mean changes from baseline (95% CI) in the left atrial volume index (LAVI, a ), pulmonary artery systolic pressure (PASP, b ), annulus relaxation velocity (e′, c ), and tricuspid annular plane systolic excursion (TAPSE, d ) in both study groups. Individual changes are represented by circles, the squares indicate the means, and the error bars indicate the 95% CIs"
+ },
+ {
+  "id": 43,
+  "sec": "Results / Resting echocardiographic parameters",
+  "page": null,
+  "text": "The reduction in LV filling pressure in the Empagliflozin group was accompanied by a significant improvement in left cardiac chamber functional variables, namely, an increase in e' velocity (reflecting active LV relaxation) and LA longitudinal strain in the reservoir phase (LASr) ( P < 0.05 for both). In contrast, these two variables remained unchanged in the control group, resulting in a significant between-group difference ( P < 0.05 for both variables, Table 2 )."
+ },
+ {
+  "id": 44,
+  "sec": "Results / Resting echocardiographic parameters",
+  "page": null,
+  "text": "During the study period, there were no differences in the impact on the LV ejection fraction, volume, mass, or GLS between the groups."
+ },
+ {
+  "id": 45,
+  "sec": "Results / Resting echocardiographic parameters",
+  "page": null,
+  "text": "At baseline, only 11 (16%) patients had RV dysfunction, defined as a TAPSE < 17 mm. Nevertheless, after 6 months, the empagliflozin group had an increase in TAPSE of 0.12 (95% CI 0.03–0.20) cm, whereas the control group had a decrease of 0.10 (95% CI − 0.17–0.03) cm, resulting in a significant between-group difference ( P < 0.001; Fig. 3 d). The significant between-group difference in PASP (see above) and TAPSE resulted in a significant ( P < 0.001) between-group difference in the TAPSE to PASP ratio as an indicator of RV‒pulmonary artery coupling [ 21 ]."
+ },
+ {
+  "id": 46,
+  "sec": "Results / Resting echocardiographic parameters",
+  "page": null,
+  "text": "While neither group differed significantly in the effect of AcT RVOT (a variable inversely related to pulmonary vascular resistance) [ 22 ], it was significantly greater in the empagliflozin group during the treatment period ( P = 0.006 vs. baseline)."
+ },
+ {
+  "id": 47,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "All study participants except two patients (one from the empaglifozin group and the other from the control group) underwent DST. The reason for not performing DST in these two patients was orthopedic problems in the lower limbs. Nevertheless, both patients had grade II or III LVDD, which allowed them to be diagnosed with HFpEF without the need for DST."
+ },
+ {
+  "id": 48,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "Patients with HFpEF tend to stop exercising before they reach 100 watts. At baseline, our participants performed a bycicle workload of 71 ± 23 watts. The main reason for cessation of exercise was the appearance of dyspnea and fatigue, which was associated with a prominent increase in the mitral E/e′ ratio (as a measure of LV filling pressure) from 12.9 ± 3.0 to 15.9 ± 3.6 and TR velocity (as a measure of pulmonary pressure) from 2.73 ± 0.40 to 3.65 ± 0.49 m/s ( P < 0.001 for both). Interestingly, the baseline exercise duration was correlated with the increase in mitral e′ velocity during exercise (i.e., diastolic reserve, r = 0.30, P = 0.017) but not with the increase in resting e′ velocity (r = 0.11, P = 0.36), which may indicate the greater importance of diastolic reserve in exercise intolerance in HFpEF patients than in LV relaxation at rest."
+ },
+ {
+  "id": 49,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "After 6 months, the mitral E/e′ ratio significantly decreased both at rest and at the peak of exercise in the empagliflozin group (for both P < 0.001 and baseline) but not in the control group (for both P < 0.05 for between-group differences). The study groups also differed in the dynamics of the increase in the E/e′ ratio during exercise. In the Empagliflozin group, the E/e′ ratio significantly decreased (from 3.5 at baseline to 2.6 at the end of the study, P < 0.001), whereas in the control group, it slightly decreased from 2.5 at baseline to 2.3 at the end of the study ( P = 0.84), resulting in significant between-group differences ( P = 0.008, Table 3 , Fig. 4 a–c). The E/e′ ratio at peak exercise with empagliflozin inversely correlated with the change in the 6MWTD ( r = − 0.38, P < 0.05; Fig. 5 a)."
+ },
+ {
+  "id": 50,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "Table 3 Dynamics of exercise echocardiographic measures in the study groups Variables Empagliflozin (n = 35) Control (n = 35) P value for intergroup differences Baseline of study 6 months of study Baseline of study 6 months of study HR, bpm Rest 68 ± 11 69 ± 9 67 ± 10 65 ± 10 – Peak 103 ± 14 110 ± 179 106 ± 14 103 ± 13 – ∆ Rest-to-Peak 35 (31 to 40) 39 (34 to 44) 40 (34, 45) 37 (33, 42) – Changes in ∆ Rest-to-Peak + 6 (2 to 10) − 2 (− 25, 1) 0.002 E , cm/s Rest 81 ± 13 75 ± 14 83 ± 19 82 ± 20 – Peak 145 ± 23 143 ± 22 136 ± 21 131 ± 23 – ∆ Rest-to-Peak 64 (58 to 71) 68 (61 to 74) 55 (45 to 62) 50 (42 to 58) – Changes in ∆ Rest-to-Peak 4 (− 3 to 10) − 4 (− 10 to 2) 0.076 e′, cm/s Rest 6.6 ± 1.4 7.1 ± 1.7 6.4 ± 1.3 6.2 ± 1.3 – Peak 9.2 ± 1.6 10.8 ± 2.1 8.9 ± 1.5 8.6 ± 1.9 – ∆ Rest-to-Peak 2.5 (2.1 to 3.0) 3.7 (3.3 to 4.3) 2.5 (2.1 to 3.1) 2.4 (1.8 to 2.9) – Changes in ∆ Rest-to-Peak + 1.2 (0.8 to 1.7) − 0.2 (− 0.5 to 0.1) < 0.001 E/e′ ratio Rest 12.7 ± 3.7 11.1 ± 2.8 13.1 ± 2.8 13.4 ± 3.6 – Peak 16.3 ± 4.0 13.7 ± 3.1 15."
+ },
+ {
+  "id": 51,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "± 3.3 15.8 ± 3.8 – ∆ Rest-to-Peak a 3.5 (2.9 to 4.4) 2.6 (1.9 to 3.2) 2.4 (1.6 to 3.2) 2.3 (1.5 to 3.2) – Changes in ∆ Rest-to-Peak − 0.9 (− 1.6 to − 0.5) − 0.1 (− 0.6 to 0.5) 0.008 TR velocity , m/s Rest 2.7 ± 0.3 2.5 ± 0.3 2.8 ± 0.5 2.8 ± 0.4 – Peak 3.7 ± 0.4 3.6 ± 0.6 3.6 ± 0.6 3.6 ± 0.6 – ∆ Rest-to-Peak 1.0 (0.9 to 1.1) 1.0 (0.9 to 1.2) 0.8 (0.7 to 1.0) 0.8 (0.7 to 0.9) – Changes in ∆ Rest-to-Peak + 0.0 (− 0.2 to 0.2) − 0.1 (− 0.2 to 0.04) 0.47 LASr , % Rest 22.2 ± 5.2 23.4 ± 5.7 21.4 ± 4.7 21.1 ± 4.9 – Peak 28.1 ± 7.9 30.2 ± 8.8 29.2 ± 8.9 28.2 ± 9.3 – ∆ Rest-to-Peak 5.9 (4.3 to 7.6) 6.7 (5.1 to 8.3) 7.8 (5.0 to 10.5) 7.0 (4.5 to 9.4) – Changes in ∆ Rest-to-Peak + 0.8 (0.2 to 1.5) − 0.8 (− 2.2 to 0.7) 0.029 LV GLS , % Rest 18.6 ± 2.9 18.7 ± 2.3 18.7 ± 3.6 18.3 ± 3.7 – Peak 22.4 ± 4.2 23.2 ± 4.3 23.8 ± 6.3 22.6 ± 4.3 – ∆ Rest-to-Peak 3.7 (2.7 to 4.7) 4.5 (3.2 to 5.8) 4.9 (3.1 to 7.0) 4.3 (2.7 to 6.0) – Changes in ∆ Rest-to-Peak + 0.8 (0.01 to 1.6) − 0.7 (− 2.6 to 1.2) 0.074 a′, cm/s Rest 8.7 ± 1.6 8.9 ± 1.5 9.0 ± 2.2 8.8 ± 2.1 – Rest 12.2 ± 2.4 13.0 ± 2.5 12.1 ± 2.7 11.7 ± 2.7 – ∆ Rest-to-Peak 3.5 (2.9 to 4.0) 4.1 (3.3 to 4.9) 3.1 (2.4 to 3.8) 2.9 (2.3 to 3.5) – Changes in ∆ Rest-to-Peak + 0.6 (0.01 to 1.2) -0.2 (-0.6 to 0.1) 0.020 TAPSE , cm Rest 2.1 ± 0.4 2.2 ± 0.3 2.2 ± 0.3 2.1 ± 0.3 – Peak 2.6 ± 0.5 2.8 ± 0.5 2.5 ± 0.4 2.5 ± 0.4 – ∆ Rest-to-Peak 0.5 (0.4 to 0.7) 0.6 (0.5 to 0.7) 0.3 (0.2 to 0.4) 0.4 (0.2 to 0.5) – Changes in ∆ Rest-to-Peak + 0.1 (− 0.01 to 0.2) 0.0 (− 0.05 to 0.1) 0.52 Baseline data at rest are presented as the mean ± standard deviation; the dynamics of variables and cardiac reserves are presented as the mean change from the baseline values (95% confidence interval) a′ Averaged annulus late diastolic velocity, E Early inflow velocity, e′ Averaged annulus relaxation velocity, GLS Global longitudinal strain, LASr Left atrial strain during the reservoir phase, LV Left ventricular, TR Tricuspid regurgitation Fig."
+ },
+ {
+  "id": 52,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "4 The mean and individual changes in the mitral E/e′ ratio ( a–c ), left atrial reservoir strain (LASr, d–f ), and heart rate ( g–i ) at rest and during cycle exercise at baseline and after 6 months in both study groups. The bars and squares indicate the means, and the markers (error bars) indicate the standard deviations or 95% confidence intervals Fig. 5 Correlations between changes in the 6-min walk test distance (6MWTD, from baseline values to 6-month values) and changes in the mitral E/e′ ratio during exercise a mitral annular relaxation velocity (e′) at rest b or during exercise c in patients treated with empagliflozin for 6 months"
+ },
+ {
+  "id": 53,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "The improvement in the LV filling pressure was accompanied by a significant increase in the mitral e′ velocity at rest ( P = 0.027), as well as a greater increase in the mitral e′ velocity during exercise (which reflects an improvement in the LV diastolic reserve, P < 0.001 vs. baseline), in the Empagliflozin group, whereas the e′ velocity did not change either at rest or during exercise in the control group (for both P < 0.05 for between-group differences, Table 3 ). In the Empagliflozin group, moderate correlations were found between the changes in e′ velocity at rest and during exercise and the 6MWTD dynamics ( r = 0.44 and r = 0.40, respectively, for both P < 0.05; Fig. 5 , b&c). Notably, in all but one patient treated with empagliflozin, the e′ velocity during peak exercise increased (Fig. 5 b). Notably, in all but one patient treated with empagliflozin, the e′ velocity increased at peak exercise (Fig. 5 b)."
+ },
+ {
+  "id": 54,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "There were also improvements in other cardiac reserves in the Empagliflozin group: LA reservoir (an enhancement of LASr increase during exercise, P = 0.018 vs. baseline), contractile (an enhancement of a′ velocity increase during exercise, P = 0.049 vs. baseline), LV contractile (an enhancement of GLS increase during exercise, P = 0.005), chronotropic (an enhancement of heart rate increase during exercise, P = 0.004), and RV contractile (an enhancement of TAPSE increase during exercise, P = 0.068) reserves (Table 3 ). These reserves did not change significantly in the control group, resulting in significant between-group differences in the impact on LV diastolic, LA reservoir and contractile, and chronotropic reserves (for all P < 0.05, Fig. 4 d–i)."
+ },
+ {
+  "id": 55,
+  "sec": "Results / Cardiac reserves: diastolic stress test",
+  "page": null,
+  "text": "After 6 months of follow-up, there was a tendency toward a greater decrease in the mitral E velocity at rest (which reflects a decrease in the LV preload) but a greater increase in the mitral E velocity during exercise (which reflects an increase in the LV preload reserve) in the Empagliflozin group than in the control group ( P = 0.094 and P = 0.076, respectively, for between-group differences; Table 3 )."
+ },
+ {
+  "id": 56,
+  "sec": "Results / Biomarkers",
+  "page": null,
+  "text": "After 24 weeks, the median NT-proBNP blood level did not significantly decrease by 11 (95% CI − 50–57) pg/mL ( P = 0.68 vs. baseline) in the empagliflozin group but significantly increased by 28 (95% CI 5–72) pg/mL ( P = 0.015 vs. baseline) in the control group, resulting in significant between-group differences ( P = 0.038; Table 4 ). Interestingly, treatment with empagliflozin in patients with higher NT-proBNP levels at baseline (> median) was accompanied by a significant decrease in NT-proBNP levels ( P = 0.045, Table 4 ), and the higher the concentration of NT-proBNP was at baseline, the greater the reduction was observed after empagliflozin therapy (r = − 0.34, P = 0.050). The changes in NT-proBNP blood levels with empagliflozin also inversely correlated with dynamics in exercise-induced increases in the mitral e′ velocity (which reflects changes in the LV diastolic reserve) and mitral a′ velocity (which reflects changes in the LA reserve): r = − 0.48, P = 0.004 and r = − 0.50, P = 0.003, respectively (Fig. 6 a & b)."
+ },
+ {
+  "id": 57,
+  "sec": "Results / Biomarkers",
+  "page": null,
+  "text": "Table 4 Dynamics of biomarker levels in the study groups after 6 months of follow-up Variables Empagliflozin (n = 35) Control (n = 35) Difference between groups (95% CI) P Value for intergroup differences Baseline Change from baseline (95% CI) 6 months Change from baseline (95% CI) NT-proBNP, pg/mL 214 (163–258) − 11 (− 50, 57) 240 (180–431) 28 (5, 72) 53 (3, 95) 0.038 NT-proBNP > mediane, pg/mL 261 (228–332) − 61 (− 121, − 2) 432 (286–644) 80 (6, 173) 130 (54, 238) 0.0029 sST2, ng/mL 25.9 (13.3–28.3) − 1.2 (− 2.9, − 0.4) 24.4 (18.5–27.9) 0.9 (− 0.3, 2.1) 2.3 (0.9, 3.8) 0.019 sST2 > mediane, ng/mL 28.3 (27.7–31.0) − 1.5 (− 3.2, 0.4) 27.5 (25.3–32.9) 1.6 (− 0.2, 3.2) 3.1 (1.2, 5.0) 0.0014 hsCRP, mg/L 2.1 (0.7–3.3) − 0.3 (− 0.8, 0.1) 1.6 (0.8–2.9) − 0.1 (− 0.4, 0.5) 0.4 (− 0.1, 1.0) 0.057 hsCRP > mediane, mg/L 3.3 (2.5–6.3) − 0.8 (− 2.7, 0.1) 2.9 (2.0–6.0) − 0.3 (− 1.2, 0.5) 0.3 (− 0.7, 1.4) 0.33 Baseline and follow-up data are presented as medians (interquartile ranges), and the dynamics of the variables are presented as the mean change from the baseline values (95% confidence intervals) hsCRP High-sensitivity C-reactive protein, NT-proBNP N-terminal pro–brain natriuretic peptide, sST2 Soluble interleukin 1 receptor-like 1 Fig."
+ },
+ {
+  "id": 58,
+  "sec": "Results / Biomarkers",
+  "page": null,
+  "text": "6 Correlations between changes in NT-proBNP levels (from baseline values to 6-month values) and changes in exercise-induced annular a′ velocity increase (LA reserve, a ), exercise-induced e′ velocity increase (diastolic reserve, b ), and hsCRP blood levels in the entire empagliflozin group ( c ) and in the subgroup of patients with baseline hsCRP > 2.1 mg/L (above the median, d ). a Average annular relaxation velocity, ε Average annular relaxation velocity, hsCRP High-sensitivity C-reactive protein, LASr Left atrial strain during the reservoir phase, NT-proBNP N-terminal pro–brain natriuretic peptide, sST2 Soluble interleukin 1 receptor-like 1"
+ },
+ {
+  "id": 59,
+  "sec": "Results / Biomarkers",
+  "page": null,
+  "text": "Compared with control treatment, empagliflozin treatment was also associated with a significant decrease in the blood level of the profibrotic biomarker sST2 and a trend toward a reduction in the level of the inflammatory biomarker hsCRP ( P = 0.019 and P = 0.05 7 for between-group differences, respectively; Table 4 )."
+ },
+ {
+  "id": 60,
+  "sec": "Results / Biomarkers",
+  "page": null,
+  "text": "The changes in NT-proBNP levels with empagliflozin were also associated with changes in ST2 ( r = 0.40, P = 0.017) and hsCRP levels ( r = 0.59, P < 0.001), especially in patients with hsCRP levels above the median ( r = 0.74, P < 0.001; Fig. 6 , c&d)."
+ },
+ {
+  "id": 61,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In this randomized, controlled, open study in patients with HFpEF and T2DM, treatment with the SGLT2 inhibitor empagliflozin was associated with an improvement in exercise ability and quality of life, which was related to a pronounced decrease in LV filling pressure and improvements in key cardiac reserves, namely LV diastolic, LA reservoir and contractile, and chronotropic. These data provide mechanistic insight into previously reported beneficial clinical and prognostic effects of SGLT2 inhibitors in this difficult-to-treat HFpEF patient population."
+ },
+ {
+  "id": 62,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In HFpEF patients, T2DM is a major driver of the development and progression of HFpEF, exerting deleterious effects, mainly through adverse cardiac remodelling, such as myocardial hypertrophy, impaired relaxation, stiffening, and interstitial fibrosis [ 23 ]. All these factors ultimately culminate in LV DD and poor exercise tolerance."
+ },
+ {
+  "id": 63,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In the present study, treatment with empagliflozin improved exercise function outcomes, as measured by the 6MWTD and bicycle exercise duration, over 6 months. The improvement in functional capacity achieved in the present study with empagliflozin contributed to the improvement in patients' daily quality of life, as measured by validated questionnaire, that agrees well with the results of other studies [ 24 ] and meta-analyses [ 25 ]. These improvements are of important clinical importance because most patients with HFpEF are elderly and severely comorbid, and this population has especially poor health status [ 26 ]."
+ },
+ {
+  "id": 64,
+  "sec": "Discussion",
+  "page": null,
+  "text": "The EMPERIAL-PRESERVED trial reported a nonsignificant improvement in 6MWDT only by 4 m with empagliflozin versus placebo [ 27 ], whereas we reported a much greater improvement (by 13 m) with empagliflozin versus the control. These discrepancies may have been due to different treatment periods in the two trials (12 vs. 24 weeks) and the enrollment in EMPERIAL-PRESERVED of relatively frail patients, with baseline 6MWTD < 350 m; in our trial, the initial baseline median 6MWTD was greater than that in placebo (372 m). Recent meta-analyses have revealed comparable improvements in 6MWTD (by 10.73 m [ 28 ] and by 13 m [ 25 ]) with SGLT2 inhibitors, as evidenced by comparison with placebo/controls."
+ },
+ {
+  "id": 65,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In the present study, we used 6MWTD to assess exercise tolerance, which is both simple and reliable as a measure of exercise capacity in mild and severe pulmonary and cardiac diseases and has been widely used in different HFpEF population, including elderly patients with T2DM [ 17 , 27 ]. Nevertheless, geriatric patients with HF have a high risk of developing frailty, cognitive and physical impairment, depression [ 29 ], which can make it challenging to perform the 6MWTD. Here, a good alternative may be the 5-m gait speed test as a measure of physical frailty, and it could well be a reasonable tool for routine use in geriatric patients with HFpEF. The impairments in 5-m gait speed test were associated with adverse outcomes in patients with HFpEF [ 30 ]. Mone P. et al. observed a marked amelioration of physical impairment, assessed by the 5-m gait speed test, in the empagliflozin and metformin groups but not in the insulin group among frail geriatric population with HFpEF and T2DM [ 31 ]. In EMPEROR-Preserved trial, empagliflozin improved frailty status during follow-up in patients with HFpEF [ 32 ]."
+ },
+ {
+  "id": 66,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In patients with HFpEF, poor exercise tolerance is caused mainly by the inability of the heart to provide appropriate LV filling and therefore an appropriate stroke volume at rest or during exercise without an accompanying increase in the LV filling pressure [ 26 ]. In our study, treatment with empagliflozin was accompanied by a reduction in the LV filling pressure, as evidenced by a significant decrease in the E/eʹ ratio, a main measure of diastolic function, both at rest and during exercise, as well as other important echocardiographic parameters related to the LV filling pressure: the LA volume index and the PASP. The ability of empagliflozin to reduce LV filling pressure during exercise is especially important because many patients with HFpEF develop elevated LV filling pressure only on exertion, where symptoms are commonly noted [ 33 ]. In our study, half of the patients initially had normal LV filling pressure at rest (grade I DD), but the LV filling pressure increased during exercise."
+ },
+ {
+  "id": 67,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Our findings are in line with those of other studies. According to Nassif et al., in patients with HF (regardless of the ejection fraction) and implanted pulmonary artery pressure sensors, empagliflozin therapy was accompanied by rapid and further escalating reductions in pulmonary artery diastolic pressure, reflecting the mean LA pressure [ 34 ]. In the CAMEO-DAPA study of 38 HFpEF patients, SGLT2 inhibition with dapagliflozin substantially reduced invasively measured resting and exercise pulmonary capillary wedge pressure (PCWP) compared with placebo [ 35 ]. Another small study revealed that 6 months of dapagliflozin therapy significantly improved LVDD (measured by E/e′ and LAVI) in patients with HFpEF and T2DM [ 36 ]. A meta-analysis of 12 randomized controlled trials including almost 11,000 patients with HFpEF revealed that SGLT2 inhibitors significantly reduce the E/e' ratio [ 37 ]. Empagliflozin also improved LV diastolic function in several studies with patients with T2DM [ 38 , 39 ], but not in the EMPA-HEART CardioLink-6 trial, where the majority of participants had no more than mild LV diastolic dysfunction (grade I) and normal LA volume [ 40 ]."
+ },
+ {
+  "id": 68,
+  "sec": "Discussion",
+  "page": null,
+  "text": "The SOTA-P-CARDIA (Sotagliflozin in Heart Failure With Preserved Ejection Fraction Patients) trial is currently underway to evaluate the effect of SGLT2 inhibition with sotiagliflozin on parameters of LV remodelling and interstitial myocardial fibrosis assessed by the gold-standard cardiac MRI in non-diabetic patients with HFpEF ( NCT05562063 ) [ 41 ]."
+ },
+ {
+  "id": 69,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In the present study, a decrease in the E/e′ ratio with empagliflozin was achieved via both a reduction in E velocity (reflecting a decrease in the LV preload) and an increase in eʹ velocity (reflecting an improvement in the LV lusitropic effect). The reduction in preload most likely resulted from the well-established diuretic effect of empagliflozin, which was partly confirmed in our study, whereas an elevation in eʹ velocity, taking into account the accompanying decline in early diastolic lengthening load via reduced preload [ 42 ], may obviously indicate an improvement in LV myocardial relaxation. A multicenter trial revealed a decrease in the E/eʹ ratio in 58 diabetic patients with HF treated for 6 months with dapagliflozin, which was attributable to the improvement in early diastolic LV relaxation and was accompanied by a reduction in the LVMI [ 43 ]."
+ },
+ {
+  "id": 70,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In contrast, in another trial in patients with T2DM (more than half of whom did not have HF), the reduction in the E/eʹ ratio with 3-month empagliflozin therapy was achieved rather by a decrease in transmitral E velocity than by an improvement in eʹ velocity [ 44 ], which may be due to the greater preservation of relaxation (higher eʹ velocity) in participants in this trial than in those in our trial (≈ 8.7 vs. 6.5 cm/s)."
+ },
+ {
+  "id": 71,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Importantly, exercise tolerance depends rather on the ability of the relaxation process to accelerate during exercise (i.e., diastolic reserve) than on the LV relaxation status at rest [ 15 ]. In HFpEF, LV diastolic dysfunction substantially and acutely deteriorates upon exertion, leading to a rise in LV filling and pulmonary vascular pressures [ 45 ], which contributes to premature termination of exercise, making this an important therapeutic target. This assertion is further reinforced by the present findings, which demonstrate a correlation between baseline exercise duration and an increase in e′ velocity during exercise but not at rest. Importantly, empagliflozin administration improved not only resting relaxation but also diastolic reserve, as eʹ velocity dynamics both at rest and at peak exertion were well correlated with improved exercise tolerance."
+ },
+ {
+  "id": 72,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Apart from an elevation in LV filling pressure, other central (cardiac) and peripheral abnormalities can also be identified in HFpEF patients during exercise: insufficient increases in LV contractility and heart rate upon exertion, progressive LA dysfunction, impaired systemic and pulmonary vasodilation, and increased arterial stiffness [ 15 ]. In the present study, empagliflozin also had a positive effect on LV cardiac reserves other than diastolic, such as LA and chronotropic reserves, which certainly improved exercise tolerance. To our knowledge, we are the first to demonstrate an improvement in cardiac reserves with SGLT2 inhibition in a well-defined population of patients with HFpEF in a prospective study."
+ },
+ {
+  "id": 73,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In the present study, cardiac hemodynamic unloading and a reduction in LV filling pressure with empagliflozin were accompanied by beneficial effects on the plasma level of NT-proBNP, and a greater absolute reduction was achieved in patients with higher baseline NT-proBNP levels. Similarly, in two prospective multicenter studies with diabetic HFpEF patients, BNP/NT-proBNP levels significantly decreased after 6 months of treatment with dapagliflozin [ 43 ] or ipragliflozin [ 46 ] in subjects with higher baseline levels. In a large-scale multicenter EMPEROR-Preserved trial, the administration of empagliflozin led to a modest but significant reduction in NT-ProBNP levels by approximately 7% over 100 weeks of treatment, and empagliflozin showed a consistent benefit on cardiac outcomes across the wide range of baseline NT-proBNP values evaluated [ 47 ]. Additionally, treatment with canagliflozin delayed the increase in serum NT-proBNP compared with placebo for more than 2 years in older patients with T2DM [ 48 ]."
+ },
+ {
+  "id": 74,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In contrast, in previously mentioned the EMPA-HEART CardioLink-6 trial, treatment with empagliflozin in 97 individuals with T2DM and coronary artery disease had no effect on the circulating levels of NT-proBNP [ 49 ], probably because the trial enrolled patients with neither HF nor significant LV dysfunction."
+ },
+ {
+  "id": 75,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Absolute NT-proBNP level depends not only on diastolic LV wall stress/filling pressure (the main trigger for brain natriuretic peptide synthesis) but also on many other factors contributing to both increase (age, CKD, atrial fibrillation) and decrease (obesity, concentric LV hypertrophy, T2DM) in NT-proBNP [ 50 ]. Nevertheless, we assume that the significant differences in NT-proBNP dynamics in favour of empagliflozin observed in the present study were primarily due to differences in LV filling pressure changes. At first, the groups were comparable in the frequency of all these comorbidities, which negates their influence on NT-proBNP level; at second, all these comorbidities, in contrast to LV filling pressure, did not undergo significant changes during the study (except for significant weight loss in the empagliflozin group, which, however, in theory should have led to an increase in NT-proBNP level)."
+ },
+ {
+  "id": 76,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Acute or chronic increases in mean LA pressure reduce pulmonary artery compliance and increase the pulsatile RV afterload, which affects RV‒arterial coupling and contributes to the development of RV dysfunction [ 51 ]. RV dysfunction is associated with a poor prognosis in HFpEF patients [ 52 ], and its prevention may be an important therapeutic goal. In the present study, empagliflozin administration was associated with an improvement in RV‒PA coupling, as assessed by the TAPSE/PASP ratio. In the CAMEO-DAPA trial, treatment with dapagliflozin reduced the pulsatile pulmonary vascular load and enhanced RV‒PA coupling during exercise in patients with HFpEF [ 53 ]. We also observed reduced resistive RV afterload with empagliflozin therapy, which manifested as an increase in AcT RVOT, a variable inversely related to pulmonary vascular resistance. All of these factors ultimately led to an improvement in RV contractility at rest (TAPSE) as well as RV contractile reserve during exercise (a tendency toward a greater increase in the TAPSE during exercise)."
+ },
+ {
+  "id": 77,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Thus, SGLT-2 inhibitors may contribute to hemodynamic unloading of the right heart chambers and thereby prevent or improve RV dysfunction, the critical contributor to adverse outcomes in HFpEF patients."
+ },
+ {
+  "id": 78,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Several potential mechanisms may explain the clinical and hemodynamic benefits of empagliflozin observed in the present study. It has been shown that empagliflozin reduces oxidative stress [ 13 ] and endothelial inflammatory activation [ 54 , 55 ], resulting in an increase in the bioavailability of endothelium-derived nitric oxide (NO) and the restoration of the protein kinase G signalling pathway, with numerous resulting beneficial effects [ 56 , 57 ]. These effects include, among others, the phosphorylation of regulatory proteins such as titin, phospholamban, and troponin I, leading to decreased myofilament passive stiffness and increased lusitropy [ 12 , 14 ]. The attenuation of diffuse myocardial fibrosis [ 58 – 61 ] via a reduction in type I collagen synthesis [ 62 ] is another, and very important, cardiovascular effect of empagliflozin."
+ },
+ {
+  "id": 79,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In this study, empagliflozin treatment was associated with a significant reduction in the fibrotic biomarker sST2 and a clear trend towards a reduction in the inflammatory biomarker hsCRP, both of which correlated well with the reduction in NT-proBNP achieved. These associations may implicate the anti-inflammatory and antifibrotic properties of empagliflozin in hemodynamic unloading of the heart and a reduction in the LV filling pressure."
+ },
+ {
+  "id": 80,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In addition to the mechanisms discussed, many other pleiotropic effects of empagliflozin, including improvement in functional iron deficiency [ 63 ], anemia [ 64 ] and increased efficiency of cardiac and skeletal muscle metabolism through ketogenesis and metabolic shift towards utilization of ketone bodies [ 61 ] may explain the clinical and hemodynamic benefits observed in the present study; however, all these effects were outside the scope of our concern."
+ },
+ {
+  "id": 81,
+  "sec": "Discussion / Study limitations",
+  "page": null,
+  "text": "The absence of placebo control, unblinded design, relatively small number of participants and the single-center nature of the study are some of the limitations of the present study. Nevertheless, in the present study, we found a significant improvement with empagliflozin in all key study domains—clinical (functional capacity), hemodynamic (LV filling pressure), morphological (LA volume index) and biological (biomarkers)—confirming the favourable effect of empagliflozin in HFpEF patients. In the present study, we assessed LV filling pressure dynamics via echocardiographic indices such as the E/e' ratio, LA volume index, and estimated PASP. Each of these parameters correlates no more than moderately with invasively measured filling pressure [ 65 ]. However, all these variables were highly significant improvement with empagliflozin therapy, which allows us to determine the ability of empagliflozin to reduce LV filling pressure in diabetic patients with HFpEF. Some patients with invasively confirmed HFpEF, especially ambulatory and obese patients, have normal NT-proBNP levels [ 66 ]."
+ },
+ {
+  "id": 82,
+  "sec": "Discussion / Study limitations",
+  "page": null,
+  "text": "Therefore, we did not consider elevated NT-proBNP as a mandatory inclusion criterion, and 7% of our patients had normal NT-proBNP levels (< 125 pg/mL). Instead, we used echocardiographic evidence of increased LV filling pressure, which is the haemodynamic essence of HFpEF [ 12 ]."
+ },
+ {
+  "id": 83,
+  "sec": "Conclusions",
+  "page": null,
+  "text": "In patients with HFpEF and T2DM, treatment with empagliflozin improves functional capacity, along with favourable effects on LV filling pressure (both at rest and at peak exercise) and key cardiac reserves: LV diastolic, LA reservoir and contractile, and chronotropic. These haemodynamic mechanisms may underline the benefits of SGLT2 inhibitors in large-scale HFpEF trials."
+ },
+ {
+  "id": 84,
+  "sec": "Supplementary Information",
+  "page": null,
+  "text": "Supplementary Material 1."
+ }
+]

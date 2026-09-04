@@ -1,0 +1,68 @@
+[
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "This placebo-controlled, double-blinded randomized clinical trial was conducted from January 2022 to May 2024, with 30 weeks of follow-up, among regional community-based mental health services in 2 regions of Denmark (Region of Southern Denmark and Region of Zealand).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象  (population, disease/condition, inclusion & exclusion criteria, age/sex, setting, sample size n per arm)",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 4,
+  "pid": 4,
+  "sec": "Abstract/Intervention",
+  "page": null,
+  "quote": "Once-weekly subcutaneous semaglutide or placebo for 30 weeks; semaglutide was titrated up to 1.0 mg/week over 8 weeks.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施  (drug/procedure/exposure, dose, frequency, route, duration)",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "SGA-treated patients with schizophrenia, prediabetes, and overweight or obesity were randomized to semaglutide or placebo.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "C — Comparator / 对照方式  (placebo / standard care / active control / no treatment; dose & duration)",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 6,
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "Semaglutide reduced HbA1c by 0.46% of total hemoglobin (95% CI, -0.56% to -0.36%) and body weight by 9.21 kg (95% CI, -11.68 to -6.75).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 6,
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "An HbA1c less than 5.7% of total hemoglobin was achieved in 81% vs 19% of patients treated with semaglutide and placebo, respectively (P < .001);",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 6,
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "Finally, semaglutide improved physical QoL by 3.75 points on the SF-36v2 (95% CI, 1.52-5.98; P = .001) but had no significant effect on mental QoL scores or PANSS-6 score.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ }
+]

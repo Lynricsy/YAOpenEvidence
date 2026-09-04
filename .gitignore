@@ -1,0 +1,8 @@
+.agent-logs/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 源码归档包（本地保留，不入库）
+smk_*.zip

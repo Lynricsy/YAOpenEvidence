@@ -1,0 +1,112 @@
+[
+ {
+  "fact": "A total of 77,242 patients were included in the analysis, with 42,920 (55.6%) in GLP1-RA trials and 34,322 (44.4%) in SGLT2i trials.",
+  "fact_zh": "总共纳入了77,242名患者，其中42,920名（55.6%）来自GLP1-RA试验，34,322名（44.4%）来自SGLT2i试验。",
+  "kind": "population",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "In total, data from 8 trials and 77 242 patients, 42 920 (55.6%) in GLP1-RA trials, and 34 322 (44.4%) in SGLT2i trials, were included.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP1-RA reduced the risk of MACE by 12% (HR, 0.88; 95% CI, 0.84-0.94; P<0.001).",
+  "fact_zh": "GLP1-RA将MACE的风险降低了12%（HR，0.88；95% CI，0.84-0.94；P<0.001）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "GLP1-RA reducing the risk by 12% (hazard ratio [HR], 0.88; 95% CI, 0.84-0.94; P<0.001) and SGLT2i by 11% (HR, 0.89; 95% CI, 0.83-0.96; P=0.001).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "SGLT2i reduced the risk of MACE by 11% (HR, 0.89; 95% CI, 0.83-0.96; P=0.001).",
+  "fact_zh": "SGLT2i将MACE的风险降低了11%（HR，0.89；95% CI，0.83-0.96；P=0.001）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "GLP1-RA reducing the risk by 12% (hazard ratio [HR], 0.88; 95% CI, 0.84-0.94; P<0.001) and SGLT2i by 11% (HR, 0.89; 95% CI, 0.83-0.96; P=0.001).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Both GLP1-RA and SGLT2i reduced MACE by 14% in patients with established atherosclerotic cardiovascular disease (HR, 0.86; 95% CI, 0.80-0.93; P=0.002).",
+  "fact_zh": "在患有已确立动脉粥样硬化性心血管疾病的患者中，GLP1-RA和SGLT2i均将MACE的风险降低了14%（HR，0.86；95% CI，0.80-0.93；P=0.002）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "this treatment effect was restricted to a 14% reduction in those with established atherosclerotic cardiovascular disease (HR, 0.86; 95% CI, 0.80-0.93; P=0.002), whereas no effect was seen in patients without established atherosclerotic cardiovascular disease (HR, 1.01; 95% CI, 0.87-1.19; P=0.81; P interaction, 0.028).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "SGLT2i reduced hospitalization for heart failure by 31% (HR, 0.69; 95% CI, 0.61-0.79; P<0.001).",
+  "fact_zh": "SGLT2i将心力衰竭住院的风险降低了31%（HR，0.69；95% CI，0.61-0.79；P<0.001）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "SGLT2i reduced hospitalization for heart failure by 31% (HR, 0.69; 95% CI, 0.61-0.79; P<0.001), whereas GLP1-RA did not have a significant effect (HR, 0.93; 95% CI, 0.83-1.04; P=0.20).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP1-RA did not significantly reduce hospitalization for heart failure (HR, 0.93; 95% CI, 0.83-1.04; P=0.20).",
+  "fact_zh": "GLP1-RA并未显著降低心力衰竭住院的风险（HR，0.93；95% CI，0.83-1.04；P=0.20）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "SGLT2i reduced hospitalization for heart failure by 31% (HR, 0.69; 95% CI, 0.61-0.79; P<0.001), whereas GLP1-RA did not have a significant effect (HR, 0.93; 95% CI, 0.83-1.04; P=0.20).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Both GLP1-RA (HR, 0.82; 95% CI, 0.75-0.89; P<0.001) and SGLT2i (HR, 0.62; 95% CI, 0.58-0.67; P<0.001) reduced the risk of progression of kidney disease including macroalbuminuria.",
+  "fact_zh": "GLP1-RA（HR，0.82；95% CI，0.75-0.89；P<0.001）和SGLT2i（HR，0.62；95% CI，0.58-0.67；P<0.001）均降低了包括大蛋白尿在内的肾脏疾病进展的风险。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "Both GLP1-RA (HR, 0.82; 95% CI, 0.75-0.89; P<0.001) and SGLT2i (HR, 0.62; 95% CI, 0.58-0.67; P<0.001) reduced the risk of progression of kidney disease including macroalbuminuria, but only SGLT2i reduced the risk of worsening estimated glomerular filtration rate, end-stage kidney disease, or renal death (HR, 0.55; 95% CI, 0.48-0.64; P<0.001).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "SGLT2i reduced the risk of worsening estimated glomerular filtration rate, end-stage kidney disease, or renal death by 45% (HR, 0.55; 95% CI, 0.48-0.64; P<0.001).",
+  "fact_zh": "SGLT2i将估算的肾小球滤过率恶化、终末期肾病或肾死亡的风险降低了45%（HR，0.55；95% CI，0.48-0.64；P<0.001）。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "but only SGLT2i reduced the risk of worsening estimated glomerular filtration rate, end-stage kidney disease, or renal death (HR, 0.55; 95% CI, 0.48-0.64; P<0.001).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The relative benefits of GLP1-RA and SGLT2i for different outcomes in patients with and without established atherosclerotic cardiovascular disease remain undefined.",
+  "fact_zh": "GLP1-RA和SGLT2i在有和没有已确立动脉粥样硬化性心血管疾病的患者中对不同结局的相对益处仍未明确。",
+  "kind": "limitation",
+  "pid": 1,
+  "sec": "Abstract/Background",
+  "page": null,
+  "quote": "The relative benefits in patients with and without established atherosclerotic cardiovascular disease for different outcomes with these classes of drugs remain undefined.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The primary outcomes of the study were the composite of myocardial infarction, stroke, and cardiovascular death (MACE); hospitalization for heart failure; and progression of kidney disease.",
+  "fact_zh": "该研究的主要结局是心肌梗死、中风和心血管死亡（MACE）的复合结局；心力衰竭住院；以及肾脏疾病的进展。",
+  "kind": "method",
+  "pid": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "quote": "The primary outcomes were the composite of myocardial infarction, stroke, and cardiovascular death (MACE); hospitalization for heart failure; and progression of kidney disease.",
+  "score": 1.0,
+  "verified": true
+ }
+]

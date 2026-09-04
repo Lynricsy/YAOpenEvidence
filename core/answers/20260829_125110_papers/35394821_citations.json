@@ -1,0 +1,56 @@
+[
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "quote": "randomized, double-blind, placebo-controlled clinical outcome trials",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "SGLT2 inhibitors reduced the risk of serious hyperkalemia (hazard ratio, 0.84 [95% CI, 0.76-0.93])",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "The incidence of investigator-reported hyperkalemia was also lower with SGLT2 inhibitors (hazard ratio, 0.80 [95% CI, 0.68-0.93])",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "SGLT2 inhibitors did not increase the risk of hypokalemia (hazard ratio, 1.04 [95% CI, 0.94-1.15])",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "quote": "A meta-analysis was conducted using individual participant data from randomized, double-blind, placebo-controlled clinical outcome trials",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "an effect consistent across studies (Pheterogeneity=0.71)",
+  "score": 1.0,
+  "verified": true
+ }
+]

@@ -1,0 +1,26 @@
+# Comparison of the Effects of Glucagon-Like Peptide Receptor Agonists and Sodium-Glucose Cotransporter 2 Inhibitors for Prevention of Major Adverse Cardiovascular and Renal Outcomes in Type 2 Diabetes Mellitus.
+
+Zelniker TA, Wiviott SD, Raz I et al. (2019) *Circulation* Q1 SJR 8.67  
+PMID:30786725 DOI:10.1161/CIRCULATIONAHA.118.038868 PMCID:  
+source: abstract · 5 paragraphs
+
+## Abstract/Background
+
+<a id="p1"></a>**¶1** Glucagon-like peptide 1 receptor agonists (GLP1-RA) and sodium-glucose cotransporter-2 inhibitors (SGLT2i) have emerged as 2 new classes of antihyperglycemic agents that also reduce cardiovascular risk. The relative benefits in patients with and without established atherosclerotic cardiovascular disease for different outcomes with these classes of drugs remain undefined.
+
+
+## Abstract/Methods
+
+<a id="p2"></a>**¶2** We performed a systematic review and trial-level meta-analysis of GLP1-RA and SGLT2i cardiovascular outcomes trials using the PubMed and EMBASE databases (Excerpta Medica Database). The primary outcomes were the composite of myocardial infarction, stroke, and cardiovascular death (MACE); hospitalization for heart failure; and progression of kidney disease.
+
+
+## Abstract/Results
+
+<a id="p3"></a>**¶3** In total, data from 8 trials and 77 242 patients, 42 920 (55.6%) in GLP1-RA trials, and 34 322 (44.4%) in SGLT2i trials, were included. Both drug classes reduced MACE in a similar magnitude with GLP1-RA reducing the risk by 12% (hazard ratio [HR], 0.88; 95% CI, 0.84-0.94; P<0.001) and SGLT2i by 11% (HR, 0.89; 95% CI, 0.83-0.96; P=0.001). For both drug classes, this treatment effect was restricted to a 14% reduction in those with established atherosclerotic cardiovascular disease (HR, 0.86; 95% CI, 0.80-0.93; P=0.002), whereas no effect was seen in patients without established atherosclerotic cardiovascular disease (HR, 1.01; 95% CI, 0.87-1.19; P=0.81; P interaction, 0.028). SGLT2i reduced hospitalization for heart failure by 31% (HR, 0.69; 95% CI, 0.61-0.79; P<0.001), whereas GLP1-RA did not have a significant effect (HR, 0.93; 95% CI, 0.83-1.04; P=0.20).
+
+<a id="p4"></a>**¶4** Both GLP1-RA (HR, 0.82; 95% CI, 0.75-0.89; P<0.001) and SGLT2i (HR, 0.62; 95% CI, 0.58-0.67; P<0.001) reduced the risk of progression of kidney disease including macroalbuminuria, but only SGLT2i reduced the risk of worsening estimated glomerular filtration rate, end-stage kidney disease, or renal death (HR, 0.55; 95% CI, 0.48-0.64; P<0.001).
+
+
+## Abstract/Conclusions
+
+<a id="p5"></a>**¶5** In trials reported to date, GLP1-RA and SGLT2i reduce atherosclerotic MACE to a similar degree in patients with established atherosclerotic cardiovascular disease, whereas SGLT2i have a more marked effect on preventing hospitalization for heart failure and progression of kidney disease. Their distinct clinical benefit profiles should be considered in the decision-making process when treating patients with type 2 diabetes mellitus.

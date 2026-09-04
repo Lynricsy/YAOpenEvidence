@@ -1,0 +1,200 @@
+[
+ {
+  "fact": "In a phase 2 clinical trial, semaglutide reduced posttreatment laboratory alcohol consumption with a medium to large effect size for grams of alcohol consumed (β, −0.48; 95% CI, −0.85 to −0.11; P = .01) and peak breath alcohol concentration (β, −0.46; 95% CI, −0.87 to −0.06; P = .03).",
+  "fact_zh": "在一项II期临床试验中，司美格鲁肽减少了治疗后实验室酒精消费，对酒精摄入量（β，−0.48；95% CI，−0.85至−0.11；P = 0.01）和峰值呼气酒精浓度（β，−0.46；95% CI，−0.87至−0.06；P = 0.03）的影响具有中等到较大的效应量。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Results / Laboratory Alcohol Self-Administration",
+  "page": null,
+  "quote": "Results of residualized change models indicated that semaglutide reduced posttreatment laboratory consumption with a medium to large effect size for grams of alcohol consumed (β, −0.48; 95% CI, −0.85 to −0.11; P = .01) and peak breath alcohol concentration (β, −0.46; 95% CI, −0.87 to −0.06; P = .03) ( Figure 2 ).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide significantly reduced weekly craving (β, −0.39; 95% CI, −0.73 to −0.06; P = .01).",
+  "fact_zh": "司美格鲁肽显著减少了每周的饮酒渴望（β，−0.39；95% CI，−0.73至−0.06；P = 0.01）。",
+  "kind": "finding",
+  "pid": 23,
+  "sec": "Results / Weekly Outcomes",
+  "page": null,
+  "quote": "Semaglutide significantly reduced weekly craving (β, −0.39; 95% CI, −0.73 to −.06; P = .01).",
+  "score": 0.89,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide significantly reduced drinks per drinking day (β, −0.41; 95% CI, −0.73 to −0.09; P = .04).",
+  "fact_zh": "司美格鲁肽显著减少了饮酒日的饮酒量（β，−0.41；95% CI，−0.73至−0.09；P = 0.04）。",
+  "kind": "finding",
+  "pid": 23,
+  "sec": "Results / Weekly Outcomes",
+  "page": null,
+  "quote": "Medication effects were nonsignificant for drinks per calendar day (β, −0.27; 95% CI, −0.63 to 0.09; P = .17) and significant for drinks per drinking day (β, −0.41; 95% CI, −0.73 to −0.09; P = .04).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "A significant treatment-by-time interaction indicated greater reductions in heavy drinking days over time in the semaglutide group relative to the placebo group (β, 0.84; 95% CI, 0.71 to 0.99; P = .04).",
+  "fact_zh": "治疗与时间的显著交互作用表明，与安慰剂组相比，司美格鲁肽组在随时间推移中重度饮酒日的减少更为显著（β，0.84；95% CI，0.71至0.99；P = 0.04）。",
+  "kind": "finding",
+  "pid": 23,
+  "sec": "Results / Weekly Outcomes",
+  "page": null,
+  "quote": "A significant treatment-by-time interaction indicated greater reductions in heavy drinking days over time in the semaglutide group relative to the placebo group (β, 0.84; 95% CI, 0.71 to 0.99; P = .04).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The proportion of participants with zero heavy drinking days increased significantly from weeks 1 through 4 to 5 through 8 in the semaglutide group (z score, −2.93; P = .003).",
+  "fact_zh": "司美格鲁肽组中无重度饮酒日的参与者比例从第1至4周显著增加到第5至8周（z值，−2.93；P = 0.003）。",
+  "kind": "finding",
+  "pid": 25,
+  "sec": "Results / Weekly Outcomes",
+  "page": null,
+  "quote": "Comparing the proportion of participants with zero heavy drinking days by group and treatment period ( Figure 4 F) showed that the likelihood of zero heavy drinking days increased significantly from weeks 1 through 4 to 5 through 8 in the semaglutide group ( z score, −2.93; P = .003), with no other significant comparisons.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Body weight (kg) change at discharge averaged −5% in the semaglutide group (mean [SD], −5.05% [3.56] vs 0.18% [2.5] in the placebo group; time-by-treatment interaction: β, −0.07; 95% CI, −0.08 to −0.05; P < .001).",
+  "fact_zh": "出院时，司美格鲁肽组的体重（kg）变化平均为−5%（均值[SD]，−5.05%[3.56]，而安慰剂组为0.18%[2.5]；时间与治疗的交互作用：β，−0.07；95% CI，−0.08至−0.05；P < 0.001）。",
+  "kind": "finding",
+  "pid": 27,
+  "sec": "Results / Weight and Safety and Adverse Effect Outcomes",
+  "page": null,
+  "quote": "Body weight (kg) change at discharge averaged −5% in the semaglutide group (mean [SD], −5.05% [3.56] vs 0.18% [2.5] in the placebo group; time-by-treatment interaction: β, −0.07; 95% CI, −0.08 to −0.05; P < .001) ( Figure 3 ).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Of the 48 participants randomized, 34 (71%) were female and 14 (29%) were male.",
+  "fact_zh": "在48名随机分配的参与者中，34人（71%）为女性，14人（29%）为男性。",
+  "kind": "population",
+  "pid": 18,
+  "sec": "Results / Sample Description and Retention",
+  "page": null,
+  "quote": "Of the 48 participants randomized, 34 (71%) were female and 14 (29%) were male.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The mean (SD) age was 39.9 (10.6) years.",
+  "fact_zh": "平均（SD）年龄为39.9（10.6）岁。",
+  "kind": "population",
+  "pid": 18,
+  "sec": "Results / Sample Description and Retention",
+  "page": null,
+  "quote": "The mean (SD) age was 39.9 (10.6) years.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Most had BMI greater than 30 (n = 27) or 25.0-29.9 (n = 20); 1 participant had BMI less than 24.9.",
+  "fact_zh": "大多数人BMI大于30（n = 27）或25.0-29.9（n = 20）；1名参与者BMI小于24.9。",
+  "kind": "population",
+  "pid": 18,
+  "sec": "Results / Sample Description and Retention",
+  "page": null,
+  "quote": "Most had BMI greater than 30 (n = 27) or 25.0-29.9 (n = 20); 1 participant had BMI less than 24.9.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Alcohol use is a leading modifiable cause of morbidity and mortality, accounting for an estimated 4% to 5% of disease burden and 2.6 million deaths per year globally.",
+  "fact_zh": "饮酒是可改变的疾病和死亡的主要原因之一，占全球疾病负担的估计4%至5%，每年导致260万例死亡。",
+  "kind": "background",
+  "pid": 4,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "Alcohol use is a leading modifiable cause of morbidity and mortality, accounting for an estimated 4% to 5% of disease burden and 2.6 million deaths per year globally.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "An estimated 178 000 US deaths per year are alcohol attributable.",
+  "fact_zh": "估计每年有178,000例美国死亡与饮酒有关。",
+  "kind": "background",
+  "pid": 4,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "An estimated 178 000 US deaths per year are alcohol attributable,",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "While roughly 29% and 11% of US adults meet lifetime and past-year criteria for alcohol use disorder (AUD), respectively, less than 10% of those with AUD report past-year treatment.",
+  "fact_zh": "大约29%和11%的美国成年人分别符合终生和过去一年的酒精使用障碍（AUD）标准，但其中不到10%的AUD患者报告过去一年接受过治疗。",
+  "kind": "background",
+  "pid": 5,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "While roughly 29% and 11% of US adults meet lifetime and past-year criteria for alcohol use disorder (AUD), respectively, less than 10% of those with AUD report past-year treatment",
+  "score": 0.95,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide, a long-acting GLP-1RA with superior efficacy to older GLP-1RA medications, received FDA approval for diabetes in 2017 and obesity in 2021.",
+  "fact_zh": "司美格鲁肽是一种长效GLP-1RA，其疗效优于较早的GLP-1RA药物，于2017年获得FDA批准用于糖尿病，2021年用于肥胖。",
+  "kind": "background",
+  "pid": 6,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "Semaglutide, a long-acting GLP-1RA with superior efficacy to older GLP-1RA medications, received FDA approval for diabetes in 2017 and obesity in 2021.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Rapidly increasing prescription rates have been accompanied by reports of reductions in alcohol use and craving during treatment.",
+  "fact_zh": "处方率的迅速增加伴随着治疗期间酒精使用和渴望减少的报告。",
+  "kind": "background",
+  "pid": 6,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "Rapidly increasing prescription rates have been accompanied by reports of reductions in alcohol use and craving during treatment.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "This prospective phase 2 randomized clinical trial evaluated the effects of once-weekly subcutaneous semaglutide in non–treatment-seeking adults with AUD.",
+  "fact_zh": "这项前瞻性II期随机临床试验评估了每周一次皮下注射司美格鲁肽对非治疗寻求型AUD成人患者的影响。",
+  "kind": "method",
+  "pid": 6,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "This prospective phase 2 randomized clinical trial evaluated the effects of once-weekly subcutaneous semaglutide in non–treatment-seeking adults with AUD.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Non–treatment-seeking adults with AUD were recruited via online and public advertisements.",
+  "fact_zh": "非治疗寻求型AUD成人患者通过在线和公共广告招募。",
+  "kind": "population",
+  "pid": 8,
+  "sec": "Methods / Participant Sample",
+  "page": null,
+  "quote": "Non–treatment-seeking adults with AUD were recruited via online and public advertisements.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Primary inclusion criteria included age 21 to 65 years, reporting past-year DSM-5 criteria for AUD, past-month endorsement of more than 7 (women) or more than 14 (men) standard drinks in a week with 2 or more heavy drinking episodes (4 or more drinks for women and 5 or more for men), and ability to attend weekly clinic visits and pretreatment and posttreatment laboratory sessions.",
+  "fact_zh": "主要纳入标准包括年龄21至65岁，报告过去一年DSM-5的AUD标准，过去一个月内每周饮用超过7（女性）或14（男性）标准饮料，并有2次或更多次重度饮酒（女性4次或更多，男性5次或更多），以及能够参加每周门诊访问和治疗前及治疗后的实验室会话。",
+  "kind": "population",
+  "pid": 8,
+  "sec": "Methods / Participant Sample",
+  "page": null,
+  "quote": "Primary inclusion criteria included age 21 to 65 years, reporting past-year DSM-5 criteria for AUD, past-month endorsement of more than 7 (women) or more than 14 (men) standard drinks in a week with 2 or more heavy drinking episodes (4 or more drinks for women and 5 or more for men), and ability to attend weekly clinic visits and pretreatment and posttreatment laboratory sessions.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Key exclusion criteria included currently seeking treatment for alcohol problems or actively attempting to reduce consumption; past use of GLP-1 receptor agonists; weight loss medications; BMI less than 23; past-year substance use disorder other than AUD, tobacco use disorder, or mild cannabis use disorder; recent (30-day) use of illicit drugs except cannabis; history of diabetes, and current medical or neurological illness precluding participation based on physician judgement.",
+  "fact_zh": "关键排除标准包括目前正在寻求酒精问题的治疗或积极尝试减少消费；过去使用GLP-1受体激动剂；减肥药物；BMI低于23；过去一年有除AUD、烟草使用障碍或轻度大麻使用障碍以外的物质使用障碍；最近（30天内）使用除大麻外的非法药物；糖尿病史，以及基于医生判断的当前医疗或神经系统疾病，使参与变得不可能。",
+  "kind": "population",
+  "pid": 8,
+  "sec": "Methods / Participant Sample",
+  "page": null,
+  "quote": "Key exclusion criteria included currently seeking treatment for alcohol problems or actively attempting to reduce consumption; past use of GLP-1 receptor agonists; weight loss medications; BMI less than 23; past-year substance use disorder other than AUD, tobacco use disorder, or mild cannabis use disorder; recent (30-day) use of illicit drugs except cannabis; history of diabetes, and current medical or neurological illness precluding participation based on physician judgement.",
+  "score": 0.84,
+  "verified": true
+ }
+]

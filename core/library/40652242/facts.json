@@ -1,0 +1,145 @@
+[
+ {
+  "fact": "In a meta-analysis of 25 studies involving 109,846 patients, GLP-1RA reduced the risk of total MI with a risk ratio (RR) of 0.86 (p < 0.01) and a number needed to benefit (NNTB) of 207 to prevent one event of MI over a follow-up of 3.48 ± 1.51 years.",
+  "fact_zh": "在一项纳入25项研究、涉及109,846名患者的荟萃分析中，GLP-1RA将总心肌梗死（MI）的风险降低了风险比（RR）0.86（p < 0.01），需要治疗207人以预防一次MI事件，随访时间为3.48 ± 1.51年。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "109,846 patients from 25 unique studies were included. Over a follow-up duration of 3.48 ± 1.51 (1.55 to 5.47) years, GLP-1RA reduced the risk of total MI (RR: 0.86, p < 0.01), with numbers needed to benefit (NNTB) of 207 to prevent one event of MI.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP-1RA reduced cardiovascular mortality with a risk ratio (RR) of 0.87 (p < 0.01) and a number needed to benefit (NNTB) of 170 to prevent one event of cardiovascular mortality over a follow-up of 3.48 ± 1.51 years.",
+  "fact_zh": "GLP-1RA将心血管死亡的风险比（RR）降低了0.87（p < 0.01），需要治疗170人以预防一次心血管死亡事件，随访时间为3.48 ± 1.51年。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA reduced cardiovascular mortality (RR: 0.87, p < 0.01, NNTB 170), MACE (RR: 0.87, p < 0.01, NNTB 67) and stroke (RR: 0.88, p < 0.01, NNTB 335) compared to placebo.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP-1RA reduced the risk of MACE with a risk ratio (RR) of 0.87 (p < 0.01) and a number needed to benefit (NNTB) of 67 to prevent one event of MACE over a follow-up of 3.48 ± 1.51 years.",
+  "fact_zh": "GLP-1RA将主要不良心血管事件（MACE）的风险比（RR）降低了0.87（p < 0.01），需要治疗67人以预防一次MACE事件，随访时间为3.48 ± 1.51年。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA reduced cardiovascular mortality (RR: 0.87, p < 0.01, NNTB 170), MACE (RR: 0.87, p < 0.01, NNTB 67) and stroke (RR: 0.88, p < 0.01, NNTB 335) compared to placebo.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP-1RA reduced the risk of stroke with a risk ratio (RR) of 0.88 (p < 0.01) and a number needed to benefit (NNTB) of 335 to prevent one event of stroke over a follow-up of 3.48 ± 1.51 years.",
+  "fact_zh": "GLP-1RA将中风的风险比（RR）降低了0.88（p < 0.01），需要治疗335人以预防一次中风事件，随访时间为3.48 ± 1.51年。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA reduced cardiovascular mortality (RR: 0.87, p < 0.01, NNTB 170), MACE (RR: 0.87, p < 0.01, NNTB 67) and stroke (RR: 0.88, p < 0.01, NNTB 335) compared to placebo.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Higher body mass index was associated with greater MI risk reduction (β: -0.09, p = 0.03) in GLP-1RA users.",
+  "fact_zh": "较高的体重指数与GLP-1RA使用者的心肌梗死（MI）风险降低相关（β: -0.09，p = 0.03）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Higher body mass index was associated with greater MI risk reduction (β: -0.09, p = 0.03) in GLP-1RA users.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP-1RA commonly resulted in gastrointestinal side-effects amongst other systems (RR: 1.55, p < 0.01, NNTH 9).",
+  "fact_zh": "GLP-1RA在其他系统中常见胃肠道副作用（RR: 1.55，p < 0.01，NNTH 9）。",
+  "kind": "safety",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA commonly resulted in gastrointestinal side-effects amongst other systems (RR: 1.55, p < 0.01, NNTH 9).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The number needed to treat (NNT) for GLP-1RA to prevent one event of MI was 207 over a follow-up of 3.48 ± 1.51 years.",
+  "fact_zh": "GLP-1RA在3.48 ± 1.51年随访期间预防一次心肌梗死（MI）事件所需的治疗人数（NNT）为207。",
+  "kind": "finding",
+  "pid": 30,
+  "sec": "Results / Number needed to treat",
+  "page": null,
+  "quote": "The current results show that number needed to benefit (NNTB) was 207 (95%CI: NNTB 129 to NNTB 620, Follow-up time: 3.48 ± 1.51 years) for total MI,",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The number needed to treat (NNT) for GLP-1RA to prevent one event of MACE was 67 over a follow-up of 3.48 ± 1.51 years.",
+  "fact_zh": "GLP-1RA在3.48 ± 1.51年随访期间预防一次主要不良心血管事件（MACE）所需的治疗人数（NNT）为67。",
+  "kind": "finding",
+  "pid": 30,
+  "sec": "Results / Number needed to treat",
+  "page": null,
+  "quote": "NNTB 67 (95%CI: NNTB 46 to NNTB 135, Follow-up time: 3.48 ± 1.51 years) for MACE,",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The number needed to treat (NNT) for GLP-1RA to prevent one event of cardiovascular mortality was 170 over a follow-up of 3.48 ± 1.51 years.",
+  "fact_zh": "GLP-1RA在3.48 ± 1.51年随访期间预防一次心血管死亡事件所需的治疗人数（NNT）为170。",
+  "kind": "finding",
+  "pid": 30,
+  "sec": "Results / Number needed to treat",
+  "page": null,
+  "quote": "NNTB 170 (95%CI: NNTB 120 to NNTB 306, Follow-up time: 3.48 ± 1.51 years) for cardiovascular mortality,",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The number needed to treat (NNT) for GLP-1RA to prevent one event of coronary revascularization was 93 over a follow-up of 3.45 ± 1.21 years.",
+  "fact_zh": "GLP-1RA在3.45 ± 1.21年随访期间预防一次冠状动脉血运重建事件所需的治疗人数（NNT）为93。",
+  "kind": "finding",
+  "pid": 30,
+  "sec": "Results / Number needed to treat",
+  "page": null,
+  "quote": "NNTB 93 (95%CI: NNTB 52 to NNTB 1717, Follow-up time: 3.45 ± 1.21 years) for coronary revascularization.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In the secondary prevention population, GLP-1RA led to a significant reduction in unstable angina events (RR: 0.88, 95%CI: 0.82 to 0.95, p = 0.03) compared to placebo.",
+  "fact_zh": "在二级预防人群中，与安慰剂相比，GLP-1RA显著减少了不稳定型心绞痛事件（RR: 0.88，95%CI: 0.82至0.95，p = 0.03）。",
+  "kind": "finding",
+  "pid": 36,
+  "sec": "Results / Efficacy / Sensitivity analysis based on prior ASCVD",
+  "page": null,
+  "quote": "In the secondary prevention population, the use of GLP-1RA led to significant reduction in unstable angina events (RR: 0.88, 95%CI: 0.82 to 0.95, p = 0.03) and coronary revascularization (RR: 0.78, 95%CI: 0.69 to 0.87, p < 0.01) compared to placebo.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In the secondary prevention population, GLP-1RA led to a significant reduction in coronary revascularization events (RR: 0.78, 95%CI: 0.69 to 0.87, p < 0.01) compared to placebo.",
+  "fact_zh": "在二级预防人群中，与安慰剂相比，GLP-1RA显著减少了冠状动脉血运重建事件（RR: 0.78，95%CI: 0.69至0.87，p < 0.01）。",
+  "kind": "finding",
+  "pid": 36,
+  "sec": "Results / Efficacy / Sensitivity analysis based on prior ASCVD",
+  "page": null,
+  "quote": "In the secondary prevention population, the use of GLP-1RA led to significant reduction in unstable angina events (RR: 0.88, 95%CI: 0.82 to 0.95, p = 0.03) and coronary revascularization (RR: 0.78, 95%CI: 0.69 to 0.87, p < 0.01) compared to placebo.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP-1RA significantly reduced the rates of MACE (RR: 0.87, 95%CI: 0.80 to 0.93, p < 0.01) compared to placebo.",
+  "fact_zh": "与安慰剂相比，GLP-1RA显著降低了主要不良心血管事件（MACE）的发生率（RR: 0.87，95%CI: 0.80至0.93，p < 0.01）。",
+  "kind": "finding",
+  "pid": 33,
+  "sec": "Results / Efficacy / Comparison to placebo",
+  "page": null,
+  "quote": "GLP-1RA significantly reduced the rates of most outcomes, including total MI (RR: 0.86, 95%I 0.78 to 0.95, p < 0.01), non-fatal MI (RR: 0.87, 95%CI: 0.79 to 0.97, p = 0.02), MACE (RR: 0.87, 95%CI: 0.80 to 0.93, p < 0.01), stroke (RR: 0.88, 95%CI: 0.82 to 0.94, p < 0.01), rates of coronary revascularization (RR: 0.85, 95CI: 0.72 to 0.99, p = 0.04) and cardiovascular mortality (RR: 0.87, 95%CI: 0.82 to 0.93, p < 0.01).",
+  "score": 1.0,
+  "verified": true
+ }
+]

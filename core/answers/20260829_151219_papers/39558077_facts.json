@@ -1,0 +1,222 @@
+[
+ {
+  "fact": "Human adipose tissue retains transcriptional changes after bariatric surgery-induced weight loss, with adipocytes showing the strongest retention of downregulated genes.",
+  "fact_zh": "人类脂肪组织在减重手术诱导的体重减轻后保留转录变化，脂肪细胞显示出下调基因的最强保留。",
+  "kind": "finding",
+  "pid": 10,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "These results indicate that obesity induces cellular and transcriptional (obesogenic) changes in the AT, which are not resolved following significant WL.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In human omental adipose tissue, 25% of individuals who underwent bariatric surgery lost at least 25% of their body mass index (BMI).",
+  "fact_zh": "在人类网膜脂肪组织中，接受减重手术的25%个体至少减少了25%的体重指数（BMI）。",
+  "kind": "finding",
+  "pid": 7,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "Only patients exhibiting a minimum of 25% body mass index (BMI) reduction were included into our study",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In human subcutaneous adipose tissue, 25% of individuals who underwent bariatric surgery lost at least 25% of their body mass index (BMI).",
+  "fact_zh": "在人类皮下脂肪组织中，接受减重手术的25%个体至少减少了25%的体重指数（BMI）。",
+  "kind": "finding",
+  "pid": 8,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "including only patients exhibiting a minimum of 25% BMI reduction",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In human omental adipose tissue, adipocytes retained the highest number of differentially expressed genes (DEGs) after weight loss compared to other cell types.",
+  "fact_zh": "在人类网膜脂肪组织中，与其它细胞类型相比，脂肪细胞在体重减轻后保留了最多的差异表达基因（DEGs）。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "the absolute number of retained DEGs from T0 to T1 was highest in these cell types as well",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In human omental adipose tissue, genes such as IGF1, LPIN1, IDH1, and PDE3A were among the downregulated genes retained after weight loss.",
+  "fact_zh": "在人类网膜脂肪组织中，IGF1、LPIN1、IDH1和PDE3A等基因是体重减轻后保留的下调基因。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "including relevant metabolic genes 38–41 such as IGF1, LPIN1, IDH1 or PDE3A",
+  "score": 0.91,
+  "verified": true
+ },
+ {
+  "fact": "In human subcutaneous adipose tissue, genes such as IGF1, DUSP1, GPX3, and GLUL were among the downregulated genes retained after weight loss.",
+  "fact_zh": "在人类皮下脂肪组织中，IGF1、DUSP1、GPX3和GLUL等基因是体重减轻后保留的下调基因。",
+  "kind": "finding",
+  "pid": 10,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "including relevant metabolic genes 38, 42–44 such as IGF1, DUSP1, GPX3 and GLUL",
+  "score": 0.85,
+  "verified": true
+ },
+ {
+  "fact": "In human omental adipose tissue, pathways related to adipocyte metabolism and function were persistently downregulated after weight loss.",
+  "fact_zh": "在人类网膜脂肪组织中，与脂肪细胞代谢和功能相关的通路在体重减轻后持续下调。",
+  "kind": "finding",
+  "pid": 10,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "persistent downregulation of pathways linked to adipocyte metabolism and function",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In human omental adipose tissue, pathways related to fibrosis and apoptosis were persistently upregulated after weight loss.",
+  "fact_zh": "在人类网膜脂肪组织中，与纤维化和凋亡相关的通路在体重减轻后持续上调。",
+  "kind": "finding",
+  "pid": 10,
+  "sec": "Transcriptional changes in human AT",
+  "page": null,
+  "quote": "persistent upregulation of pathways linked to fibrosis (related to TGFβ signalling) and apoptosis",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, weight loss partially restored glucose tolerance in HC mice but not in HHC mice.",
+  "fact_zh": "在小鼠中，体重减轻部分恢复了HC小鼠的葡萄糖耐受性，但未恢复HHC小鼠的葡萄糖耐受性。",
+  "kind": "finding",
+  "pid": 19,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "WL restored insulin sensitivity in HHC mice, whereas HC mice still showed impaired glucose tolerance",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, weight loss normalized fasting blood glucose levels in both HC and HHC groups to control levels.",
+  "fact_zh": "在小鼠中，体重减轻使HC和HHC组的空腹血糖水平恢复正常水平。",
+  "kind": "finding",
+  "pid": 19,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "Fasting blood glucose levels were normalized by WL in both groups, matching those of control mice",
+  "score": 0.85,
+  "verified": true
+ },
+ {
+  "fact": "In mice, weight loss partially resolved hyperinsulinemia in HC mice but only diminished it in HHC mice.",
+  "fact_zh": "在小鼠中，体重减轻部分缓解了HC小鼠的高胰岛素血症，但在HHC小鼠中仅有所减轻。",
+  "kind": "finding",
+  "pid": 19,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "hyperinsulinemia was resolved in HC mice, but only diminished in HHC mice",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, weight loss normalized liver triglyceride accumulation in HC and most HHC mice to control levels.",
+  "fact_zh": "在小鼠中，体重减轻使HC和大多数HHC小鼠的肝脏甘油三酯积累恢复正常水平。",
+  "kind": "finding",
+  "pid": 20,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "Liver triglyceride accumulation was normalized (to control levels) in HC, and most HHC, mice.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, weight loss did not result in a significant decrease in lean mass in HC mice.",
+  "fact_zh": "在小鼠中，体重减轻并未导致HC小鼠的瘦体重显著减少。",
+  "kind": "finding",
+  "pid": 57,
+  "sec": "Metabolic memory primes adipocytes",
+  "page": null,
+  "quote": "HC mice did not lose lean mass",
+  "score": 0.55,
+  "verified": true
+ },
+ {
+  "fact": "In mice, obese H mice had larger subcutaneous inguinal adipose tissue (ingAT), epididymal adipose tissue (epiAT), and brown adipose tissue (BAT) depots than control mice.",
+  "fact_zh": "在小鼠中，肥胖的H小鼠的皮下腹股沟脂肪组织（ingAT）、附睾脂肪组织（epiAT）和棕色脂肪组织（BAT）储库比对照小鼠更大。",
+  "kind": "finding",
+  "pid": 20,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "Obese H mice had larger subcutaneous inguinal AT (ingAT), epididymal AT (epiAT) and brown AT (BAT) depots than corresponding control mice",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, weight loss normalized the size of subcutaneous inguinal adipose tissue (ingAT) and brown adipose tissue (BAT) depots in both HC and HHC groups.",
+  "fact_zh": "在小鼠中，体重减轻使HC和HHC组的皮下腹股沟脂肪组织（ingAT）和棕色脂肪组织（BAT）储库大小恢复正常。",
+  "kind": "finding",
+  "pid": 20,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "ingAT and BAT depot sizes normalized after WL",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, the epiAT of HC mice was smaller than that of controls after weight loss.",
+  "fact_zh": "在小鼠中，体重减轻后HC小鼠的epiAT比对照组小。",
+  "kind": "finding",
+  "pid": 20,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "epiAT of HC mice was smaller than that of controls after WL",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, the epiAT of HH and HHC mice showed equal adipocyte sizes, likely due to tissue shrinkage.",
+  "fact_zh": "在小鼠中，HH和HHC小鼠的epiAT脂肪细胞大小相等，可能是由于组织萎缩所致。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "adipocytes were of equal size, probably owing to the tissue shrinkage",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, the epiAT of obese H and HH mice showed immune cell infiltration and apical fibrosis, which partially improved after weight loss in HC mice but not in HHC mice.",
+  "fact_zh": "在小鼠中，肥胖的H和HH小鼠的epiAT表现出免疫细胞浸润和顶端纤维化，体重减轻后在HC小鼠中有所改善，但在HHC小鼠中未改善。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "the epiAT of obese mice (H and HH) showed immune cell infiltration and apical fibrosis, which partially improved after WL in HC, but not HHC, mice",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, weight loss resulted in increased collagen deposition in epiAT, as shown by Masson’s trichrome staining.",
+  "fact_zh": "在小鼠中，体重减轻导致epiAT中胶原沉积增加，如Masson三色染色所示。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "Masson’s trichrome staining showed more collagen deposition in epiAT after WL",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In mice, after weight loss, only mild metabolic impairments persisted, including glucose intolerance in HC mice, hyperinsulinemia and slight liver steatosis in HHC mice, and a notable decrease in epiAT depot size in both groups.",
+  "fact_zh": "在小鼠中，体重减轻后，仅存在轻微的代谢障碍，包括HC小鼠的葡萄糖不耐受、HHC小鼠的高胰岛素血症和轻微的肝脂肪变性，以及两组中epiAT储库大小的显著减少。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Pathophysiology mostly resolves after WL",
+  "page": null,
+  "quote": "Overall, after WL, only a few mild metabolic impartments persisted, including glucose intolerance in HC mice, hyperinsulinemia and slight liver steatosis in HHC mice and a notable decrease in epiAT depot size after WL in both groups.",
+  "score": 1.0,
+  "verified": true
+ }
+]

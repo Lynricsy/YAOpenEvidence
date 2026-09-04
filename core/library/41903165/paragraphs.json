@@ -1,0 +1,266 @@
+[
+ {
+  "id": 1,
+  "sec": "Abstract",
+  "page": null,
+  "text": "Does the EMPEROR-Preserved prognostic model accurately stratify risk in patients with heart failure with mildly reduced or preserved ejection fraction enrolled in the FINEARTS-HF trial, and does baseline risk modify the treatment effect of finerenone?"
+ },
+ {
+  "id": 2,
+  "sec": "Abstract",
+  "page": null,
+  "text": "In this secondary analysis of 6001 patients from the FINEARTS-HF trial, the risk model showed good discrimination and generally preserved calibration across mortality. The relative treatment effect of finerenone was consistent across all risk categories, while absolute risk reductions were greater among patients at higher baseline risk."
+ },
+ {
+  "id": 3,
+  "sec": "Abstract",
+  "page": null,
+  "text": "In this study, the EMPEROR-Preserved risk model provided a practical framework for risk stratification and estimation of absolute treatment benefit in patients with heart failure and mildly reduced or preserved ejection fraction and may support patient selection and enrichment in future clinical trials."
+ },
+ {
+  "id": 4,
+  "sec": "Introduction",
+  "page": null,
+  "text": "Over the past decade, the need for accurate risk prediction in heart failure with preserved ejection fraction (HFpEF) has grown substantially, driven by the global rise in HFpEF prevalence. 1 , 2 , 3 Beyond the risk of mortality, frequent heart failure (HF) hospitalization imposes a substantial health care and economic burden. 4 , 5 The identification of patients at highest risk is essential for optimizing resource allocation, guiding intensity of outpatient surveillance (including use of implantable monitors), and potentially, informing personalized therapeutic strategies in this heterogeneous syndrome."
+ },
+ {
+  "id": 5,
+  "sec": "Introduction",
+  "page": null,
+  "text": "Several prognostic models for HFpEF have recently been proposed, including the HF-DANAS 6 and ApHAC scores 7 ; however, these models are limited by the lack of adequate external validation, geographic and ethnic variability in predictive performance, and reliance on clinical variables that may not fully reflect contemporary HF therapy. General HF risk models, such as the Meta-Analysis Global Group in Chronic (MAGGIC) heart failure risk score, have also shown suboptimal accuracy when applied to patients with HFpEF. 8"
+ },
+ {
+  "id": 6,
+  "sec": "Introduction",
+  "page": null,
+  "text": "In this context, the Empagliflozin Outcome Trial in Patients With Chronic Heart Failure With Preserved Ejection Fraction (EMPEROR-Preserved) risk model, 9 developed from a large, multinational randomized clinical trial, 10 represents a contemporary tool that incorporates established prognostic biomarkers, such as N-terminal pro–B-type natriuretic peptide (NT-proBNP) and high-sensitivity cardiac troponin T (hs-cTnT), as well as information related to sodium-glucose cotransporter 2 (SGLT2) inhibitor therapy—features that distinguish it from prior models. This study aimed to evaluate the performance of the EMPEROR-Preserved model in the Finerenone Trial to Investigate Efficacy and Safety Superior to Placebo in Patients With Heart Failure (FINEARTS-HF), 11 the most recent and largest global trial in patients with HFpEF, and to assess whether baseline risk modifies the treatment effect of finerenone."
+ },
+ {
+  "id": 7,
+  "sec": "Methods / FINEARTS-HF Trial: Design and Objectives",
+  "page": null,
+  "text": "This is a prespecified secondary analysis of FINEARTS-HF, a prospective, randomized, double-blind, placebo-controlled, event-driven trial that examined the efficacy and safety of finerenone compared with placebo in patients with HF with mildly reduced ejection fraction (HFmrEF) or HFpEF. The design, baseline characteristics, and primary results are published, 11 , 12 , 13 and the trial protocol and statistical analysis plan appear in Supplement 1 . Ethics committees for the 653 participating institutions in 37 countries approved the protocol, and all patients gave written informed consent. The trial followed the Consolidated Standards of Reporting Trials ( CONSORT ) reporting guideline (eFigure 1 in Supplement 2 )."
+ },
+ {
+  "id": 8,
+  "sec": "Methods / Study Patients and Treatment",
+  "page": null,
+  "text": "Key inclusion criteria were age 40 years or older, symptomatic HF in New York Heart Association (NYHA) functional class II to IV, treatment with a diuretic for more than 30 days before randomization, and a left ventricular ejection fraction (LVEF) of 40% or greater with evidence of structural heart disease (either left atrial enlargement or left ventricular hypertrophy) measured within 12 months of screening. Patients were also required to have elevated natriuretic peptide levels (NT-proBNP >300 pg/mL [or BNP >100 pg/mL] for patients in sinus rhythm or NT-proBNP >900 pg/mL [or BNP >300 pg/mL] for patients in atrial fibrillation [to convert NT-proBNP and BNP to nanograms per liter, multiply by 1]), measured within 90 days in those with a recent worsening HF event within 90 days of randomization or measured 30 days before randomization in those without a recent worsening HF event. Both ambulatory and hospitalized patients were eligible for enrollment. Patients with prior LVEF of less than 40% with subsequent improvement to 40% or greater were also eligible for enrollment, provided that ongoing HF symptoms were present and all other inclusion criteria were satisfied."
+ },
+ {
+  "id": 9,
+  "sec": "Methods / Study Patients and Treatment",
+  "page": null,
+  "text": "Key exclusion criteria were estimated glomerular filtration rate (eGFR) of less than 25 mL/min/1.73 m 2 , serum or plasma potassium greater than 5.0 mEq/L at screening or randomization (to convert to millimoles per liter, multiply by 1), or symptomatic hypotension with mean systolic blood pressure less than 90 mm Hg at screening or randomization. A complete list of exclusion criteria is provided in the design article. 13"
+ },
+ {
+  "id": 10,
+  "sec": "Methods / Study Patients and Treatment",
+  "page": null,
+  "text": "Race was included in the analysis for reporting transparency and for readers to assess generalizability of results. Race was determined by the participant based on fixed categories. Participants who selected American Indian or Alaska Native, Native Hawaiian or Other Pacific Islander, and multiple races as well as those who did not report their racial identity were classified as belonging to additional groups."
+ },
+ {
+  "id": 11,
+  "sec": "Methods / Study Patients and Treatment",
+  "page": null,
+  "text": "Eligible participants were randomized in a 1:1 ratio to finerenone or matching placebo. The starting dose was 10 mg once daily in participants with an eGFR of 60 mL/min/1.73 m 2 or less, with a maximum maintenance dose of 20 mg once daily, whereas the starting dose was 20 mg once daily if the eGFR was greater than 60 mL/min/1.73 m 2 , with a maximum maintenance dose of 40 mg once daily."
+ },
+ {
+  "id": 12,
+  "sec": "Methods / EMPEROR-Preserved Risk Score",
+  "page": null,
+  "text": "Analysis of outcomes according to the EMPEROR-Preserved risk score was prespecified in the FINEARTS-HF academic statistical analysis plan ( Supplement 1 ). The EMPEROR-Preserved risk calculator was developed using data from 5988 participants in the EMPEROR-Preserved trial. 9 , 10 It represents a biomarker-driven prognostic model for patients with HFpEF, based on NT-proBNP and hs-cTnT measurements. The model aims to predict the composite end point of first HF hospitalization or cardiovascular (CV) death, as well as CV death and all-cause death individually. External validation was conducted in 1251 participants of the Prospective Comparison of Angiotensin Receptor–Neprilysin Inhibitor With Angiotensin-Receptor Blockers Global Outcomes in HF With Preserved Ejection Fraction (PARAGON-HF) trial in whom NT-proBNP and hs-cTnT levels had been measured at the time of randomization. 14 For the outcomes of first HF hospitalization or CV death, 8 independent factors were identified; similarly, 8 factors were identified for CV and for all-cause death (eTable 1 in Supplement 2 )."
+ },
+ {
+  "id": 13,
+  "sec": "Methods / EMPEROR-Preserved Risk Score",
+  "page": null,
+  "text": "In this analysis, the EMPEROR-Preserved risk score was calculated as the sum of values obtained by multiplying each variable included in the model by its respective β coefficient. Baseline survival rates were estimated using constants derived from the EMPEROR-Preserved trial, which served as the derivation cohort. In the present analysis, we applied this model to estimate risk over a broader time to first composite outcome comprising CV death or worsening HF events, including urgent HF visits as well as HF hospitalization. In addition, we examined the association between this model and the primary outcome of total (first and recurrent) HF events and CV death as well as the secondary outcome of total HF events. Furthermore, using the risk model for time to first HF hospitalization or CV death, we evaluated prespecified safety outcomes, including hyperkalemia, hypokalemia, elevation of serum creatinine, and hypotension."
+ },
+ {
+  "id": 14,
+  "sec": "Methods / Statistical Analysis",
+  "page": null,
+  "text": "In the EMPEROR-Preserved risk model, albumin was the only variable that was completely missing. Details regarding missing variables are provided in eTable 2 in Supplement 2 . For these variables, median values from the EMPEROR-Preserved trial cohort were used for imputation. Patients were categorized into quintiles according to the EMPEROR-Preserved risk score. Baseline characteristics were summarized by quintiles using frequencies and percentages for categorical variables and means and SDs or medians and IQRs for continuous variables."
+ },
+ {
+  "id": 15,
+  "sec": "Methods / Statistical Analysis",
+  "page": null,
+  "text": "The incremental discrimination of the EMPEROR-Preserved risk model compared with NT-proBNP–only or hs-cTnT–only models was evaluated using Harrell C statistic and the continuous net reclassification improvement (NRI). Model calibration was assessed by comparing observed and estimated 2-year event risks across quintiles of predicted risk."
+ },
+ {
+  "id": 16,
+  "sec": "Methods / Statistical Analysis",
+  "page": null,
+  "text": "For each quintile of the EMPEROR-Preserved score, crude incidence rates for each outcome were calculated as events per 100 patient-years of follow-up. To assess the associations between EMPEROR-Preserved risk score quintiles and each outcome, time-to-first events were evaluated using Kaplan-Meier curves and Cox proportional hazards models, stratified by region and baseline LVEF (<60% or ≥60%) and adjusted for treatment assignment. Hazard ratios (HRs) with 95% CIs were reported. Total (first and recurrent) events were evaluated using Nelson-Aalen cumulative hazard curves and rate ratios (RRs) with 95% CIs from semiparametric proportional rates models, 15 with adjustment and stratification for the same variables mentioned previously. Incidence rates for each outcome across the spectrum of the EMPEROR-Preserved risk score were examined using a Poisson regression model with restricted cubic splines with 3 knots."
+ },
+ {
+  "id": 17,
+  "sec": "Methods / Statistical Analysis",
+  "page": null,
+  "text": "The relative effect of finerenone compared with placebo by baseline EMPEROR-Preserved risk categories was calculated as an RR with 95% CI derived from semiparametric proportional rates models for total events 15 or as a HR with 95% CI from Cox proportional hazards models for time-to–first events. All models were stratified by geographic region and baseline LVEF. The effect of finerenone on each outcome across the full spectrum of the EMPEROR-Preserved risk score was modeled using restricted cubic splines, with knots placed at points that resulted in the model with the lowest Akaike information criterion value. Absolute rate differences were estimated using a Poisson regression model with the EMPEROR-Preserved risk score included as a continuous variable, modeled using a restricted cubic spline with 3 knots. Absolute benefits of finerenone were calculated for (1) the composite outcome of total HF events and CV death and (2) total HF events, under the assumption of a constant treatment effect across the range of the baseline EMPEROR-Preserved risk score."
+ },
+ {
+  "id": 18,
+  "sec": "Methods / Statistical Analysis",
+  "page": null,
+  "text": "All statistical analyses were performed using Stata version 18 (StataCorp). A 2-sided P < .05 was considered statistically significant. Data analysis was conducted from September to October 2025."
+ },
+ {
+  "id": 19,
+  "sec": "Results",
+  "page": null,
+  "text": "Of 6001 patients enrolled in FINEARTS-HF, a total of 3003 were randomly assigned to finerenone and 2998 to placebo. The mean (SD) age was 72.0 (9.6) years, and 2732 patients (45.5%) were women. The mean (SD) LVEF was 52.6% (7.8). A total of 1854 patients (37.0%) were classified as NYHA functional class III or IV, and the median (IQR) NT-proBNP level was 1041 (449-1946) pg/mL. The median (IQR) follow-up period was 32 (23-37) months."
+ },
+ {
+  "id": 20,
+  "sec": "Results / Baseline EMPEROR-Preserved Score",
+  "page": null,
+  "text": "eFigure 2 in Supplement 2 shows the distribution of EMPEROR-Preserved risk scores for first HF hospitalization or CV death, CV death, and all-cause death. The median (IQR) EMPEROR-Preserved score for the composite outcome of first HF hospitalization or CV death was 5.4 (4.8-6.1), whereas the median (IQR) scores for CV death and all-cause death were 4.5 (4.0-5.0) and 4.2 (3.7-4.8), respectively."
+ },
+ {
+  "id": 21,
+  "sec": "Results / Patient Characteristics According to EMPEROR-Preserved Risk Score",
+  "page": null,
+  "text": "Table 1 presents the baseline characteristics of patients categorized by quintiles of risk for first HF hospitalization or CV death. Among baseline characteristics not included in the risk score, patients at the highest estimated risk were older and had lower LVEF, eGFR, body mass index, and Kansas City Cardiomyopathy Questionnaire total symptom scores as well as a higher prevalence of stroke and atrial fibrillation. Regarding background therapy, the use of β-blockers, angiotensin-converting enzyme inhibitors, angiotensin receptor blockers, or angiotensin receptor–neprilysin inhibitors was less frequent, whereas the use of diuretics was more common in those with the highest estimated risk. Patient characteristics by quintiles of risk for CV death and all-cause death are presented in eTables 3 and 4 in Supplement 2 . For these outcomes as well, the trends in patient characteristics across risk categories were generally consistent with those observed for the quintiles of risk for first HF hospitalization or CV death based on the EMPEROR-Preserved score."
+ },
+ {
+  "id": 22,
+  "sec": "Results / Patient Characteristics According to EMPEROR-Preserved Risk Score",
+  "page": null,
+  "text": "Table 1. Baseline Characteristics According to EMPEROR-Preserved Risk Score for CV Death or First HF Hospitalization by Quintile of Risk Score"
+ },
+ {
+  "id": 23,
+  "sec": "Results / Outcomes Related to EMPEROR-Preserved Risk Scores",
+  "page": null,
+  "text": "For the composite end point of first HF hospitalization or CV death, the incidence rate was 2.2 (95% CI, 1.7-2.8) per 100 patient-years in the lowest estimated-risk quintile and 25.0 (95% CI, 23.0-27.3) per 100 patient-years in the highest quintile, corresponding to a HR of 10.49 (95% CI, 8.14-13.52) ( Table 2 ; eFigure 3 in Supplement 2 ). The HR for cardiovascular death, comparing the lowest with the highest risk quintile, was 13.47 (95% CI, 8.79-20.64). When modeled as a continuous variable, the risk score demonstrated a clear, graded association with higher event risk ( Figure 1 ). A similar stepwise gradient was observed for the expanded outcomes—including total HF events and CV death, total HF events alone, and first HF event or CV death—with progressively higher event rates across high-risk-score categories ( Table 2 ; eFigure 3 in Supplement 2 ). The same pattern was evident when the score was evaluated as a continuous measure ( Figure 1 )."
+ },
+ {
+  "id": 24,
+  "sec": "Results / Outcomes Related to EMPEROR-Preserved Risk Scores",
+  "page": null,
+  "text": "For both CV death and all-cause death, higher risk scores were consistently associated with higher event rates, regardless of whether the score was modeled categorically or continuously ( Figure 1 and Table 2 ; eFigure 3 in Supplement 2 )."
+ },
+ {
+  "id": 25,
+  "sec": "Results / Outcomes Related to EMPEROR-Preserved Risk Scores",
+  "page": null,
+  "text": "Table 2. Clinical Outcomes According to Quintile of EMPEROR-Preserved Risk Score"
+ },
+ {
+  "id": 26,
+  "sec": "Results / Outcomes Related to EMPEROR-Preserved Risk Scores",
+  "page": null,
+  "text": "Figure 1. Line Graphs of Incidence Rate of Key Clinical Outcomes Across the Empagliflozin Outcome Trial in Patients with Chronic Heart Failure With Preserved Ejection Fraction (EMPEROR-Preserved) Risk Score at Baseline in the Finerenone Trial to Investigate Efficacy and Safety Superior to Placebo in Patients With Heart Failure (HF) The risks of time to cardiovascular (CV) death or first HF event, CV death and total HF events, and total HF events were assessed using the risk score for time to first HF hospitalization or cardiovascular death. Risks of cardiovascular death and all-cause death were calculated using the separate EMPEROR-Preserved risk models developed for these outcomes. Shaded areas indicate the 95% CIs."
+ },
+ {
+  "id": 27,
+  "sec": "Results / EMPEROR-Preserved Risk Model Discrimination and Calibration",
+  "page": null,
+  "text": "The composite end point of first HF hospitalization or CV death occurred in 599 patients (19.9%) in the finerenone group and 664 patients (22.1%) in the placebo group. At 2 years, the EMPEROR-Preserved risk model demonstrated superior discrimination for this composite end point compared with NT-proBNP alone, with an improvement in the C statistic, and a continuous NRI (eTable 5 in Supplement 2 ). As expected, the model also outperformed hs-cTnT alone (eTable 6 in Supplement 2 ). When stratified by risk quintiles, both observed and model-estimated risks showed a clear gradient across quintiles. Calibration was generally acceptable in the lower to middle quintiles, whereas estimated 2-year risk modestly exceeded observed risk in the highest quintile (eFigure 4 in Supplement 2 ). In a sensitivity analysis excluding the use of a term for SGLT2 inhibitor from the linear predictor, model performance was materially unchanged, with preserved risk gradients and similar calibration (eFigure 5 in Supplement 2 )."
+ },
+ {
+  "id": 28,
+  "sec": "Results / EMPEROR-Preserved Risk Model Discrimination and Calibration",
+  "page": null,
+  "text": "At 2 years, the C statistics and the continuous NRI values for CV death and all-cause death were likewise higher than those obtained using NT-proBNP alone (eTable 5 in Supplement 2 ). The model also demonstrated superior discrimination compared with hs-cTnT alone (eTable 6 in Supplement 2 ). For both CV death and all-cause death, the observed 2-year risks closely aligned with the model-estimated risks across all quintiles. A consistent, stepwise increase in risk was evident from the lowest to the highest quintile, demonstrating good calibration for both end points (eFigure 4 in Supplement 2 )."
+ },
+ {
+  "id": 29,
+  "sec": "Results / Effect of Finerenone Across the Spectrum of Baseline Risk",
+  "page": null,
+  "text": "For the composite outcome of first HF hospitalization or CV death, the relative effect of finerenone was consistent across quintiles of the EMPEROR-Preserved risk score, with hazard ratios of 0.93 (95% CI, 0.58-1.49), 1.04 (95% CI, 0.76-1.43), 0.82 (95% CI, 0.62-1.07), 0.81 (95% CI, 0.65-1.01), and 0.88 (95% CI, 0.74-1.05) from the lowest to the highest quintile ( P for interaction = .68). Similar consistency in terms of relative risk reduction across risk-score quintiles was observed for the effect of finerenone on other outcomes of interest, including the primary trial outcome ( Table 3 ). Applying the overall relative risk reduction for the primary composite outcome, analyzed as time to first event (ie, worsening HF event or CV death), to the lowest risk quintile gave an absolute reduction in risk of 3.7 per 1000 person-years (and number needed to treat of 272); by contrast, these numbers were 43.0 per 1000 person-years (and number needed to treat of 23) in the highest quintile of risk."
+ },
+ {
+  "id": 30,
+  "sec": "Results / Effect of Finerenone Across the Spectrum of Baseline Risk",
+  "page": null,
+  "text": "Table 3. Effect of Finerenone on Key Outcomes in FINEARTS-HF According to EMPEROR-Preserved Risk Score"
+ },
+ {
+  "id": 31,
+  "sec": "Results / Effect of Finerenone Across the Spectrum of Baseline Risk",
+  "page": null,
+  "text": "When analyzed as a continuous variable, the EMPEROR-Preserved risk score similarly showed no evidence of statistical heterogeneity in the relative treatment effect of finerenone across the entire risk spectrum for any outcome (eFigure 6 in Supplement 2 ). With respect to absolute risk reductions, applying the overall relative risk reduction observed in the FINEARTS-HF trial for the primary composite end point (and total HF events) demonstrated that patients at higher baseline risk derived greater absolute benefit ( Figure 2 )."
+ },
+ {
+  "id": 32,
+  "sec": "Results / Effect of Finerenone Across the Spectrum of Baseline Risk",
+  "page": null,
+  "text": "Figure 2. Line Graphs of Absolute Benefit of Finerenone Compared With Placebo Across the Empagliflozin Outcome Trial in Patients With Chronic Heart Failure With Preserved Ejection Fraction (EMPEROR-Preserved) Risk Score at Baseline These panels show the absolute benefits of finerenone across the range of EMPEROR-Preserved risk model score. The x-axis shows the EMPEROR-Preserved risk model score spectrum, and the y-axis shows the continuous rate difference for the effect of finerenone compared to placebo. The solid line represents the continuous rate difference, and the shaded areas represent the 95% CI. A rate difference less than zero indicates a benefit of finerenone over placebo. CV indicates cardiovascular death; HF, heart failure."
+ },
+ {
+  "id": 33,
+  "sec": "Results / Safety Outcomes Across the Spectrum of Baseline Risk",
+  "page": null,
+  "text": "In the placebo group, the incidences of hyperkalemia and elevated creatinine increased across higher EMPEROR-Preserved risk score quintiles. Overall, the incidences of hypotension, elevated creatinine, and hyperkalemia were higher with finerenone than with placebo, whereas the incidence of hypokalemia was lower with finerenone. However, the magnitude of these differences between the finerenone and placebo groups was consistent across all risk-score quintiles (eTable 7 in Supplement 2 )."
+ },
+ {
+  "id": 34,
+  "sec": "Discussion",
+  "page": null,
+  "text": "One of the principal findings of the present study is that the EMPEROR-Preserved risk model demonstrated robust performance in the FINEARTS-HF trial, showing good discrimination and generally preserved calibration except within the highest-risk quintile for first HF hospitalization or CV death. Importantly, high discriminative ability was maintained not only for conventional outcomes, such as all-cause death, CV death (with a more than 13-fold difference in risk between the highest and lowest risk quintiles), and first HF hospitalization or CV death, but also for extended end points incorporating total HF events—including the primary end point of FINEARTS-HF (with a 12-fold difference in risk between the highest and lowest risk quintiles)."
+ },
+ {
+  "id": 35,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Patients in FINEARTS-HF were at higher risk than those in EMPEROR-Preserved because of lower mean LVEF, higher NT-proBNP levels, and a greater prevalence of NYHA class III. Despite this, model performance for CV and all-cause death was preserved across the risk distribution. The consistency of discrimination and calibration likely reflects the substantial overlap between the factors driving elevated risk in FINEARTS-HF and the core prognostic variables incorporated into the mortality models (NT-proBNP, LVEF, and NYHA class). As a result, estimated absolute risks rose proportionally with observed event rates, maintaining model accuracy even in the higher-risk population."
+ },
+ {
+  "id": 36,
+  "sec": "Discussion",
+  "page": null,
+  "text": "In contrast, outcomes involving HF hospitalization showed a modest overestimation of risk in the highest-risk quintile. The EMPEROR-Preserved risk model incorporates time since the most recent HF hospitalization (<3 months or 3-6 months) as a strong prognostic factor; however, in FINEARTS-HF, approximately 80% of patients in the highest-risk quintile met these criteria, resulting in a uniform addition of risk across this group. This uniform increase in the linear predictor may have disproportionately inflated estimated risk in patients with already advanced clinical profiles."
+ },
+ {
+  "id": 37,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Comparison with the Prognostic Models for Mortality and Morbidity in HFpEF (PREDICT-HFpEF) model offers an additional perspective. We previously developed the PREDICT-HFpEF model using data from the Dapagliflozin Evaluation to Improve the Lives of Patients With Preserved Ejection Fraction Heart Failure (DELIVER) trial, externally validated it in PARAGON-HF and I-Preserve, 16 and subsequently evaluated its performance in FINEARTS-HF. 17 Although PREDICT-HFpEF demonstrated good discrimination for first HF hospitalization or CV death in FINEARTS-HF—comparable with the EMPEROR-Preserved model—its ability to predict CV and all-cause death was lower ( C statistics for CV death: 0.68 vs 0.73; all-cause death: 0.69 vs 0.71). While the 2 models share numerous variables, a key distinction is the inclusion of hs-cTnT in the EMPEROR-Preserved model but not in PREDICT-HFpEF. In EMPEROR-Preserved, hs-cTnT had the strongest association with all-cause death and second only to NT-proBNP for CV death, underscoring its critical role in mortality risk estimation. 9"
+ },
+ {
+  "id": 38,
+  "sec": "Discussion",
+  "page": null,
+  "text": "The importance of hs-cTnT is supported by prior evidence. 18 , 19 , 20 Although prognostic data regarding hs-cTnT in patients with HFmrEF or HFpEF have been limited, the PARAGON-HF trial demonstrated that elevated hs-cTnT was an independent predictor of CV death. 14 These mechanistic insights align with the superior mortality risk discrimination observed with the EMPEROR-Preserved model."
+ },
+ {
+  "id": 39,
+  "sec": "Discussion",
+  "page": null,
+  "text": "More broadly, given the heterogeneity of HFpEF, the present findings underscore the limitations of relying on a single clinical indicator for risk stratification. In the placebo group of EMPEROR-Preserved, event rates for first HF hospitalization or CV death differed more than 11-fold between the highest and lowest quintiles of the risk score—far exceeding the discriminatory capacity of traditional univariable markers such as age, sex, NT-proBNP, NYHA class, or diabetes."
+ },
+ {
+  "id": 40,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Another important finding of this study is that the relative risk reduction with finerenone was consistent across the full spectrum of baseline risk, whereas the absolute risk reduction was greater among patients at higher risk. These observations are consistent with post hoc analyses from DELIVER, PARAGON-HF, and other major HFpEF trials, 21 , 22 demonstrating that patients with higher biochemical and clinical risk derive larger absolute benefits from evidence-based therapies."
+ },
+ {
+  "id": 41,
+  "sec": "Discussion",
+  "page": null,
+  "text": "The inclusion of a term for SGLT2 inhibitor use in the original risk model warrants careful consideration, particularly given the distinction between causal treatment effects observed in randomized clinical trials and prescribing patterns in routine clinical practice. In EMPEROR-Preserved, treatment allocation was randomized, and the corresponding coefficient reflects a causal reduction in risk. In contrast, in observational settings, SGLT2 inhibitor use may be associated with higher baseline risk because clinicians preferentially prescribe these agents to higher-risk patients. Importantly, risk prediction models are designed to optimize prognostic discrimination rather than to estimate causal treatment effects. In our sensitivity analyses excluding the SGLT2 inhibitor term, discrimination, calibration, and risk gradients were materially unchanged, indicating that inclusion of this variable does not meaningfully compromise model performance or transportability. Although SGLT2 inhibitor use has increased substantially in contemporary practice, these findings suggest that the predictive framework remains robust across evolving background therapy patterns."
+ },
+ {
+  "id": 42,
+  "sec": "Discussion",
+  "page": null,
+  "text": "Taken together, these results suggest that the EMPEROR-Preserved risk model may serve as a valuable clinical tool—supporting estimation of absolute treatment benefit with finerenone, identification of patients with HFmrEF or HFpEF requiring intensified management and follow-up, as well as optimization of patient selection in future HFmrEF and HFpEF clinical trials."
+ },
+ {
+  "id": 43,
+  "sec": "Discussion / Limitations",
+  "page": null,
+  "text": "This study has several limitations. First, the possibility of residual confounding or unmeasured heterogeneity across subgroups cannot be excluded. Furthermore, the subgroup interaction analyses were underpowered, raising the possibility that true effect modification may exist. Second, the study patients were derived from a randomized clinical trial with stringent inclusion and exclusion criteria. This selective enrollment may limit the generalizability of our findings to the broader population of patients with HFmrEF and HFpEF. Finally, one laboratory variable required for the EMPEROR-Preserved risk score was unavailable in FINEARTS-HF and was imputed using the median value from EMPEROR-Preserved. This approach may reduce variability and attenuate true associations, potentially affecting calibration and predictive performance."
+ },
+ {
+  "id": 44,
+  "sec": "Conclusions",
+  "page": null,
+  "text": "In the FINEARTS-HF trial, the EMPEROR-Preserved risk score demonstrated broad applicability across all evaluated outcomes. Baseline risk did not modify the relative treatment effect of finerenone; however, patients at higher risk experienced substantially greater absolute benefit. These findings highlight the value of the EMPEROR-Preserved score as a pragmatic tool for individualized risk stratification and estimation of absolute treatment benefit. The score may also facilitate targeted patient enrichment in future HFmrEF and HFpEF clinical trials."
+ }
+]

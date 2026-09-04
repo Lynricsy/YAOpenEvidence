@@ -1,0 +1,65 @@
+[
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Compared with placebo, allocation to an SGLT2 inhibitor reduced the risk of kidney disease progression by 37% (relative risk [RR] 0·63, 95% CI 0·58–0·69) with similar RRs in patients with and without diabetes",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "with similar RRs in patients with and without diabetes",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 31,
+  "pid": 31,
+  "sec": "Results",
+  "page": null,
+  "quote": "SGLT2 inhibitors reduced the risk of kidney disease progression by 40% (0·60, 0·53–0·69)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 9,
+  "pid": 9,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "data were limited in patients without diabetes who were eligible for inclusion",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 13,
+  "pid": 13,
+  "sec": "Introduction",
+  "page": null,
+  "quote": "the inability to standardise between-trial differences in the thresholds of eGFR decrease used to define kidney disease progression within categorical composite outcomes",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 21,
+  "pid": 21,
+  "sec": "Methods / Data analysis",
+  "page": null,
+  "quote": "absence of individual participant-level data",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 25,
+  "pid": 25,
+  "sec": "Results",
+  "page": null,
+  "quote": "Two large trials [...] were excluded from meta-analyses as follow-up was less than 6 months",
+  "score": 0.81,
+  "verified": true
+ }
+]

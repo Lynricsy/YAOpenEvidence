@@ -1,0 +1,29 @@
+# Cardiovascular Effects and Tolerability of GLP-1 Receptor Agonists: A Systematic Review and Meta-Analysis of 99,599 Patients.
+
+Galli M, Benenati S, Laudani C et al. (2025) *Journal of the American College of Cardiology* Q1 SJR 9.02  
+PMID:40892610 DOI:10.1016/j.jacc.2025.08.027 PMCID:  
+source: abstract · 5 paragraphs
+
+## Abstract/Background
+
+<a id="p1"></a>**¶1** Glucagon-like peptide-1 receptor agonists (GLP-1 RAs) have demonstrated significant cardiovascular (CV) benefits, particularly in patients with diabetes mellitus, but the safety and efficacy of different GLP-1 RAs across diverse populations remain insufficiently defined.
+
+
+## Abstract/Objectives
+
+<a id="p2"></a>**¶2** Previous meta-analyses of GLP-1 RAs have been limited by restricted populations, omission of recent trials, or incomplete safety synthesis; this study integrates the latest evidence across 21 randomized controlled trials and diverse populations using advanced meta-analytic methods.
+
+
+## Abstract/Methods
+
+<a id="p3"></a>**¶3** Randomized controlled trials comparing GLP-1 RAs vs controls or placebo were included. Analyses were conducted in prespecified subgroups based on the GLP-1 RA used. Prespecified subgroups according to diabetes mellitus, kidney function, obesity, or heart failure were also performed. Main outcomes comprised mortality (all-cause and CV), trial-defined major adverse cardiovascular events (MACE) and serious adverse events. GRADE (Grading of Recommendations Assessment, Development and Evaluation) and trial sequential analyses were performed to evaluate certainty and conclusiveness of findings, respectively.
+
+
+## Abstract/Results
+
+<a id="p4"></a>**¶4** A total of 21 trials encompassing 99,599 patients were included. Eight different GLP-1 RAs were used (lixisenatide, liraglutide, exenatide, semaglutide, efpeglenatide, dulaglutide, albiglutide, and tirzepatide), each administered at therapeutic doses and compared vs placebo or controls. Mean follow-up duration was 2.4 years. We found conclusive, high-certainty evidence that GLP-1 RAs reduced all-cause death (incidence rate ratio [IRR]: 0.88; 95% CI: 0.84-0.92; needed to treat [NNT] = 121), CV death (IRR: 0.87; 95% CI: 0.81-0.92; NNT = 170), and MACE (IRR: 0.87; 95% CI: 0.83-0.91; NNT = 66), compared with controls. GLP-1 RAs reduced serious adverse events (-9%), myocardial infarction (-15%), acute kidney failure (-9%), heart failure (-15%), and infections (-10%), but increased gastrointestinal (+63%) and gallbladder (+26%) disorders. There were no differences in stroke, pancreatitis, or neoplasm between groups. Results were mostly consistent across subgroups. Analysis by GLP-1 RA type revealed potential differences in efficacy and safety profiles.
+
+
+## Abstract/Conclusions
+
+<a id="p5"></a>**¶5** GLP-1 RAs reduce mortality and MACE in high-risk populations, highlighting benefits beyond glycemic control. These come at increased gastrointestinal and gallbladder risks. Variation in efficacy and tolerability supports tailoring GLP-1 RA therapy to individual patient characteristics and treatment goals. (PROSPERO [GLP-1 RAs Reduce Mortality and Cardiovascular Events Across the Spectrum of Treated Patients: A Systematic Review and Meta-Analysis]; CRD420251032222).

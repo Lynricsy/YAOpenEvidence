@@ -1,0 +1,112 @@
+[
+ {
+  "fact": "Semaglutide reduced HbA1c by 0.46% of total hemoglobin (95% CI, -0.56% to -0.36%) in SGA-treated adults with schizophrenia, prediabetes, and obesity.",
+  "fact_zh": "司美格鲁肽将SGA治疗的患有精神分裂症、糖尿病前期和肥胖的成年人的HbA1c降低了0.46%（95% CI，-0.56%至-0.36%）",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "Semaglutide reduced HbA1c by 0.46% of total hemoglobin (95% CI, -0.56% to -0.36%) and body weight by 9.21 kg (95% CI, -11.68 to -6.75).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide reduced body weight by 9.21 kg (95% CI, -11.68 to -6.75) in SGA-treated adults with schizophrenia, prediabetes, and obesity.",
+  "fact_zh": "司美格鲁肽将SGA治疗的患有精神分裂症、糖尿病前期和肥胖的成年人的体重减少了9.21公斤（95% CI，-11.68至-6.75）",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "Semaglutide reduced HbA1c by 0.46% of total hemoglobin (95% CI, -0.56% to -0.36%) and body weight by 9.21 kg (95% CI, -11.68 to -6.75).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "81% of patients treated with semaglutide achieved an HbA1c less than 5.7% of total hemoglobin, compared to 19% of patients treated with placebo.",
+  "fact_zh": "接受司美格鲁肽治疗的患者中有81%实现了HbA1c低于总血红蛋白的5.7%，而接受安慰剂治疗的患者中只有19%实现了这一目标。",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "An HbA1c less than 5.7% of total hemoglobin was achieved in 81% vs 19% of patients treated with semaglutide and placebo, respectively (P < .001);",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide improved physical QoL by 3.75 points on the SF-36v2 (95% CI, 1.52-5.98; P = .001) in SGA-treated adults with schizophrenia, prediabetes, and obesity.",
+  "fact_zh": "司美格鲁肽在SGA治疗的患有精神分裂症、糖尿病前期和肥胖的成年人中，将SF-36v2的躯体健康生活质量提高了3.75分（95% CI，1.52-5.98；P = 0.001）",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "Semaglutide improved physical QoL by 3.75 points on the SF-36v2 (95% CI, 1.52-5.98; P = .001) but had no significant effect on mental QoL scores or PANSS-6 score.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "154 patients were recruited and randomized 1:1 to semaglutide or placebo in the trial.",
+  "fact_zh": "试验中招募了154名患者，并按1:1的比例随机分配到司美格鲁肽或安慰剂组。",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "A total of 154 patients were recruited and randomized 1:1 to semaglutide or placebo (87 female participants (56.5%); mean [SD] age, 38.3 [10.7] years).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "141 (91.5%) of the 154 randomized patients completed the trial.",
+  "fact_zh": "154名随机分组的患者中有141人（91.5%）完成了试验。",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "Of 154 randomized patients, 141 (91.5%) completed the trial-74 of 77 patients randomized to semaglutide (96%) and 67 of 77 randomized to placebo (87%).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide improved high-density cholesterol by 10.81 mg/dL (95% CI, 2.70-18.53; P = .007) in SGA-treated adults with schizophrenia, prediabetes, and obesity.",
+  "fact_zh": "司美格鲁肽在SGA治疗的患有精神分裂症、糖尿病前期和肥胖的成年人中，将高密度脂蛋白胆固醇提高了10.81 mg/dL（95% CI，2.70-18.53；P = 0.007）",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "improvements in high-density cholesterol by 10.81 mg/dL (95% CI, 2.70-18.53; P = .007) and triglycerides by -29.20 mg/dL (95% CI, -55.75 to 2.65; P = .03) (to convert to millimoles per liter, multiply by 0.0113) were also observed.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide reduced triglycerides by 29.20 mg/dL (95% CI, -55.75 to 2.65; P = .03) in SGA-treated adults with schizophrenia, prediabetes, and obesity.",
+  "fact_zh": "司美格鲁肽在SGA治疗的患有精神分裂症、糖尿病前期和肥胖的成年人中，将甘油三酯降低了29.20 mg/dL（95% CI，-55.75至2.65；P = 0.03）",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "improvements in high-density cholesterol by 10.81 mg/dL (95% CI, 2.70-18.53; P = .007) and triglycerides by -29.20 mg/dL (95% CI, -55.75 to 2.65; P = .03) (to convert to millimoles per liter, multiply by 0.0113) were also observed.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide was titrated up to 1.0 mg/week over 8 weeks in the trial.",
+  "fact_zh": "在试验中，司美格鲁肽在8周内逐渐增加至每周1.0毫克。",
+  "kind": "method",
+  "pid": 4,
+  "sec": "Abstract/Intervention",
+  "page": null,
+  "quote": "Once-weekly subcutaneous semaglutide or placebo for 30 weeks; semaglutide was titrated up to 1.0 mg/week over 8 weeks.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The trial was a placebo-controlled, double-blinded randomized clinical trial conducted from January 2022 to May 2024.",
+  "fact_zh": "该试验是一项从2022年1月至2024年5月进行的安慰剂对照、双盲随机临床试验。",
+  "kind": "method",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "This placebo-controlled, double-blinded randomized clinical trial was conducted from January 2022 to May 2024, with 30 weeks of follow-up, among regional community-based mental health services in 2 regions of Denmark (Region of Southern Denmark and Region of Zealand).",
+  "score": 1.0,
+  "verified": true
+ }
+]

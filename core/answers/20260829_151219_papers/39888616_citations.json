@@ -1,0 +1,189 @@
+[
+ {
+  "claimed_pid": 13,
+  "pid": 13,
+  "sec": "Methods / Study Population",
+  "page": null,
+  "quote": "We identified adults with overweight or obesity first dispensed a GLP-1 RA between January 1, 2018, and December 31, 2023.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 13,
+  "pid": 13,
+  "sec": "Methods / Study Population",
+  "page": null,
+  "quote": "We required a BMI of 27 or higher and a weight measured in the 60 days preceding the first dispensing of a GLP-1 RA.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 13,
+  "pid": 13,
+  "sec": "Methods / Study Population",
+  "page": null,
+  "quote": "Patients with a history of type 1 diabetes, gestational diabetes, or diabetic retinopathy, as well as those with missing data on sex or with no follow-up encounters after GLP-1 RA initiation were excluded.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 21,
+  "pid": 21,
+  "sec": "Results",
+  "page": null,
+  "quote": "The mean (SD) age overall was 54.4 (13.1) years; 82 063 patients (65.4%) were female, and 43 411 patients (34.6%) were male;",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 10,
+  "pid": 10,
+  "sec": "Methods / Data Source",
+  "page": null,
+  "quote": "This study used a subset of Truveta Data. Truveta provides access to continuously updated and linked electronic health record (EHR) data from a collective of 30 US health care systems.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 21,
+  "pid": null,
+  "sec": null,
+  "page": null,
+  "quote": "Overall, 125 474 adults met inclusion criteria, including 76 524 patients (61.0%) with type 2 diabetes and 48 950 patients (39.0%) without type 2 diabetes.",
+  "score": 0.7,
+  "verified": false,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 13,
+  "pid": 8,
+  "sec": "Methods / Study Design",
+  "page": null,
+  "quote": "New users of liraglutide, injectable semaglutide, or tirzepatide (henceforth referred to as GLP-1 RAs) with overweight or obesity (regardless of type 2 diabetes) between January 1, 2018, and December 31, 2023, were included.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "In this cohort study of 125 474 patients initiating GLP-1 RAs, 46.5% of patients with and 64.8% without type 2 diabetes discontinued within 1 year; 47.3% of patients with and 36.3% without type 2 diabetes subsequently reinitiated a GLP-1 RA within 1 year.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Weight loss, income, and adverse events were significantly associated with discontinuation, while weight regain was significantly associated with reinitiation.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 8,
+  "pid": 8,
+  "sec": "Methods / Study Design",
+  "page": null,
+  "quote": "Patients were followed up for up to 2 years to assess discontinuation.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 27,
+  "pid": 27,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "On-treatment moderate or severe incident GI adverse events were associated with a higher hazard of discontinuation for patients with type 2 diabetes (HR, 1.38 [95% CI, 1.31-1.45]) and for patients without type 2 diabetes (HR, 1.19 [95% CI, 1.12-1.27]).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 24,
+  "pid": 24,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "Accounting for censoring, 53.6% (95% CI, 53.4%-53.9%) discontinued by 1 year, and 72.2% (95% CI, 71.9%-72.4%) discontinued by 2 years.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 31,
+  "pid": 31,
+  "sec": "Results / Reinitiation",
+  "page": null,
+  "quote": "Accounting for censoring, 47.3% (95% CI, 46.6%-48.0%) of patients with type 2 diabetes and 36.3% (95% CI, 35.6%-37.0%) of patients without type 2 diabetes reinitiated a GLP-1 RA within 1 year.",
+  "score": 0.94,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 9,
+  "pid": 9,
+  "sec": "Methods / Study Design",
+  "page": null,
+  "quote": "This retrospective observational cohort study followed the Strengthening the Reporting of Observational Studies in Epidemiology (STROBE) reporting guideline.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "S — Study design / 研究设计",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 10,
+  "pid": 10,
+  "sec": "Methods / Data Source",
+  "page": null,
+  "quote": "Truveta provides access to continuously updated and linked electronic health record (EHR) data from a collective of 30 US health care systems.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "S — Study design / 研究设计",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "47.3% of patients with and 36.3% without type 2 diabetes subsequently reinitiated a GLP-1 RA within 1 year.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 26,
+  "pid": 26,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "A 1% reduction in weight from baseline was associated with a 3.1% (95% CI, 2.9%-3.2%) lower hazard of discontinuation for patients with type 2 diabetes and a 3.3% (95% CI, 3.2%-3.5%) lower hazard of discontinuation for patients without type 2 diabetes.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ }
+]

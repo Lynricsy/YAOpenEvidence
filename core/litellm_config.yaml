@@ -1,0 +1,20 @@
+# LiteLLM proxy: exposes local vLLM (port 8000) as an OpenAI-compatible endpoint
+# on port 4000, including the /v1/responses API that Codex uses.
+model_list:
+  - model_name: qwen3-14b
+    litellm_params:
+      model: hosted_vllm/Qwen3-14B
+      api_base: http://127.0.0.1:8000/v1
+      api_key: EMPTY
+  - model_name: qwen3-4b
+    litellm_params:
+      model: hosted_vllm/Qwen3-4B
+      api_base: http://127.0.0.1:8000/v1
+      api_key: EMPTY
+
+litellm_settings:
+  drop_params: true
+  request_timeout: 600
+
+general_settings:
+  master_key: sk-123456

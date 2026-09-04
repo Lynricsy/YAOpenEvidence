@@ -1,0 +1,112 @@
+[
+ {
+  "fact": "Forty-five percent of patients in the EMPEROR-Preserved trial had a BMI of ≥30 kg/m2.",
+  "fact_zh": "在EMPEROR-Preserved试验中，45%的患者BMI≥30 kg/m2。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract/Methods And Results",
+  "page": null,
+  "quote": "Forty-five percent had a BMI of ≥30 kg/m2.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Empagliflozin showed a consistent treatment effect versus placebo on the primary outcome (HHF or CV death) across all BMI categories.",
+  "fact_zh": "恩格列净在所有BMI类别中对主要结局（HHF或CV死亡）显示出与安慰剂一致的治疗效果。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract/Methods And Results",
+  "page": null,
+  "quote": "there was a consistent treatment effect of empagliflozin versus placebo across the BMI categories with no formal interaction (p trend = 0.19) by BMI categories.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Empagliflozin slowed the decline in eGFR compared to placebo, with no difference across BMI categories.",
+  "fact_zh": "与安慰剂相比，恩格列净减缓了eGFR的下降，且在不同BMI类别中没有差异。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract/Methods And Results",
+  "page": null,
+  "quote": "there was no difference in the effects on secondary outcomes including total HHF (p trend = 0.19), CV death (p trend = 0.20), or eGFR slope with slower declines with empagliflozin regardless of BMI (range 1.12-1.71 ml/min/1.73 m2 relative to placebo, p trend = 0.85 for interaction)",
+  "score": 0.9,
+  "verified": true
+ },
+ {
+  "fact": "The difference in weight change between empagliflozin and placebo was -2.67 kg in the highest BMI category.",
+  "fact_zh": "在最高BMI类别中，恩格列净与安慰剂之间的体重变化差异为-2.67 kg。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Methods And Results",
+  "page": null,
+  "quote": "difference in weight change between empagliflozin and placebo was -0.59, -1.48, -1.54, -0.87, and - 2.67 kg in the lowest to highest BMI categories",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "There was a trend toward greater absolute KCCQ-CSS benefit at 32 weeks with empagliflozin at higher BMIs (p = 0.08).",
+  "fact_zh": "在较高BMI患者中，恩格列净在32周时显示出更大的绝对KCCQ-CSS获益趋势（p = 0.08）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Methods And Results",
+  "page": null,
+  "quote": "there was a trend toward greater absolute KCCQ-CSS benefit at 32 weeks with empagliflozin at higher BMIs (p = 0.08).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Empagliflozin treatment resulted in broadly consistent cardiac effects across the range of BMI in patients with HFpEF.",
+  "fact_zh": "恩格列净治疗在HFpEF患者中不同BMI范围内产生了广泛一致的心脏效应。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusions",
+  "page": null,
+  "quote": "Empagliflozin treatment resulted in broadly consistent cardiac effects across the range of BMI in patients with HFpEF.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "SGLT2i treatment yields benefit in patients with HFpEF regardless of baseline BMI.",
+  "fact_zh": "无论基线BMI如何，SGLT2i治疗对HFpEF患者均有获益。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusions",
+  "page": null,
+  "quote": "SGLT2i treatment yields benefit in patients with HFpEF regardless of baseline BMI.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study examined the effects of empagliflozin versus placebo on the primary outcome (HHF or CV death) across five BMI categories.",
+  "fact_zh": "该研究考察了恩格列净与安慰剂在五个BMI类别中对主要结局（HHF或CV死亡）的影响。",
+  "kind": "method",
+  "pid": 2,
+  "sec": "Abstract/Methods And Results",
+  "page": null,
+  "quote": "the effects of empagliflozin versus placebo on the risks for the primary outcome (hospitalization for heart failure [HHF] or cardiovascular [CV] death), change in estimated glomerular filtration rate (eGFR) slopes, change in Kansas City Cardiomyopathy Questionnaire clinical summary score (KCCQ-CSS), and secondary outcomes across baseline BMI categories (<25 kg/m2, 25 to <30 kg/m2, 30 to <35 kg/m2, 35 to <40 kg/m2 and ≥40 kg/m2) were examined",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "A meta-analysis was conducted with DELIVER data in addition to EMPEROR-Preserved data.",
+  "fact_zh": "除了EMPEROR-Preserved数据外，还使用DELIVER数据进行了荟萃分析。",
+  "kind": "method",
+  "pid": 2,
+  "sec": "Abstract/Methods And Results",
+  "page": null,
+  "quote": "and a meta-analysis conducted with DELIVER.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study population included patients with HFpEF.",
+  "fact_zh": "研究人群包括HFpEF患者。",
+  "kind": "population",
+  "pid": 1,
+  "sec": "Abstract/Aims",
+  "page": null,
+  "quote": "Whether BMI modifies benefits of sodium-glucose cotransporter 2 inhibitors (SGLT2i) in heart failure with preserved ejection fraction (HFpEF) requires further investigation.",
+  "score": 1.0,
+  "verified": true
+ }
+]

@@ -1,0 +1,26 @@
+[
+ {
+  "id": 1,
+  "sec": "Abstract/Background",
+  "page": null,
+  "text": "Hyperkalemia increases risk of cardiac arrhythmias and death and limits the use of renin-angiotensin-aldosterone system inhibitors and mineralocorticoid receptor antagonists, which improve clinical outcomes in people with chronic kidney disease or systolic heart failure. Sodium-glucose cotransporter 2 (SGLT2) inhibitors reduce the risk of cardiorenal events in people with type 2 diabetes at high cardiovascular risk or with chronic kidney disease. However, their effect on hyperkalemia has not been systematically evaluated."
+ },
+ {
+  "id": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "text": "A meta-analysis was conducted using individual participant data from randomized, double-blind, placebo-controlled clinical outcome trials with SGLT2 inhibitors in people with type 2 diabetes at high cardiovascular risk or with chronic kidney disease in whom serum potassium levels were routinely measured. The primary outcome was time to serious hyperkalemia, defined as central laboratory-determined serum potassium ≥6.0 mmol/L, with other outcomes including investigator-reported hyperkalemia events and hypokalemia (serum potassium ≤3.5 mmol/L). Cox regression analyses were performed to estimate treatment effects from each trial with hazards ratios and corresponding 95% CIs pooled with random-effects models to obtain summary treatment effects, overall and across key subgroups."
+ },
+ {
+  "id": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "text": "Results from 6 trials were included comprising 49 875 participants assessing 4 SGLT2 inhibitors. Of these, 1754 participants developed serious hyperkalemia, and an additional 1119 investigator-reported hyperkalemia events were recorded. SGLT2 inhibitors reduced the risk of serious hyperkalemia (hazard ratio, 0.84 [95% CI, 0.76-0.93]), an effect consistent across studies (Pheterogeneity=0.71). The incidence of investigator-reported hyperkalemia was also lower with SGLT2 inhibitors (hazard ratio, 0.80 [95% CI, 0.68-0.93]; Pheterogeneity=0.21). Reductions in serious hyperkalemia were observed across a range of subgroups, including baseline kidney function, history of heart failure, and use of renin-angiotensin-aldosterone system inhibitor, diuretic, and mineralocorticoid receptor antagonist. SGLT2 inhibitors did not increase the risk of hypokalemia (hazard ratio, 1.04 [95% CI, 0.94-1.15]; Pheterogeneity=0.42)."
+ },
+ {
+  "id": 4,
+  "sec": "Abstract/Conclusions",
+  "page": null,
+  "text": "SGLT2 inhibitors reduce the risk of serious hyperkalemia in people with type 2 diabetes at high cardiovascular risk or with chronic kidney disease without increasing the risk of hypokalemia."
+ }
+]

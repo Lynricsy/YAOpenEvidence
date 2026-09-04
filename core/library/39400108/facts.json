@@ -1,0 +1,112 @@
+[
+ {
+  "fact": "Heart failure with preserved ejection fraction (HFpEF) comprises 40%–50% of newly diagnosed heart failure cases.",
+  "fact_zh": "射血分数保留的心力衰竭（HFpEF）占新诊断心力衰竭病例的40%至50%。",
+  "kind": "finding",
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Heart failure (HF) is a highly prevalent disease, among the primary factors contributing to morbidity and death. One of its types is heart failure with preserved ejection fraction (HFpEF) comprising 40%–50% of newly diagnosed HF cases.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "SGLT2 inhibitors decreased the risk of cardiovascular hospitalization and kidney injury in HFpEF patients.",
+  "fact_zh": "SGLT2抑制剂降低了HFpEF患者心血管住院和肾脏损伤的风险。",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "However, different SGLT2 inhibitors lead to a decreased risk of cardiovascular hospitalization and kidney injury.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "SGLT2 inhibitors showed a decreased risk of cardiovascular hospitalization but not death due to cardiovascular causes or other causes in HFpEF patients.",
+  "fact_zh": "SGLT2抑制剂在HFpEF患者中显示出降低心血管住院风险，但未降低心血管原因或其他原因导致的死亡风险。",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Our meta-analysis showed a decreased risk of cardiovascular hospitalization but not death due to cardiovascular causes or other causes.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The included studies were of moderate to high quality.",
+  "fact_zh": "纳入的研究质量为中等至高。",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "The included studies were of moderate to high quality.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "SGLT2 inhibitors have been proven to be a safe and effective medication for HFpEF patients.",
+  "fact_zh": "SGLT2抑制剂已被证明对HFpEF患者是安全有效的药物。",
+  "kind": "finding",
+  "pid": 7,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "For individuals with HFpEF, SGLT2 inhibitors have been proven to be a safe and effective medication.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Eight studies with 16,509 participants were included in the analysis.",
+  "fact_zh": "分析纳入了8项研究，共16,509名参与者。",
+  "kind": "finding",
+  "pid": 6,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "We included 8 studies with 16,509 participants.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The pooled studies analysis showed statistically significant results between SGLT2i group and placebo group favoring SGLT2i group for cardiovascular death or hospitalization for HF (Mean Difference (MD) = 0.78; 95% CI = (0.72–0.85)).",
+  "fact_zh": "合并研究分析显示，SGLT2i组与安慰剂组在心血管死亡或HF住院方面有统计学意义的结果，SGLT2i组更优（均值差异（MD）= 0.78；95% CI = (0.72–0.85))。",
+  "kind": "finding",
+  "pid": 30,
+  "sec": "Results / Main outcomes / Cardiovascular death or hospitalization for HF",
+  "page": null,
+  "quote": "Pooled studies analysis showed statistically significant results between SGLT2i group and placebo group favoring SGLT2i group (Mean Difference (MD) = 0.78; 95% CI = (0.72–0.85)).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The pooled studies analysis showed statistically significant results between SGLT2i group and placebo group favoring SGLT2i group for HF hospitalization (MD = 0.74; 95% CI = (0.67–0.83)).",
+  "fact_zh": "合并研究分析显示，SGLT2i组与安慰剂组在HF住院方面有统计学意义的结果，SGLT2i组更优（MD = 0.74；95% CI = (0.67–0.83))。",
+  "kind": "finding",
+  "pid": 33,
+  "sec": "Results / Main outcomes / HF hospitalization",
+  "page": null,
+  "quote": "Pooled studies analysis showed statistically significant results between the SGLT2i group and the placebo group favoring the SGLT2i group (MD = 0.74; 95% CI = (0.67–0.83)).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The effect of SGLT2i on the incidence of primary outcome events was generally consistent across prespecified subgroups, including estimated glomerular filtration rate (eGFR; CKD-EPI) at baseline, systolic blood pressure (SBP), atrial fibrillation or flutter, diabetes mellitus, sex, body mass index (BMI), NYHA, NT-proBNP, and overall race.",
+  "fact_zh": "SGLT2i对主要结局事件发生率的影响在预设亚组中总体一致，包括基线估计肾小球滤过率（eGFR；CKD-EPI）、收缩压（SBP）、心房颤动或扑动、糖尿病、性别、体重指数（BMI）、NYHA、NT-proBNP和总体种族。",
+  "kind": "finding",
+  "pid": 36,
+  "sec": "Results / Prespecified analysis of main outcomes",
+  "page": null,
+  "quote": "The effect of SGLT2i on the incidence of primary outcome events was generally consistent across prespecified subgroups, including estimated glomerular filtration rate (eGFR; CKD-EPI) at baseline, systolic blood pressure (SBP), atrial fibrillation or flutter, diabetes mellitus, sex, body mass index (BMI), NYHA, NT-proBNP, and overall race.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The pooled studies analysis showed statistically significant results between patients with eGFR ⩾60 ml/min/1.73 m2 and those with eGFR < 60 ml/min/1.73 m2 favoring the SGLT2i group (MD = 0.80; 95% CI = (0.74–0.88)).",
+  "fact_zh": "合并研究分析显示，eGFR ⩾60 ml/min/1.73 m2患者与eGFR < 60 ml/min/1.73 m2患者相比，SGLT2i组更优（MD = 0.80；95% CI = (0.74–0.88))。",
+  "kind": "finding",
+  "pid": 39,
+  "sec": "Results / Prespecified analysis of main outcomes / eGFR (CKD-EPI) at baseline",
+  "page": null,
+  "quote": "Overall pooled studies analysis showed statistically significant results between patients with eGFR ⩾60 ml/min/1.73 m2 and those with eGFR < 60 ml/min/1.73 m2 favoring the SGLT2i group (MD = 0.80; 95% CI = (0.74–0.88)).",
+  "score": 0.96,
+  "verified": true
+ }
+]

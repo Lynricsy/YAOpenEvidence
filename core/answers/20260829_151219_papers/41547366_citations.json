@@ -1,0 +1,90 @@
+[
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1 receptor agonists (eg, liraglutide and semaglutide) and the dual glucose-dependent insulinotropic polypeptide (GIP) and GLP-1 receptor co-agonist tirzepatide have been approved for treatment of obesity",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "the dual glucose-dependent insulinotropic polypeptide (GIP) and GLP-1 receptor co-agonist tirzepatide",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1 receptor agonists (eg, liraglutide and semaglutide)",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "clinical trials establishing benefits for various obesity-related conditions",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1 receptor agonists reduce risks for major adverse cardiovascular events (eg, non-fatal myocardial infarction, stroke, and cardiovascular death)",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "and the risk of admission to or treatment within hospital for heart failure",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "However, some clinical development programmes have a high burden of adverse gastrointestinal events",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Limitations stated by the authors",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "and dose-escalation regimens should be optimised to reach acceptable tolerability",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Limitations stated by the authors",
+  "key_finding": false
+ }
+]

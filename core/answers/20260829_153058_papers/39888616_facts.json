@@ -1,0 +1,178 @@
+[
+ {
+  "fact": "Among 125,474 patients initiating GLP-1 RAs, 46.5% of patients with type 2 diabetes and 64.8% without type 2 diabetes discontinued within 1 year.",
+  "fact_zh": "在125,474名开始使用GLP-1 RA的患者中，有46.5%的2型糖尿病患者和64.8%的非2型糖尿病患者在1年内停药。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "46.5% of patients with and 64.8% without type 2 diabetes discontinued within 1 year",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Among 125,474 patients initiating GLP-1 RAs, 47.3% of patients with type 2 diabetes and 36.3% without type 2 diabetes reinitiated a GLP-1 RA within 1 year.",
+  "fact_zh": "在125,474名开始使用GLP-1 RA的患者中，有47.3%的2型糖尿病患者和36.3%的非2型糖尿病患者在1年内重新开始使用GLP-1 RA。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "47.3% of patients with and 36.3% without type 2 diabetes subsequently reinitiated a GLP-1 RA within 1 year",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Discontinuation rates were significantly lower for patients with type 2 diabetes (46.5% by 1 year and 64.1% by 2 years) compared with patients without type 2 diabetes (64.8% by 1 year and 84.4% by 2 years).",
+  "fact_zh": "与没有2型糖尿病的患者相比，2型糖尿病患者的停药率显著较低（1年内46.5%，2年内64.1% vs 1年内64.8%，2年内84.4%）。",
+  "kind": "finding",
+  "pid": 24,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "Discontinuation rates were significantly lower for patients with type 2 diabetes (46.5% [95% CI, 46.2%-46.9%] by 1 year and 64.1% [95% CI, 63.7%-64.5%] by 2 years) compared with patients without type 2 diabetes (64.8% [95% CI, 64.4%-65.2%] by 1 year and 84.4% [95% CI, 84.0%-84.8%] by 2 years) (Figure 1 A).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "A 1% reduction in weight from baseline was associated with a 3.1% lower hazard of discontinuation for patients with type 2 diabetes and a 3.3% lower hazard of discontinuation for patients without type 2 diabetes.",
+  "fact_zh": "基线体重减少1%与2型糖尿病患者停药风险降低3.1%以及非2型糖尿病患者停药风险降低3.3%相关。",
+  "kind": "finding",
+  "pid": 26,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "A 1% reduction in weight from baseline was associated with a 3.1% (95% CI, 2.9%-3.2%) lower hazard of discontinuation for patients with type 2 diabetes and a 3.3% (95% CI, 3.2%-3.5%) lower hazard of discontinuation for patients without type 2 diabetes.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Patients 65 years of age or older were more likely to discontinue their GLP-1 RA (with type 2 diabetes: hazard ratio [HR], 1.28 [95% CI, 1.24-1.32]; without type 2 diabetes: HR, 1.18 [95% CI, 1.13-1.22]).",
+  "fact_zh": "65岁或以上的患者更有可能停用GLP-1 RA（有2型糖尿病：风险比[HR]，1.28 [95% CI，1.24-1.32]；无2型糖尿病：HR，1.18 [95% CI，1.13-1.22]）。",
+  "kind": "finding",
+  "pid": 26,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "Patients 65 years of age or older were more likely to discontinue their GLP-1 RA (with type 2 diabetes: hazard ratio [HR], 1.28 [95% CI, 1.24-1.32]; without type 2 diabetes: HR, 1.18 [95% CI, 1.13-1.22]).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Higher income was progressively associated with a lower rate of discontinuation among those with type 2 diabetes.",
+  "fact_zh": "更高的收入与2型糖尿病患者的停药率降低呈正相关。",
+  "kind": "finding",
+  "pid": 26,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "Higher income was progressively associated with a lower rate of discontinuation among those with type 2 diabetes.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "On-treatment moderate or severe incident GI adverse events were associated with a higher hazard of discontinuation for patients with type 2 diabetes (HR, 1.38 [95% CI, 1.31-1.45]) and for patients without type 2 diabetes (HR, 1.19 [95% CI, 1.12-1.27]).",
+  "fact_zh": "治疗期间出现的中度或重度胃肠道不良事件与2型糖尿病患者（HR，1.38 [95% CI，1.31-1.45]）和非2型糖尿病患者（HR，1.19 [95% CI，1.12-1.27]）的停药风险增加相关。",
+  "kind": "finding",
+  "pid": 27,
+  "sec": "Results / Discontinuation",
+  "page": null,
+  "quote": "On-treatment moderate or severe incident GI adverse events were associated with a higher hazard of discontinuation for patients with type 2 diabetes (HR, 1.38 [95% CI, 1.31-1.45]) and for patients without type 2 diabetes (HR, 1.19 [95% CI, 1.12-1.27]).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "A 1% weight gain since discontinuation was significantly associated with a 2.3% increased hazard of reinitiation for patients with type 2 diabetes and a 2.8% increased hazard of reinitiation for patients without type 2 diabetes.",
+  "fact_zh": "停药后体重增加1%与2型糖尿病患者重新开始使用GLP-1 RA的风险增加2.3%以及非2型糖尿病患者重新开始使用GLP-1 RA的风险增加2.8%显著相关。",
+  "kind": "finding",
+  "pid": 32,
+  "sec": "Results / Reinitiation",
+  "page": null,
+  "quote": "A 1% weight gain since discontinuation was significantly associated with a 2.3% (95% CI, 1.9%-2.8%) increased hazard of reinitiation for patients with type 2 diabetes and a 2.8% (95% CI, 2.4%-3.2%) increased hazard of reinitiation for patients without type 2 diabetes.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Those aged 65 years or older were significantly less likely to reinitiate their GLP-1 RA (with type 2 diabetes: HR, 0.88 [95% CI, 0.83-0.94]; without type 2 diabetes: HR, 0.73 [95% CI, 0.66-0.80]).",
+  "fact_zh": "65岁或以上的患者重新开始使用GLP-1 RA的可能性显著降低（有2型糖尿病：HR，0.88 [95% CI，0.83-0.94]；无2型糖尿病：HR，0.73 [95% CI，0.66-0.80]）。",
+  "kind": "finding",
+  "pid": 32,
+  "sec": "Results / Reinitiation",
+  "page": null,
+  "quote": "Those aged 65 years or older were significantly less likely to reinitiate their GLP-1 RA (with type 2 diabetes: HR, 0.88 [95% CI, 0.83-0.94]; without type 2 diabetes: HR, 0.73 [95% CI, 0.66-0.80]).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Among patients with income information (105,841 [84.4%]), individual income exceeded $50,000 for 33,742 of 64,650 (52.2%) with type 2 diabetes and 24,291 of 41,191 (59.0%) without type 2 diabetes.",
+  "fact_zh": "在有收入信息的患者中（105,841 [84.4%]），有52.2%的2型糖尿病患者（64,650人中有33,742人）和59.0%的非2型糖尿病患者（41,191人中有24,291人）的个人收入超过50,000美元。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Results",
+  "page": null,
+  "quote": "individual income exceeded $50 000 for 33 742 of 64 650 (52.2%) with type 2 diabetes and 24 291 of 41 191 (59.0%) without type 2 diabetes.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The median BMI at baseline was 37.3 (IQR, 33.1-42.7), with 45,751 patients (36.5%) overall classified as having class 3 obesity (BMI ≥40).",
+  "fact_zh": "基线BMI中位数为37.3（IQR，33.1-42.7），总体有45,751名患者（36.5%）被归类为3级肥胖（BMI≥40）。",
+  "kind": "finding",
+  "pid": 21,
+  "sec": "Results",
+  "page": null,
+  "quote": "The median BMI at baseline was 37.3 (IQR, 33.1-42.7), with 45 751 patients (36.5%) overall classified as having class 3 obesity (BMI ≥40).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The median time between GLP-1 RA initiation and censoring (last encounter before November 5, 2024, or 2 years, whichever occurred first) was 618 days (IQR, 470-730 days).",
+  "fact_zh": "GLP-1 RA开始使用与审查（2024年11月5日之前的最后一次接触或2年，以先发生者为准）之间的中位时间为618天（IQR，470-730天）。",
+  "kind": "finding",
+  "pid": 23,
+  "sec": "Results",
+  "page": null,
+  "quote": "The median time between GLP-1 RA initiation and censoring (last encounter before November 5, 2024, or 2 years, whichever occurred first) was 618 days (IQR, 470-730 days).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Overall, 112,634 patients (89.8%) were followed up for at least 1 year, and 48,099 (38.3%) for at least 2 years after GLP-1 RA initiation.",
+  "fact_zh": "总体而言，112,634名患者（89.8%）至少随访了1年，48,099名患者（38.3%）在GLP-1 RA开始使用后至少随访了2年。",
+  "kind": "finding",
+  "pid": 23,
+  "sec": "Results",
+  "page": null,
+  "quote": "Overall, 112 634 patients (89.8%) were followed up for at least 1 year, and 48 099 (38.3%) for at least 2 years after GLP-1 RA initiation.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study included 76,524 patients (61.0%) with type 2 diabetes and 48,950 patients (39.0%) without type 2 diabetes.",
+  "fact_zh": "该研究包括76,524名（61.0%）有2型糖尿病的患者和48,950名（39.0%）无2型糖尿病的患者。",
+  "kind": "population",
+  "pid": 21,
+  "sec": "Results",
+  "page": null,
+  "quote": "125 474 adults met inclusion criteria, including 76 524 patients (61.0%) with type 2 diabetes... and 48 950 patients (39.0%) without type 2 diabetes",
+  "score": 0.61,
+  "verified": true
+ },
+ {
+  "fact": "The study used a subset of Truveta Data, which includes electronic health record (EHR) data from 30 US health care systems.",
+  "fact_zh": "该研究使用了Truveta数据的一个子集，其中包括来自美国30个医疗系统的电子健康记录（EHR）数据。",
+  "kind": "method",
+  "pid": 10,
+  "sec": "Methods / Data Source",
+  "page": null,
+  "quote": "This study used a subset of Truveta Data. Truveta provides access to continuously updated and linked electronic health record (EHR) data from a collective of 30 US health care systems.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study used deidentified patient records and therefore did not require institutional review board approval or patient consent.",
+  "fact_zh": "该研究使用了匿名患者记录，因此不需要机构审查委员会的批准或患者同意。",
+  "kind": "method",
+  "pid": 8,
+  "sec": "Methods / Study Design",
+  "page": null,
+  "quote": "This study used only deidentified patient records and therefore did not require institutional review board approval or patient consent in accordance with the Common Rule.",
+  "score": 1.0,
+  "verified": true
+ }
+]

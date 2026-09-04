@@ -1,0 +1,90 @@
+[
+ {
+  "claimed_pid": 12,
+  "pid": 12,
+  "sec": "Results / Network meta-analysis / TBWL% at different timepoints",
+  "page": null,
+  "quote": "Semaglutide Tirzepatide Body weight TBWL (WMD, %) Endpoint (overall) 3.1 [0.7,5.5] 4.8 [3.7,5.8] 4.5 [1.0,7.9] 8.8 [8.2,9.5] 11.9 [8.1,15.7] 16.2 [11.2,21.3]",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Both tirzepatide and semaglutide showed normoglycemia restoration, remission of type 2 diabetes and reduction in hospitalization due to heart failure.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 30,
+  "pid": 30,
+  "sec": "Results / Network meta-analysis / Effects on cardiovascular morbidity and mortality",
+  "page": null,
+  "quote": "Only semaglutide was associated with a significantly lower risk for MACE, with all OMMs reporting odds ratios below 1, except for phentermine plus topiramate (odds ratio = 2.00 [0.18–22.1], P > 0.50; Supplemtnary Fig. 8b ).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 30,
+  "pid": 30,
+  "sec": "Results / Network meta-analysis / Effects on cardiovascular morbidity and mortality",
+  "page": null,
+  "quote": "HHF was significantly reduced by tirzepatide (n = 2 RCTs), whereas semaglutide (n = 4 RCTs) showed a non-significant trend toward a reduction.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 5,
+  "pid": 5,
+  "sec": "Main",
+  "page": null,
+  "quote": "However, the availability of head-to-head comparisons between different OMMs in randomized controlled trials (RCTs) is still limited 19 , which makes assessment of differences in efficacy and safety across available molecules challenging.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Limitations stated by the authors",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 9,
+  "pid": 9,
+  "sec": "Results / Retrieved trials",
+  "page": null,
+  "quote": "The quality of studies was heterogeneous (Supplementary Fig. 2 ). Most of the included RCTs were double blind (66%), with a few trials inadequately reporting attrition and/or description of allocation or blinding of assessors (29%).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Limitations stated by the authors",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 30,
+  "pid": 30,
+  "sec": "Results / Network meta-analysis / Effects on cardiovascular morbidity and mortality",
+  "page": null,
+  "quote": "No information on cardiovascular mortality was reported for phentermine plus topiramate.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Limitations stated by the authors",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 32,
+  "pid": 32,
+  "sec": "Results / Network meta-analysis / Effects on quality of life and mental health",
+  "page": null,
+  "quote": "Few studies reported on anxiety (n = 9); thus, an NMA was not possible, and low event numbers precluded a formal meta-analysis.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Limitations stated by the authors",
+  "key_finding": false
+ }
+]

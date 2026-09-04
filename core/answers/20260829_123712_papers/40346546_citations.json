@@ -1,0 +1,65 @@
+[
+ {
+  "claimed_pid": 38,
+  "pid": 38,
+  "sec": "Results / Clinical variables",
+  "page": null,
+  "quote": "After 6 months of therapy, the 6MWTD, the primary endpoint, increased by 16 (95% CI 8–24) m in the Empagliflozin group but only by 3 (95% CI–6–12) m in the control group",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 42,
+  "pid": 42,
+  "sec": "Results / Resting echocardiographic parameters",
+  "page": null,
+  "quote": "After 6 months, the empagliflozin group showed a significant decrease in key parameters associated with the LV filling pressure: the mean change in the mitral E/e′ ratio was − 1.4 (95% CI − 2.0 to − 1.0); in the LA volume index, it was − 2.9 (95% CI − 4.2 to − 1.6) mL/m 2 ; and in the PASP, it was − 4.2 (95% CI − 7.0 to − 1.5) mm Hg",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "LV diastolic, LA reservoir and contractile, and chronotropic reserves also improved in the empagliflozin group compared with those in the control group (P < 0.05 for all)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Furthermore, treatment with empagliflozin led to improvements in NT-proBNP and ST2 blood levels compared with those in the control group (P < 0.05 for both)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 39,
+  "pid": 39,
+  "sec": "Results / Clinical variables",
+  "page": null,
+  "quote": "An improvement in MLHFQ total score was revealed only in the empagliflozin group (a reduction by 4 [95% CI–6––2] units vs. an increase by 1 [95% CI–2–3] units in the control group",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 41,
+  "pid": 41,
+  "sec": "Results / Clinical variables",
+  "page": null,
+  "quote": "After 6 months, a decrease in body weight was observed in the empagliflozin group but not in the control group",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 45,
+  "pid": 45,
+  "sec": "Results / Resting echocardiographic parameters",
+  "page": null,
+  "quote": "the empagliflozin group had an increase in TAPSE of 0.12 (95% CI 0.03–0.20) cm, whereas the control group had a decrease of 0.10 (95% CI − 0.17–0.03) cm, resulting in a significant between-group difference (P < 0.001",
+  "score": 1.0,
+  "verified": true
+ }
+]

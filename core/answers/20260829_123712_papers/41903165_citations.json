@@ -1,0 +1,74 @@
+[
+ {
+  "claimed_pid": 34,
+  "pid": 34,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "One of the principal findings of the present study is that the EMPEROR-Preserved risk model demonstrated robust performance in the FINEARTS-HF trial, showing good discrimination and generally preserved calibration except within the highest-risk quintile for first HF hospitalization or CV death.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 40,
+  "pid": 40,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "Another important finding of this study is that the relative risk reduction with finerenone was consistent across the full spectrum of baseline risk, whereas the absolute risk reduction was greater among patients at higher risk.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 29,
+  "pid": null,
+  "sec": null,
+  "page": null,
+  "quote": "Applying the overall relative risk reduction for the primary composite outcome... gave an absolute reduction in risk of 3.7 per 1000 person-years... these numbers were 43.0 per 1000 person-years...",
+  "score": 0.54,
+  "verified": false
+ },
+ {
+  "claimed_pid": 29,
+  "pid": 29,
+  "sec": "Results / Effect of Finerenone Across the Spectrum of Baseline Risk",
+  "page": null,
+  "quote": "For the composite outcome of first HF hospitalization or CV death, the relative effect of finerenone was consistent across quintiles of the EMPEROR-Preserved risk score...",
+  "score": 0.93,
+  "verified": true
+ },
+ {
+  "claimed_pid": 43,
+  "pid": 43,
+  "sec": "Discussion / Limitations",
+  "page": null,
+  "quote": "First, the possibility of residual confounding or unmeasured heterogeneity across subgroups cannot be excluded.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 43,
+  "pid": 43,
+  "sec": "Discussion / Limitations",
+  "page": null,
+  "quote": "Furthermore, the subgroup interaction analyses were underpowered, raising the possibility that true effect modification may exist.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 43,
+  "pid": 43,
+  "sec": "Discussion / Limitations",
+  "page": null,
+  "quote": "Second, the study patients were derived from a randomized clinical trial with stringent inclusion and exclusion criteria. This selective enrollment may limit the generalizability of our findings to the broader population of patients with HFmrEF and HFpEF.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 43,
+  "pid": 43,
+  "sec": "Discussion / Limitations",
+  "page": null,
+  "quote": "Finally, one laboratory variable required for the EMPEROR-Preserved risk score was unavailable in FINEARTS-HF and was imputed using the median value from EMPEROR-Preserved. This approach may reduce variability and attenuate true associations, potentially affecting calibration and predictive performance.",
+  "score": 1.0,
+  "verified": true
+ }
+]

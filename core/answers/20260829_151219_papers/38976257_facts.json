@@ -1,0 +1,222 @@
+[
+ {
+  "fact": "Among 18,386 propensity-score matched patients initiating tirzepatide or semaglutide for type 2 diabetes, most achieved weight loss of 5% or greater within 1 year of treatment.",
+  "fact_zh": "在18,386名接受二甲双胍或司美格鲁肽治疗的2型糖尿病患者中，大多数在治疗一年内实现了5%或更大的体重减轻。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "In this cohort study of 18 386 propensity-score matched patients initiating tirzepatide or semaglutide labeled for type 2 diabetes, discontinuation was common; most achieved weight loss of 5% or greater within 1 year of treatment.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Although most adults with overweight or obesity experienced 5% or greater weight loss with treatment, the benefit was greater with tirzepatide.",
+  "fact_zh": "尽管大多数超重或肥胖的成年人在接受治疗后实现了5%或更大的体重减轻，但使用替西帕肽的益处更大。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Although most adults with overweight or obesity experienced 5% or greater weight loss with treatment, the benefit was greater with tirzepatide.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In total, 41,222 patients met our inclusion criteria (tirzepatide: 9,193; semaglutide: 32,029).",
+  "fact_zh": "总共41,222名患者符合我们的纳入标准（替西帕肽：9,193人；司美格鲁肽：32,029人）。",
+  "kind": "population",
+  "pid": 23,
+  "sec": "Results / Patient Characteristics",
+  "page": null,
+  "quote": "In total, 41 222 patients met our inclusion criteria (tirzepatide: 9193; semaglutide: 32 029) ( Figure 1 ).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The 1:1 propensity score matched cohort included 18,386 patients, with standardized mean differences for all variables lower than 0.1.",
+  "fact_zh": "1:1倾向评分匹配队列包括18,386名患者，所有变量的标准均值差异均低于0.1。",
+  "kind": "method",
+  "pid": 23,
+  "sec": "Results / Patient Characteristics",
+  "page": null,
+  "quote": "The 1:1 propensity score matched cohort included 18 386 patients, with standardized mean differences for all variables lower than 0.1.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The mean (SD) baseline weight was similar between groups (tirzepatide: 110 [25.7] kg; semaglutide: 109 [25.2] kg).",
+  "fact_zh": "两组的平均（标准差）基线体重相似（替西帕肽：110 [25.7] kg；司美格鲁肽：109 [25.2] kg）。",
+  "kind": "finding",
+  "pid": 23,
+  "sec": "Results / Patient Characteristics",
+  "page": null,
+  "quote": "mean (SD) baseline weight was similar between groups (tirzepatide: 110 [25.7] kg; semaglutide: 109 [25.2] kg)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The mean (median) duration of on-treatment follow-up was 165 (129; IQR, 75-231; difference, 156) days.",
+  "fact_zh": "治疗期间随访的平均（中位数）持续时间为165（129；IQR，75-231；差异，156）天。",
+  "kind": "finding",
+  "pid": 26,
+  "sec": "Results / Patient Characteristics",
+  "page": null,
+  "quote": "The mean (median) duration of on-treatment follow-up was 165 (129; IQR, 75-231; difference, 156) days.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Follow-up was ended by discontinuation for 9963 (54.2%) (tirzepatide: 5140 [55.9%]; semaglutide: 4823 [52.5%]).",
+  "fact_zh": "9963（54.2%）名患者的随访因停药而结束（替西帕肽：5140 [55.9%]；司美格鲁肽：4823 [52.5%]）。",
+  "kind": "finding",
+  "pid": 26,
+  "sec": "Results / Patient Characteristics",
+  "page": null,
+  "quote": "Follow-up was ended by discontinuation for 9963 (54.2%) (tirzepatide: 5140 [55.9%]; semaglutide: 4823 [52.5%])",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Overall, 31,419 (76%) patients had at least 1 on-treatment follow-up weight.",
+  "fact_zh": "总体而言，31,419（76%）名患者至少有一次治疗期间的随访体重。",
+  "kind": "finding",
+  "pid": 27,
+  "sec": "Results / Patient Characteristics",
+  "page": null,
+  "quote": "Overall, 31 419 (76%) patients had at least 1 on-treatment follow-up weight",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Among the matched population at risk (undergoing treatment), 81.8% (95% CI, 79.8%-83.7%) receiving tirzepatide vs 66.5% (95% CI, 64.3%-68.7%) receiving semaglutide achieved 5% or greater weight loss within 365 days.",
+  "fact_zh": "在匹配的高风险人群中（接受治疗），81.8%（95% CI，79.8%-83.7%）接受替西帕肽治疗的患者与66.5%（95% CI，64.3%-68.7%）接受司美格鲁肽治疗的患者在365天内实现了5%或更大的体重减轻。",
+  "kind": "finding",
+  "pid": 28,
+  "sec": "Results / Hazard of 5%, 10%, and 15% Weight Loss",
+  "page": null,
+  "quote": "Among the matched population at risk (undergoing treatment), 81.8% (95% CI, 79.8%-83.7%) receiving tirzepatide vs 66.5% (95% CI, 64.3%-68.7%) receiving semaglutide achieved 5% or greater weight loss within 365 days",
+  "score": 0.88,
+  "verified": true
+ },
+ {
+  "fact": "The mean on-treatment change in body weight was −5.9% (95% CI, −6.0% to −5.8%) for tirzepatide vs −3.6% (95% CI, −3.7% to −3.4%) for semaglutide at 3 months.",
+  "fact_zh": "治疗期间体重的平均变化为替西帕肽−5.9%（95% CI，−6.0%至−5.8%）与司美格鲁肽−3.6%（95% CI，−3.7%至−3.4%）在3个月时。",
+  "kind": "finding",
+  "pid": 31,
+  "sec": "Results / Percentage Change in Body Weight",
+  "page": null,
+  "quote": "The mean on-treatment change in body weight was −5.9% (95% CI, −6.0% to −5.8%) for tirzepatide vs −3.6% (95% CI, −3.7% to −3.4%) for semaglutide at 3 months",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "After adjusting for residual confounding, the absolute difference in weight loss between tirzepatide and semaglutide was −2.4% (95% CI, −2.5% to −2.2) at 3 months.",
+  "fact_zh": "在调整残余混杂因素后，替西帕肽与司美格鲁肽在3个月时的体重减轻绝对差异为−2.4%（95% CI，−2.5%至−2.2%）。",
+  "kind": "finding",
+  "pid": 31,
+  "sec": "Results / Percentage Change in Body Weight",
+  "page": null,
+  "quote": "After adjusting for residual confounding, the absolute difference in weight loss between tirzepatide and semaglutide was −2.4% (95% CI, −2.5% to −2.2), −4.3% (95% CI, −4.7% to −4.0%), and −6.9% (95% CI, −7.9% to −5.8%) at 3, 6, and 12 months receiving treatment, respectively",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Modified ITT analyses resulted in fewer patients achieving weight loss thresholds, smaller weight reductions, and slightly attenuated comparative effect estimates, though tirzepatide remained associated with significantly greater weight loss in all analyses.",
+  "fact_zh": "修改后的意向治疗分析显示，更少的患者达到体重减轻阈值，体重减少幅度较小，比较效应估计略有减弱，尽管替西帕肽在所有分析中仍与显著更大的体重减轻相关。",
+  "kind": "finding",
+  "pid": 33,
+  "sec": "Results / Sensitivity Analyses",
+  "page": null,
+  "quote": "Modified ITT analyses resulted in fewer patients achieving weight loss thresholds, smaller weight reductions, and slightly attenuated comparative effect estimates, though tirzepatide remained associated with significantly greater weight loss in all analyses",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "In stratified analyses, those without T2D had larger reductions in body weight than those with T2D for tirzepatide and semaglutide alike.",
+  "fact_zh": "在分层分析中，没有2型糖尿病的患者在接受替西帕肽和司美格鲁肽治疗时，体重减少幅度大于有2型糖尿病的患者。",
+  "kind": "finding",
+  "pid": 36,
+  "sec": "Results / Subgroup Analyses",
+  "page": null,
+  "quote": "In stratified analyses, those without T2D had larger reductions in body weight than those with T2D for tirzepatide and semaglutide alike",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "We observed no significant differences in the risk of any gastrointestinal AEs between those receiving tirzepatide vs semaglutide.",
+  "fact_zh": "我们观察到接受替西帕肽与司美格鲁肽治疗的患者在任何胃肠道不良事件（AE）风险方面没有显著差异。",
+  "kind": "safety",
+  "pid": 37,
+  "sec": "Results / Gastrointestinal Adverse Events",
+  "page": null,
+  "quote": "We observed no significant differences in the risk of any gastrointestinal AEs between those receiving tirzepatide vs semaglutide",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "This study represents the first clinical comparative effectiveness study of tirzepatide and semaglutide in adults with overweight or obesity.",
+  "fact_zh": "这项研究代表了在超重或肥胖成人中替西帕肽和司美格鲁肽的首次临床比较效果研究。",
+  "kind": "finding",
+  "pid": 38,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "This study represents the first clinical comparative effectiveness study of tirzepatide and semaglutide in adults with overweight or obesity",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Findings in this study are broadly consistent with existing evidence from RCTs.",
+  "fact_zh": "本研究的发现与现有随机对照试验（RCTs）的证据基本一致。",
+  "kind": "finding",
+  "pid": 39,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "Findings in this study are broadly consistent with existing evidence from RCTs",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "This study has several strengths, including a large and recent cohort of patients with overweight and obesity evaluated in May 2022 or later.",
+  "fact_zh": "这项研究有几个优势，包括2022年5月或之后评估的大量超重和肥胖患者队列。",
+  "kind": "strength",
+  "pid": 40,
+  "sec": "Discussion / Strengths and Limitations",
+  "page": null,
+  "quote": "This study has several strengths. First, the analysis included a large and recent cohort of patients with overweight and obesity evaluated in May 2022 (the month of tirzepatide approval) or later.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "This study used clinical EHR data, which has some inherent limitations, including underreporting of AEs and delayed observation of weight changes.",
+  "fact_zh": "本研究使用了临床电子健康记录（EHR）数据，这有一些固有的局限性，包括不良事件（AE）的报告不足和体重变化的观察延迟。",
+  "kind": "limitation",
+  "pid": 42,
+  "sec": "Discussion / Strengths and Limitations",
+  "page": null,
+  "quote": "This study used clinical EHR data, which has some inherent limitations. Information is collected during routine clinical care, and AEs are likely underreported relative to protocolized, prospective AE ascertainment in clinical trials.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "A trial comparing tirzepatide to semaglutide in patients with overweight or obesity, but without T2D is underway (SURMOUNT-5, NCT05822830).",
+  "fact_zh": "一项比较替西帕肽与司美格鲁肽在超重或肥胖但无2型糖尿病患者中的试验正在进行中（SURMOUNT-5，NCT05822830）。",
+  "kind": "background",
+  "pid": 39,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "a trial comparing tirzepatide to semaglutide in patients with overweight or obesity, but without T2D is underway (SURMOUNT-5, NCT05822830) 38 ; the results, however, are not expected until late 2024.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study used propensity score matching to balance treatment groups on measured variables.",
+  "fact_zh": "该研究使用倾向评分匹配来平衡治疗组在测量变量上的差异。",
+  "kind": "method",
+  "pid": 17,
+  "sec": "Methods / Weight Outcomes",
+  "page": null,
+  "quote": "Propensity scores were used to balance treatment groups on measured variables.",
+  "score": 1.0,
+  "verified": true
+ }
+]

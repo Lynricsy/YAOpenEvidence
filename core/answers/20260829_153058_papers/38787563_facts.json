@@ -1,0 +1,222 @@
+[
+ {
+  "fact": "Among new users of GLP-1 agonists, the prevalence of discontinuation was 26.2% at 3 months, 30.8% at 6 months, and 36.5% at 12 months.",
+  "fact_zh": "在新型GLP-1激动剂使用者中，停药率在3个月时为26.2%，6个月时为30.8%，12个月时为36.5%。",
+  "kind": "finding",
+  "pid": 7,
+  "sec": "Results",
+  "page": null,
+  "quote": "Overall prevalence of GLP-1 agonist discontinuation was 26.2%, 30.8%, and 36.5% at 3, 6, and 12 months, respectively",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Patients with obesity only had a higher prevalence of discontinuation at 12 months (50.3%) compared to those with T2D only (35.8%) and those with both (34.2%).",
+  "fact_zh": "仅肥胖患者的12个月停药率（50.3%）高于仅T2D患者（35.8%）和同时患有T2D和肥胖的患者（34.2%）。",
+  "kind": "finding",
+  "pid": 7,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients with obesity only had a higher prevalence of discontinuation at 12 months vs those with T2D only and those with both (50.3% vs 35.8% and 34.2%)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Black or Hispanic patients had significantly higher odds of discontinuation at 12 months compared to other racial/ethnic groups.",
+  "fact_zh": "与其它种族/民族群体相比，黑人或西班牙裔患者在12个月时停药的可能性显著更高。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they were Black or Hispanic",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Male patients had significantly higher odds of discontinuation at 12 months compared to female patients.",
+  "fact_zh": "与女性患者相比，男性患者在12个月时停药的可能性显著更高。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they were ... male",
+  "score": 0.87,
+  "verified": true
+ },
+ {
+  "fact": "Medicare or Medicaid enrollees had significantly higher odds of discontinuation at 12 months compared to other insurance types.",
+  "fact_zh": "与其它保险类型相比，Medicare或Medicaid参保者在12个月时停药的可能性显著更高。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they were ... Medicare or Medicaid enrollees",
+  "score": 0.88,
+  "verified": true
+ },
+ {
+  "fact": "Patients living in areas with very high levels of social needs had significantly higher odds of discontinuation at 12 months.",
+  "fact_zh": "居住在社会需求非常高的地区的患者在12个月时停药的可能性显著更高。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they ... lived in areas with very high levels of social needs",
+  "score": 0.66,
+  "verified": true
+ },
+ {
+  "fact": "Patients with obesity only at baseline had significantly higher odds of discontinuation at 12 months compared to those with T2D only or both.",
+  "fact_zh": "基线时仅肥胖的患者在12个月时停药的可能性显著高于仅T2D患者或同时患有T2D和肥胖的患者。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they ... had obesity only",
+  "score": 0.79,
+  "verified": true
+ },
+ {
+  "fact": "Patients with heart failure (HF) at baseline had significantly higher odds of discontinuation at 12 months.",
+  "fact_zh": "基线时有心力衰竭（HF）的患者在12个月时停药的可能性显著更高。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they ... had HF",
+  "score": 0.84,
+  "verified": true
+ },
+ {
+  "fact": "Patients with other CVD conditions besides HF at baseline had significantly higher odds of discontinuation at 12 months.",
+  "fact_zh": "基线时有除HF以外的其他心血管疾病（CVD）的患者在12个月时停药的可能性显著更高。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they ... had other CVD conditions besides HF",
+  "score": 0.55,
+  "verified": true
+ },
+ {
+  "fact": "Patients with new gastrointestinal adverse effects at follow-up had significantly higher odds of discontinuation at 12 months.",
+  "fact_zh": "随访期间出现新的胃肠道不良反应的患者在12个月时停药的可能性显著更高。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they ... had new gastrointestinal adverse effects at follow-up",
+  "score": 0.68,
+  "verified": true
+ },
+ {
+  "fact": "Older patients had lower odds of discontinuation at 12 months compared to younger patients.",
+  "fact_zh": "与年轻患者相比，老年患者在12个月时停药的可能性更低。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Older patients had lower odds of discontinuation than younger patients",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Each 1-percentage point increase in out-of-pocket (OOP) cost per 30-day supply of GLP-1 agonist was associated with increased odds of discontinuation (odds ratio, 1.02; 95% CI, 1.02-1.03).",
+  "fact_zh": "每增加1个百分点的自付（OOP）成本，与停药的可能性增加相关（比值比，1.02；95% CI，1.02-1.03）。",
+  "kind": "finding",
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "each 1–percentage point increase in OOP cost per a 30-day supply of GLP-1 agonist was associated with increased odds of discontinuation (odds ratio, 1.02; 95% CI, 1.02-1.03)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study excluded tirzepatide, a newer GLP-1 agonist, which is a limitation of the study.",
+  "fact_zh": "该研究排除了新型GLP-1激动剂替尔泊肽，这是研究的局限性。",
+  "kind": "limitation",
+  "pid": 11,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "Study limitations include the exclusion of tirzepatide (a newer GLP-1 agonist)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study did not determine whether weight reduction or adverse effects could explain the higher prevalence of discontinuation among patients with obesity.",
+  "fact_zh": "该研究未确定体重减轻或不良反应是否能解释肥胖患者停药率较高的原因。",
+  "kind": "limitation",
+  "pid": 11,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "whether weight reduction or adverse effects could explain the higher prevalence of discontinuation among patients with obesity",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study population included 195,915 individuals with a mean age of 53.8 years (SD, 12.5 years), of whom 58.9% were female and 41.1% were male.",
+  "fact_zh": "研究人群包括195,915名个体，平均年龄为53.8岁（SD，12.5岁），其中58.9%为女性，41.1%为男性。",
+  "kind": "population",
+  "pid": 7,
+  "sec": "Results",
+  "page": null,
+  "quote": "The study included 195 915 individuals (mean [SD] age, 53.8 [12.5] years; 115 394 females [58.9%], 80 521 males [41.1%])",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Discontinuation of GLP-1 agonists was defined as no GLP-1 agonist fill in the 135 days following the 3-, 6-, and 12-month post–index date assessment.",
+  "fact_zh": "GLP-1激动剂的停药定义为在3个月、6个月和12个月随访评估后135天内没有GLP-1激动剂的处方。",
+  "kind": "definition",
+  "pid": 5,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Discontinuation was defined as no GLP-1 agonist fill in the 135 days following the 3-, 6-, and 12-month post–index date assessment",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Adherence to GLP-1 agonists was defined as proportion of days covered (PDC), calculated allowing 10 days, at most, between prescriptions.",
+  "fact_zh": "GLP-1激动剂的依从性定义为覆盖天数比例（PDC），计算时允许处方之间最多间隔10天。",
+  "kind": "definition",
+  "pid": 5,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Adherence, defined as proportion of days covered (PDC), was calculated allowing 10 days, at most, between prescriptions",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study used data from January 1, 2021, to December 31, 2023, from the Komodo Healthcare Map database.",
+  "fact_zh": "该研究使用了2021年1月1日至2023年12月31日来自Komodo Healthcare Map数据库的数据。",
+  "kind": "population",
+  "pid": 3,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Data from January 1, 2021, to December 31, 2023, came from the Komodo Healthcare Map database",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study followed the STROBE reporting guideline for cohort studies.",
+  "fact_zh": "该研究遵循了队列研究的STROBE报告指南。",
+  "kind": "method",
+  "pid": 3,
+  "sec": "Methods",
+  "page": null,
+  "quote": "We followed the STROBE reporting guideline",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study excluded patients without T2D or obesity at baseline.",
+  "fact_zh": "该研究排除了基线时没有T2D或肥胖的患者。",
+  "kind": "population",
+  "pid": 4,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Patients without T2D or obesity at baseline were excluded",
+  "score": 1.0,
+  "verified": true
+ }
+]

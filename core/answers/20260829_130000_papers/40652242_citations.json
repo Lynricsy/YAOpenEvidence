@@ -1,0 +1,167 @@
+[
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "109,846 patients from 25 unique studies were included",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 4,
+  "pid": 4,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA reduced the risk of MI, stroke, cardiovascular mortality and MACE in a broad range of patients with and without T2DM and/or prior ASCVD",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 15,
+  "pid": 15,
+  "sec": "Methods / Study design and search strategy",
+  "page": null,
+  "quote": "This systematic review and meta-analysis was conducted with reference to the Preferred Reporting Items for Systematic Review and Meta-Analyses (PRISMA) 2020. Two electronic databases, Embase and Medline, were searched for randomized controlled trials (RCTs) relating to treatment with GLP-1RA and prevention of MI",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 16,
+  "pid": 16,
+  "sec": "Methods / Eligibility and selection criteria",
+  "page": null,
+  "quote": "Non-randomized controlled trials and observational studies, including cohort and cross-sectional studies, were excluded from this study. Reviews, study protocols, letters, commentaries, conference abstracts were also excluded. Studies in pediatric populations were also excluded in this study",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 25,
+  "pid": 25,
+  "sec": "Results / Summary of included articles",
+  "page": null,
+  "quote": "The proportion of males ranged from 24 to 76%, and the mean age was 62.6 ± 9.2 years",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 25,
+  "pid": 25,
+  "sec": "Results / Summary of included articles",
+  "page": null,
+  "quote": "Most studies were conducted in a multi-national setting, except for two studies conducted only in Japan",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Glucagon like peptide-1 receptor agonist (GLP-1RA) use in individuals with high atherosclerotic cardiovascular disease (ASCVD) risk reduces major adverse cardiovascular events (MACE)",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 25,
+  "pid": 25,
+  "sec": "Results / Summary of included articles",
+  "page": null,
+  "quote": "Most studies were conducted in patients with T2DM, except for one study conducted in a cohort with obesity in the absence of T2DM",
+  "score": 0.89,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Over a follow-up duration of 3.48 ± 1.51 (1.55 to 5.47) years",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 25,
+  "pid": 26,
+  "sec": "Results / Summary of included articles",
+  "page": null,
+  "quote": "Majority of studies compared GLP-1RA to placebo [12, 14, 38–40, 44, 47, 48, 51–61], while others used insulin regiments and other anti-diabetic medications [41–43, 45–47, 49, 50] as the comparators",
+  "score": 0.86,
+  "verified": true,
+  "note_section": "C — Comparator / 对照方式",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA reduced the risk of total MI (RR: 0.86, p < 0.01), with numbers needed to benefit (NNTB) of 207 to prevent one event of MI",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA reduced cardiovascular mortality (RR: 0.87, p < 0.01, NNTB 170), MACE (RR: 0.87, p < 0.01, NNTB 67) and stroke (RR: 0.88, p < 0.01, NNTB 335) compared to placebo",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 30,
+  "pid": 30,
+  "sec": "Results / Number needed to treat",
+  "page": null,
+  "quote": "NNTB 93 (95%CI: NNTB 52 to NNTB 1717, Follow-up time: 3.45 ± 1.21 years) for coronary revascularization",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1RA commonly resulted in gastrointestinal side-effects amongst other systems (RR: 1.55, p < 0.01, NNTH 9)",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 23,
+  "pid": 23,
+  "sec": "Methods / Study quality, publication bias and certainty of outcomes",
+  "page": null,
+  "quote": "Each study was independently screened by two pairs of authors (FS, JTYH, SKSC, GS). Any discrepancies were resolved by consensus or in consultation with a senior author (ASPT, JQ, YHC, NWC). Quality assessment of included articles was conducted using the Cochrane Risk of Bias 2 (ROB-2) tool",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "S — Study design / 研究设计",
+  "key_finding": false
+ }
+]

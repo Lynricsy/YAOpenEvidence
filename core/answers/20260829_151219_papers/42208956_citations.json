@@ -1,0 +1,79 @@
+[
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Obesity is increasingly managed with medications as disease-modifying therapies, reflecting its role as a gateway disease driving metabolic, cardiovascular, reproductive, neuropsychiatric, and mechanical conditions.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "newer GLP-1 receptor agonist-based agents (eg, tirzepatide, survodutide, mazdutide, retatrutide, cagrilintide-semaglutide, and amycretin)",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "I — Intervention / 干预措施",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "glucagon-like peptide-1 (GLP-1) receptor agonists (eg, liraglutide, semaglutide, subcutaneously and orally)",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "C — Comparator / 对照方式",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "We evaluated the effects of obesity medications across major obesity-related conditions, including type 2 diabetes, metabolic dysfunction-associated steatotic liver disease, chronic kidney disease, heart failure, cardiovascular disease...",
+  "score": 0.95,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "This Review synthesises evidence from randomised controlled trials and high-quality meta-analyses on approved and late-stage investigational obesity medications",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "S — Study design / 研究设计",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1-based and multiagonist therapies show beneficial effects across these comorbid conditions.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "accumulating evidence indicates important weight loss-independent effects, particularly with GLP-1 receptor agonist-based therapies.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ }
+]

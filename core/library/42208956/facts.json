@@ -1,0 +1,57 @@
+[
+ {
+  "fact": "Phentermine-topiramate, naltrexone-bupropion, and GLP-1 receptor agonists (e.g., liraglutide, semaglutide, subcutaneously and orally) are approved or late-stage investigational obesity medications.",
+  "fact_zh": "芬特明-托吡酯、纳曲酮-安非他酮和GLP-1受体激动剂（如利拉鲁肽、司美格鲁肽，皮下和口服）是已批准或处于晚期研究阶段的肥胖药物。",
+  "kind": "background",
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "including phentermine-topiramate, naltrexone-bupropion, glucagon-like peptide-1 (GLP-1) receptor agonists (eg, liraglutide, semaglutide, subcutaneously and orally), and newer GLP-1 receptor agonist-based agents",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "GLP-1-based and multiagonist therapies show beneficial effects across major obesity-related conditions such as type 2 diabetes, metabolic dysfunction-associated steatotic liver disease, and cardiovascular disease.",
+  "fact_zh": "基于GLP-1和多激动剂疗法在主要肥胖相关疾病（如2型糖尿病、代谢功能障碍相关脂肪肝和心血管疾病）中显示出有益效果。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1-based and multiagonist therapies show beneficial effects across these comorbid conditions.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Many benefits of obesity medications are mediated by weight loss, but accumulating evidence indicates important weight loss-independent effects, particularly with GLP-1 receptor agonist-based therapies.",
+  "fact_zh": "许多肥胖药物的益处是通过减重介导的，但越来越多的证据表明，特别是基于GLP-1受体激动剂的疗法，有重要的与减重无关的效果。",
+  "kind": "finding",
+  "pid": 2,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "While many benefits of obesity medications are mediated by weight loss, accumulating evidence indicates important weight loss-independent effects, particularly with GLP-1 receptor agonist-based therapies.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Obesity is increasingly managed with medications as disease-modifying therapies, reflecting its role as a gateway disease driving multiple conditions.",
+  "fact_zh": "肥胖越来越多地通过药物作为疾病修饰疗法进行管理，这反映了其作为驱动多种疾病的门户疾病的特性。",
+  "kind": "background",
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Obesity is increasingly managed with medications as disease-modifying therapies, reflecting its role as a gateway disease driving metabolic, cardiovascular, reproductive, neuropsychiatric, and mechanical conditions.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Newer GLP-1 receptor agonist-based agents include tirzepatide, survodutide, mazdutide, retatrutide, cagrilintide-semaglutide, and amycretin.",
+  "fact_zh": "较新的基于GLP-1受体激动剂的药物包括替西帕肽、苏沃鲁肽、马祖鲁肽、雷特鲁肽、卡格列汀-司美格鲁肽和阿米克汀。",
+  "kind": "background",
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "newer GLP-1 receptor agonist-based agents (eg, tirzepatide, survodutide, mazdutide, retatrutide, cagrilintide-semaglutide, and amycretin)",
+  "score": 1.0,
+  "verified": true
+ }
+]

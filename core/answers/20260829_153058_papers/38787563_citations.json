@@ -1,0 +1,123 @@
+[
+ {
+  "claimed_pid": 4,
+  "pid": 4,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Patients 18 years or older were included if their index date (first-recorded GLP-1 agonist fill of dulaglutide, exenatide, liraglutide, or semaglutide) was in 2021.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 4,
+  "pid": 4,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Patients without T2D or obesity at baseline were excluded.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 7,
+  "pid": 7,
+  "sec": "Results",
+  "page": null,
+  "quote": "The study included 195 915 individuals (mean [SD] age, 53.8 [12.5] years; 115 394 females [58.9%], 80 521 males [41.1%]).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 4,
+  "pid": 4,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Other inclusion requirements were continuous enrollment in a commercial, Medicare, or Medicaid plan or dual Medicare-Medicaid eligibility for at least 12 months before (baseline) and at least 17 months after (follow-up) the index date.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "P — Patient / 研究对象",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 7,
+  "pid": 7,
+  "sec": "Results",
+  "page": null,
+  "quote": "Overall prevalence of GLP-1 agonist discontinuation was 26.2%, 30.8%, and 36.5% at 3, 6, and 12 months, respectively ( Table 1 ).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 5,
+  "pid": 5,
+  "sec": "Methods",
+  "page": null,
+  "quote": "Adverse effects included new gastrointestinal disease diagnosis at the 12-month follow-up.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "O — Outcome / 结局指标",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "This cohort study examines the prevalence of and factors associated with glucagon-like peptide 1 agonist discontinuation among new users.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "S — Study design / 研究设计",
+  "key_finding": false
+ },
+ {
+  "claimed_pid": 7,
+  "pid": 7,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients with obesity only had a higher prevalence of discontinuation at 12 months vs those with T2D only and those with both (50.3% vs 35.8% and 34.2%).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 9,
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Patients had significantly higher odds of discontinuation at 12 months if they were Black or Hispanic, male, and Medicare or Medicaid enrollees; lived in areas with very high levels of social needs; had obesity only, HF, or other CVD conditions besides HF at baseline; and had new gastrointestinal adverse effects at follow-up ( Table 2 ).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 9,
+  "pid": 9,
+  "sec": "Results",
+  "page": null,
+  "quote": "Furthermore, each 1–percentage point increase in OOP cost per a 30-day supply of GLP-1 agonist was associated with increased odds of discontinuation (odds ratio, 1.02; 95% CI, 1.02-1.03) ( Table 2 ).",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 11,
+  "pid": 11,
+  "sec": "Discussion",
+  "page": null,
+  "quote": "Study limitations include the exclusion of tirzepatide (a newer GLP-1 agonist) and whether weight reduction or adverse effects could explain the higher prevalence of discontinuation among patients with obesity.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Limitations stated by the authors",
+  "key_finding": false
+ }
+]

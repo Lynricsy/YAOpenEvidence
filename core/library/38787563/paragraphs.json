@@ -1,0 +1,68 @@
+[
+ {
+  "id": 1,
+  "sec": "Abstract",
+  "page": null,
+  "text": "This cohort study examines the prevalence of and factors associated with glucagon-like peptide 1 agonist discontinuation among new users."
+ },
+ {
+  "id": 2,
+  "sec": "Introduction",
+  "page": null,
+  "text": "Glucagon-like peptide 1 (GLP-1) receptor agonists are indicated for treatment of type 2 diabetes (T2D). Prior studies have reported substantial benefits of GLP-1 agonists in reducing cardiovascular disease (CVD) risk and promoting weight loss. 1 , 2 Nonetheless, little is known about the prevalence of GLP-1 agonist discontinuation, especially among patients with obesity. One study found a 12-month discontinuation of 45.2% among patients with T2D. 3 In this study, we estimated the prevalence of GLP-1 agonist discontinuation among new users with T2D or obesity and the patient characteristics associated with discontinuation."
+ },
+ {
+  "id": 3,
+  "sec": "Methods",
+  "page": null,
+  "text": "Data from January 1, 2021, to December 31, 2023, came from the Komodo Healthcare Map database (eMethods in Supplement 1 ). The University of Pittsburgh Institutional Review Board deemed this cohort study exempt from review and informed consent because it used deidentified data. We followed the STROBE reporting guideline."
+ },
+ {
+  "id": 4,
+  "sec": "Methods",
+  "page": null,
+  "text": "Patients 18 years or older were included if their index date (first-recorded GLP-1 agonist fill of dulaglutide, exenatide, liraglutide, or semaglutide) was in 2021. Other inclusion requirements were continuous enrollment in a commercial, Medicare, or Medicaid plan or dual Medicare-Medicaid eligibility for at least 12 months before (baseline) and at least 17 months after (follow-up) the index date. Patients without T2D or obesity at baseline were excluded."
+ },
+ {
+  "id": 5,
+  "sec": "Methods",
+  "page": null,
+  "text": "GLP-1 agonist discontinuation and adherence were assessed for patients with T2D only, obesity only, or both. Discontinuation was defined as no GLP-1 agonist fill in the 135 days following the 3-, 6-, and 12-month post–index date assessment (eMethods in Supplement 1 ). A 135-day period was selected to accommodate a small portion (5.3%) of prescriptions with a 90-day supply. Adherence, defined as proportion of days covered (PDC), was calculated allowing 10 days, at most, between prescriptions. Patient demographic characteristics included age, sex, and race and ethnicity, among others. Baseline clinical characteristics were T2D, obesity, heart failure (HF), other CVD conditions besides HF, and chronic kidney disease. Adverse effects included new gastrointestinal disease diagnosis at the 12-month follow-up. Out-of-pocket (OOP) cost (2023 amounts) was calculated per 30-day supply of GLP-1 agonist at the 12-month follow-up."
+ },
+ {
+  "id": 6,
+  "sec": "Methods",
+  "page": null,
+  "text": "Descriptive statistics were used to estimate the prevalence of discontinuation and adherence at 3, 6, and 12 months, overall and by baseline T2D and obesity status. Logistic regression was used to examine the association between patient characteristics and GLP-1 agonist discontinuation at 12 months. Two-sided P < .05 indicated statistical significance. Data analysis was performed with RStudio 2023.12.1+402 (RStudio)."
+ },
+ {
+  "id": 7,
+  "sec": "Results",
+  "page": null,
+  "text": "The study included 195 915 individuals (mean [SD] age, 53.8 [12.5] years; 115 394 females [58.9%], 80 521 males [41.1%]). Overall prevalence of GLP-1 agonist discontinuation was 26.2%, 30.8%, and 36.5% at 3, 6, and 12 months, respectively ( Table 1 ). Overall PDC was 81.1%, 72.3%, and 64.3% for the same 3 periods. Patients with obesity only had a higher prevalence of discontinuation at 12 months vs those with T2D only and those with both (50.3% vs 35.8% and 34.2%)."
+ },
+ {
+  "id": 8,
+  "sec": "Results",
+  "page": null,
+  "text": "Table 1. Prevalence of GLP-1 Receptor Agonist Discontinuation and PDC Among New GLP-1 Receptor Agonist Users by Baseline Status a"
+ },
+ {
+  "id": 9,
+  "sec": "Results",
+  "page": null,
+  "text": "Patients had significantly higher odds of discontinuation at 12 months if they were Black or Hispanic, male, and Medicare or Medicaid enrollees; lived in areas with very high levels of social needs; had obesity only, HF, or other CVD conditions besides HF at baseline; and had new gastrointestinal adverse effects at follow-up ( Table 2 ). Older patients had lower odds of discontinuation than younger patients. Furthermore, each 1–percentage point increase in OOP cost per a 30-day supply of GLP-1 agonist was associated with increased odds of discontinuation (odds ratio, 1.02; 95% CI, 1.02-1.03) ( Table 2 )."
+ },
+ {
+  "id": 10,
+  "sec": "Results",
+  "page": null,
+  "text": "Table 2. Logistic Regression of GLP-1 Receptor Agonist Discontinuation After 12 Months by Patient Characteristics"
+ },
+ {
+  "id": 11,
+  "sec": "Discussion",
+  "page": null,
+  "text": "GLP-1 agonist discontinuation was higher among those with obesity only than those with T2D at baseline. Specific demographic, clinical, and financial characteristics were associated with discontinuation. Study limitations include the exclusion of tirzepatide (a newer GLP-1 agonist) and whether weight reduction or adverse effects could explain the higher prevalence of discontinuation among patients with obesity. Discontinuation could have policy and medication coverage implications, especially if the weight reduction is not sustained after medications are discontinued."
+ }
+]

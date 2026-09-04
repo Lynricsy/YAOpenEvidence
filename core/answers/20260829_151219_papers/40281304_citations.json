@@ -1,0 +1,24 @@
+[
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "GLP-1-based therapies, such as semaglutide and tirzepatide, represent highly effective treatment options for people with type 2 diabetes and obesity, enabling effective control of glucose and weight loss, while reducing cardiovascular and renal morbidity and mortality.",
+  "score": 0.95,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ },
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract",
+  "page": null,
+  "quote": "Structurally unique GLP-1-based medicines that achieve substantially greater and rapid weight loss may impact musculoskeletal health, providing a rationale for therapeutics that more selectively target adipose tissue loss while preserving muscle mass and strength.",
+  "score": 1.0,
+  "verified": true,
+  "note_section": "Key findings relevant to the question",
+  "key_finding": true
+ }
+]

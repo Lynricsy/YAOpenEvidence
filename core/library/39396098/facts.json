@@ -1,0 +1,145 @@
+[
+ {
+  "fact": "Semaglutide use in individuals with overweight or obesity reduces hospitalization due to heart failure by 76%.",
+  "fact_zh": "在超重或肥胖个体中使用司美格鲁肽可将因心力衰竭住院的风险降低76%。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusion",
+  "page": null,
+  "quote": "The use of semaglutide reduced 76% in hospitalization due to HF",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide use in individuals with overweight or obesity reduces cardiovascular death by 17%.",
+  "fact_zh": "在超重或肥胖个体中使用司美格鲁肽可将心血管死亡风险降低17%。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusion",
+  "page": null,
+  "quote": "17% deaths due to cardiovascular causes",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide use in individuals with overweight or obesity reduces all-cause mortality by 21%.",
+  "fact_zh": "在超重或肥胖个体中使用司美格鲁肽可将全因死亡风险降低21%。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusion",
+  "page": null,
+  "quote": "21% deaths due to any cause",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide use in individuals with overweight or obesity reduces non-fatal myocardial infarction by 24%.",
+  "fact_zh": "在超重或肥胖个体中使用司美格鲁肽可将非致命性心肌梗死风险降低24%。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusion",
+  "page": null,
+  "quote": "24% non-fatal myocardial infarction",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide use in individuals with overweight or obesity reduces coronary revascularization by 24%.",
+  "fact_zh": "在超重或肥胖个体中使用司美格鲁肽可将冠状动脉血运重建术的风险降低24%。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusion",
+  "page": null,
+  "quote": "24% coronary revascularization",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "Semaglutide use in individuals with diabetes reduces stroke by 35%.",
+  "fact_zh": "在糖尿病患者中使用司美格鲁肽可将中风风险降低35%。",
+  "kind": "finding",
+  "pid": 4,
+  "sec": "Abstract/Conclusion",
+  "page": null,
+  "quote": "35% stroke (in patients with diabetes)",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The relative risk of hospitalization due to heart failure with semaglutide was 0.24 (95% CI 0.12-0.57) in 1045 participants.",
+  "fact_zh": "在1045名参与者中，使用司美格鲁肽因心力衰竭住院的相对风险为0.24（95% CI 0.12-0.57）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "hospitalization due to heart failure (HF) 0.24 95% CI 0.12-0.57 (n = 2; 1045 participants",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The relative risk of cardiovascular death with semaglutide was 0.83 (95% CI 0.71-0.98) in 24,084 participants.",
+  "fact_zh": "在24,084名参与者中，使用司美格鲁肽心血管死亡的相对风险为0.83（95% CI 0.71-0.98）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "death due to cardiovascular causes 0.83 95% CI 0.71-0.98 (n = 3; 24 084 participants",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The relative risk of all-cause mortality with semaglutide was 0.79 (95% CI 0.70-0.89) in 24,084 participants.",
+  "fact_zh": "在24,084名参与者中，使用司美格鲁肽全因死亡的相对风险为0.79（95% CI 0.70-0.89）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "death from any cause 0.79 95% CI 0.70-0.89 (n = 3; 24 084 participants",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The relative risk of non-fatal myocardial infarction with semaglutide was 0.76 (95% CI 0.66-0.88) in 24,084 participants.",
+  "fact_zh": "在24,084名参与者中，使用司美格鲁肽非致命性心肌梗死的相对风险为0.76（95% CI 0.66-0.88）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "non-fatal myocardial infarction 0.76 95%CI 0.66-0.88 (n = 3; 24 084 participants",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The relative risk of stroke with semaglutide was 0.65 (95% CI 0.44-0.97) in 6480 participants with diabetes.",
+  "fact_zh": "在6480名糖尿病患者中，使用司美格鲁肽中风的相对风险为0.65（95% CI 0.44-0.97）。",
+  "kind": "finding",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "RR of stroke was 0.65 95% CI 0.44-0.97 for patients with diabetes (n = 2; 6480 participants",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study included 38 articles after an additional search.",
+  "fact_zh": "在额外的搜索后，该研究纳入了38篇文章。",
+  "kind": "method",
+  "pid": 3,
+  "sec": "Abstract/Results",
+  "page": null,
+  "quote": "An additional search included 19 studies, totaling 38 articles.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "fact": "The study evaluated the effect of semaglutide on cardiovascular outcomes in individuals with overweight or obesity.",
+  "fact_zh": "该研究评估了司美格鲁肽对超重或肥胖个体心血管结局的影响。",
+  "kind": "background",
+  "pid": 1,
+  "sec": "Abstract/Background",
+  "page": null,
+  "quote": "The objective was to evaluate whether the use of semaglutide, in individuals with overweight or obesity, reduces cardiovascular outcomes and adverse effects (AE).",
+  "score": 1.0,
+  "verified": true
+ }
+]

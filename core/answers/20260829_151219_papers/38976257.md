@@ -1,0 +1,162 @@
+# Semaglutide vs Tirzepatide for Weight Loss in Adults With Overweight or Obesity.
+
+Rodriguez PJ, Goodwin Cartwright BM, Gratzl S et al. (2024) *JAMA internal medicine* Q1 SJR 4.62  
+PMID:38976257 DOI:10.1001/jamainternmed.2024.2525 PMCID:PMC11231910  
+source: pmc · 49 paragraphs
+
+## Abstract
+
+<a id="p1"></a>**¶1** How does weight loss differ between patients receiving tirzepatide compared with semaglutide among a clinical population of adults with overweight or obesity?
+
+<a id="p2"></a>**¶2** In this cohort study of 18 386 propensity-score matched patients initiating tirzepatide or semaglutide labeled for type 2 diabetes, discontinuation was common; most achieved weight loss of 5% or greater within 1 year of treatment.
+
+<a id="p3"></a>**¶3** Although most adults with overweight or obesity experienced 5% or greater weight loss with treatment, the benefit was greater with tirzepatide.
+
+
+## Introduction
+
+<a id="p4"></a>**¶4** Overweight and obesity are highly prevalent conditions associated with increased morbidity and mortality. 1 , 2 , 3 Historically, pharmacologic treatments for weight reduction (antiobesity medications [AOMs]) have been limited in number, not particularly well-tolerated, and modest in impacts on weight. 4 , 5 However, newer therapies, including the glucagon-like peptide 1 receptor agonist (GLP-1 RA) semaglutide and the dual GLP-1 RA/gastric inhibitory polypeptide (GIP) agonist tirzepatide, have demonstrated substantial weight reduction in patients with obesity, with and without type 2 diabetes (T2D), in randomized clinical trials (RCTs). 6 , 7 , 8 , 9 , 10
+
+<a id="p5"></a>**¶5** While tirzepatide produces greater weight loss than semaglutide in patients with T2D, 11 data from head-to-head trials comparing these therapies in patients with overweight or obesity are not yet available. Further, it remains unclear whether the magnitude of weight loss in clinical settings mirrors that in RCTs, given well-described differences between these populations. 12 , 13 , 14 Finally, because these medications are costly and insurance coverage is limited for patients without T2D, actual adherence may differ from clinical trials, potentially attenuating the treatment effect.
+
+<a id="p6"></a>**¶6** Accordingly, we aimed to compare on-treatment weight change between tirzepatide and semaglutide (injectable) labeled for T2D in a large clinical population. We quantified differences in (1) likelihood of achieving 5% or greater, 10% or greater, and 15% or greater weight loss, and (2) percentage change in body weight at 3, 6, and 12 months with treatment.
+
+
+## Methods / Study Design
+
+<a id="p7"></a>**¶7** New users of tirzepatide or semaglutide with overweight or obesity (regardless of T2D) were included in the study. The first dispensation of tirzepatide or semaglutide was considered the treatment initiation date and served as the study index date. New users were defined as those having no previous dispensation of any GLP-1 RA or GLP-1 RA/GIP agonist (henceforth referred to as GLP-1 RA for brevity). Only adult patients with regular interactions with the health care system and an available baseline weight were included (see Study Population below). Patients were followed up for weight loss and gastrointestinal adverse events (AEs) until the first of discontinuation of therapy, GLP-1 RA switching, administrative censoring, or study end (November 3, 2023).
+
+
+## Methods / Data
+
+<a id="p8"></a>**¶8** This study used a subset of Truveta data. Truveta provides access to continuously updated and linked electronic health record (EHR) from a collective of US health care systems, including structured information on demographics (age, sex, health system–reported race and ethnicity), encounters, diagnoses, vital signs (eg, weight, body mass index [BMI, calculated as weight in kilograms divided by height in meters squared], blood pressure), medication requests (prescriptions), laboratory and diagnostic tests and results (eg, hemoglobin A1c [HbA 1c ] tests and values), and procedures. In addition to EHR data for care delivered within Truveta constituent health care systems, medication dispensing and social drivers of health (SDOH) information are made available through linked third-party data. Medication dispense (via e-prescribing data) includes fills for prescriptions written both within and outside constituent health care systems, providing greater observability into patients’ medication history. Medication dispense histories are updated at encounters, and include fill dates, NDC or RxNorm codes, quantity dispensed, and days of medication supplied.
+
+<a id="p9"></a>**¶9** SDOH data include individual income and education.
+
+<a id="p10"></a>**¶10** Data are normalized into a common data model through syntactic and semantic normalization. Truveta data are then deidentified by expert determination under the Health Insurance Portability and Accountability Act Privacy Rule and therefore exempt from institutional review board approval. Data for this study were accessed on November 3, 2023, using Truveta Studio.
+
+<a id="p11"></a>**¶11** This retrospective observational cohort study followed the Strengthening the Reporting of Observational Studies in Epidemiology ( STROBE ) reporting guidelines. 15 The analysis was completed on April 3, 2024.
+
+
+## Methods / Study Population, Setting, and Exposure
+
+<a id="p12"></a>**¶12** We identified adults first dispensed tirzepatide or semaglutide labeled for T2D (as brand names Mounjaro [Eli Lilly] or Ozempic [Novo Nordisk], respectively) between May 1, 2022 (the month of tirzepatide approval) and September 30, 2023, and who had overweight (BMI ≥27 or a diagnosis code indicating BMI ≥27) or obesity (BMI ≥30 or a diagnosis code for obesity) in the year before their index date. An overweight threshold BMI of 27 or greater was used to mirror clinical trials in patients with overweight or obesity. 6 , 7 , 9 , 10 We required a complete negative history of GLP-1 RA use. To improve outcome observability, we limited our analysis to patients with regular interactions with the health care system during the year prior to their index date, defined as at least 1 encounter, observation, or medication request in each consecutive 6-month period preceding the index date. We required a GLP-1 RA prescription and a baseline weight measurement in the 60 days before the index date. A 60-day window was selected because insurance denials and appeal processes for these medications may result in unusually long times between medication prescribing and filling.
+
+<a id="p13"></a>**¶13** Of note, the GLP-1 RA prescribed was not required to match the medication first dispensed, given that drug shortages during the study period 16 , 17 may have resulted in substitutions. Patients were categorized according to the medication dispensed. Additional exclusions were made for patients with missing sex and those with no follow-up time. The number of patients meeting the inclusion criteria determined the sample size. Codes for all definitions used in this study are provided in Supplement 1 (eDefinitions).
+
+<a id="p14"></a>**¶14** We relied on brand as a proxy for target dose. The standard full dose is 0.5 mg for semaglutide labeled for T2D and 5.0 mg for tirzepatide (labeled exclusively for T2D at the time of this analysis). The standard dose escalation schedule for both drugs is 4 weeks.
+
+
+## Methods / Patient Comorbidities and Covariates
+
+<a id="p15"></a>**¶15** Patients were classified as having T2D if they had a T2D diagnosis, were prescribed, administered, or dispensed insulin or a dipeptidyl peptidase 4 (DPP-4) inhibitor, or had an HbA 1c level of 7.5% or greater in the 2 years before their index date. Baseline patient demographics, clinical comorbidities, use of other antidiabetic medication (ADM) and AOM, and history of bariatric surgery in the 2 years before the index date were assessed. Several steps were taken to standardize weight data, including the removal of apparent data entry or unit conversion errors (detailed in eMethods 1.1 in Supplement 2 ). The most recent weight within the 60 days before the index date was considered the baseline value.
+
+
+## Methods / Weight Outcomes
+
+<a id="p16"></a>**¶16** Our primary estimand of interest was on-treatment weight loss. Therefore, patients were censored at the first of either treatment discontinuation (≥30 days without medication on hand), GLP-1 RA switching (change to a different medication; brand changes were allowed), last encounter, or study end (November 3, 2023). Analyses assumed unobserved weights for at-risk patients were missing at random, and therefore conditional on observed information only. Although relationships with unobserved variables cannot be tested, we assessed characteristics of patients with vs without any follow-up weight.
+
+<a id="p17"></a>**¶17** Propensity scores were used to balance treatment groups on measured variables. Propensity scores estimated the probability of initiating tirzepatide, compared to semaglutide, as a function of demographic, clinical, and utilization characteristics (eMethods 1.2 in Supplement 2 ). Patients were then matched using 1:1 nearest neighbor propensity score (PS) matching. Balance was assessed by standardized mean differences, with an acceptable threshold of 0.1. To provide further control for residual confounding, age, presence of T2D (eg, on-label use), and baseline weight were included as covariates in all parametric and semiparametric models.
+
+<a id="p18"></a>**¶18** Percentage change in body weight was calculated as (follow-up weight − baseline weight)/baseline weight. Probabilities of achieving 5% or greater, 10% or greater, and 15% or greater weight loss within 1 year, accounting for censoring, were extracted from Kaplan-Meier models. Relative differences in the hazard of achieving 5% or greater, 10% or greater, and 15% or greater weight loss for those receiving tirzepatide compared with semaglutide were estimated using Cox proportional hazards models with a robust variance estimator. 18 Survival methods were used to accommodate censoring rates in this clinical dataset.
+
+<a id="p19"></a>**¶19** For weight change at 3, 6, and 12 months, only the subpopulation still at risk (not yet censored) at the time point of interest was evaluated. The weight value nearest to the time point, within 45 days, was considered the outcome value. For at-risk patients without a weight value in this window, multiple imputation was used to impute weight change using information on all measured covariates and outcomes from the full at-risk population. Within each ( m = 10) imputed dataset of at-risk patients at the time point of interest, propensity score matching was reapplied, and differences in percentages of weight loss were estimated using linear models. Estimates were then pooled across imputations using Rubin rules. 19 Details on missingness and imputation are provided in eMethods 1.3 to 1.5 in Supplement 2 (eTable 1, eTable 2, eTable 3 in Supplement 2 ).
+
+
+## Methods / Sensitivity Analyses
+
+<a id="p20"></a>**¶20** Several sensitivity analyses were performed to test the robustness of findings. First, we replicated all analyses using inverse probability of treatment weighting (IPTW), rather than propensity score matching. Second, we conducted stratified analyses for patients with and without T2D (eg, on-label vs off-label use), replicating the full process described for each stratum. Third, we conducted a modified intention-to-treat (ITT) analysis, where censoring time ignored discontinuation and switching. This analysis included all available follow-up weights regardless of whether the patient was receiving treatment. Finally, analyses were replicated excluding patients with missing weight values (complete case analysis). We also conducted a sensitivity analysis comparing liraglutide to semaglutide as validation.
+
+
+## Methods / Safety Outcomes
+
+<a id="p21"></a>**¶21** Moderate to severe gastrointestinal AE (bowel obstruction, cholecystitis, cholelithiasis, gastroenteritis, gastroparesis, and pancreatitis) were identified from EHR data. Mild AEs, such as nausea and vomiting, were not included given the expectation of inconsistent capture in EHR data. The incidence rate of each gastrointestinal AE per 1000 person-years at risk was calculated, using the previously described censoring approach. Patients with a history of the specific AE in the year before index were excluded from analyses of the specific AE. Differences in the hazard of each AE between tirzepatide and semaglutide were estimated using Cox proportional hazards models.
+
+
+## Methods / Stats Program and Packages Used
+
+<a id="p22"></a>**¶22** Analyses were conducted in R statistical software (version 4.2.3; R Foundation) using the following packages: rlang, 20 arrow, 21 dplyr, 22 tidyr, 23 lubridate, 24 forcats, 25 table1, 26 cobalt, 27 MatchIt, 28 WeightIt, 29 mice, 30 MatchThem, 31 survey, 32 survival, 33 ggsurvfit, 34 broom, 35 ggplot2, 36 and xtable. 37
+
+
+## Results / Patient Characteristics
+
+<a id="p23"></a>**¶23** In total, 41 222 patients met our inclusion criteria (tirzepatide: 9193; semaglutide: 32 029) ( Figure 1 ). Prior to propensity score matching, patients who initiated tirzepatide, compared with semaglutide, were younger and a higher proportion were female, White, and had evidence of college education ( Table ). Patients who initiated tirzepatide had a lower prevalence of T2D and most other comorbidities. Despite demographic and clinical differences, mean (SD) baseline weight was similar between groups (tirzepatide: 110 [25.7] kg; semaglutide: 109 [25.2] kg), with measurement occurring an average (median) of 9.3 (4.0; interquartile range [IQR], 14-1; difference, 13) days before treatment initiation. The 1:1 propensity score matched cohort included 18 386 patients, with standardized mean differences for all variables lower than 0.1.
+
+<a id="p24"></a>**¶24** Figure 1. Study Flow Diagram A complete negative history of glucagon-like peptide 1 receptor agonist (GLP-1 RA) dispensing was required before the index date. Other exclusions include missing sex and no follow-up time. GLP-1 RA refers to both GLP-1 RA and GLP-1 RA/gastric inhibitory polypeptide agonist medications. a Index event: first GLP-1 dispensed between May 2022 to September 2023.
+
+<a id="p25"></a>**¶25** Table. Characteristics of Study Population Before and After Propensity Score Matching a
+
+<a id="p26"></a>**¶26** The mean (median) duration of on-treatment follow-up was 165 (129; IQR, 75-231; difference, 156) days. Follow-up was ended by discontinuation for 9963 (54.2%) (tirzepatide: 5140 [55.9%]; semaglutide: 4823 [52.5%]), medication switching for 153 (0.8%) (tirzepatide: 124 [1.3%]; semaglutide: 29 [0.3%]), and administrative censoring for 8270 (45.0%) (tirzepatide: 3929 [42.7%]; semaglutide: 4341 [47.2%]). The mean (median) duration of follow-up with administrative censoring alone (modified ITT analysis) was 257 (256) days. Distributions of initiation and follow-up times are provided in eFigure 1 and eFigure 2 in Supplement 2 .
+
+<a id="p27"></a>**¶27** Overall, 31 419 (76%) patients had at least 1 on-treatment follow-up weight and 35 097 (85%) had at least 1 follow-up weight during observation (eTable 3 in Supplement 2 ). The mean (median) days between weight observations on-treatment was 37.6 (27) (during observation, 62.5 [50]) for tirzepatide and 37.6 (27) (during observation, 59.1 [46]) for semaglutide.
+
+
+## Results / Hazard of 5%, 10%, and 15% Weight Loss
+
+<a id="p28"></a>**¶28** Among the matched population at risk (undergoing treatment), 81.8% (95% CI, 79.8%-83.7%) receiving tirzepatide vs 66.5% (95% CI, 64.3%-68.7%) receiving semaglutide achieved 5% or greater weight loss, 62.1% (95% CI, 59.7%-64.3%) vs 37.1% (95% CI, 34.6%-39.4%) achieved 10% or greater weight loss, and 42.3% (95% CI, 39.8%-44.6%) vs 18.1% (95% CI, 16.1%-20.0%) achieved 15% or greater weight loss within 365 days ( Figure 2 ). HRs comparing tirzepatide with semaglutide were 1.76 (95% CI, 1.68-1.84) for 5% or greater weight loss, 2.54 (95% CI, 2.37-2.73) for 10% weighor greatert loss and 3.24 (95% CI, 2.91-3.61) for 15% or greater weight loss ( Figure 3 ).
+
+<a id="p29"></a>**¶29** Figure 2. Event Probabilities for 5% or Greater, 10% or Greater, and 15% or Greater Weight Reduction Among Propensity-Score Matched Patients on Treatment The y-axis represents the event probability (1-survival probability [eg, probability of being event-free]).
+
+<a id="p30"></a>**¶30** Figure 3. Mean Percentage Change in Body Weight at 3, 6, and 12 Months Receiving Treatment for the Overall Population, Those With Type 2 Diabetes (T2D), and Those Without T2D Bars represent mean changes in body weight from baseline to the time point among the propensity score matched population of patients still receiving treatment. The whiskers represent 95% CIs.
+
+
+## Results / Percentage Change in Body Weight
+
+<a id="p31"></a>**¶31** The mean on-treatment change in body weight was −5.9% (95% CI, −6.0% to −5.8%) for tirzepatide vs −3.6% (95% CI, −3.7% to −3.4%) for semaglutide at 3 months, −10.1% (95% CI, −10.4% to −9.9%) vs −5.8% (95% CI, −6.0% to −5.5%) at 6 months, and −15.3% (95% CI, −16.0% to −14.5%) vs −8.3% (95% CI, −9% to −7.6%) at 12 months ( Figure 4 ). After adjusting for residual confounding, the absolute difference in weight loss between tirzepatide and semaglutide was −2.4% (95% CI, −2.5% to −2.2), −4.3% (95% CI, −4.7% to −4.0%), and −6.9% (95% CI, −7.9% to −5.8%) at 3, 6, and 12 months receiving treatment, respectively ( Figure 3 ).
+
+<a id="p32"></a>**¶32** Figure 4. Treatment Effects Comparing Tirzepatide to Semaglutide for All Patients, Patients With Type 2 Diabetes (T2D), and Patients Without T2D Points represent point estimates; the whiskers represent 95% CIs. Panels A-C contain hazard ratios for achieving 5% or greater, 10% or greater, and 15% or greater weight loss for patients receiving tirzepatide vs semaglutide among propensity score matched populations. Hazard ratios greater than 1 indicate higher likelihood of reaching weight loss threshold with tirzepatide. Panels D-F contain absolute differences in body weight change at 3 months, 6 months, and 12 months for patients receiving tirzepatide vs semaglutide among propensity score matched populations still receiving treatment at the time point. Negative differences indicate greater weight loss with tirzepatide.
+
+
+## Results / Sensitivity Analyses
+
+<a id="p33"></a>**¶33** Modified ITT analyses resulted in fewer patients achieving weight loss thresholds, smaller weight reductions, and slightly attenuated comparative effect estimates, though tirzepatide remained associated with significantly greater weight loss in all analyses (eResults 2.1, eFigure 3, eFigure 4, eFigure 5, and eFigure 6 in Supplement 2 ). A smaller proportion achieved 5% or greater weight loss within 1 year, 71.1% (95% CI, 69.9%-72.3%) with tirzepatide and 56.4% (95% CI, 55%-57.8%) with semaglutide, resulting in an HR of 1.63 (95% CI, 1.56-1.70). Similarly, mean changes in body weight were smaller: −5.3% (95% CI, −5.4% to −5.2%) for tirzepatide vs −3.3% (95% CI, −3.4% to −3.2%) for semaglutide at 3 months, −8.2% (95% CI, −8.4% to −8.0%) for tirzepatide vs −5.0% (95% CI, −5.1% to −4.8%) for semaglutide at 6 months, and −11.4% (95% CI, −12.0% to −10.8%) for tirzepatide vs −6.2% (95% CI, −6.7% to −5.8%) for semaglutide at 12 months.
+
+<a id="p34"></a>**¶34** After adjusting for residual confounding, the difference in weight loss between those receiving tirzepatide vs semaglutide was −2.0% (95% CI, −2.1% to −1.8%) at 3 months, −3.2% (95% CI, −3.5% to −3.0%) at 6 months, and −5.1% (95% CI, −5.8% to −4.3%) at 12 months.
+
+<a id="p35"></a>**¶35** Sensitivity analyses using inverse probability of treatment weighting produced very similar results (eFigure 4 and eFigure 6 in Supplement 2 ). Results of the liraglutide validation analysis are given in eFigure 7, eFigure 8, eFigure 9, and eFigure 10 in Supplement 2 .
+
+
+## Results / Subgroup Analyses
+
+<a id="p36"></a>**¶36** In stratified analyses, those without T2D had larger reductions in body weight than those with T2D for tirzepatide and semaglutide alike ( Figure 3 ; eFigures 11 and 12 in Supplement 2 ). Tirzepatide was still associated with significantly greater weight loss in all analyses (eFigure 13 and eFigure 14 in Supplement 2 ).
+
+
+## Results / Gastrointestinal Adverse Events
+
+<a id="p37"></a>**¶37** We observed no significant differences in the risk of any gastrointestinal AEs between those receiving tirzepatide vs semaglutide (eTable 4 in Supplement 2 ).
+
+
+## Discussion
+
+<a id="p38"></a>**¶38** In this large clinical analysis of US adults with overweight or obesity who initiated tirzepatide or semaglutide treatment, those receiving tirzepatide were more likely to achieve 5% or greater, 10% or greater, and 15% or greater weight loss and experienced larger reductions in body weight at 3, 6, and 12 months. To our knowledge, this study represents the first clinical comparative effectiveness study of tirzepatide and semaglutide in adults with overweight or obesity. Comparative effect estimates were consistent in direction and significance between methodological approaches (propensity score matching, IPTW, modified ITT) and within subgroups of patients with and without T2D. No significant differences in the incidence of gastrointestinal AEs were observed.
+
+<a id="p39"></a>**¶39** Findings in this study are broadly consistent with existing evidence from RCTs. Among placebo-controlled trials of patients with overweight or obesity, treatment with tirzepatide at 10 mg per week resulted in 82% and 96% of individuals with and without T2D achieving 5% or more weight loss by 72 weeks, respectively (efficacy estimands). 9 , 10 Among similarly designed placebo-controlled trials, treatment with semaglutide at 2.4 mg per week resulted in 73% and 92% of individuals with and without T2D achieving 5% or greater body weight by 68 weeks, respectively (efficacy estimands). 6 , 7 While data from head-to-head trials are more limited, a single study that evaluated the glucose-lowering effect of tirzepatide (5 mg per week) compared with semaglutide (1 mg per week) in patients with T2D found that 5% weight loss was achieved by 69% and 58%, respectively. 11 Importantly, a trial comparing tirzepatide to semaglutide in patients with overweight or obesity, but without T2D is underway (SURMOUNT-5, NCT05822830 ) 38 ; the results, however, are not expected until late 2024.
+
+
+## Discussion / Strengths and Limitations
+
+<a id="p40"></a>**¶40** This study has several strengths. First, the analysis included a large and recent cohort of patients with overweight and obesity evaluated in May 2022 (the month of tirzepatide approval) or later. It is likely that the weight reduction observed in our study was greater than that found in previous clinical studies of GLP-1 RA because such studies ended before semaglutide and/or tirzepatide were available. 39 , 40 Second, estimates were consistent in direction and significance between estimands (on treatment vs modified ITT), subgroups (with vs without T2D), and methodological approaches (propensity score matching, IPTW, complete case analysis). Third, this study included individuals likely ineligible for participation in related RCTs, including those with major depressive disorder. Major depressive disorder was common in our population (4044 patients [22%] had a history in the preceding 2 years) suggesting clinical trials may have excluded many patients using these medications in clinical settings.
+
+<a id="p41"></a>**¶41** Finally, use of prescribing and dispensing data allowed us to include populations without T2D, which may not be captured in pharmacy claims data alone given limited insurance coverage for off-label use.
+
+<a id="p42"></a>**¶42** Our study is also subject to several limitations. Unlike many clinical end points, weight loss is directly observable to patients, which may result in informative censoring, with those observing no weight loss being more likely to discontinue or switch drugs. 40 , 41 Whereas a modified ITT analysis inclusive of postdiscontinuation weights showed smaller reductions in weight, differences between tirzepatide and semaglutide were similar. In addition, unmeasured confounding, especially the degree of motivation for weight loss, may exist. A substantial amount of unmeasured confounding, though, would be required to negate the treatment effect estimates observed in this study. This study used clinical EHR data, which has some inherent limitations. Information is collected during routine clinical care, and AEs are likely underreported relative to protocolized, prospective AE ascertainment in clinical trials. Similarly, weight changes are ascertained only when patients return for visits, and therefore observed event times are likely delayed relative to true times.
+
+<a id="p43"></a>**¶43** However, we expect misclassification of AE and weight loss occurrence and timing to be nondifferential between groups, given the similarity of follow-up cadence between groups. Our imputation model assumed missingness was conditional on observed information only (eg, missing at random), which may be biased if unmeasured variables contributed to missingness. In addition, we relied on brand as a proxy for target dose because this approach most closely approximates randomization to a treatment arm, where the individual dose received may deviate from the target dose. Patients in both groups may receive doses that are higher or lower than standard full doses. Health system and payer information were unavailable for this analysis. Although the analytic sample included patients in 35 states, the geographic distribution was not representative of the US, which limited generalizability. Finally, this study included medications labeled for T2D only. Future studies are needed to compare versions labeled for weight loss.
+
+<a id="p44"></a>**¶44** Consistent with clinical trials, we found larger weight reductions among those without T2D, compared with those with T2D. 6 , 7 , 9 , 10 The underlying reasons are unclear. Although differential impacts on weight are possible, patients with and without T2D may have differing motivation levels for weight loss and may engage in other weight loss activities differentially. Additional research is needed to understand the complex relationships between motivations and outcomes for patients with and without T2D. Further, most patients in our study discontinued. Additional research on discontinuation is needed, including the role of shortages, adverse events, and costs.
+
+
+## Conclusions
+
+<a id="p45"></a>**¶45** In this large, propensity-matched, cohort study, individuals with overweight or obesity treated with tirzepatide were significantly more likely to achieve clinically meaningful weight loss and larger reductions in body weight compared with those treated with semaglutide. Consistent treatment effect estimates were observed in subgroups with and without T2D. Future work is needed to compare the effect of tirzepatide and semaglutide on other key end points (eg, reduction in major adverse cardiovascular events). 42 , 43
+
+
+## Section
+
+<a id="p46"></a>**¶46** Supplement 1. eDefinitions
+
+<a id="p47"></a>**¶47** Supplement 2. eMethods eFigure 1. Distribution of initiation time by group eFigure 2. Distribution of follow-up time by initiation date eTable 1. Weight Availability at t: On-Treatment Analyses eTable 2. Weight Availability at t: ITT Analyses eTable 3. Characteristics of Matched Patients with Available vs. Missing Follow-up Weight. eResults eFigure 3. Proportion of at-risk patients achieving weight loss targets by one year for on treatment and intention to treat analyses eFigure 4. Hazard ratio comparing tirzepatide vs semaglutide for achieving weight loss targets under different analytic approaches eFigure 5. Mean change in body weight for tirzepatide and semaglutide groups under on treatment and modified intention to treat analyses eFigure 6. Difference in percent change in body weight comparing tirzepatide to semaglutide under different analytic approaches eFigure 7. Event probabilities of weight loss, accounting for censoring, for patients on liraglutide and semaglutide eFigure 8. Hazard ratios comparing liraglutide to semaglutide eFigure 9. Mean change in body weight for liraglutide and semaglutide eFigure 10.
+
+<a id="p48"></a>**¶48** Difference in percent change in body weight comparing liraglutide to semaglutide eFigure 11. Weight loss event probabilities, accounting for censoring, for patients with T2D eFigure 12. Weight loss event probabilities, accounting for censoring, for patients without T2D eFigure 13. Hazard ratio comparing tirzepatide to semaglutide for different populations eFigure 14. Difference in percent change in body weight comparing tirzepatide to semaglutide for different populations eTable 4. Gastrointestinal Adverse Event Rates Per 1000 person-years
+
+<a id="p49"></a>**¶49** Supplement 3. Data Sharing Statement

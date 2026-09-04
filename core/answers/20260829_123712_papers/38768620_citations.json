@@ -1,0 +1,92 @@
+[
+ {
+  "claimed_pid": 1,
+  "pid": 1,
+  "sec": "Abstract/Background",
+  "page": null,
+  "quote": "Sodium-glucose co-transporter-2 (SGLT2) inhibitors have been studied in patients with heart failure, type 2 diabetes, chronic kidney disease, atherosclerotic cardiovascular disease, and acute myocardial infarction.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Findings",
+  "page": null,
+  "quote": "We included 15 trials (N=100 952).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "quote": "large trials (n>1000) of SGLT2 inhibitors in patients with heart failure, type 2 diabetes, chronic kidney disease, and atherosclerotic cardiovascular disease (including acute myocardial infarction).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Findings",
+  "page": null,
+  "quote": "Compared with placebo, SGLT2 inhibitors reduced the risk...",
+  "score": 0.81,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Findings",
+  "page": null,
+  "quote": "Compared with placebo, SGLT2 inhibitors reduced the risk of first hospitalisation for heart failure by 29% in patients with heart failure (hazard ratio [HR] 0·71 [95% CI 0·67-0·77])",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 3,
+  "pid": 3,
+  "sec": "Abstract/Findings",
+  "page": null,
+  "quote": "SGLT2 inhibitors reduced cardiovascular death by 14% in patients with heart failure (HR 0·86 [95% CI 0·79-0·93])",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 4,
+  "pid": 4,
+  "sec": "Abstract/Findings",
+  "page": null,
+  "quote": "heart failure with preserved ejection fraction (26% reduction in first hospitalisation for heart failure; no effect on cardiovascular death).",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "quote": "In this systematic review and meta-analysis, we queried online databases...",
+  "score": 0.85,
+  "verified": true
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "quote": "Effect sizes were pooled using random-effects models.",
+  "score": 1.0,
+  "verified": true
+ },
+ {
+  "claimed_pid": 2,
+  "pid": 2,
+  "sec": "Abstract/Methods",
+  "page": null,
+  "quote": "This study is registered with PROSPERO, CRD42024513836.",
+  "score": 1.0,
+  "verified": true
+ }
+]
