@@ -9,7 +9,10 @@ user prompt 里抄真实段落原文，这样 `knowledge_store.verify_citations`
 from __future__ import annotations
 
 import json
+import os
 import re
+
+from pydantic import BaseModel
 
 PARA_RE = re.compile(r"\[¶(\d+)\]\s*(.+?)(?=\n\[¶\d+\]|\n##|\Z)", re.S)
 MARKER_RE = re.compile(r"\[(\d{1,2})¶(\d{1,4})\]")
@@ -76,36 +79,45 @@ def fake_llm(system: str, user: str, max_tokens: int = 2000, think: bool = False
     return "fake-llm: unrecognised system prompt"
 
 
+class Message(BaseModel):
+    role: str
+    content: str = ""
+
+
+class ChatRequest(BaseModel):
+    """只声明 ask.py 会发的字段；其余（chat_template_kwargs 等）忽略。"""
+
+    model: str = ""
+    messages: list[Message] = []
+    max_tokens: int = 2000
+    temperature: float = 0.2
+
+
+def model_name() -> str:
+    return os.environ.get("LLM_MODEL", "qwen3-14b")
+
+
 def create_app():
-    """OpenAI 兼容的最小服务，只实现 ask.py 用到的两个端点。"""
-    import os
+    """OpenAI 兼容的最小服务，只实现 ask.py 用到的两个端点。
 
+    请求模型必须定义在模块级：本文件开了 `from __future__ import annotations`，
+    函数内的局部类无法被 FastAPI 解析注解，参数会被当成 query 参数（422）。
+    """
     from fastapi import FastAPI
-    from pydantic import BaseModel
 
-    model_name = os.environ.get("LLM_MODEL", "qwen3-14b")
     app = FastAPI(title="fake-llm")
-
-    class Message(BaseModel):
-        role: str
-        content: str = ""
-
-    class ChatRequest(BaseModel):
-        model: str = model_name
-        messages: list[Message] = []
-        max_tokens: int = 2000
-        temperature: float = 0.2
 
     @app.get("/v1/models")
     def models() -> dict:
-        return {"object": "list", "data": [{"id": model_name, "object": "model", "owned_by": "fake"}]}
+        name = model_name()
+        return {"object": "list", "data": [{"id": name, "object": "model", "owned_by": "fake"}]}
 
     @app.post("/v1/chat/completions")
     def chat(req: ChatRequest) -> dict:
         system = next((m.content for m in req.messages if m.role == "system"), "")
         user = next((m.content for m in req.messages if m.role == "user"), "")
         text = fake_llm(system, user, max_tokens=req.max_tokens, temperature=req.temperature)
-        return {"id": "fake-1", "object": "chat.completion", "model": req.model,
+        return {"id": "fake-1", "object": "chat.completion", "model": req.model or model_name(),
                 "choices": [{"index": 0, "finish_reason": "stop",
                              "message": {"role": "assistant", "content": text}}],
                 "usage": {"prompt_tokens": len(user) // 4, "completion_tokens": len(text) // 4,

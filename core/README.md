@@ -1,3 +1,5 @@
+本文是 CLI 内核的详细文档；项目整体定位、HTTP API 与部署见仓库根目录的 [README](../README.md)，协议见 [API 文档](../docs/api.md)。
+
 # PICOSGpt — 本地大模型医学文献问答 Demo
 
 **问一个临床问题 → 自动检索 PubMed / Europe PMC → 下载全文 → 模型逐篇阅读 → 输出带编号引用、可核对的答案。**

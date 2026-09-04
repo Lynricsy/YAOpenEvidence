@@ -8,6 +8,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --all-packages --no-dev --no-install-workspace
 COPY core/ core/
 COPY backend/ backend/
+# 两棵测试树共用的根 conftest：test 阶段必须有它才能建表并搭好数据根
+COPY conftest.py ./
 
 FROM base AS runtime
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --all-packages --no-dev
