@@ -30,6 +30,13 @@ def cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_worker(_args: argparse.Namespace) -> int:
+    from .worker import run
+
+    run()
+    return 0
+
+
 def cmd_migrate(_args: argparse.Namespace) -> int:
     from alembic import command
 
@@ -59,6 +66,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--port", type=int, default=0)
     s.add_argument("--reload", action="store_true")
     s.set_defaults(fn=cmd_serve)
+
+    w = sub.add_parser("worker", help="run the arq task worker")
+    w.set_defaults(fn=cmd_worker)
 
     m = sub.add_parser("migrate", help="alembic upgrade head")
     m.set_defaults(fn=cmd_migrate)

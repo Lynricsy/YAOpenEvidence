@@ -80,4 +80,18 @@ def _prepare_data_root() -> Path:
             shutil.copyfile(src, dst)
 
     ks.KnowledgeStore(kb_dir=str(root / "kb")).add_paper(meta, paras, facts)
+
+    # backend 需要建好表、清空 Redis 测试库（默认 db 15）
+    from alembic import command
+    from alembic.config import Config
+
+    cfg = Config(str(REPO / "backend" / "alembic.ini"))
+    cfg.set_main_option("script_location", str(REPO / "backend" / "alembic"))
+    command.upgrade(cfg, "head")
+
+    import redis
+
+    client = redis.Redis.from_url(os.environ["YAOE_REDIS_URL"])
+    client.flushdb()
+    client.close()
     return root

@@ -435,6 +435,35 @@ def format_hits(hits: list[dict]) -> str:
     return "\n".join(lines) if lines else "(knowledge base is empty)"
 
 
+def reindex(emit: Callable[[dict], None] = lambda e: None) -> tuple[int, int]:
+    """从 library/ 重建 kb/（换 embedder 后必须做）。返回 (入库条目数, 论文数)。
+
+    `emit` 收结构化进度事件，供 HTTP worker 推给 SSE；CLI 传默认值即静默。
+    """
+    for fn in ("meta.jsonl", "vectors.npy", "info.json"):
+        p = os.path.join(KB_DIR, fn)
+        if os.path.exists(p):
+            os.remove(p)
+    store = KnowledgeStore()
+    dirs = sorted(glob_dirs())
+    emit({"type": "stage", "stage": "reindex", "status": "started", "detail": {"papers": len(dirs)}})
+    n, done = 0, 0
+    for i, d in enumerate(dirs, 1):
+        try:
+            with open(os.path.join(d, "meta.json"), encoding="utf-8") as f: meta = json.load(f)
+            with open(os.path.join(d, "paragraphs.json"), encoding="utf-8") as f: paras = json.load(f)
+            with open(os.path.join(d, "facts.json"), encoding="utf-8") as f: facts = json.load(f)
+        except FileNotFoundError:
+            continue
+        n += store.add_paper(meta, paras, facts, replace=False)
+        done += 1
+        emit({"type": "progress", "stage": "reindex", "current": i, "total": len(dirs),
+              "pmid": str(meta.get("pmid") or ""), "title": str(meta.get("title") or "")})
+    emit({"type": "stage", "stage": "reindex", "status": "finished",
+          "detail": {"items": n, "papers": done}})
+    return n, done
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd")
@@ -447,21 +476,8 @@ def main() -> None:
     elif a.cmd == "stats":
         print(json.dumps(KnowledgeStore().stats(), ensure_ascii=False, indent=1))
     elif a.cmd == "reindex":
-        for fn in ("meta.jsonl", "vectors.npy", "info.json"):
-            p = os.path.join(KB_DIR, fn)
-            if os.path.exists(p):
-                os.remove(p)
-        ks = KnowledgeStore()
-        n = 0
-        for d in sorted(glob_dirs()):
-            try:
-                with open(os.path.join(d, "meta.json"), encoding="utf-8") as f: meta = json.load(f)
-                with open(os.path.join(d, "paragraphs.json"), encoding="utf-8") as f: paras = json.load(f)
-                with open(os.path.join(d, "facts.json"), encoding="utf-8") as f: facts = json.load(f)
-            except FileNotFoundError:
-                continue
-            n += ks.add_paper(meta, paras, facts, replace=False)
-        print(f"reindexed {n} items from {len(glob_dirs())} papers")
+        n, papers = reindex()
+        print(f"reindexed {n} items from {papers} papers")
     else:
         ap.print_help()
 
