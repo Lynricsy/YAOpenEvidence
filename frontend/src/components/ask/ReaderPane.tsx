@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react'
-import { Star, X } from 'lucide-react'
+import { Hourglass, Star, X } from 'lucide-react'
 import * as m from 'motion/react-m'
 import type { components } from '@/api/schema'
 import { ApiError, problemMessage } from '@/api/errors'
@@ -36,6 +36,8 @@ export type ReaderProps = {
   pid: number | null
   papers: components['schemas']['AnswerPaper'][]
   citations: components['schemas']['Citation'][]
+  /** 任务仍在 queued/running：逐篇材料尚未写入，缺失是预期而非旧版导入。 */
+  answerActive: boolean
   onClose: () => void
 }
 
@@ -52,6 +54,7 @@ function PaperReader({
   pid,
   papers,
   citations,
+  answerActive,
   onClose,
 }: ReaderProps) {
   const detail = useAnswerPaper(answerId, n)
@@ -129,7 +132,15 @@ function PaperReader({
           <Loading>正在加载文献材料…</Loading>
         </div>
       ) : missing ? (
-        <EmptyState title="此答案没有逐篇材料（旧版导入）" />
+        answerActive ? (
+          <EmptyState
+            icon={Hourglass}
+            title="该文献尚未阅读完成"
+            description="任务仍在进行中，原文与核实材料会在逐篇阅读阶段结束后出现。"
+          />
+        ) : (
+          <EmptyState title="此答案没有逐篇材料（旧版导入）" />
+        )
       ) : error ? (
         <div role="alert" className="error-panel m-4">
           <p>{problemMessage(error)}</p>

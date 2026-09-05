@@ -125,6 +125,7 @@ export default function AskPage() {
     pid: paperPid,
     papers: answer?.papers ?? [],
     citations: answer?.citations ?? [],
+    answerActive: active,
     onClose: closeReader,
   }
   return (
