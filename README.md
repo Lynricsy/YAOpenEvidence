@@ -1,6 +1,6 @@
 # YAOpenEvidence
 
-YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问题出发，由 LLM 生成检索式，经 PubMed 与 Europe PMC 检索并获取全文，再按 PICOS 框架逐篇阅读、把引文逐条回到原文核实、将原子知识写入本地知识库，最终生成带段落级引用定位的综述。系统提供两个使用面：本机使用的 `core/PICOSGpt` CLI，以及通过容器部署的 `/v1` REST + SSE API。
+YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问题出发，由 LLM 生成检索式，经 PubMed 与 Europe PMC 检索并获取全文，再按 PICOS 框架逐篇阅读、把引文逐条回到原文核实、将原子知识写入本地知识库，最终生成带段落级引用定位的综述。系统提供浏览器工作台、本机使用的 `core/PICOSGpt` CLI，以及 `/v1` REST + SSE API。
 
 API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md)；CLI 内核的详细用法见 [core/README.md](core/README.md)。
 
@@ -12,7 +12,7 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 ├── backend/                 # yaoe-backend：FastAPI、数据库迁移、arq worker 与后端测试
 ├── frontend/                # React 19、Vite、TypeScript、Tailwind 与 shadcn/ui 浏览器前端
 ├── docs/                    # 面向 API 使用者的协议文档
-├── compose.yaml             # Redis、迁移、API、worker 与 test profile
+├── compose.yaml             # nginx web、Redis、迁移、API、worker 与 test profile
 ├── compose.fake-llm.yaml    # 确定性假 LLM 的 Compose 覆盖配置
 ├── Dockerfile               # API/worker 共用的 runtime 镜像及 test 镜像
 └── var/                     # API SQLite 数据库等运行期状态，不入库
@@ -22,11 +22,17 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 
 前端开发：在 `frontend/` 执行 `pnpm install`、`pnpm gen:api`、`pnpm typecheck`、`pnpm dev`。Vite 默认监听 `http://localhost:5173`，将 `/v1` 同源代理到本机 API 的 `8765` 端口；生成的 API 类型随代码入库。生产构建使用 `pnpm build`。
 
+浏览器工作台包含文献筛选与实时问答、段落级引用和原文阅读、问答历史、账号设置、管理员用户管理，以及文献库、知识库和上游文献检索。鉴权采用 Bearer 会话；问答仅本人和管理员可见，文献与衍生知识库仍共享，不应提交敏感患者信息。
+
+`pnpm test` 运行引用、筛选与任务事件回归；`pnpm gen:api` 从入库 OpenAPI 生成类型，并保留服务端默认字段的可选性。修改 API 契约后需要重新生成。明暗主题默认跟随系统；筛选和手动主题设置保存在当前浏览器。
+
 ## 架构
 
 ```mermaid
 flowchart LR
     Client[CLI / API 客户端]
+    Browser[浏览器工作台]
+    Web[web<br/>nginx]
     API[api<br/>FastAPI]
     Redis[(redis<br/>任务队列与事件流)]
     Worker[worker<br/>arq]
@@ -34,6 +40,8 @@ flowchart LR
     LLM[宿主机<br/>LiteLLM :4000 + vLLM]
     Sources[PubMed / Europe PMC<br/>Semantic Scholar]
 
+    Browser --> Web
+    Web --> API
     Client --> API
     API --> Redis
     Redis --> Worker
@@ -68,7 +76,7 @@ cd ..
 
 默认 Compose 配置通过 `http://host.docker.internal:4000/v1` 访问 LiteLLM。
 
-### 3. 启动后端
+### 3. 启动工作台与后端
 
 ```bash
 docker compose up -d --build
@@ -77,6 +85,8 @@ curl http://localhost:8765/v1/health/ready
 ```
 
 `migrate` 服务先执行 Alembic 迁移；迁移成功后 `api` 和 `worker` 才启动。应用不会在进程启动时自行迁移数据库。
+
+浏览器打开 `http://localhost:8080`，使用管理员创建的账号登录。`YAOE_WEB_PORT` 控制前端端口；若 8080 被占用，可设置为其他空闲端口。nginx 将 `/v1/` 同源代理到 API，关闭代理缓冲以即时传输 SSE，并支持 `/a/<id>`、`/library/<key>` 等深链刷新；无需配置 CORS。生产环境应在入口启用 HTTPS。
 
 `create-admin` 会交互读取并确认密码，没有默认账号或密码。通过管理员登录取得 `access_token`：
 

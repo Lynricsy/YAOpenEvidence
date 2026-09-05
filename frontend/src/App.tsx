@@ -1,18 +1,20 @@
+import { lazy, Suspense } from 'react'
+import { Loader2 } from 'lucide-react'
 import { Navigate, Route, Routes } from 'react-router'
 import { RequireAuth } from '@/auth/RequireAuth'
 import { AppShell } from '@/components/AppShell'
-import AskPage from '@/pages/AskPage'
-import LoginPage from '@/pages/LoginPage'
-import HistoryPage from '@/pages/HistoryPage'
-import AccountPage from '@/pages/AccountPage'
-import UsersPage from '@/pages/admin/UsersPage'
-import LibraryPage from '@/pages/explore/LibraryPage'
-import PaperPage from '@/pages/explore/PaperPage'
-import KbSearchPage from '@/pages/explore/KbSearchPage'
-import LiteratureSearchPage from '@/pages/explore/LiteratureSearchPage'
+const AskPage = lazy(() => import('@/pages/AskPage'))
+const LoginPage = lazy(() => import('@/pages/LoginPage'))
+const HistoryPage = lazy(() => import('@/pages/HistoryPage'))
+const AccountPage = lazy(() => import('@/pages/AccountPage'))
+const UsersPage = lazy(() => import('@/pages/admin/UsersPage'))
+const LibraryPage = lazy(() => import('@/pages/explore/LibraryPage'))
+const PaperPage = lazy(() => import('@/pages/explore/PaperPage'))
+const KbSearchPage = lazy(() => import('@/pages/explore/KbSearchPage'))
+const LiteratureSearchPage = lazy(() => import('@/pages/explore/LiteratureSearchPage'))
 
 export default function App() {
-  return <Routes>
+  return <Suspense fallback={<div role="status" className="flex min-h-64 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />正在加载…</div>}><Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route element={<RequireAuth />}>
       <Route element={<AppShell />}>
@@ -30,5 +32,5 @@ export default function App() {
       </Route>
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes>
+  </Routes></Suspense>
 }

@@ -51,6 +51,13 @@ services:
       redis: { condition: service_healthy }
       migrate: { condition: service_completed_successfully }
 
+  web:
+    build: { context: frontend }
+    image: yaoe-web:local
+    ports: ["${YAOE_WEB_PORT:-8080}:80"]
+    depends_on:
+      api: { condition: service_healthy }
+
   test:
     profiles: [test]
     build: { context: ., target: test }
