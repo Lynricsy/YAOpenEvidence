@@ -164,9 +164,6 @@
   .error-panel {
     @apply rounded-xl border border-danger/25 bg-danger/5 p-5 text-sm leading-7;
   }
-  .chip {
-    @apply inline-flex h-7 items-center gap-1.5 rounded-md border bg-background px-2.5 text-xs transition-colors hover:bg-accent/60 data-[state=on]:border-primary/40 data-[state=on]:bg-primary/10 data-[state=on]:text-primary;
-  }
   /* 语义色表面：`--tone` 决定文字/描边/底色，深色下前景提亮以保对比度。
      Tailwind v4 不允许 @apply 自定义组件类，因此各消费者并列在同一规则里。 */
   .tone-surface,
@@ -289,6 +286,13 @@
   }
   .reader-separator {
     @apply relative w-px bg-border transition-colors before:absolute before:inset-y-0 before:-left-1.5 before:-right-1.5 hover:bg-primary/50 active:bg-primary;
+  }
+}
+/* `.chip` 必须落在 utilities 层：shadcn 的 toggleVariants 以工具类输出
+   h-9 / px-3 / data-[state=on]:bg-accent，components 层的规则会被它们压过。 */
+@layer utilities {
+  .chip {
+    @apply inline-flex h-7 items-center gap-1.5 rounded-md border bg-background px-2.5 text-xs transition-colors hover:bg-accent/60 hover:text-foreground data-[state=on]:border-primary/40 data-[state=on]:bg-primary/10 data-[state=on]:text-primary;
   }
 }
 ::view-transition-old(root),
