@@ -6,7 +6,10 @@ import { Toaster } from '@/components/ui/sonner'
 import { queryClient } from '@/api/queries'
 import { AuthProvider } from '@/auth/store'
 import { ThemeProvider } from '@/lib/theme'
+import { MotionProvider } from '@/lib/motion'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/noto-serif-sc'
 import './index.css'
 import App from './App.tsx'
 
@@ -14,14 +17,16 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <TooltipProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-            <Toaster richColors position="top-center" />
-          </AuthProvider>
-        </TooltipProvider>
+        <MotionProvider>
+          <TooltipProvider>
+            <AuthProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+              <Toaster richColors position="top-center" />
+            </AuthProvider>
+          </TooltipProvider>
+        </MotionProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

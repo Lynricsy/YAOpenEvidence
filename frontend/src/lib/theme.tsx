@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -26,10 +27,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     media.addEventListener('change', update)
     return () => media.removeEventListener('change', update)
   }, [])
+  const lastResolved = useRef<'light' | 'dark' | null>(null)
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', resolved === 'dark')
-    document.documentElement.style.colorScheme = resolved
+    const apply = () => {
+      document.documentElement.classList.toggle('dark', resolved === 'dark')
+      document.documentElement.style.colorScheme = resolved
+    }
     localStorage.setItem('yaoe.theme', theme)
+    // 仅在明暗真正切换时做视图过渡；首帧与同色重渲染直接落地，避免无谓的整页快照。
+    const changed = lastResolved.current !== null && lastResolved.current !== resolved
+    lastResolved.current = resolved
+    if (changed && document.startViewTransition) document.startViewTransition(apply)
+    else apply()
   }, [theme, resolved])
   return (
     <Context.Provider value={{ theme, setTheme, resolved }}>

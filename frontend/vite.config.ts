@@ -7,6 +7,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
-    proxy: { '/v1': { target: 'http://127.0.0.1:8765', changeOrigin: false } },
+    proxy: {
+      '/v1': {
+        target: process.env.YAOE_API_PROXY ?? 'http://127.0.0.1:8765',
+        changeOrigin: false,
+      },
+    },
   },
 })
