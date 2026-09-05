@@ -86,7 +86,7 @@ curl http://localhost:8765/v1/health/ready
 
 `migrate` 服务先执行 Alembic 迁移；迁移成功后 `api` 和 `worker` 才启动。应用不会在进程启动时自行迁移数据库。
 
-浏览器打开 `http://localhost:8080`，使用管理员创建的账号登录。`YAOE_WEB_PORT` 控制前端端口；若 8080 被占用，可设置为其他空闲端口。nginx 将 `/v1/` 同源代理到 API，关闭代理缓冲以即时传输 SSE，并支持 `/a/<id>`、`/library/<key>` 等深链刷新；无需配置 CORS。生产环境应在入口启用 HTTPS。
+浏览器打开 `http://localhost:39109`，使用管理员创建的账号登录。默认使用选定的高位端口 39109，`YAOE_WEB_PORT` 可覆盖为其他空闲端口。nginx 将 `/v1/` 同源代理到 API，关闭代理缓冲以即时传输 SSE，并支持 `/a/<id>`、`/library/<key>` 等深链刷新；无需配置 CORS。生产环境应在入口启用 HTTPS。
 
 `create-admin` 会交互读取并确认密码，没有默认账号或密码。通过管理员登录取得 `access_token`：
 
