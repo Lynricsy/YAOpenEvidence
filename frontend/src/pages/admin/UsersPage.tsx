@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { KeyRound, Loader2, RefreshCw, UserPlus, Users } from 'lucide-react'
+import { KeyRound, Loader2, UserPlus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import type { components } from '@/api/schema'
 import {
@@ -9,11 +9,13 @@ import {
   updateUser,
   useUsers,
 } from '@/api/queries'
-import { problemMessage } from '@/api/errors'
 import { useAuth } from '@/auth/store'
-import { EmptyState } from '@/components/EmptyState'
-import { Pagination } from '@/components/Pagination'
-import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/common/EmptyState'
+import { Loading } from '@/components/common/Loading'
+import { PageHeader } from '@/components/common/PageHeader'
+import { Pagination } from '@/components/common/Pagination'
+import { Pill } from '@/components/common/Pill'
+import { QueryError } from '@/components/common/QueryError'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -41,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { dateTime } from '@/lib/format'
 
 type User = components['schemas']['UserRead']
 
@@ -87,6 +90,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
             <Label htmlFor="create-username">用户名</Label>
             <Input
               id="create-username"
+              className="h-10"
               autoComplete="off"
               required
               minLength={3}
@@ -102,7 +106,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
               id="create-username-hint"
               className={
                 username && !usernameValid
-                  ? 'text-xs text-destructive'
+                  ? 'text-xs text-danger'
                   : 'text-xs text-muted-foreground'
               }
             >
@@ -113,6 +117,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
             <Label htmlFor="create-password">密码</Label>
             <Input
               id="create-password"
+              className="h-10"
               type="password"
               autoComplete="new-password"
               required
@@ -128,7 +133,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
               id="create-password-hint"
               className={
                 password && !passwordValid
-                  ? 'text-xs text-destructive'
+                  ? 'text-xs text-danger'
                   : 'text-xs text-muted-foreground'
               }
             >
@@ -144,7 +149,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
                 if (value === 'user' || value === 'admin') setRole(value)
               }}
             >
-              <SelectTrigger id="create-role" className="w-full">
+              <SelectTrigger id="create-role" className="h-10 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -227,6 +232,7 @@ function ResetPasswordDialog({
             <Label htmlFor="reset-password">新密码</Label>
             <Input
               id="reset-password"
+              className="h-10"
               type="password"
               autoComplete="new-password"
               required
@@ -242,7 +248,7 @@ function ResetPasswordDialog({
               id="reset-password-hint"
               className={
                 password && !valid
-                  ? 'text-xs text-destructive'
+                  ? 'text-xs text-danger'
                   : 'text-xs text-muted-foreground'
               }
             >
@@ -285,144 +291,133 @@ export default function UsersPage() {
   })
 
   return (
-    <div className="page w-full min-w-0 max-w-6xl">
-      <header className="page-heading flex flex-wrap items-center justify-between gap-4">
-        <h1 className="page-title">用户管理</h1>
-        <Button onClick={() => setCreating(true)}>
-          <UserPlus />
-          新建用户
-        </Button>
-      </header>
-      {users.isPending && (
-        <div
-          className="py-12 text-center text-sm text-muted-foreground"
-          role="status"
-        >
-          <Loader2 className="mr-2 inline size-4 animate-spin" />
-          正在加载用户…
-        </div>
-      )}
-      {users.isError && (
-        <div className="error-panel my-4" role="alert">
-          <p>{problemMessage(users.error)}</p>
-          <Button
-            className="mt-3"
-            variant="outline"
-            disabled={users.isFetching}
-            onClick={() => void users.refetch()}
-          >
-            <RefreshCw
-              className={users.isFetching ? 'animate-spin' : undefined}
-            />
-            重试
-          </Button>
-        </div>
-      )}
-      {users.data && (
-        <>
-          {users.data.items.length ? (
-            <div className="min-w-0 max-w-full overflow-x-auto">
-              <Table className="min-w-[640px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>用户名</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>创建时间</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.data.items.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="max-w-64 whitespace-normal break-all font-medium">
-                        {user.username}
-                        {user.id === currentUser?.id && (
-                          <Badge variant="outline" className="ml-2">
-                            我
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {user.role === 'admin' ? '管理员' : '普通用户'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={user.is_active}
-                            disabled={update.isPending}
-                            aria-label={`${user.is_active ? '禁用' : '启用'}用户 ${user.username}`}
-                            onCheckedChange={(is_active) => {
-                              if (!update.isPending)
-                                update.mutate({ id: user.id, is_active })
-                            }}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {update.isPending &&
-                            update.variables?.id === user.id
-                              ? '更新中…'
-                              : user.is_active
-                                ? '已启用'
-                                : '已禁用'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        <time dateTime={user.created_at}>
-                          {new Date(user.created_at).toLocaleString('zh-CN')}
-                        </time>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setResetUser(user)}
-                        >
-                          <KeyRound />
-                          重置密码
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <EmptyState
-              icon={Users}
-              title={offset ? '此页暂无用户' : '暂无用户'}
-              action={
-                offset ? (
-                  <Button variant="outline" onClick={() => setOffset(0)}>
-                    返回第一页
-                  </Button>
-                ) : (
-                  <Button onClick={() => setCreating(true)}>
-                    <UserPlus />
-                    新建用户
-                  </Button>
-                )
-              }
-            />
-          )}
-          <Pagination
-            total={users.data.total}
-            limit={20}
-            offset={offset}
-            onChange={setOffset}
-          />
-        </>
-      )}
-      {creating && <CreateUserDialog onClose={() => setCreating(false)} />}
-      {resetUser && (
-        <ResetPasswordDialog
-          key={resetUser.id}
-          user={resetUser}
-          onClose={() => setResetUser(null)}
+    <div className="h-full overflow-y-auto">
+      <div className="page">
+        <PageHeader
+          title="用户管理"
+          description="创建账号、启用或禁用用户并重置密码"
+          actions={
+            <Button onClick={() => setCreating(true)}>
+              <UserPlus />
+              新建用户
+            </Button>
+          }
         />
-      )}
+        {users.isPending && <Loading>正在加载用户…</Loading>}
+        {users.isError && (
+          <QueryError error={users.error} retry={users.refetch} />
+        )}
+        {users.data && (
+          <>
+            {users.data.items.length ? (
+              <div className="min-w-0 max-w-full overflow-x-auto rounded-xl border bg-card">
+                <Table className="min-w-[640px]">
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>用户名</TableHead>
+                      <TableHead>角色</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead>创建时间</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users.data.items.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="max-w-64 font-medium whitespace-normal break-all">
+                          <span className="flex items-center gap-2">
+                            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary/15 text-[10px] font-semibold uppercase text-primary">
+                              {user.username[0]}
+                            </span>
+                            <span className="min-w-0">{user.username}</span>
+                            {user.id === currentUser?.id && (
+                              <Pill tone="primary">我</Pill>
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Pill
+                            tone={user.role === 'admin' ? 'primary' : 'neutral'}
+                          >
+                            {user.role === 'admin' ? '管理员' : '普通用户'}
+                          </Pill>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={user.is_active}
+                              disabled={update.isPending}
+                              aria-label={`${user.is_active ? '禁用' : '启用'}用户 ${user.username}`}
+                              onCheckedChange={(is_active) => {
+                                if (!update.isPending)
+                                  update.mutate({ id: user.id, is_active })
+                              }}
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {update.isPending &&
+                              update.variables?.id === user.id
+                                ? '更新中…'
+                                : user.is_active
+                                  ? '已启用'
+                                  : '已禁用'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          <time dateTime={user.created_at}>
+                            {dateTime(user.created_at)}
+                          </time>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            onClick={() => setResetUser(user)}
+                          >
+                            <KeyRound />
+                            重置密码
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <EmptyState
+                icon={Users}
+                title={offset ? '此页暂无用户' : '暂无用户'}
+                action={
+                  offset ? (
+                    <Button variant="outline" onClick={() => setOffset(0)}>
+                      返回第一页
+                    </Button>
+                  ) : (
+                    <Button onClick={() => setCreating(true)}>
+                      <UserPlus />
+                      新建用户
+                    </Button>
+                  )
+                }
+              />
+            )}
+            <Pagination
+              total={users.data.total}
+              limit={20}
+              offset={offset}
+              onChange={setOffset}
+            />
+          </>
+        )}
+        {creating && <CreateUserDialog onClose={() => setCreating(false)} />}
+        {resetUser && (
+          <ResetPasswordDialog
+            key={resetUser.id}
+            user={resetUser}
+            onClose={() => setResetUser(null)}
+          />
+        )}
+      </div>
     </div>
   )
 }
