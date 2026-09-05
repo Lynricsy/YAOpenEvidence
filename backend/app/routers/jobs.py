@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 from starlette.concurrency import run_in_threadpool
 
-from ..auth import Principal, require
+from ..auth import Principal, require, session_principal
 from ..deps import get_db, get_redis
 from ..errors import ApiError
 from ..models import Job as JobRow
@@ -33,7 +33,7 @@ HEARTBEAT_S = 15
 def _visible(db: Session, job_id: str, principal: Principal) -> JobRow:
     """别人的任务一律当不存在：404 比 403 更少泄露信息（连是否存在都不透露）。"""
     row = db.get(JobRow, job_id)
-    if row is None or not (principal.is_admin or row.api_key_id == principal.key_id):
+    if row is None or not (principal.is_admin or row.user_id == principal.user_id):
         raise ApiError(404, "not_found", f"job {job_id!r} not found")
     return row
 
@@ -42,10 +42,10 @@ def _visible(db: Session, job_id: str, principal: Principal) -> JobRow:
 def list_jobs(kind: JobKind | None = None, status: JobStatus | None = None,
               limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0),
               db: Session = Depends(get_db),
-              principal: Principal = Depends(require("read"))) -> Page[Job]:
+              principal: Principal = Depends(require())) -> Page[Job]:
     conds = []
     if not principal.is_admin:
-        conds.append(JobRow.api_key_id == principal.key_id)
+        conds.append(JobRow.user_id == principal.user_id)
     if kind:
         conds.append(JobRow.kind == kind)
     if status:
@@ -60,7 +60,7 @@ def list_jobs(kind: JobKind | None = None, status: JobStatus | None = None,
 
 @router.get("/jobs/{job_id}", response_model=Job, summary="任务详情")
 def get_job(job_id: str, db: Session = Depends(get_db),
-            principal: Principal = Depends(require("read"))) -> Job:
+            principal: Principal = Depends(require())) -> Job:
     return Job.model_validate(_visible(db, job_id, principal))
 
 
@@ -69,7 +69,7 @@ def get_job(job_id: str, db: Session = Depends(get_db),
              responses={202: {"headers": {"Location": {"schema": {"type": "string"},
                                                        "description": "任务状态地址"}}}})
 async def cancel_job(job_id: str, db: Session = Depends(get_db), redis=Depends(get_redis),  # noqa: ANN001
-                     principal: Principal = Depends(require("write"))) -> Response:
+                     principal: Principal = Depends(require())) -> Response:
     job = _visible(db, job_id, principal)
     await jobs_service.cancel(job, redis, principal)
     return Response(status_code=202, headers={"Location": f"/v1/jobs/{job_id}"})
@@ -99,7 +99,7 @@ async def job_events(job_id: str, request: Request,
                      )] = "0-0",
                      db: Session = Depends(get_db),
                      redis=Depends(get_redis),  # noqa: ANN001
-                     principal: Principal = Depends(require("read", allow_query=True))):
+                     principal: Principal = Depends(require())):
     # 依赖的 session 会活到 SSE 结束，必须先归还连接；轮询另用短事务。
     bind = db.get_bind()
     await run_in_threadpool(_visible, db, job_id, principal)
@@ -107,7 +107,8 @@ async def job_events(job_id: str, request: Request,
 
     def terminal_snapshot():
         with Session(bind=bind) as snapshot:
-            job = _visible(snapshot, job_id, principal)
+            current = session_principal(snapshot, principal.session_hash)
+            job = _visible(snapshot, job_id, current)
             if job.status in TERMINAL_JOB_STATUSES:
                 return job.status, _terminal_payload(job)
         return None
@@ -116,9 +117,15 @@ async def job_events(job_id: str, request: Request,
         return await run_in_threadpool(terminal_snapshot)
 
     async def stream():
-        async for entry_id, kind, data in events.subscribe(redis, job_id, last_event_id, terminal=terminal):
-            if await request.is_disconnected():
-                return
-            yield {"id": entry_id, "event": kind, "data": json.dumps(data, ensure_ascii=False)}
+        try:
+            async for entry_id, kind, data in events.subscribe(redis, job_id, last_event_id, terminal=terminal):
+                if await request.is_disconnected():
+                    return
+                # Redis 回放也可能持续有数据；每次发送前检查撤销和当前权限。
+                await terminal()
+                yield {"id": entry_id, "event": kind, "data": json.dumps(data, ensure_ascii=False)}
+        except ApiError as exc:
+            if exc.status not in (401, 403, 404):
+                raise
 
     return EventSourceResponse(stream(), ping=HEARTBEAT_S)

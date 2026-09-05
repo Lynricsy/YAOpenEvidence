@@ -42,7 +42,7 @@ def search(
     quartiles: list[int] = Query(default=[]),
     journals: list[str] = Query(default=[]),
     open_access_only: bool = False,
-    _principal: Principal = Depends(require("read")),
+    _principal: Principal = Depends(require()),
 ) -> LiteratureSearchResult:
     _validate_filters(years=years, year_from=year_from, year_to=year_to, quartiles=quartiles)
     return service.search(
@@ -64,7 +64,7 @@ def get_fulltext(
     ident: str = Query(..., min_length=1),
     section: str = "",
     max_chars: int = Query(20000, ge=1000, le=100000),
-    _principal: Principal = Depends(require("read")),
+    _principal: Principal = Depends(require()),
 ) -> FulltextResult:
     return service.fulltext(ident, section=section, max_chars=max_chars)
 
@@ -73,7 +73,7 @@ def get_fulltext(
 def get_citations(
     ident: str = Query(..., min_length=1),
     limit: int = Query(10, ge=1, le=50),
-    _principal: Principal = Depends(require("read")),
+    _principal: Principal = Depends(require()),
 ) -> LiteratureRecordList:
     return LiteratureRecordList(items=service.citations(ident, limit))
 
@@ -82,7 +82,7 @@ def get_citations(
 def get_references(
     ident: str = Query(..., min_length=1),
     limit: int = Query(10, ge=1, le=50),
-    _principal: Principal = Depends(require("read")),
+    _principal: Principal = Depends(require()),
 ) -> LiteratureRecordList:
     return LiteratureRecordList(items=service.references(ident, limit))
 
@@ -91,7 +91,7 @@ def get_references(
 def get_recommendations(
     ident: str = Query(..., min_length=1),
     limit: int = Query(10, ge=1, le=50),
-    _principal: Principal = Depends(require("read")),
+    _principal: Principal = Depends(require()),
 ) -> LiteratureRecordList:
     return LiteratureRecordList(items=service.recommendations(ident, limit))
 
@@ -99,6 +99,6 @@ def get_recommendations(
 @router.get("/resolve", response_model=LiteratureRecord, summary="获取单篇文献")
 def get_literature(
     ident: str = Query(..., min_length=1),
-    _principal: Principal = Depends(require("read")),
+    _principal: Principal = Depends(require()),
 ) -> LiteratureRecord:
     return service.resolve(ident)

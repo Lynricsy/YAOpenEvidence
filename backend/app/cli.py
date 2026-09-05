@@ -1,4 +1,4 @@
-"""`yaoe` 命令行：serve / migrate / export-openapi。
+"""`yaoe` 命令行：运行服务、迁移、离线账号管理与 OpenAPI 导出。
 
 重依赖（uvicorn、alembic）都在子命令内部导入，避免 `yaoe --help` 也要付
 导入成本。alembic 的路径按本文件定位，因此在任意 cwd 下都能跑。
@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
+import sys
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -57,6 +59,49 @@ def cmd_import_answers(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _read_password(args: argparse.Namespace) -> str:
+    if args.password_stdin:
+        value = sys.stdin.readline(131).rstrip("\r\n")
+        if not value:
+            raise ValueError("标准输入未提供密码")
+        return value
+    value = getpass.getpass("密码（12-128 字符）: ")
+    if value != getpass.getpass("再次输入密码: "):
+        raise ValueError("两次输入的密码不一致")
+    return value
+
+
+def cmd_account(args: argparse.Namespace) -> int:
+    from pydantic import ValidationError
+    from sqlalchemy import select
+
+    from .db import SessionLocal
+    from .errors import ApiError
+    from .models import User
+    from .services.accounts import create_user, reset_password
+
+    try:
+        password = _read_password(args)
+        with SessionLocal() as db:
+            if args.cmd == "create-admin":
+                user = create_user(db, username=args.username, password=password, role="admin")
+                print(f"created admin: {user.username} ({user.id})")
+            else:
+                user = db.scalar(select(User).where(User.username == args.username.lower()))
+                if user is None:
+                    raise ApiError(404, "not_found", "用户不存在")
+                reset_password(db, user, password)
+                print(f"password reset: {user.username}; all sessions revoked")
+        return 0
+    except ValidationError as exc:
+        print("; ".join(e["msg"] for e in exc.errors(include_input=False)), file=sys.stderr)
+    except ApiError as exc:
+        print(exc.detail, file=sys.stderr)
+    except (ValueError, EOFError) as exc:
+        print(str(exc) or "缺少密码输入", file=sys.stderr)
+    return 1
+
+
 def cmd_export_openapi(args: argparse.Namespace) -> int:
     from .main import create_app
 
@@ -85,6 +130,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     i = sub.add_parser("import-answers", help="index existing answers/<ts>.md files into the DB")
     i.set_defaults(fn=cmd_import_answers)
+
+    for command, help_text in (
+        ("create-admin", "create an administrator account"),
+        ("reset-password", "reset a user password and revoke all sessions"),
+    ):
+        account = sub.add_parser(command, help=help_text)
+        account.add_argument("username")
+        account.add_argument("--password-stdin", action="store_true",
+                             help="read password from stdin instead of an interactive prompt")
+        account.set_defaults(fn=cmd_account)
 
     e = sub.add_parser("export-openapi", help="dump the OpenAPI document")
     e.add_argument("path", nargs="?", default=str(BACKEND_DIR / "openapi.json"))

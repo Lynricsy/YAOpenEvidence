@@ -195,7 +195,7 @@ def test_quartiles_and_journals_map_to_cli_strings():
 @pytest.mark.parametrize("status", ["succeeded", "failed"])
 async def test_terminal_xadd_failure_converges_after_stage_replay(
         worker_ctx, sync_redis, monkeypatch, status):
-    job_id, answer_id = make_job(api_key_id="reader")
+    job_id, answer_id = make_job(user_id="reader")
 
     def run(opts, *, emit, **kwargs):
         emit({"type": "stage", "stage": "search", "status": "started"})

@@ -1,37 +1,37 @@
 """文献库、知识库与期刊分区端点的消费者行为。"""
 from __future__ import annotations
 
-from .conftest import ADMIN_KEY, READ_KEY, auth
+from .conftest import ADMIN_TOKEN, USER_TOKEN, auth
 
 
 def test_papers_list_and_paragraph(client):
-    response = client.get("/v1/papers", headers=auth(READ_KEY))
+    response = client.get("/v1/papers", headers=auth(USER_TOKEN))
     assert response.status_code == 200
     body = response.json()
     assert body["total"] == 1
     assert body["items"][0]["key"] == "39133485"
     assert body["items"][0]["n_paragraphs"] == 49
 
-    response = client.get("/v1/papers/39133485/paragraphs/2", headers=auth(READ_KEY))
+    response = client.get("/v1/papers/39133485/paragraphs/2", headers=auth(USER_TOKEN))
     assert response.status_code == 200
     assert response.json()["text"].startswith("In this cohort study")
 
 
 def test_missing_paragraph_is_problem(client):
-    response = client.get("/v1/papers/39133485/paragraphs/9999", headers=auth(READ_KEY))
+    response = client.get("/v1/papers/39133485/paragraphs/9999", headers=auth(USER_TOKEN))
     assert response.status_code == 404
     assert response.headers["content-type"] == "application/problem+json"
     assert response.json()["code"] == "not_found"
 
 
 def test_paper_key_cannot_escape_library(client):
-    response = client.get("/v1/papers/..%2Fx", headers=auth(READ_KEY))
+    response = client.get("/v1/papers/..%2Fx", headers=auth(USER_TOKEN))
     assert response.status_code == 404
     assert response.json()["code"] == "not_found"
 
 
 def test_paper_fulltext(client):
-    response = client.get("/v1/papers/39133485/fulltext", headers=auth(READ_KEY))
+    response = client.get("/v1/papers/39133485/fulltext", headers=auth(USER_TOKEN))
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/markdown; charset=utf-8"
     assert '<a id="p2">' in response.text
@@ -42,17 +42,17 @@ def test_paper_fulltext(client):
 
 def test_kb_search_and_stats(client):
     response = client.get("/v1/kb/search", params={"q": "tirzepatide mortality"},
-                          headers=auth(READ_KEY))
+                          headers=auth(USER_TOKEN))
     assert response.status_code == 200
     assert response.json()["items"]
     assert response.json()["items"][0]["pmid"] == "39133485"
 
     response = client.get("/v1/kb/search", params={"q": "x", "kind": "fact"},
-                          headers=auth(READ_KEY))
+                          headers=auth(USER_TOKEN))
     assert response.status_code == 200
     assert all(item["kind"] == "fact" for item in response.json()["items"])
 
-    response = client.get("/v1/kb/stats", headers=auth(READ_KEY))
+    response = client.get("/v1/kb/stats", headers=auth(USER_TOKEN))
     assert response.status_code == 200
     body = response.json()
     assert body["items"] > 0
@@ -61,10 +61,10 @@ def test_kb_search_and_stats(client):
 
 
 def test_kb_reindex_requires_admin_and_enqueues(client, arq):
-    response = client.post("/v1/kb/reindex", headers=auth(READ_KEY))
+    response = client.post("/v1/kb/reindex", headers=auth(USER_TOKEN))
     assert response.status_code == 403
 
-    response = client.post("/v1/kb/reindex", headers=auth(ADMIN_KEY))
+    response = client.post("/v1/kb/reindex", headers=auth(ADMIN_TOKEN))
     assert response.status_code == 202
     body = response.json()
     assert body["kind"] == "kb_reindex"
@@ -75,7 +75,7 @@ def test_kb_reindex_requires_admin_and_enqueues(client, arq):
 
 def test_journal_rank(client):
     response = client.get("/v1/journals/rank", params={"title": "Lancet"},
-                          headers=auth(READ_KEY))
+                          headers=auth(USER_TOKEN))
     assert response.status_code == 200
     body = response.json()
     assert body["found"] is True
@@ -84,7 +84,7 @@ def test_journal_rank(client):
 
 
 def test_journal_rank_requires_query(client):
-    response = client.get("/v1/journals/rank", headers=auth(READ_KEY))
+    response = client.get("/v1/journals/rank", headers=auth(USER_TOKEN))
     assert response.status_code == 422
     assert response.json()["code"] == "validation_error"
 

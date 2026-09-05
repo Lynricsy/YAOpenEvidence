@@ -22,9 +22,9 @@ def new_id() -> str:
     return uuid.uuid4().hex
 
 
-async def enqueue(arq, db: Session, *, kind: str, params: dict, api_key_id: str | None,
+async def enqueue(arq, db: Session, *, kind: str, params: dict, user_id: str | None,
                   fn_name: str, job_id: str | None = None, answer: Answer | None = None) -> Job:
-    job = Job(id=job_id or new_id(), kind=kind, status="queued", api_key_id=api_key_id,
+    job = Job(id=job_id or new_id(), kind=kind, status="queued", user_id=user_id,
               params=params, progress=None, error=None, result=None)
     db.add(job)
     if answer is not None:
@@ -48,22 +48,22 @@ async def enqueue(arq, db: Session, *, kind: str, params: dict, api_key_id: str 
     return job
 
 
-def active_job_count(db: Session, api_key_id: str | None) -> int:
+def active_job_count(db: Session, user_id: str | None) -> int:
     from sqlalchemy import func, select
 
     stmt = (select(func.count(Job.id))
-            .where(Job.api_key_id == api_key_id, Job.status.in_(("queued", "running"))))
+            .where(Job.user_id == user_id, Job.status.in_(("queued", "running"))))
     return int(db.scalar(stmt) or 0)
 
 
 def may_touch(job: Job, principal) -> bool:  # noqa: ANN001
-    return principal.is_admin or job.api_key_id == principal.key_id
+    return principal.is_admin or job.user_id == principal.user_id
 
 
 async def cancel(job: Job, redis, principal) -> None:  # noqa: ANN001
     """请求取消；终态任务返回 409（幂等地重复取消没有意义，也会掩盖客户端 bug）。"""
     if not may_touch(job, principal):
-        raise ApiError(403, "forbidden", "not your job")
+        raise ApiError(404, "not_found", f"job {job.id!r} not found")
     if job.status in TERMINAL_JOB_STATUSES:
         raise ApiError(409, "conflict", f"job {job.id} already {job.status}")
     await events.request_cancel(redis, job.id, settings.events_ttl_s)

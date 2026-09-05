@@ -9,7 +9,7 @@ from ..errors import ApiError
 from ..schemas.journals import RankInfo, RankQuery, RankResult
 
 router = APIRouter(prefix="/journals", tags=["journals"])
-_read = require("read")
+_read = require()
 
 
 @router.get("/rank", response_model=RankResult, summary="查询期刊分区")

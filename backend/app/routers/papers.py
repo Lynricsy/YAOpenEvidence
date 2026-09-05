@@ -10,7 +10,7 @@ from ..schemas.papers import Fact, PaperMeta, Paragraph
 from ..services import papers as service
 
 router = APIRouter(prefix="/papers", tags=["papers"])
-_read = require("read")
+_read = require()
 
 
 class ParagraphList(BaseModel):

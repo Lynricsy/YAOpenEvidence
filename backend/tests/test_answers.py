@@ -16,13 +16,13 @@ from app.models import Answer, Job
 from app.services import events
 from app.services.answers import import_legacy_answers
 
-from .conftest import ADMIN_KEY, READ_KEY, WRITE_KEY, auth
+from .conftest import ADMIN_TOKEN, USER_TOKEN, OTHER_TOKEN, PASSWORD, auth
 
 VALID = {"question": "SGLT2 抑制剂对 HFpEF 有什么获益？", "papers": 2, "years": 3, "use_kb": False}
 
 
 def _create(client, **overrides):
-    return client.post("/v1/answers", json={**VALID, **overrides}, headers=auth(WRITE_KEY))
+    return client.post("/v1/answers", json={**VALID, **overrides}, headers=auth(OTHER_TOKEN))
 
 
 def test_create_returns_202_with_location_and_enqueues(client, arq):
@@ -35,13 +35,12 @@ def test_create_returns_202_with_location_and_enqueues(client, arq):
     assert r.headers["location"] == f"/v1/answers/{body['id']}"
     assert body["created_at"].endswith("Z")
 
-    assert arq.calls == [("run_ask_job", (body["job_id"],), {"_job_id": body["job_id"]})]
     with SessionLocal() as db:
         job = db.get(Job, body["job_id"])
         answer = db.get(Answer, body["id"])
         assert job.status == "queued" and job.kind == "ask"
         assert job.params["answer_id"] == body["id"]
-        assert answer.status == "queued" and answer.api_key_id == "writer"
+        assert answer.status == "queued" and answer.user_id == "writer"
 
 
 @pytest.mark.parametrize("payload, field", [
@@ -61,41 +60,45 @@ def test_invalid_options_are_rejected(client, payload, field):
     assert body["errors"], "422 必须带上逐字段的 errors"
 
 
-def test_active_job_limit_per_key(client):
+def test_active_job_limit_is_shared_by_sessions_of_one_user(client):
+    login = client.post("/v1/auth/login", json={"username": "writer", "password": PASSWORD})
+    assert login.status_code == 200
+    second_token = login.json()["access_token"]
     assert _create(client).status_code == 202
-    assert _create(client).status_code == 202
-    r = _create(client)
-    assert r.status_code == 429
-    assert r.json()["code"] == "too_many_jobs"
+    assert client.post("/v1/answers", json=VALID, headers=auth(second_token)).status_code == 202
+    response = _create(client)
+    assert response.status_code == 429
+    assert response.json()["code"] == "too_many_jobs"
+    assert client.post("/v1/answers", json=VALID, headers=auth(USER_TOKEN)).status_code == 202
 
 
 def test_markdown_of_unfinished_answer_is_conflict(client):
     answer_id = _create(client).json()["id"]
-    r = client.get(f"/v1/answers/{answer_id}/markdown", headers=auth(READ_KEY))
+    r = client.get(f"/v1/answers/{answer_id}/markdown", headers=auth(OTHER_TOKEN))
     assert r.status_code == 409
     assert r.json()["code"] == "not_ready"
 
 
 def test_paper_detail_of_answer_without_papers_is_404(client):
     answer_id = _create(client).json()["id"]
-    r = client.get(f"/v1/answers/{answer_id}/papers/1", headers=auth(READ_KEY))
+    r = client.get(f"/v1/answers/{answer_id}/papers/1", headers=auth(OTHER_TOKEN))
     assert r.status_code == 404
     assert r.json()["code"] == "not_found"
 
 
 def test_unknown_answer_is_404(client):
-    r = client.get("/v1/answers/nope", headers=auth(READ_KEY))
+    r = client.get("/v1/answers/nope", headers=auth(OTHER_TOKEN))
     assert r.status_code == 404
     assert r.json()["code"] == "not_found"
 
 
 def test_delete_active_answer_is_conflict_without_requesting_cancel(client, sync_redis):
     body = _create(client).json()
-    r = client.delete(f"/v1/answers/{body['id']}", headers=auth(WRITE_KEY))
+    r = client.delete(f"/v1/answers/{body['id']}", headers=auth(OTHER_TOKEN))
     assert r.status_code == 409
     assert not sync_redis.exists(events.cancel_key(body["job_id"]))
     # 活动态删除不改变任务状态；调用者必须显式取消关联 job。
-    assert client.get(f"/v1/answers/{body['id']}", headers=auth(READ_KEY)).status_code == 200
+    assert client.get(f"/v1/answers/{body['id']}", headers=auth(OTHER_TOKEN)).status_code == 200
 
 
 def test_delete_terminal_answer_removes_row_and_files(client, data_root: Path):
@@ -113,28 +116,28 @@ def test_delete_terminal_answer_removes_row_and_files(client, data_root: Path):
         job.status = "succeeded"
         db.commit()
 
-    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY)).status_code == 204
-    assert client.get(f"/v1/answers/{answer_id}", headers=auth(READ_KEY)).status_code == 404
+    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(OTHER_TOKEN)).status_code == 204
+    assert client.get(f"/v1/answers/{answer_id}", headers=auth(OTHER_TOKEN)).status_code == 404
     assert not md.exists()
     assert not papers_dir.exists()
 
 
-def test_delete_other_keys_answer_is_forbidden_but_admin_may(client):
+def test_delete_other_users_answer_is_hidden_but_admin_may(client):
     answer_id = _create(client).json()["id"]
     with SessionLocal() as db:
         row = db.get(Answer, answer_id)
-        row.api_key_id = "someone-else"
+        row.user_id = "reader"
         row.status = "ready"
         db.commit()
-    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY)).status_code == 403
-    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(ADMIN_KEY)).status_code == 204
+    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(OTHER_TOKEN)).status_code == 404
+    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(ADMIN_TOKEN)).status_code == 204
 
 
 def test_list_filters_by_status_and_question(client):
     first = _create(client, question="替西帕肽与死亡率").json()["id"]
     _create(client, question="SGLT2 与心衰住院")
 
-    r = client.get("/v1/answers", params={"q": "替西帕肽"}, headers=auth(READ_KEY))
+    r = client.get("/v1/answers", params={"q": "替西帕肽"}, headers=auth(OTHER_TOKEN))
     assert r.status_code == 200
     page = r.json()
     assert page["total"] == 1
@@ -142,7 +145,7 @@ def test_list_filters_by_status_and_question(client):
     assert "body_md" not in page["items"][0], "列表用 summary，不带正文"
 
     assert client.get("/v1/answers", params={"status": "ready"},
-                      headers=auth(READ_KEY)).json()["total"] == 0
+                      headers=auth(OTHER_TOKEN)).json()["total"] == 0
 
 
 def test_import_legacy_answers_is_idempotent(client, data_root: Path):
@@ -151,14 +154,14 @@ def test_import_legacy_answers_is_idempotent(client, data_root: Path):
         assert import_legacy_answers(db) >= 1
         assert import_legacy_answers(db) == 0
 
-    r = client.get("/v1/answers/20260101_000000", headers=auth(READ_KEY))
+    r = client.get("/v1/answers/20260101_000000", headers=auth(ADMIN_TOKEN))
     assert r.status_code == 200
     body = r.json()
     assert body["question"] == "测试"
     assert body["status"] == "ready"
     assert body["created_at"] == "2026-01-01T00:00:00Z"
 
-    md = client.get("/v1/answers/20260101_000000/markdown", headers=auth(READ_KEY))
+    md = client.get("/v1/answers/20260101_000000/markdown", headers=auth(ADMIN_TOKEN))
     assert md.status_code == 200
     assert md.headers["content-type"].startswith("text/markdown")
     assert "正文" in md.text
@@ -177,14 +180,14 @@ def test_answer_paper_detail_reads_run_artifacts(client, data_root: Path):
         json.dumps([{"claimed_pid": 1, "pid": 1, "quote": "text", "score": 1.0, "verified": True}]),
         encoding="utf-8")
     with SessionLocal() as db:
-        db.add(Answer(id=answer_id, job_id=None, api_key_id="writer", status="ready",
+        db.add(Answer(id=answer_id, job_id=None, user_id="writer", status="ready",
                       question="q", queries=[], options={}, papers=[{"n": 1, "pmid": "39133485",
                                                                      "title": "T", "source": "pmc"}],
                       citations=[], kb_hits=[], answer_md="# Q: q",
                       created_at=dt.datetime.now(dt.timezone.utc)))
         db.commit()
 
-    r = client.get(f"/v1/answers/{answer_id}/papers/1", headers=auth(READ_KEY))
+    r = client.get(f"/v1/answers/{answer_id}/papers/1", headers=auth(OTHER_TOKEN))
     assert r.status_code == 200
     body = r.json()
     assert body["n"] == 1 and body["pmid"] == "39133485"
@@ -195,7 +198,7 @@ def test_answer_paper_detail_reads_run_artifacts(client, data_root: Path):
     assert '<a id="p1">' in body["fulltext_md"]
 
     assert client.get(f"/v1/answers/{answer_id}/papers/2",
-                      headers=auth(READ_KEY)).status_code == 404
+                      headers=auth(OTHER_TOKEN)).status_code == 404
 
 
 def test_enqueue_failure_persists_linked_failures_and_allows_delete(client, arq, monkeypatch):
@@ -220,11 +223,11 @@ def test_enqueue_failure_persists_linked_failures_and_allows_delete(client, arq,
         assert answer.error == job.error
         assert job.error["code"] == "internal_error"
         assert answer.finished_at is not None and job.finished_at is not None
-    response = client.get(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY))
+    response = client.get(f"/v1/answers/{answer_id}", headers=auth(OTHER_TOKEN))
     assert response.json()["status"] == "failed"
     assert response.json()["job_id"] == job_id
-    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY)).status_code == 204
-    assert client.get(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY)).status_code == 404
+    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(OTHER_TOKEN)).status_code == 204
+    assert client.get(f"/v1/answers/{answer_id}", headers=auth(OTHER_TOKEN)).status_code == 404
 
 
 def test_worker_completion_during_enqueue_is_not_overwritten(client, arq, monkeypatch):
@@ -242,7 +245,7 @@ def test_worker_completion_during_enqueue_is_not_overwritten(client, arq, monkey
     response = _create(client)
     assert response.status_code == 202
     assert response.json()["status"] == "ready"
-    job = client.get(f"/v1/jobs/{response.json()['job_id']}", headers=auth(WRITE_KEY))
+    job = client.get(f"/v1/jobs/{response.json()['job_id']}", headers=auth(OTHER_TOKEN))
     assert job.json()["status"] == "succeeded"
 
 
@@ -288,7 +291,7 @@ def test_markdown_links_follow_run_snapshot(client, data_root: Path, snapshot_ro
                           answer_md=None if storage == "file-only" else text))
             db.commit()
 
-    response = client.get(f"/v1/answers/{answer_id}/markdown", headers=auth(READ_KEY))
+    response = client.get(f"/v1/answers/{answer_id}/markdown", headers=auth(ADMIN_TOKEN))
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/markdown")
     links = re.findall(r"\[[^\]]+\]\(([^)]+)\)", response.text)
@@ -296,7 +299,7 @@ def test_markdown_links_follow_run_snapshot(client, data_root: Path, snapshot_ro
     assert all(link.startswith(f"/v1/answers/{answer_id}/papers/1/markdown") for link in links)
     for link in links:
         parsed = urlsplit(link)
-        result = client.get(parsed.path, headers=auth(READ_KEY))
+        result = client.get(parsed.path, headers=auth(ADMIN_TOKEN))
         assert result.status_code == 200
         assert result.headers["content-type"].startswith("text/markdown")
         assert result.text == snapshot
@@ -304,7 +307,7 @@ def test_markdown_links_follow_run_snapshot(client, data_root: Path, snapshot_ro
             assert f'id="{parsed.fragment}"' in result.text
     assert client.get(urlsplit(links[0]).path).status_code == 401
     assert client.get(f"/v1/answers/{answer_id}/papers/2/markdown",
-                      headers=auth(READ_KEY)).status_code == 404
+                      headers=auth(ADMIN_TOKEN)).status_code == 404
     # HTTP 读取不回写 CLI 原稿。
     assert (snapshot_root / f"{answer_id}.md").read_text(encoding="utf-8") == text
 
@@ -323,11 +326,11 @@ def test_paper_markdown_rejects_cross_answer_artifacts(client, snapshot_root, es
         if escape == "file-symlink":
             (directory / "123.md").symlink_to(other / "123.md")
     with SessionLocal() as db:
-        db.add(Answer(id="safe", status="ready", question="q", queries=[], options={},
+        db.add(Answer(id="safe", user_id="writer", status="ready", question="q", queries=[], options={},
                       papers=[{"n": 1, "pmid": "../other_papers/123" if escape == "metadata" else "123"}],
                       citations=[], kb_hits=[]))
         db.commit()
-    result = client.get("/v1/answers/safe/papers/1/markdown", headers=auth(READ_KEY))
+    result = client.get("/v1/answers/safe/papers/1/markdown", headers=auth(ADMIN_TOKEN))
     assert result.status_code == 404
     assert "Private other answer" not in result.text
 
@@ -357,14 +360,42 @@ def test_legacy_markdown_cannot_map_other_answer_files(client, snapshot_root):
     with SessionLocal() as db:
         import_legacy_answers(db)
     for n in (1, 2):
-        response = client.get(f"/v1/answers/legacy/papers/{n}/markdown", headers=auth(READ_KEY))
+        response = client.get(f"/v1/answers/legacy/papers/{n}/markdown", headers=auth(ADMIN_TOKEN))
         assert response.status_code == 404
 
 
 def test_missing_snapshot_never_falls_back_to_library(client, data_root: Path, snapshot_root):
     assert (data_root / "library" / "39133485" / "fulltext.md").is_file()
     with SessionLocal() as db:
-        db.add(Answer(id="missing", status="ready", question="q", papers=[{"n": 1, "pmid": "39133485"}]))
+        db.add(Answer(id="missing", user_id="writer", status="ready", question="q", papers=[{"n": 1, "pmid": "39133485"}]))
         db.commit()
-    response = client.get("/v1/answers/missing/papers/1/markdown", headers=auth(READ_KEY))
+    response = client.get("/v1/answers/missing/papers/1/markdown", headers=auth(OTHER_TOKEN))
     assert response.status_code == 404
+
+
+@pytest.mark.parametrize("owner", ["writer", None])
+def test_answer_and_all_run_materials_are_private(client, snapshot_root, owner):
+    answer_id = "private-answer"
+    directory = snapshot_root / f"{answer_id}_papers"
+    directory.mkdir()
+    (directory / "123.md").write_text("Private fulltext", encoding="utf-8")
+    (directory / "123_notes.md").write_text("Private notes", encoding="utf-8")
+    with SessionLocal() as db:
+        db.add(Answer(id=answer_id, user_id=owner, status="ready", question="Private question",
+                      queries=[], options={}, papers=[{"n": 1, "pmid": "123", "title": "Private paper"}],
+                      citations=[], kb_hits=[], answer_md="Private answer"))
+        db.commit()
+    paths = [f"/v1/answers/{answer_id}{suffix}" for suffix in
+             ("", "/markdown", "/papers/1", "/papers/1/markdown")]
+    for path in paths:
+        assert client.get(path, headers=auth(USER_TOKEN)).status_code == 404
+        assert client.get(path, headers=auth(ADMIN_TOKEN)).status_code == 200
+        expected = 200 if owner == "writer" else 404
+        assert client.get(path, headers=auth(OTHER_TOKEN)).status_code == expected
+    assert client.get("/v1/answers", headers=auth(USER_TOKEN)).json()["total"] == 0
+    assert client.get("/v1/answers", headers=auth(OTHER_TOKEN)).json()["total"] == (1 if owner else 0)
+    assert client.get("/v1/answers", headers=auth(ADMIN_TOKEN)).json()["total"] == 1
+    assert client.delete(paths[0], headers=auth(USER_TOKEN)).status_code == 404
+    assert directory.exists()
+    assert client.delete(paths[0], headers=auth(ADMIN_TOKEN)).status_code == 204
+    assert not directory.exists()

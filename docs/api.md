@@ -12,25 +12,28 @@
 - ReDoc：`GET /v1/redoc`
 - 下文示例使用服务地址 `http://localhost:8765`。
 
-健康检查与上述接口描述入口免鉴权；其余 `/v1` 资源端点需要 API Key。
+健康检查、上述接口描述入口和 `POST /v1/auth/login` 免鉴权；其余 `/v1` 资源端点需要有效用户会话。
 
 ### 1.2 鉴权
 
-通常在请求头中传入静态 API Key：
+先由管理员创建账号，再使用用户名密码登录。之后统一在请求头中传入会话令牌：
 
 ```http
-Authorization: Bearer <api_key>
+Authorization: Bearer <access_token>
 ```
 
-Key 在服务端 `backend/api_keys.toml` 的 `[[keys]]` 表中定义，每项包含 `id`、`key` 与 `scopes`。凭证缺失或无效返回 `401 unauthenticated`，并带响应头 `WWW-Authenticate: Bearer`。
+仅支持 `user` 和 `admin` 两种角色，不开放注册。用户名 3-64 字符，匹配 `^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$`，统一小写；密码为 12-128 字符，不修剪空白。密码以 Argon2id 哈希保存，随机会话令牌只存 SHA-256 摘要。登录响应含 `access_token`、`token_type: "bearer"`、`expires_at` 和 `user`；会话默认固定有效期 7 天，不自动续期，不提供刷新令牌。
 
-只有 `GET /v1/jobs/{job_id}/events` 还接受查询参数 `?access_token=<api_key>`。这是为浏览器原生 `EventSource` 无法设置 `Authorization` 请求头提供的例外，采用 RFC 6750 §2.3 的 URI query parameter 方式。其他端点不接受该参数。查询字符串可能进入访问日志和浏览器历史，能设置请求头的客户端仍应优先使用请求头。
+令牌缺失、无效、过期、被撤销，或账号已禁用时返回 `401 unauthenticated`，并带 `WWW-Authenticate: Bearer`。注销仅撤销当前会话；修改/重置密码、禁用账号撤销全部会话；重新启用不会恢复旧令牌。生产环境必须使用 HTTPS。
 
-| scope | 能力 |
+SSE 也只接受 Bearer 请求头；所有端点均不再接受 `?access_token=`。原生浏览器 `EventSource` 不适用，使用支持请求头的 fetch 流客户端。不要把令牌写入 URL、日志或 Markdown 引用。
+
+| 角色 | 能力 |
 |---|---|
-| `read` | 读取 answers、jobs、papers、KB、期刊分区和上游文献；订阅 SSE。非管理员只能看到本 Key 创建的 job。 |
-| `write` | 创建 answer；取消本 Key 创建的 job；删除本 Key 的终态 answer。 |
-| `admin` | 重建 KB 索引；与 `read` 组合时查看全部 job；与 `write` 组合时取消任意 Key 的 job、删除任意 Key 的终态 answer。scope 不隐含其他 scope，应按用途显式组合。 |
+| `user` | 读取和管理自己的 answers、jobs、阅读材料及 SSE；共享读取 papers、KB、期刊与上游文献。 |
+| `admin` | 具备普通用户能力，可查看和管理全部问答、任务与历史无归属资源，重建 KB 并管理账号。 |
+
+问答、阅读快照与任务是私有资源，非所有者一律得到 `404`，不暴露是否存在。文献与衍生知识继续共享；知识提取使用问题作为上下文，因此不是严格的用户隐私或租户隔离，不应提交敏感个人或患者信息。
 
 ### 1.3 JSON、时间与分页
 
@@ -47,9 +50,11 @@ Key 在服务端 `backend/api_keys.toml` 的 `[[keys]]` 表中定义，每项包
 
 ### 1.4 CORS 与限流
 
-CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization`、`Content-Type` 与 `Last-Event-ID`，并通过 `Access-Control-Expose-Headers` 暴露 `Location`，供浏览器读取创建结果和取消请求的任务状态地址。
+CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization`、`Content-Type` 与 `Last-Event-ID`，响应暴露 `Location`、`Retry-After`、`WWW-Authenticate`。不用 Cookie，不需要浏览器 `credentials: "include"`。
 
-v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任务数：`queued` 与 `running` job 的合计达到 `YAOE_MAX_ACTIVE_JOBS_PER_KEY`（默认 `2`）后，`POST /v1/answers` 返回 `429 too_many_jobs`。
+登录按归一化后的用户名使用 Redis 固定窗口限流，含成功登录：默认 300 秒最多 10 次，超出返回 `429 login_rate_limited` 及剩余秒数 `Retry-After`；窗口不因重试延长。配置为 `YAOE_LOGIN_MAX_ATTEMPTS`、`YAOE_LOGIN_WINDOW_S`。Redis 不可用时登录返回 `503 unavailable`，不绕过限流；已有会话仍由数据库验证。
+
+业务接口没有通用请求速率限制。每个用户的 `queued` 与 `running` job 合计达到 `YAOE_MAX_ACTIVE_JOBS_PER_USER`（默认 `2`）后，`POST /v1/answers` 返回 `429 too_many_jobs`；同一用户的多个会话共享额度。
 
 ## 2. 错误模型
 
@@ -82,14 +87,18 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 
 | code | HTTP 状态 | 含义 | 典型触发场景 |
 |---|---:|---|---|
-| `unauthenticated` | 401 | 未通过鉴权 | 缺少、格式错误或无效的 Bearer API Key。 |
-| `forbidden` | 403 | Key 缺少所需 scope，或无权修改目标资源 | `read` Key 创建 answer；普通 Key 删除别人的 answer/job。 |
-| `not_found` | 404 | 资源不存在或不可见 | answer/paper/段落/章节不存在；普通 Key 查询别人的 job 时也返回 404，避免泄露其存在性。 |
+| `unauthenticated` | 401 | 未通过鉴权 | 错误用户名/密码；缺失、无效、过期或撤销的会话；账号禁用。 |
+| `forbidden` | 403 | 角色不足 | 普通用户管理账号或重建 KB。 |
+| `not_found` | 404 | 资源不存在或不可见 | 普通用户访问他人的 answer、job 或阅读材料也返回 404。 |
 | `fulltext_unavailable` | 404 | 无可用 PMC 全文 | 标识符不能映射到 PMCID，或 Europe PMC 没有全文。 |
 | `not_ready` | 409 | answer 尚未就绪 | 在 answer 为 `queued`、`running`、`failed` 或 `cancelled` 时请求渲染稿。 |
 | `conflict` | 409 | 当前资源状态不允许操作 | 取消已终态 job；活跃 answer 缺少关联 job。 |
+| `username_exists` | 409 | 用户名已被占用 | 大小写不敏感的重复建号。 |
+| `cannot_disable_self` | 409 | 禁止禁用自己 | 管理员禁用当前账号。 |
+| `last_admin` | 409 | 必须保留活跃管理员 | 禁用最后一个活跃管理员。 |
 | `validation_error` | 422 | 参数或请求体校验失败 | 参数越界、年份规则冲突、期刊查询没有 `issn` 与 `title`。框架级校验失败另带 `errors` 数组。 |
-| `too_many_jobs` | 429 | 当前 Key 的活跃任务达到上限 | 创建 answer 时，本 Key 的 `queued`/`running` job 数已达到配置值。 |
+| `too_many_jobs` | 429 | 当前用户活跃任务达到上限 | 同一用户所有会话合计的 `queued`/`running` 数达到配置值。 |
+| `login_rate_limited` | 429 | 登录窗口内请求过多 | 同一用户名达到限额；读取 `Retry-After` 后再试。 |
 | `upstream_unavailable` | 502 | Redis、PubMed、Semantic Scholar 或 Europe PMC 等上游不可用 | 入队失败、上游超时、上游限流或返回错误。`detail` 会指出来源。 |
 | `unavailable` | 503 | 服务依赖不可用 | HTTP 层产生 503 时的默认错误码。就绪探针自身会以其健康响应形状直接返回 503。 |
 | `internal_error` | 500 | 未处理的服务端错误 | 服务端内部异常；响应不会暴露堆栈。 |
@@ -114,41 +123,66 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 
 表中路径与 `backend/openapi.json` 的 `paths` 一一对应。一个路径可能支持多个方法。
 
-| 方法 | 路径 | scope | 说明 |
+| 方法 | 路径 | 访问要求 | 说明 |
 |---|---|---|---|
 | `GET` | `/v1/health` | 无 | 存活探针。 |
 | `GET` | `/v1/health/ready` | 无 | DB、Redis、LLM、KB、期刊分区就绪检查。 |
-| `POST` | `/v1/answers` | `write` | 创建异步问答任务。 |
-| `GET` | `/v1/answers` | `read` | 分页浏览 answer。 |
-| `GET` | `/v1/answers/{answer_id}` | `read` | 获取 answer 详情。 |
-| `DELETE` | `/v1/answers/{answer_id}` | `write`（本人）；任意资源需再有 `admin` | 仅删除终态结果；活跃时返回 `409`。 |
-| `GET` | `/v1/answers/{answer_id}/markdown` | `read` | 获取带链接的完整 Markdown 渲染稿。 |
-| `GET` | `/v1/answers/{answer_id}/papers/{n}` | `read` | 获取本次问答阅读的第 `n` 篇详情。 |
-| `GET` | `/v1/answers/{answer_id}/papers/{n}/markdown` | `read` | 获取本次阅读原文快照，保留段落锚点。 |
-| `GET` | `/v1/jobs` | `read`；查看全部需再有 `admin` | 分页浏览 job。 |
-| `GET` | `/v1/jobs/{job_id}` | `read` | 获取可见 job 详情。 |
-| `POST` | `/v1/jobs/{job_id}/cancel` | `write`（本人）；任意资源需再有 `admin` | 请求取消活跃 job，接受后返回 `202`。 |
-| `GET` | `/v1/jobs/{job_id}/events` | `read` | 订阅 job 的 SSE 事件流。 |
-| `GET` | `/v1/papers` | `read` | 分页浏览本地文献库。 |
-| `GET` | `/v1/papers/{key}` | `read` | 获取文献元数据。 |
-| `GET` | `/v1/papers/{key}/paragraphs` | `read` | 获取文献全部段落。 |
-| `GET` | `/v1/papers/{key}/paragraphs/{pid}` | `read` | 获取单个段落。 |
-| `GET` | `/v1/papers/{key}/facts` | `read` | 获取原子事实。 |
-| `GET` | `/v1/papers/{key}/fulltext` | `read` | 获取带段落锚点的 Markdown 全文。 |
-| `GET` | `/v1/kb/search` | `read` | 语义检索知识库。 |
-| `GET` | `/v1/kb/stats` | `read` | 获取知识库统计。 |
+| `POST` | `/v1/auth/login` | 无 | 用户名密码登录，受登录限流保护。 |
+| `POST` | `/v1/auth/logout` | 登录 | 注销本次会话。 |
+| `GET` | `/v1/auth/me` | 登录 | 读取当前用户。 |
+| `POST` | `/v1/auth/password` | 登录 | 校验当前密码，改密并撤销全部会话。 |
+| `GET` / `POST` | `/v1/users` | `admin` | 分页浏览或创建用户。 |
+| `GET` / `PATCH` | `/v1/users/{user_id}` | `admin` | 读取账号或切换启用状态。 |
+| `POST` | `/v1/users/{user_id}/password` | `admin` | 重置密码并撤销全部会话。 |
+| `POST` | `/v1/answers` | 登录 | 创建异步问答任务。 |
+| `GET` | `/v1/answers` | 登录 | 分页浏览 answer。 |
+| `GET` | `/v1/answers/{answer_id}` | 登录 | 获取 answer 详情。 |
+| `DELETE` | `/v1/answers/{answer_id}` | 本人或 `admin` | 仅删除终态结果；活跃时返回 `409`。 |
+| `GET` | `/v1/answers/{answer_id}/markdown` | 登录 | 获取带链接的完整 Markdown 渲染稿。 |
+| `GET` | `/v1/answers/{answer_id}/papers/{n}` | 登录 | 获取本次问答阅读的第 `n` 篇详情。 |
+| `GET` | `/v1/answers/{answer_id}/papers/{n}/markdown` | 登录 | 获取本次阅读原文快照，保留段落锚点。 |
+| `GET` | `/v1/jobs` | 登录 | 本人任务；`admin` 查看全部。 |
+| `GET` | `/v1/jobs/{job_id}` | 登录 | 获取可见 job 详情。 |
+| `POST` | `/v1/jobs/{job_id}/cancel` | 本人或 `admin` | 请求取消活跃 job，接受后返回 `202`。 |
+| `GET` | `/v1/jobs/{job_id}/events` | 登录 | 订阅 job 的 SSE 事件流。 |
+| `GET` | `/v1/papers` | 登录 | 分页浏览本地文献库。 |
+| `GET` | `/v1/papers/{key}` | 登录 | 获取文献元数据。 |
+| `GET` | `/v1/papers/{key}/paragraphs` | 登录 | 获取文献全部段落。 |
+| `GET` | `/v1/papers/{key}/paragraphs/{pid}` | 登录 | 获取单个段落。 |
+| `GET` | `/v1/papers/{key}/facts` | 登录 | 获取原子事实。 |
+| `GET` | `/v1/papers/{key}/fulltext` | 登录 | 获取带段落锚点的 Markdown 全文。 |
+| `GET` | `/v1/kb/search` | 登录 | 语义检索知识库。 |
+| `GET` | `/v1/kb/stats` | 登录 | 获取知识库统计。 |
 | `POST` | `/v1/kb/reindex` | `admin` | 异步重建知识库索引。 |
-| `GET` | `/v1/journals/rank` | `read` | 按 ISSN 或标题查询期刊分区。 |
-| `GET` | `/v1/literature/search` | `read` | 检索 Semantic Scholar/PubMed。 |
-| `GET` | `/v1/literature/resolve` | `read` | 通过必填 `ident` 查询参数解析单篇上游文献。 |
-| `GET` | `/v1/literature/fulltext` | `read` | 通过 `ident` 获取 Europe PMC 全文目录或正文。 |
-| `GET` | `/v1/literature/citations` | `read` | 通过 `ident` 获取引用该文献的文献。 |
-| `GET` | `/v1/literature/references` | `read` | 通过 `ident` 获取该文献的参考文献。 |
-| `GET` | `/v1/literature/recommendations` | `read` | 通过 `ident` 获取推荐文献。 |
+| `GET` | `/v1/journals/rank` | 登录 | 按 ISSN 或标题查询期刊分区。 |
+| `GET` | `/v1/literature/search` | 登录 | 检索 Semantic Scholar/PubMed。 |
+| `GET` | `/v1/literature/resolve` | 登录 | 通过必填 `ident` 查询参数解析单篇上游文献。 |
+| `GET` | `/v1/literature/fulltext` | 登录 | 通过 `ident` 获取 Europe PMC 全文目录或正文。 |
+| `GET` | `/v1/literature/citations` | 登录 | 通过 `ident` 获取引用该文献的文献。 |
+| `GET` | `/v1/literature/references` | 登录 | 通过 `ident` 获取该文献的参考文献。 |
+| `GET` | `/v1/literature/recommendations` | 登录 | 通过 `ident` 获取推荐文献。 |
 
 ## 4. 分资源详解
 
 以下各节列出的 `401`/`403` 适用于所有受保护端点；参数结构或范围错误均可能返回 `422 validation_error`。
+
+### 用户与会话
+
+公开用户模型 `UserRead` 只含 `id: string`、`username: string`、`role: "user" | "admin"`、`is_active: boolean`、`created_at: UTC string`，不返回密码哈希或会话摘要。账号身份与登录响应使用 `Cache-Control: no-store`。
+
+| 端点 | JSON 请求体 | 成功响应 |
+|---|---|---|
+| `POST /v1/auth/login` | `{"username":"alice","password":"<your-password>"}` | `200`，`{"access_token":"...","token_type":"bearer","expires_at":"...Z","user":UserRead}` |
+| `POST /v1/auth/logout` | 无 | `204`；仅当前会话失效，再用该令牌请求得到 `401` |
+| `GET /v1/auth/me` | 无 | `200 UserRead` |
+| `POST /v1/auth/password` | `{"current_password":"...","new_password":"..."}` | `204`；全部会话失效，必须重新登录 |
+| `POST /v1/users` | `{"username":"alice","password":"<initial-password>","role":"user"}`，`role` 可省略 | `201 UserRead`；`Location: /v1/users/{user_id}` |
+| `GET /v1/users` | 无；查询参数 `limit=20`、`offset=0` | `200 Page<UserRead>`，按创建时间、ID 升序 |
+| `GET /v1/users/{user_id}` | 无 | `200 UserRead` |
+| `PATCH /v1/users/{user_id}` | `{"is_active":false}`；不允许其他字段 | `200 UserRead` |
+| `POST /v1/users/{user_id}/password` | `{"new_password":"..."}` | `204`；全部会话失效 |
+
+不支持公开注册、修改用户名/角色或删除账号。禁止禁用自己或最后一个活跃管理员。禁用不会删除问答或取消已提交任务；账号状态每次请求重新检查。首次管理员与遗失管理员密码的恢复在可信服务器终端执行 `yaoe create-admin <username>` / `yaoe reset-password <username>`，交互读取密码；自动化支持 `--password-stdin`。
 
 ### 4.1 Answers
 
@@ -186,17 +220,17 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 | `limit` | `integer` | `20` | `1..100`。 |
 | `offset` | `integer` | `0` | `>=0`。 |
 
-返回 `Page<AnswerSummary>`。持 `read` 的 Key 可读取全部 answer，而不只限于本 Key。可能错误：`validation_error`、`internal_error`。
+返回 `Page<AnswerSummary>`。普通用户仅看到自己的答案，管理员看到全部（包括历史无归属答案）。可能错误：`validation_error`、`internal_error`。
 
 #### `GET /v1/answers/{answer_id}`
 
-`answer_id` 为字符串路径参数。返回 `Answer`；未完成时 `body_md`、完成时间等字段可为 `null`。可能错误：`not_found`、`internal_error`。
+`answer_id` 为字符串路径参数。仅本人或管理员可见；未完成时 `body_md`、完成时间等字段可为 `null`。返回 `Answer`。可能错误：`not_found`、`internal_error`。
 
 #### `GET /v1/answers/{answer_id}/markdown`
 
-无查询参数。answer 为 `ready` 时返回 `text/markdown; charset=utf-8` 的完整渲染稿，包含正文、参考文献和定位附录。与 CLI 文件稿不同，内部引用指向 `/v1/answers/{answer_id}/papers/{n}/markdown#p{pid}`，不会嵌入 API Key。已有持久化稿与导入的 CLI 稿也按本次论文映射转换链接，不回写原文件。可能错误：`not_found`、`not_ready`、`internal_error`。
+无查询参数。answer 为 `ready` 时返回 `text/markdown; charset=utf-8` 的完整渲染稿，包含正文、参考文献和定位附录。与 CLI 文件稿不同，内部引用指向 `/v1/answers/{answer_id}/papers/{n}/markdown#p{pid}`，不会嵌入会话令牌。已有持久化稿与导入的 CLI 稿也按本次论文映射转换链接，不回写原文件。可能错误：`not_found`、`not_ready`、`internal_error`。
 
-这些 URL 仍需要 `read` 权限。浏览器客户端应拦截内部引用，带 Bearer 请求原文，渲染 Markdown 后定位 `id="p{pid}"`；直接导航不会自动附加 Bearer。不得为实现点击跳转而把凭证拼进引用 URL。
+这些 URL 同样只允许本人或管理员访问。浏览器应拦截内部引用，带 Bearer 请求原文，渲染 Markdown 后定位 `id="p{pid}"`；直接导航不会自动附加 Bearer。不得把凭证拼进引用 URL。答案与单篇 Markdown 响应使用 `Cache-Control: no-store`。
 
 #### `GET /v1/answers/{answer_id}/papers/{n}`
 
@@ -214,7 +248,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 - answer 为终态：删除数据库记录、`answers/{id}.md` 与 `answers/{id}_papers/`。删除成功后的重复请求返回 `404 not_found`。
 - 本地文献库 `library/` 与 KB 不随 answer 删除。
 
-端点始终需要 `write`；创建该 answer 的 Key 可操作，操作其他 Key 的 answer 还必须有 `admin`。可能错误：`not_found`、`forbidden`、`conflict`、`internal_error`。
+创建该答案的用户或管理员可操作，其他用户得到 `404`。可能错误：`not_found`、`conflict`、`internal_error`。
 
 ### 4.2 Jobs
 
@@ -227,19 +261,19 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 | `limit` | `integer` | `20` | `1..100`。 |
 | `offset` | `integer` | `0` | `>=0`。 |
 
-返回 `Page<Job>`。持 `read` 的普通 Key 只看到本 Key 的 job；同时持 `read` 与 `admin` 时看到全部。可能错误：`validation_error`、`internal_error`。
+返回 `Page<Job>`。普通用户只看到自己的 job，管理员看到全部。可能错误：`validation_error`、`internal_error`。
 
 #### `GET /v1/jobs/{job_id}`
 
-返回 `Job`。普通 Key 查询别人的 job 与查询不存在的 job 均返回 `404 not_found`。可能错误：`not_found`、`internal_error`。
+返回 `Job`。普通用户查询别人的 job 与不存在的 job 均返回 `404 not_found`。可能错误：`not_found`、`internal_error`。
 
 #### `GET /v1/jobs/{job_id}/events`
 
-返回 `text/event-stream`。鉴权可使用 Bearer 头，或仅在此端点使用字符串查询参数 `access_token`（无默认值）；同时提供时以 Bearer 为准。OpenAPI 的 `HTTPBearer` 与 `SSEAccessToken` 表达两种替代鉴权。可选请求头 `Last-Event-ID` 指定上次已处理的 Redis Stream entry ID，格式为两个无前导零的无符号 64 位整数，以 `-` 分隔；缺省从 `0-0` 开始回放。格式或范围非法时，在启动事件流之前返回 `422 validation_error`。协议详见“异步任务与 SSE”。可能错误：`unauthenticated`、`forbidden`、`not_found`、`validation_error`、`internal_error`。
+返回 `text/event-stream`。仅接受 Bearer 请求头，对应 OpenAPI `HTTPBearer`；不接受 URL 令牌。可选 `Last-Event-ID` 为两个无前导零的无符号 64 位整数，以 `-` 分隔；缺省从 `0-0` 回放。非法游标在开始流之前返回 `422`。仅本人或管理员可订阅；每次发送和空读轮询均检查当前会话，撤销或失去权限后关闭连接。协议详见“异步任务与 SSE”。可能错误：`unauthenticated`、`not_found`、`validation_error`、`internal_error`。
 
 #### `POST /v1/jobs/{job_id}/cancel`
 
-无请求体与查询参数。活跃 job 接受取消请求后返回 `202 Accepted`，响应体为空，`Location: /v1/jobs/{job_id}` 指向可观察状态。活跃期间重复请求仍为 `202`；进入任意终态后返回 `409 conflict`。此端点不会删除 job、answer 或结果文件。端点始终需要 `write`；本 Key 的 job 可取消，取消其他 Key 的 job 还必须有 `admin`。普通 Key 对不可见 job 得到 `404 not_found`。可能错误：`not_found`、`forbidden`、`conflict`、`internal_error`。
+无请求体与查询参数。活跃 job 接受取消请求后返回 `202 Accepted`，响应体为空，`Location: /v1/jobs/{job_id}` 指向可观察状态。活跃期间重复请求仍为 `202`；进入任意终态后返回 `409 conflict`。此端点不会删除 job、answer 或结果文件。仅本人或管理员可操作，普通用户对不可见 job 得到 `404 not_found`。可能错误：`not_found`、`conflict`、`internal_error`。
 
 ### 4.3 Papers
 
@@ -476,7 +510,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | `id` | `string` | job ID。 |
 | `kind` | `ask \| kb_reindex` | 任务种类。 |
 | `status` | `queued \| running \| succeeded \| failed \| cancelled` | job 生命周期状态。 |
-| `api_key_id` | `string \| null` | 创建任务的 Key ID，不是秘密 Key 本身。 |
+| `user_id` | `string \| null` | 所有者的用户 ID；历史迁移或 CLI 导入的无归属数据为 `null`，仅管理员可见。 |
 | `params` | `object` | 入队参数。 |
 | `progress` | `JobProgress \| null` | 最近一次阶段/进度快照。 |
 | `error` | `JobError \| null` | 失败信息。 |
@@ -698,42 +732,50 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 - 事件流默认保留 7 天，并受最大长度配置约束。订阅开始时以及活动订阅的空读周期（约 5 秒）会检查数据库终态；数据库连接只用于短期查询，不随 SSE 长连接持续占用。
 - 数据库已终态时，先回放游标之后仍保留的事件；若终态事件发布失败、已过期，或客户端游标已越过终态事件，则补发数据库中的终态并关闭。合成事件沿用最后游标（没有历史游标时为 `0-0`），客户端不得仅因 ID 与上一条相同而丢弃终态。
 - 合成 `succeeded` 使用 `job.result`，`failed` 使用 `job.error`，`cancelled` 的 `data` 为空对象。已终态任务无需等待下一个空读周期。
+- 会话在每次发送前及空读轮询时重新验证，注销、到期或禁用后停止发送并关闭。空闲流通常在下一次约 5 秒的轮询时结束；已收到的内容无法收回。非终态断开时先调用 `/v1/auth/me`，若为 `401` 则重新登录，不要携带失效令牌无限重试。
 
 取消是异步且协作式的：`POST /v1/jobs/{job_id}/cancel` 的 `202` 只表示已写入取消请求。worker 在任务开始前、阶段边界和逐篇完成边界检查取消标记；它不会中断正在执行的 LLM 调用。客户端必须观察实际终态，不能把 `202` 当成已经取消成功；接近完成时也可能先进入 `succeeded`。
 
-### 6.4 浏览器 `EventSource`
+### 6.4 浏览器 fetch 流
+
+以下示例使用 [`eventsource-parser`](https://github.com/rexxars/eventsource-parser) 解析 SSE（前端安装 `eventsource-parser` 3.x），不把会话令牌放进 URL。`onEvent` 处理成功后才推进游标；断线时保留游标，重新调用即可续传：
 
 ```js
-const apiKey = "yaoe_replace_me_frontend";
-const jobId = "<job_id>";
-const url = new URL(`http://localhost:8765/v1/jobs/${jobId}/events`);
-url.searchParams.set("access_token", apiKey);
+import {createParser} from "eventsource-parser";
 
-const stream = new EventSource(url);
-for (const name of ["stage", "progress", "log", "succeeded", "failed", "cancelled"]) {
-  stream.addEventListener(name, (event) => {
-    const data = JSON.parse(event.data);
-    console.log(name, event.lastEventId, data);
-    if (["succeeded", "failed", "cancelled"].includes(name)) stream.close();
+async function readJobEvents({baseUrl, jobId, token, cursor, signal, onEvent}) {
+  const response = await fetch(`${baseUrl}/v1/jobs/${jobId}/events`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Last-Event-ID": cursor.id ?? "0-0",
+    },
+    signal,
   });
+  if (!response.ok) throw await response.json();
+  const parser = createParser({
+    onEvent(event) {
+      onEvent(event.event, JSON.parse(event.data));
+      if (event.id !== undefined) cursor.id = event.id;
+    },
+    onError(error) { throw error; },
+  });
+  for await (const text of response.body.pipeThrough(new TextDecoderStream())) {
+    parser.feed(text);
+  }
 }
-stream.onerror = (error) => console.error("SSE disconnected", error);
 ```
 
-浏览器会按 SSE 规范在自动重连时携带其已处理的 last event ID。
+客户端在 `succeeded` / `failed` / `cancelled` 后停止重连，离开页面可通过 `AbortController` 关闭连接。非终态断开先检查账号是否仍登录，再使用最后已处理游标重连。
 
-命令行：
+命令行首次订阅与手工续传：
 
 ```bash
 curl -N \
-  'http://localhost:8765/v1/jobs/<job_id>/events?access_token=yaoe_replace_me_frontend'
-```
+  -H 'Authorization: Bearer <access_token>' \
+  'http://localhost:8765/v1/jobs/<job_id>/events'
 
-需手工续传时：
-
-```bash
 curl -N \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   -H 'Last-Event-ID: 1725537600000-0' \
   'http://localhost:8765/v1/jobs/<job_id>/events'
 ```
@@ -742,11 +784,19 @@ curl -N \
 
 ### 7.1 创建、观察并读取结果
 
+先登录，将响应的 `access_token` 用于以下请求头占位符：
+
+```bash
+curl -s -X POST 'http://localhost:8765/v1/auth/login' \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"alice","password":"<your-password>"}'
+```
+
 创建任务；同时查看响应头可取得 `Location`：
 
 ```bash
 curl -i -X POST 'http://localhost:8765/v1/answers' \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   -H 'Content-Type: application/json' \
   -d '{
     "question": "SGLT2抑制剂对HFpEF患者有什么获益？",
@@ -762,14 +812,15 @@ curl -i -X POST 'http://localhost:8765/v1/answers' \
 
 ```bash
 curl -N \
-  'http://localhost:8765/v1/jobs/<job_id>/events?access_token=yaoe_replace_me_frontend'
+  -H 'Authorization: Bearer <access_token>' \
+  'http://localhost:8765/v1/jobs/<job_id>/events'
 ```
 
 也可读取 job 快照：
 
 ```bash
 curl -s \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   'http://localhost:8765/v1/jobs/<job_id>'
 ```
 
@@ -777,15 +828,15 @@ curl -s \
 
 ```bash
 curl -s \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   'http://localhost:8765/v1/answers/<answer_id>'
 
 curl -s \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   'http://localhost:8765/v1/answers/<answer_id>/papers/1'
 
 curl -s \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   'http://localhost:8765/v1/answers/<answer_id>/markdown'
 ```
 
@@ -795,7 +846,7 @@ curl -s \
 
 ```bash
 curl -i -X POST \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   'http://localhost:8765/v1/jobs/<job_id>/cancel'
 ```
 
@@ -803,7 +854,7 @@ curl -i -X POST \
 
 ```bash
 curl -i -X DELETE \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   'http://localhost:8765/v1/answers/<answer_id>'
 ```
 
@@ -813,11 +864,11 @@ curl -i -X DELETE \
 
 ```bash
 # 文献库
-curl -s -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+curl -s -H 'Authorization: Bearer <access_token>' \
   'http://localhost:8765/v1/papers?q=Lancet&limit=10&offset=0'
 
 # KB；pmid 可重复
-curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+curl -sG -H 'Authorization: Bearer <access_token>' \
   --data-urlencode 'q=SGLT2 HFpEF 心衰住院' \
   --data-urlencode 'kind=fact' \
   --data-urlencode 'top_k=8' \
@@ -825,12 +876,12 @@ curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
   'http://localhost:8765/v1/kb/search'
 
 # 期刊分区
-curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+curl -sG -H 'Authorization: Bearer <access_token>' \
   --data-urlencode 'title=Lancet' \
   'http://localhost:8765/v1/journals/rank'
 
 # 上游检索
-curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+curl -sG -H 'Authorization: Bearer <access_token>' \
   --data-urlencode 'q=SGLT2 inhibitors HFpEF' \
   --data-urlencode 'source=auto' \
   --data-urlencode 'limit=2' \
@@ -838,14 +889,14 @@ curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
   'http://localhost:8765/v1/literature/search'
 
 # Europe PMC 章节
-curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+curl -sG -H 'Authorization: Bearer <access_token>' \
   --data-urlencode 'ident=PMC9306514' \
   --data-urlencode 'section=Conclusion' \
   --data-urlencode 'max_chars=20000' \
   'http://localhost:8765/v1/literature/fulltext'
 
 # 管理员异步重建 KB
-curl -s -X POST -H 'Authorization: Bearer yaoe_replace_me_ops' \
+curl -s -X POST -H 'Authorization: Bearer <admin_access_token>' \
   'http://localhost:8765/v1/kb/reindex'
 ```
 
@@ -860,13 +911,16 @@ curl -s -X POST -H 'Authorization: Bearer yaoe_replace_me_ops' \
 
 ## 9. 未纳入 v1
 
-- **无通用限流。** v1 只限制每个 Key 的活跃任务数，不提供按秒/分钟的请求配额响应头。
-- **无用户与租户体系。** API Key 是服务凭证，不是最终用户账号。持 `read` scope 的 Key 可读取全部 answers、papers 与 KB；job 列表/详情按 Key 隔离，`read` 与 `admin` 组合时可查看全部 job。删除与取消始终需要 `write`，且仅限创建资源的 Key；跨 Key 操作还需要 `admin`。
+- **无通用业务限流。** 登录有用户名窗口限流，创建问答按用户限制活跃任务数；其余业务接口没有每秒/分钟配额。
+- **无注册、租户或复杂角色。** 账号由管理员创建，只有 `user`/`admin`，不提供邮件找回、第三方登录、JWT 刷新令牌、组织或角色编辑。文献和衍生知识共享，不承诺严格隐私隔离。
 - **容器内不支持机构订阅下载。** 镜像不包含 `core/vendor/`，因此 v1 容器服务不会通过机构订阅抓取付费全文；开放全文仅使用 Europe PMC，问答流水线在无全文时可使用摘要。本机原有 CLI 内核的机构订阅能力不属于本 API 协议。
 - **全文透传不下载 OA PDF 兜底。** `/v1/literature/fulltext?ident=...` 只读 Europe PMC；`LiteratureRecord.open_access_pdf` 即使存在，也只是上游元数据。
 
 ## 10. 契约迁移
 
+- 用户体系迁移 `0002`：停 API/worker 并备份后迁移，执行 `yaoe create-admin`。旧任务和答案保留，`user_id=null`，仅管理员可见；不会把旧 Key ID 猜测为用户。已有本地 Key 文件不读取、不删除。
+- 静态 API Key、`YAOE_API_KEYS_FILE`、`YAOE_AUTH_DISABLED` 和 SSE 查询令牌已移除；客户端统一登录后使用 Bearer，原生 `EventSource` 改为带请求头的流客户端。
+- `Job.api_key_id` 改为 `user_id`；`YAOE_MAX_ACTIVE_JOBS_PER_KEY` 改为 `YAOE_MAX_ACTIVE_JOBS_PER_USER`。原来全局可读的答案及所有子资源现在仅本人或管理员可见。
 - 原 `DELETE /v1/jobs/{job_id}` 已移除，取消改用 `POST /v1/jobs/{job_id}/cancel`，成功接受状态由 `204` 改为 `202`，通过 `Location` 观察任务。
 - 原对活跃 answer 调用 `DELETE` 的取消行为已移除。先取 `Answer.job_id` 请求取消；`DELETE /v1/answers/{answer_id}` 只用于删除终态答案。
 - 原 `/v1/literature/{ident}` 及其操作后缀路径已移除。详情使用 `/resolve?ident=...`，其余使用 `/fulltext`、`/citations`、`/references`、`/recommendations` 加 `ident` 查询参数。不保留兼容别名。

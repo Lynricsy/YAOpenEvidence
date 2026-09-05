@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+from functools import lru_cache
 from typing import Any
 
 import pytest
+from argon2 import PasswordHasher
 import redis
 import redis.asyncio as aioredis
 from fastapi.testclient import TestClient
@@ -14,15 +17,16 @@ from app.config import settings
 from app.db import SessionLocal
 from app.deps import get_arq
 from app.main import create_app
-from app.models import Answer, Job
+from app.models import Answer, Job, User, UserSession
 
-READ_KEY = "test_read_key"
-WRITE_KEY = "test_write_key"
-ADMIN_KEY = "test_admin_key"
+USER_TOKEN = "test_user_session"
+OTHER_TOKEN = "test_other_session"
+ADMIN_TOKEN = "test_admin_session"
+PASSWORD = "Testing-user-pass!1"
 
 
-def auth(key: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {key}"}
+def auth(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
 
 class ArqStub:
@@ -38,18 +42,37 @@ class ArqStub:
         pass
 
 
+@lru_cache(maxsize=1)
+def _password_hash() -> str:
+    return PasswordHasher().hash(PASSWORD)
+
+
+def _clear_db(db) -> None:
+    for model in (Answer, Job, UserSession, User):
+        db.execute(delete(model))
+    db.commit()
+
+
 @pytest.fixture(autouse=True)
 def clean_db():
-    """每个测试自带干净的 jobs/answers，避免「活跃任务数」等断言互相污染。"""
+    """每个测试独立持有真实用户与会话，业务外键与认证检查均不绕过。"""
     with SessionLocal() as db:
-        db.execute(delete(Answer))
-        db.execute(delete(Job))
+        _clear_db(db)
+        now = dt.datetime.now(dt.timezone.utc)
+        identities = (("reader", USER_TOKEN), ("writer", OTHER_TOKEN), ("admin", ADMIN_TOKEN))
+        for user_id, _ in identities:
+            db.add(User(id=user_id, username=user_id, password_hash=_password_hash(),
+                        role="admin" if user_id == "admin" else "user", is_active=True,
+                        auth_version=0, created_at=now))
+        db.flush()
+        for user_id, token in identities:
+            db.add(UserSession(token_hash=hashlib.sha256(token.encode()).hexdigest(),
+                               user_id=user_id, auth_version=0, created_at=now,
+                               expires_at=now + dt.timedelta(days=1)))
         db.commit()
     yield
     with SessionLocal() as db:
-        db.execute(delete(Answer))
-        db.execute(delete(Job))
-        db.commit()
+        _clear_db(db)
 
 
 @pytest.fixture
@@ -81,17 +104,21 @@ def worker_ctx(sync_redis):
     yield ctx
 
 
-def make_job(*, kind: str = "ask", status: str = "queued", api_key_id: str = "writer",
+def make_job(*, kind: str = "ask", status: str = "queued", user_id: str | None = "writer",
              params: dict | None = None, answer: bool = True) -> tuple[str, str | None]:
     """直接建库里的 job(+answer) 行，绕过 HTTP，便于单测 worker。"""
     job_id = f"job-{dt.datetime.now(dt.timezone.utc).timestamp():.6f}".replace(".", "")
     answer_id = f"ans-{job_id}" if answer else None
     with SessionLocal() as db:
-        db.add(Job(id=job_id, kind=kind, status=status, api_key_id=api_key_id,
+        if user_id is not None and db.get(User, user_id) is None:
+            db.add(User(id=user_id, username=user_id, password_hash=_password_hash(),
+                        role="user", is_active=True, auth_version=0))
+            db.flush()
+        db.add(Job(id=job_id, kind=kind, status=status, user_id=user_id,
                    params={**(params or {}), **({"answer_id": answer_id} if answer_id else {})}))
         db.flush()      # answers.job_id 有外键，必须先落 job 行
         if answer_id:
-            db.add(Answer(id=answer_id, job_id=job_id, api_key_id=api_key_id, status="queued",
+            db.add(Answer(id=answer_id, job_id=job_id, user_id=user_id, status="queued",
                           question="测试问题", queries=[],
                           options={"question": "测试问题", "papers": 1, "use_kb": False},
                           papers=[], citations=[], kb_hits=[]))

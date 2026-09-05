@@ -13,15 +13,16 @@ from app.main import create_app
 from app.routers import health
 from app.schemas.common import Problem
 
+from .conftest import USER_TOKEN, auth
+
 
 @pytest.fixture
 def http_client(monkeypatch, arq):
     monkeypatch.setattr(settings, "cors_origins", ["https://frontend.example"])
     app = create_app()
-    app.state.auth_disabled = True
     app.dependency_overrides[get_arq] = lambda: arq
     # 不进入 lifespan，探针依赖全部由测试控制，不连接外部服务。
-    client = TestClient(app)
+    client = TestClient(app, headers=auth(USER_TOKEN))
     yield client
     client.close()
 

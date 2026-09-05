@@ -47,26 +47,7 @@ def assert_test_redis(url: str) -> str:
 
 os.environ["YAOE_REDIS_URL"] = assert_test_redis(os.environ["YAOE_REDIS_URL"])
 os.environ["YAOE_DATABASE_URL"] = f"sqlite:///{_TMP}/var/test.sqlite3"
-os.environ["YAOE_API_KEYS_FILE"] = f"{_TMP}/api_keys.toml"
 os.environ.setdefault("LLM_BASE", "http://127.0.0.1:4999/v1")   # 不存在的端口：测试不该真调 LLM
-
-API_KEYS_TOML = """\
-[[keys]]
-id = "reader"
-key = "test_read_key"
-scopes = ["read"]
-
-[[keys]]
-id = "writer"
-key = "test_write_key"
-scopes = ["read", "write"]
-
-[[keys]]
-id = "admin"
-key = "test_admin_key"
-scopes = ["read", "write", "admin"]
-"""
-
 
 @pytest.fixture(scope="session")
 def data_root() -> Path:
@@ -79,7 +60,6 @@ def _prepare_data_root() -> Path:
     root = Path(_TMP)
     for sub in ("answers", "library", "kb", "var", "pdfs", "data/journal_ranks"):
         (root / sub).mkdir(parents=True, exist_ok=True)
-    (root / "api_keys.toml").write_text(API_KEYS_TOML, encoding="utf-8")
 
     paper = root / "library" / "39133485"
     paper.mkdir(exist_ok=True)

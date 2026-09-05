@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 from typing import Annotated
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from picos_paths import VAR_DIR
@@ -22,8 +21,9 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://127.0.0.1:6379/0"
     database_url: str = ""                      # 空 -> sqlite:///{VAR_DIR}/api.sqlite3
-    api_keys_file: Path = Path("api_keys.toml")
-    auth_disabled: bool = False
+    session_ttl_s: int = Field(604800, gt=0)
+    login_max_attempts: int = Field(10, gt=0)
+    login_window_s: int = Field(300, gt=0)
     cors_origins: Annotated[list[str], NoDecode] = []
 
     host: str = "127.0.0.1"
@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     worker_max_jobs: int = 1                    # 单 GPU：默认串行跑问答任务
     job_timeout_s: int = 1800
-    max_active_jobs_per_key: int = 2
+    max_active_jobs_per_user: int = Field(2, gt=0)
     events_ttl_s: int = 604800                  # Redis 事件流保留 7 天
     events_maxlen: int = 2000
 

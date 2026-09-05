@@ -188,7 +188,7 @@ def import_legacy_answers(db: Session) -> int:
             created = dt.datetime.strptime(stem, LEGACY_TS_FORMAT).replace(tzinfo=dt.timezone.utc)
         except ValueError:
             created = dt.datetime.fromtimestamp(os.path.getmtime(path), dt.timezone.utc)
-        db.add(Answer(id=stem, job_id=None, api_key_id=None, status="ready", question=question,
+        db.add(Answer(id=stem, job_id=None, user_id=None, status="ready", question=question,
                       question_en=None, queries=[], options={}, filters_label=None,
                       n_papers=None, n_fulltext=None, papers=[], body_md=None, answer_md=text,
                       citations=[], kb_hits=[], error=None, created_at=created,

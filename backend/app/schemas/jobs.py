@@ -22,7 +22,7 @@ class Job(BaseModel):
     id: str
     kind: JobKind
     status: JobStatus
-    api_key_id: str | None = None
+    user_id: str | None = None
     params: dict = {}
     progress: JobProgress | None = None
     error: JobError | None = None

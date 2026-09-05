@@ -14,8 +14,8 @@ from ..services.jobs import enqueue
 from ..services.kb import KbService
 
 router = APIRouter(prefix="/kb", tags=["kb"])
-_read = require("read")
-_admin = require("admin")
+_read = require()
+_admin = require(admin=True)
 
 
 @router.get("/search", response_model=KbSearchResult, summary="检索知识库")
@@ -38,6 +38,6 @@ def stats(_principal: Principal = Depends(_read),
              summary="重建知识库索引")
 async def reindex(principal: Principal = Depends(_admin), arq=Depends(get_arq),
                   db: Session = Depends(get_db)) -> Job:
-    job = await enqueue(arq, db, kind="kb_reindex", params={}, api_key_id=principal.key_id,
+    job = await enqueue(arq, db, kind="kb_reindex", params={}, user_id=principal.user_id,
                         fn_name="run_kb_reindex_job")
     return Job.model_validate(job)

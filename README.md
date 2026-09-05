@@ -50,11 +50,10 @@ flowchart LR
 
 ```bash
 cp .env.example .env
-cp backend/api_keys.example.toml backend/api_keys.toml
 mkdir -p var core/pdfs
 ```
 
-编辑 `backend/api_keys.toml`，替换示例 key。生产环境不要继续使用占位值。
+账号存储在 API 数据库中，不再配置静态 API Key。不要在公开网络上以明文 HTTP 传输密码或会话令牌。
 
 ### 2. 在宿主机启动模型服务
 
@@ -70,16 +69,25 @@ cd ..
 
 ```bash
 docker compose up -d --build
+docker compose exec api yaoe create-admin admin
 curl http://localhost:8765/v1/health/ready
 ```
 
 `migrate` 服务先执行 Alembic 迁移；迁移成功后 `api` 和 `worker` 才启动。应用不会在进程启动时自行迁移数据库。
 
-创建第一个问答任务：
+`create-admin` 会交互读取并确认密码，没有默认账号或密码。通过管理员登录取得 `access_token`：
+
+```bash
+curl -s -X POST http://localhost:8765/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"<your-admin-password>"}'
+```
+
+使用返回的令牌创建第一个问答任务：
 
 ```bash
 curl -i -X POST http://localhost:8765/v1/answers \
-  -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  -H 'Authorization: Bearer <access_token>' \
   -H 'Content-Type: application/json' \
   -d '{"question":"SGLT2抑制剂对HFpEF患者有什么获益？","papers":2,"years":3,"use_kb":false}'
 ```
@@ -119,12 +127,13 @@ uv sync --all-packages
 docker run -d --name yaoe-redis -p 6379:6379 redis:7-alpine
 
 uv run --directory backend yaoe migrate
+uv run --directory backend yaoe create-admin admin
 uv run --directory backend yaoe serve
 # 另开终端
 uv run --directory backend yaoe worker
 ```
 
-`serve` 默认监听 `127.0.0.1:8765`。本地从 `backend/` 启动时，默认读取 `backend/api_keys.toml`；请先按快速开始一节复制并修改示例文件。
+`serve` 默认监听 `127.0.0.1:8765`。先迁移数据库，再创建管理员；同一数据库只需首次建号，不要在每次启动时重复执行。
 
 本机测试：
 
@@ -140,31 +149,35 @@ Compose 的规范测试方式：
 docker compose --profile test run --rm test
 ```
 
-## API Key 与 scope
+## 用户与登录会话
 
-API Key 从 `backend/api_keys.toml` 的 `[[keys]]` 表加载：
+系统只有 `user` 和 `admin` 两种角色，不开放注册。管理员通过 `POST /v1/users` 创建用户，或通过本机命令创建管理员：
 
-```toml
-[[keys]]
-id = "frontend-web"
-key = "yaoe_replace_me_frontend"
-scopes = ["read", "write"]
-
-[[keys]]
-id = "ops"
-key = "yaoe_replace_me_ops"
-scopes = ["read", "write", "admin"]
+```bash
+uv run --directory backend yaoe create-admin admin
+uv run --directory backend yaoe reset-password admin
 ```
 
-| scope | 权限边界 |
+两条命令默认交互读取并确认密码；自动化可用 `--password-stdin` 从标准输入读取，不接受明文密码命令行参数。用户名为 3-64 位 ASCII 字母数字、下划线、横线或点，以字母数字开头，统一转小写且不区分大小写；密码为 12-128 字符，以 Argon2id 哈希保存。
+
+| 角色 | 权限边界 |
 |---|---|
-| `read` | 调用受保护的 GET 端点；普通 key 的任务列表和任务详情只显示本 key 的任务 |
-| `write` | 创建问答任务，取消或删除本 key 创建的 answer/job |
-| `admin` | 发起 KB 重建，并解除任务查看与资源删除时的所有者限制 |
+| `user` | 创建和读取自己的问答、任务与阅读材料，取消自己的任务、删除自己的终态答案；共享读取文献、KB、期刊与上游检索 |
+| `admin` | 具备普通用户能力，可查看和管理所有问答及任务、重建 KB、创建账号、启用/禁用账号与重置密码 |
 
-scope 不按层级自动包含：需要完整运维能力的 key 应同时配置 `read`、`write`、`admin`。`backend/api_keys.toml` 已被 `.gitignore` 排除，不应提交。`YAOE_AUTH_DISABLED=true` 会让请求以拥有全部 scope 的匿名身份运行，只适用于隔离的本机调试环境。
+账号只能启用/禁用，不支持删除或修改角色；禁止禁用自己或最后一个活跃管理员。禁用不会删除已有问答，也不会自动取消已经排队或执行中的任务。
 
-鉴权方式、免鉴权端点以及 SSE 的查询参数例外见 [API 协议文档](docs/api.md)。
+`POST /v1/auth/login` 返回随机 Bearer 令牌，默认固定有效期 7 天，不自动续期；数据库只保存令牌的 SHA-256 摘要。`GET /v1/auth/me` 读取当前账号；`POST /v1/auth/logout` 仅注销当前会话；修改或重置密码、禁用账号会撤销全部会话，重新启用也不会恢复旧令牌。过期后重新登录，不引入 JWT 或刷新令牌。
+
+所有受保护端点（包括 SSE）只接受 `Authorization: Bearer <access_token>`，不再接受 URL 查询令牌。浏览器请使用能带请求头的流式客户端，不能直接使用原生 `EventSource`。生产环境必须使用 HTTPS，并避免将令牌写入日志、URL 或不必要的持久化存储。
+
+个人问答私有，但文献和衍生知识仍共享；当前知识提取使用问题作为上下文，因此这不是严格的用户隐私或租户隔离，不应提交敏感个人或患者信息。健康探针、API 描述和登录端点免鉴权，其余接口必须登录。
+
+### 从静态 API Key 升级
+
+先停止 API 和 worker 并备份数据库及结果目录，再执行迁移、创建管理员，最后启动服务。迁移 `0002` 保留旧任务、答案和关联关系；旧 Key 及 CLI 导入数据不猜测用户归属，`user_id` 为 `null`，仅管理员可见。旧 `api_key_id` 字段、静态 Key 鉴权、`YAOE_API_KEYS_FILE` 和 `YAOE_AUTH_DISABLED` 已移除；所有客户端必须先登录。已有本地 `backend/api_keys.toml` 不读取、不随迁移删除，仍被版本控制和镜像构建排除。
+
+`YAOE_MAX_ACTIVE_JOBS_PER_KEY` 改为 `YAOE_MAX_ACTIVE_JOBS_PER_USER`，同一用户的多个令牌共享额度。完整请求体、错误码和 SSE 接入方式见 [API 协议文档](docs/api.md)。
 
 ## 环境变量
 
@@ -176,18 +189,19 @@ scope 不按层级自动包含：需要完整运维能力的 key 应同时配置
 |---|---|---|
 | `YAOE_REDIS_URL` | `redis://127.0.0.1:6379/0` | arq 队列、任务事件流与取消标记使用的 Redis |
 | `YAOE_DATABASE_URL` | 空；随后解析为 `sqlite:///<PICOSGPT_DATA>/var/api.sqlite3` | SQLAlchemy 数据库 URL；包含 `%` 时按原 URL 填写，无需为迁移命令额外转义 |
-| `YAOE_API_KEYS_FILE` | `api_keys.toml` | 静态 API Key TOML 文件路径 |
-| `YAOE_AUTH_DISABLED` | `false` | 关闭鉴权；仅用于本机调试 |
+| `YAOE_SESSION_TTL_S` | `604800` | 登录会话固定有效期（秒），必须大于 0 |
+| `YAOE_LOGIN_MAX_ATTEMPTS` | `10` | 单个用户名在登录窗口内的最大请求数，含成功登录，必须大于 0 |
+| `YAOE_LOGIN_WINDOW_S` | `300` | 登录限流窗口（秒），必须大于 0 |
 | `YAOE_CORS_ORIGINS` | `[]` | 允许的 CORS origin；可用逗号分隔或 JSON 数组 |
 | `YAOE_HOST` | `127.0.0.1` | `yaoe serve` 默认监听地址 |
 | `YAOE_PORT` | `8765` | `yaoe serve` 默认端口；Compose 也用它设置宿主机映射端口 |
 | `YAOE_WORKER_MAX_JOBS` | `1` | 单个 worker 同时执行的最大任务数 |
 | `YAOE_JOB_TIMEOUT_S` | `1800` | worker 任务超时秒数 |
-| `YAOE_MAX_ACTIVE_JOBS_PER_KEY` | `2` | 每个 API Key 允许的 queued/running 任务上限 |
+| `YAOE_MAX_ACTIVE_JOBS_PER_USER` | `2` | 每个用户允许的 queued/running 任务上限，多个会话共享，必须大于 0 |
 | `YAOE_EVENTS_TTL_S` | `604800` | Redis 任务事件流与取消标记的保留秒数，默认 7 天 |
 | `YAOE_EVENTS_MAXLEN` | `2000` | 每个任务 Redis Stream 的近似最大事件数 |
 
-Compose 固定容器内的 Redis 为 `redis://redis:6379/0`、数据库为 `sqlite:////data/var/api.sqlite3`、key 文件为 `/config/api_keys.toml`；`.env` 中的 `YAOE_PORT` 控制宿主机端口映射。
+Compose 固定容器内的 Redis 为 `redis://redis:6379/0`、数据库为 `sqlite:////data/var/api.sqlite3`；`.env` 中的 `YAOE_PORT` 控制宿主机端口映射。
 
 ### 内核与上游服务
 
