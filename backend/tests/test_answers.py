@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -84,15 +86,15 @@ def test_paper_detail_of_answer_without_papers_is_404(client):
 def test_unknown_answer_is_404(client):
     r = client.get("/v1/answers/nope", headers=auth(READ_KEY))
     assert r.status_code == 404
-    assert r.json()["detail"].startswith("answer 'nope'")
+    assert r.json()["code"] == "not_found"
 
 
-def test_delete_active_answer_requests_cancel(client, sync_redis):
+def test_delete_active_answer_is_conflict_without_requesting_cancel(client, sync_redis):
     body = _create(client).json()
     r = client.delete(f"/v1/answers/{body['id']}", headers=auth(WRITE_KEY))
-    assert r.status_code == 204
-    assert sync_redis.exists(events.cancel_key(body["job_id"]))
-    # 还在跑的任务不删行，等 worker 收尾
+    assert r.status_code == 409
+    assert not sync_redis.exists(events.cancel_key(body["job_id"]))
+    # 活动态删除不改变任务状态；调用者必须显式取消关联 job。
     assert client.get(f"/v1/answers/{body['id']}", headers=auth(READ_KEY)).status_code == 200
 
 
@@ -242,3 +244,127 @@ def test_worker_completion_during_enqueue_is_not_overwritten(client, arq, monkey
     assert response.json()["status"] == "ready"
     job = client.get(f"/v1/jobs/{response.json()['job_id']}", headers=auth(WRITE_KEY))
     assert job.json()["status"] == "succeeded"
+
+
+@pytest.fixture
+def snapshot_root(tmp_path, monkeypatch):
+    from app.services import answers as service
+
+    root = tmp_path / "answers"
+    root.mkdir()
+    monkeypatch.setattr(service, "ANSWERS_DIR", str(root))
+    return root
+
+
+@pytest.mark.parametrize("storage", ["persisted", "legacy", "file-only", "file-url", "http"])
+def test_markdown_links_follow_run_snapshot(client, data_root: Path, snapshot_root, storage):
+    from ask import cited_passages, location_appendix, ref_line, resolve_markers
+
+    answer_id = "snapshot-links"
+    directory = snapshot_root / f"{answer_id}_papers"
+    directory.mkdir()
+    snapshot = '<a id="p1"></a>\n**¶1** Original run text\n'
+    (directory / "39133485.md").write_text(snapshot, encoding="utf-8")
+    paper = {"n": 1, "pmid": "39133485", "md_file": "39133485.md", "title": "Study",
+             "authors": "Author", "year": "2026", "journal": "Journal", "source": "pmc",
+             "paras": [{"id": 1, "sec": "Results", "text": "Original run text"}], "cites": []}
+    target = ({1: f"/v1/answers/{answer_id}/papers/1/markdown"} if storage == "http"
+              else f"{answer_id}_papers")
+    body, used = resolve_markers("Evidence [1¶1].", {1: paper}, target)
+    text = "\n\n".join(("# Q: q", body, ref_line(paper, target),
+                        location_appendix(cited_passages(used, {1: paper}), {1: paper}, target)))
+    if storage == "file-url":
+        text = text.replace(f"{answer_id}_papers/", directory.as_uri() + "/")
+    (snapshot_root / f"{answer_id}.md").write_text(text, encoding="utf-8")
+    # 同 PMID 的共享文献与本次快照不同，引用必须使用本次快照。
+    assert "Original run text" not in (data_root / "library" / "39133485" / "fulltext.md").read_text(encoding="utf-8")
+    if storage == "legacy":
+        with SessionLocal() as db:
+            import_legacy_answers(db)
+    else:
+        with SessionLocal() as db:
+            db.add(Answer(id=answer_id, status="ready", question="q", queries=[], options={},
+                          papers=[{"n": 1, "pmid": "39133485"}], citations=[], kb_hits=[],
+                          answer_md=None if storage == "file-only" else text))
+            db.commit()
+
+    response = client.get(f"/v1/answers/{answer_id}/markdown", headers=auth(READ_KEY))
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/markdown")
+    links = re.findall(r"\[[^\]]+\]\(([^)]+)\)", response.text)
+    assert len(links) == 3
+    assert all(link.startswith(f"/v1/answers/{answer_id}/papers/1/markdown") for link in links)
+    for link in links:
+        parsed = urlsplit(link)
+        result = client.get(parsed.path, headers=auth(READ_KEY))
+        assert result.status_code == 200
+        assert result.headers["content-type"].startswith("text/markdown")
+        assert result.text == snapshot
+        if parsed.fragment:
+            assert f'id="{parsed.fragment}"' in result.text
+    assert client.get(urlsplit(links[0]).path).status_code == 401
+    assert client.get(f"/v1/answers/{answer_id}/papers/2/markdown",
+                      headers=auth(READ_KEY)).status_code == 404
+    # HTTP 读取不回写 CLI 原稿。
+    assert (snapshot_root / f"{answer_id}.md").read_text(encoding="utf-8") == text
+
+
+@pytest.mark.parametrize("escape", ["metadata", "file-symlink", "directory-symlink"])
+def test_paper_markdown_rejects_cross_answer_artifacts(client, snapshot_root, escape):
+    root = snapshot_root
+    other = root / "other_papers"
+    other.mkdir()
+    (other / "123.md").write_text("Private other answer", encoding="utf-8")
+    directory = root / "safe_papers"
+    if escape == "directory-symlink":
+        directory.symlink_to(other, target_is_directory=True)
+    else:
+        directory.mkdir()
+        if escape == "file-symlink":
+            (directory / "123.md").symlink_to(other / "123.md")
+    with SessionLocal() as db:
+        db.add(Answer(id="safe", status="ready", question="q", queries=[], options={},
+                      papers=[{"n": 1, "pmid": "../other_papers/123" if escape == "metadata" else "123"}],
+                      citations=[], kb_hits=[]))
+        db.commit()
+    result = client.get("/v1/answers/safe/papers/1/markdown", headers=auth(READ_KEY))
+    assert result.status_code == 404
+    assert "Private other answer" not in result.text
+
+
+def test_cli_citation_rendering_keeps_local_links():
+    from ask import cited_passages, location_appendix, ref_line, resolve_markers
+
+    paper = {"n": 1, "pmid": "123", "md_file": "123.md", "title": "Study", "authors": "Author",
+             "year": "2026", "journal": "Journal", "source": "pmc",
+             "paras": [{"id": 1, "sec": "Results", "text": "Evidence"}], "cites": []}
+    body, used = resolve_markers("Valid [1¶1], invalid [1¶2].", {1: paper}, "run_papers")
+    assert body == "Valid [1¶1](run_papers/123.md#p1), invalid [1]."
+    assert "[原文](run_papers/123.md)" in ref_line(paper, "run_papers")
+    appendix = location_appendix(cited_passages(used, {1: paper}), {1: paper}, "run_papers")
+    assert "[¶1](run_papers/123.md#p1)" in appendix
+    assert "#p2" not in appendix
+
+
+def test_legacy_markdown_cannot_map_other_answer_files(client, snapshot_root):
+    root = snapshot_root
+    other = root / "other_papers"
+    other.mkdir()
+    (other / "123.md").write_text("Other answer snapshot", encoding="utf-8")
+    (root / "legacy.md").write_text(
+        "# Q: q\n\n[1] Study [原文](other_papers/123.md)\n"
+        "[2] Study [原文](legacy_papers/../other_papers/123.md)\n", encoding="utf-8")
+    with SessionLocal() as db:
+        import_legacy_answers(db)
+    for n in (1, 2):
+        response = client.get(f"/v1/answers/legacy/papers/{n}/markdown", headers=auth(READ_KEY))
+        assert response.status_code == 404
+
+
+def test_missing_snapshot_never_falls_back_to_library(client, data_root: Path, snapshot_root):
+    assert (data_root / "library" / "39133485" / "fulltext.md").is_file()
+    with SessionLocal() as db:
+        db.add(Answer(id="missing", status="ready", question="q", papers=[{"n": 1, "pmid": "39133485"}]))
+        db.commit()
+    response = client.get("/v1/answers/missing/papers/1/markdown", headers=auth(READ_KEY))
+    assert response.status_code == 404

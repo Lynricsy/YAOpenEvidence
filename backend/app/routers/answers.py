@@ -10,18 +10,14 @@ import os
 import shutil
 
 from fastapi import APIRouter, Depends, Path, Query, Response
-from fastapi.responses import PlainTextResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from picos_paths import LIB_DIR
-
 from ..auth import Principal, require
 from ..config import settings
-from ..deps import get_arq, get_db, get_redis
+from ..deps import get_arq, get_db
 from ..errors import ApiError
 from ..models import Answer as AnswerRow
-from ..models import Job as JobRow
 from ..schemas.answers import (
     TERMINAL_ANSWER_STATUSES,
     Answer,
@@ -30,13 +26,17 @@ from ..schemas.answers import (
     AnswerStatus,
     AnswerSummary,
 )
-from ..schemas.common import Page
+from ..schemas.common import MarkdownResponse, Page
 from ..services import jobs as jobs_service
-from ..services.answers import answer_paths, read_json
+from ..services.answers import (
+    answer_paths,
+    http_answer_markdown,
+    paper_artifact_path,
+    paper_stems,
+    read_json,
+)
 
 router = APIRouter(tags=["answers"])
-
-MARKDOWN = "text/markdown; charset=utf-8"
 
 
 def _row(db: Session, answer_id: str) -> AnswerRow:
@@ -92,21 +92,30 @@ def get_answer(answer_id: str, db: Session = Depends(get_db),
     return Answer.model_validate(_row(db, answer_id))
 
 
-@router.get("/answers/{answer_id}/markdown", response_class=PlainTextResponse,
+@router.get("/answers/{answer_id}/markdown", response_class=MarkdownResponse,
             summary="完整渲染稿（Markdown）")
 def get_answer_markdown(answer_id: str, db: Session = Depends(get_db),
-                        principal: Principal = Depends(require("read"))) -> PlainTextResponse:
+                        principal: Principal = Depends(require("read"))) -> MarkdownResponse:
     row = _row(db, answer_id)
     if row.status != "ready":
         raise ApiError(409, "not_ready", f"answer {answer_id!r} is {row.status}")
-    text = row.answer_md
-    if not text:                                  # legacy 导入的行只有文件，没有落库
-        path, _ = answer_paths(answer_id)
-        if not os.path.exists(path):
-            raise ApiError(404, "not_found", f"rendered markdown for {answer_id!r} is missing")
+    return MarkdownResponse(http_answer_markdown(row))
+
+
+@router.get("/answers/{answer_id}/papers/{n}/markdown", response_class=MarkdownResponse,
+            summary="本次阅读原文快照（含段落锚点的 Markdown）")
+def get_answer_paper_markdown(answer_id: str, n: int = Path(ge=1), db: Session = Depends(get_db),
+                              principal: Principal = Depends(require("read"))) -> MarkdownResponse:
+    row = _row(db, answer_id)
+    stem = paper_stems(row).get(n)
+    if stem is None:
+        raise ApiError(404, "not_found", f"answer {answer_id!r} has no paper #{n}")
+    path = paper_artifact_path(answer_id, stem)
+    try:
         with open(path, encoding="utf-8") as f:
-            text = f.read()
-    return PlainTextResponse(text, media_type=MARKDOWN)
+            return MarkdownResponse(f.read())
+    except FileNotFoundError as exc:
+        raise ApiError(404, "not_found", f"paper snapshot for {answer_id!r} #{n} is missing") from exc
 
 
 @router.get("/answers/{answer_id}/papers/{n}", response_model=AnswerPaperDetail,
@@ -117,42 +126,35 @@ def get_answer_paper(answer_id: str, n: int = Path(ge=1), db: Session = Depends(
     paper = next((p for p in (row.papers or []) if p.get("n") == n), None)
     if paper is None:
         raise ApiError(404, "not_found", f"answer {answer_id!r} has no paper #{n}")
-    _, papers_dir = answer_paths(answer_id)
+    # 全文和元数据都限制在本次阅读目录，不从可被覆盖的 library 回退。
     stem = paper.get("pmid") or "paper"
-    notes_path = os.path.join(papers_dir, f"{stem}_notes.md")
-    fulltext_path = os.path.join(papers_dir, f"{stem}.md")
+    notes_path = paper_artifact_path(answer_id, stem, "_notes.md")
+    fulltext_path = paper_artifact_path(answer_id, stem)
     if not (os.path.exists(notes_path) and os.path.exists(fulltext_path)):
         raise ApiError(404, "not_found", f"per-paper files for {answer_id!r} #{n} are missing")
     with open(notes_path, encoding="utf-8") as f:
         notes_md = f.read()
     with open(fulltext_path, encoding="utf-8") as f:
         fulltext_md = f.read()
-    paragraphs = read_json(os.path.join(papers_dir, f"{stem}_paragraphs.json"), default=None)
-    if paragraphs is None:                        # 早期运行只在 library 里留了段落
-        paragraphs = read_json(os.path.join(LIB_DIR, stem, "paragraphs.json"), default=[])
+    paragraphs = read_json(paper_artifact_path(answer_id, stem, "_paragraphs.json"), default=[])
     return AnswerPaperDetail(
         **paper,
         notes_md=notes_md,
-        citations=read_json(os.path.join(papers_dir, f"{stem}_citations.json"), default=[]),
-        facts=read_json(os.path.join(papers_dir, f"{stem}_facts.json"), default=[]),
+        citations=read_json(paper_artifact_path(answer_id, stem, "_citations.json"), default=[]),
+        facts=read_json(paper_artifact_path(answer_id, stem, "_facts.json"), default=[]),
         paragraphs=paragraphs,
         fulltext_md=fulltext_md,
     )
 
 
-@router.delete("/answers/{answer_id}", status_code=204, summary="取消任务或删除结果")
-async def delete_answer(answer_id: str, db: Session = Depends(get_db), redis=Depends(get_redis),  # noqa: ANN001
+@router.delete("/answers/{answer_id}", status_code=204, summary="删除终态答案")
+def delete_answer(answer_id: str, db: Session = Depends(get_db),
                         principal: Principal = Depends(require("write"))) -> Response:
     row = _row(db, answer_id)
     if not (principal.is_admin or row.api_key_id == principal.key_id):
         raise ApiError(403, "forbidden", "not your answer")
     if row.status not in TERMINAL_ANSWER_STATUSES:
-        # 还在跑：删除等于取消，结果文件由 worker 自己收尾
-        job = db.get(JobRow, row.job_id) if row.job_id else None
-        if job is None:
-            raise ApiError(409, "conflict", f"answer {answer_id!r} is {row.status} but has no job")
-        await jobs_service.cancel(job, redis, principal)
-        return Response(status_code=204)
+        raise ApiError(409, "conflict", f"answer {answer_id!r} is {row.status}; cancel its job first")
     md_path, papers_dir = answer_paths(answer_id)
     db.delete(row)
     db.commit()

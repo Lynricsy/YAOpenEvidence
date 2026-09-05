@@ -4,6 +4,8 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
+from urllib.parse import unquote, urlsplit
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,6 +14,7 @@ import journal_rank as jr
 from ask import AskOptions
 from picos_paths import ANSWERS_DIR
 
+from ..errors import ApiError
 from ..models import Answer
 from ..schemas.answers import AnswerCreate
 
@@ -78,15 +81,89 @@ def to_answer_paper(p: dict) -> dict:
 
 
 def answer_paths(answer_id: str) -> tuple[str, str]:
-    """(answers/<id>.md, answers/<id>_papers/)"""
-    return os.path.join(ANSWERS_DIR, f"{answer_id}.md"), os.path.join(ANSWERS_DIR, f"{answer_id}_papers")
+    """只允许答案根目录内的单个资源，拒绝路径和符号链接越界。"""
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", answer_id):
+        raise ApiError(404, "not_found", "invalid answer artifact")
+    root = os.path.realpath(ANSWERS_DIR)
+    paths = (os.path.join(root, f"{answer_id}.md"), os.path.join(root, f"{answer_id}_papers"))
+    if any(os.path.dirname(os.path.realpath(path)) != root for path in paths):
+        raise ApiError(404, "not_found", "invalid answer artifact")
+    return paths
+
+
+def answer_markdown(row: Answer) -> str:
+    if row.answer_md:
+        return row.answer_md
+    path, _ = answer_paths(row.id)
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError as exc:
+        raise ApiError(404, "not_found", f"rendered markdown for {row.id!r} is missing") from exc
+
+
+def paper_artifact_path(answer_id: str, stem: str, suffix: str = ".md") -> str:
+    """文件名仅来自本次论文映射，不接受任意下载路径。"""
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", stem):
+        raise ApiError(404, "not_found", "invalid paper artifact")
+    _, directory = answer_paths(answer_id)
+    path = os.path.join(directory, stem + suffix)
+    if os.path.dirname(os.path.realpath(path)) != directory:
+        raise ApiError(404, "not_found", "invalid paper artifact")
+    return path
+
+
+def _local_paper_stem(answer_id: str, url: str) -> str | None:
+    parsed = urlsplit(url)
+    if parsed.scheme not in ("", "file") or parsed.netloc or parsed.query:
+        return None
+    path = unquote(parsed.path)
+    filename = os.path.basename(path)
+    if not filename.endswith(".md"):
+        return None
+    stem = filename[:-3]
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", stem):
+        return None
+    expected = paper_artifact_path(answer_id, stem)
+    if path not in (f"{answer_id}_papers/{filename}", f"./{answer_id}_papers/{filename}", expected):
+        return None
+    return stem
+
+
+def paper_stems(row: Answer, text: str | None = None) -> dict[int, str]:
+    """旧 CLI 答案从参考文献恢复编号，只接受本次目录里的原文链接。"""
+    if row.papers:
+        return {p["n"]: p.get("pmid") or "paper" for p in row.papers}
+    text = answer_markdown(row) if text is None else text
+    stems: dict[int, str] = {}
+    for match in re.finditer(r"^\[(\d+)\][^\n]*\[原文\]\(([^)\n]+)\)", text, re.MULTILINE):
+        stem = _local_paper_stem(row.id, match[2])
+        if stem is not None:
+            stems[int(match[1])] = stem
+    return stems
+
+
+def http_answer_markdown(row: Answer) -> str:
+    """历史持久化稿只重写已知本次论文链接，保留原文段落锚点。"""
+    text = answer_markdown(row)
+    by_stem = {stem: n for n, stem in paper_stems(row, text).items()}
+
+    def replace(match: re.Match) -> str:
+        stem = _local_paper_stem(row.id, match[2])
+        n = by_stem.get(stem) if stem is not None else None
+        if n is None:
+            return match[0]
+        fragment = urlsplit(match[2]).fragment
+        anchor = f"#{fragment}" if re.fullmatch(r"p[1-9]\d*", fragment) else ""
+        return f"[{match[1]}](/v1/answers/{row.id}/papers/{n}/markdown{anchor})"
+
+    return re.sub(r"\[([^\]\n]*)\]\(([^)\n]+)\)", replace, text)
 
 
 def import_legacy_answers(db: Session) -> int:
     """把 CLI 时代的 answers/<ts>.md 收进 answers 表（幂等），使它们能被浏览。
 
-    这些答案没有结构化数据（papers/citations 为空），只有渲染稿；因此
-    /markdown 可用，/papers/{n} 会 404。
+    没有结构化 papers 时从本次参考文献恢复编号，原文资源仍只读本次快照。
     """
     if not os.path.isdir(ANSWERS_DIR):
         return 0

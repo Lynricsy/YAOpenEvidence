@@ -29,8 +29,8 @@ Key 在服务端 `backend/api_keys.toml` 的 `[[keys]]` 表中定义，每项包
 | scope | 能力 |
 |---|---|
 | `read` | 读取 answers、jobs、papers、KB、期刊分区和上游文献；订阅 SSE。非管理员只能看到本 Key 创建的 job。 |
-| `write` | 创建 answer；取消或删除本 Key 创建的 answer/job。 |
-| `admin` | 重建 KB 索引；与 `read` 组合时查看全部 job；与 `write` 组合时取消或删除任意 Key 的 answer/job。scope 不隐含其他 scope，应按用途显式组合。 |
+| `write` | 创建 answer；取消本 Key 创建的 job；删除本 Key 的终态 answer。 |
+| `admin` | 重建 KB 索引；与 `read` 组合时查看全部 job；与 `write` 组合时取消任意 Key 的 job、删除任意 Key 的终态 answer。scope 不隐含其他 scope，应按用途显式组合。 |
 
 ### 1.3 JSON、时间与分页
 
@@ -47,13 +47,13 @@ Key 在服务端 `backend/api_keys.toml` 的 `[[keys]]` 表中定义，每项包
 
 ### 1.4 CORS 与限流
 
-CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization` 与 `Content-Type`。
+CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization`、`Content-Type` 与 `Last-Event-ID`，并通过 `Access-Control-Expose-Headers` 暴露 `Location`，供浏览器读取创建结果和取消请求的任务状态地址。
 
 v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任务数：`queued` 与 `running` job 的合计达到 `YAOE_MAX_ACTIVE_JOBS_PER_KEY`（默认 `2`）后，`POST /v1/answers` 返回 `429 too_many_jobs`。
 
 ## 2. 错误模型
 
-错误采用 RFC 9457 Problem Details，响应媒体类型为 `application/problem+json`。客户端应依据稳定的 `code` 分支，不应依赖可能调整的 `detail` 文案。
+错误采用 RFC 9457 Problem Details，响应媒体类型为 `application/problem+json`，包括请求校验产生的 `422`。客户端应依据稳定的 `code` 分支，不应依赖可能调整的 `detail` 文案。就绪探针的依赖故障 `503` 是明确例外，使用 `ReadinessResponse`，详见健康检查。
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -112,7 +112,7 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 
 ## 3. 端点总表
 
-表中 25 个路径与 `backend/openapi.json` 的 `paths` 一一对应。一个路径可能支持多个方法。
+表中路径与 `backend/openapi.json` 的 `paths` 一一对应。一个路径可能支持多个方法。
 
 | 方法 | 路径 | scope | 说明 |
 |---|---|---|---|
@@ -121,12 +121,13 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 | `POST` | `/v1/answers` | `write` | 创建异步问答任务。 |
 | `GET` | `/v1/answers` | `read` | 分页浏览 answer。 |
 | `GET` | `/v1/answers/{answer_id}` | `read` | 获取 answer 详情。 |
-| `DELETE` | `/v1/answers/{answer_id}` | `write`（本人）；任意资源需再有 `admin` | 活跃时请求取消，终态时删除结果。 |
+| `DELETE` | `/v1/answers/{answer_id}` | `write`（本人）；任意资源需再有 `admin` | 仅删除终态结果；活跃时返回 `409`。 |
 | `GET` | `/v1/answers/{answer_id}/markdown` | `read` | 获取带链接的完整 Markdown 渲染稿。 |
 | `GET` | `/v1/answers/{answer_id}/papers/{n}` | `read` | 获取本次问答阅读的第 `n` 篇详情。 |
+| `GET` | `/v1/answers/{answer_id}/papers/{n}/markdown` | `read` | 获取本次阅读原文快照，保留段落锚点。 |
 | `GET` | `/v1/jobs` | `read`；查看全部需再有 `admin` | 分页浏览 job。 |
 | `GET` | `/v1/jobs/{job_id}` | `read` | 获取可见 job 详情。 |
-| `DELETE` | `/v1/jobs/{job_id}` | `write`（本人）；任意资源需再有 `admin` | 请求取消活跃 job。 |
+| `POST` | `/v1/jobs/{job_id}/cancel` | `write`（本人）；任意资源需再有 `admin` | 请求取消活跃 job，接受后返回 `202`。 |
 | `GET` | `/v1/jobs/{job_id}/events` | `read` | 订阅 job 的 SSE 事件流。 |
 | `GET` | `/v1/papers` | `read` | 分页浏览本地文献库。 |
 | `GET` | `/v1/papers/{key}` | `read` | 获取文献元数据。 |
@@ -139,11 +140,11 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 | `POST` | `/v1/kb/reindex` | `admin` | 异步重建知识库索引。 |
 | `GET` | `/v1/journals/rank` | `read` | 按 ISSN 或标题查询期刊分区。 |
 | `GET` | `/v1/literature/search` | `read` | 检索 Semantic Scholar/PubMed。 |
-| `GET` | `/v1/literature/{ident}` | `read` | 解析并获取单篇上游文献。 |
-| `GET` | `/v1/literature/{ident}/fulltext` | `read` | 获取 Europe PMC 全文目录或正文。 |
-| `GET` | `/v1/literature/{ident}/citations` | `read` | 获取引用该文献的文献。 |
-| `GET` | `/v1/literature/{ident}/references` | `read` | 获取该文献的参考文献。 |
-| `GET` | `/v1/literature/{ident}/recommendations` | `read` | 获取推荐文献。 |
+| `GET` | `/v1/literature/resolve` | `read` | 通过必填 `ident` 查询参数解析单篇上游文献。 |
+| `GET` | `/v1/literature/fulltext` | `read` | 通过 `ident` 获取 Europe PMC 全文目录或正文。 |
+| `GET` | `/v1/literature/citations` | `read` | 通过 `ident` 获取引用该文献的文献。 |
+| `GET` | `/v1/literature/references` | `read` | 通过 `ident` 获取该文献的参考文献。 |
+| `GET` | `/v1/literature/recommendations` | `read` | 通过 `ident` 获取推荐文献。 |
 
 ## 4. 分资源详解
 
@@ -193,18 +194,24 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 #### `GET /v1/answers/{answer_id}/markdown`
 
-无查询参数。answer 为 `ready` 时返回 `text/markdown; charset=utf-8` 的完整渲染稿，与数据目录下 `answers/{id}.md` 等价。它与 `Answer.body_md` 不同：渲染稿包含可点击链接、参考文献和定位附录。可能错误：`not_found`、`not_ready`、`internal_error`。
+无查询参数。answer 为 `ready` 时返回 `text/markdown; charset=utf-8` 的完整渲染稿，包含正文、参考文献和定位附录。与 CLI 文件稿不同，内部引用指向 `/v1/answers/{answer_id}/papers/{n}/markdown#p{pid}`，不会嵌入 API Key。已有持久化稿与导入的 CLI 稿也按本次论文映射转换链接，不回写原文件。可能错误：`not_found`、`not_ready`、`internal_error`。
+
+这些 URL 仍需要 `read` 权限。浏览器客户端应拦截内部引用，带 Bearer 请求原文，渲染 Markdown 后定位 `id="p{pid}"`；直接导航不会自动附加 Bearer。不得为实现点击跳转而把凭证拼进引用 URL。
 
 #### `GET /v1/answers/{answer_id}/papers/{n}`
 
 `n` 为整数路径参数，最小值 `1`，对应 `Answer.papers[].n`。返回 `AnswerPaperDetail`，包括笔记、核实引文、事实、段落和全文。旧版导入的 answer 没有结构化 `papers`，此端点会返回 `not_found`。可能错误：`validation_error`、`not_found`、`internal_error`。
 
+#### `GET /v1/answers/{answer_id}/papers/{n}/markdown`
+
+`n` 为最小值 `1` 的整数，对应本次阅读的论文编号。返回带 `pN` 段落锚点的 `text/markdown; charset=utf-8` 原文快照，不回退到可能被后来问答覆盖的共享 `library/`。旧版答案在原文文件与参考文献编号映射存在时也可访问。未知编号、缺失快照或越界文件路径返回 `404 not_found`；非法编号返回 `422 validation_error`。
+
 #### `DELETE /v1/answers/{answer_id}`
 
 无请求体与查询参数，成功返回 `204 No Content`：
 
-- answer 为活跃状态：设置关联 job 的取消标记；取消为异步、协作式。
-- answer 为终态：删除数据库记录、`answers/{id}.md` 与 `answers/{id}_papers/`。
+- answer 为活跃状态：返回 `409 conflict`，既不删除，也不请求取消。需要取消时，使用 `Answer.job_id` 调用独立取消端点。
+- answer 为终态：删除数据库记录、`answers/{id}.md` 与 `answers/{id}_papers/`。删除成功后的重复请求返回 `404 not_found`。
 - 本地文献库 `library/` 与 KB 不随 answer 删除。
 
 端点始终需要 `write`；创建该 answer 的 Key 可操作，操作其他 Key 的 answer 还必须有 `admin`。可能错误：`not_found`、`forbidden`、`conflict`、`internal_error`。
@@ -228,11 +235,11 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 #### `GET /v1/jobs/{job_id}/events`
 
-返回 `text/event-stream`。鉴权可使用 Bearer 头，或仅在此端点使用字符串查询参数 `access_token`（无默认值）。可选请求头 `Last-Event-ID` 指定上次已处理的 Redis Stream entry ID；缺省时从 `0-0` 开始回放。协议详见“异步任务与 SSE”。可能错误：`unauthenticated`、`forbidden`、`not_found`、`internal_error`。
+返回 `text/event-stream`。鉴权可使用 Bearer 头，或仅在此端点使用字符串查询参数 `access_token`（无默认值）；同时提供时以 Bearer 为准。OpenAPI 的 `HTTPBearer` 与 `SSEAccessToken` 表达两种替代鉴权。可选请求头 `Last-Event-ID` 指定上次已处理的 Redis Stream entry ID，格式为两个无前导零的无符号 64 位整数，以 `-` 分隔；缺省从 `0-0` 开始回放。格式或范围非法时，在启动事件流之前返回 `422 validation_error`。协议详见“异步任务与 SSE”。可能错误：`unauthenticated`、`forbidden`、`not_found`、`validation_error`、`internal_error`。
 
-#### `DELETE /v1/jobs/{job_id}`
+#### `POST /v1/jobs/{job_id}/cancel`
 
-无请求体与查询参数。活跃 job 接受取消请求后返回 `204 No Content`；终态 job 返回 `409 conflict`。端点始终需要 `write`；本 Key 的 job 可取消，取消其他 Key 的 job 还必须有 `admin`。普通 Key 对不可见 job 得到 `404 not_found`。可能错误：`not_found`、`forbidden`、`conflict`、`internal_error`。
+无请求体与查询参数。活跃 job 接受取消请求后返回 `202 Accepted`，响应体为空，`Location: /v1/jobs/{job_id}` 指向可观察状态。活跃期间重复请求仍为 `202`；进入任意终态后返回 `409 conflict`。此端点不会删除 job、answer 或结果文件。端点始终需要 `write`；本 Key 的 job 可取消，取消其他 Key 的 job 还必须有 `admin`。普通 Key 对不可见 job 得到 `404 not_found`。可能错误：`not_found`、`forbidden`、`conflict`、`internal_error`。
 
 ### 4.3 Papers
 
@@ -310,37 +317,38 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 返回 `LiteratureSearchResult`。`items` 不超过请求的 `limit`，即使 PubMed 为期刊或分区过滤扩大候选池；`total` 仍是上游命中总数，不是本地过滤后的数量。`source=auto` 回退时，结果的 `source` 为 `pubmed`，`fallback_reason` 给出 S2 失败原因；直接指定 `source=s2` 时不回退。可能错误：`validation_error`、`upstream_unavailable`、`internal_error`。
 
-#### 标识符 `{ident}` 的解析
+#### 标识符 `ident` 的解析
 
-下列 literature 端点共用字符串路径参数 `{ident}`：
+下列 literature 端点共用必填、非空的字符串查询参数 `ident`，缺失或空字符串返回 `422 validation_error`：
 
 1. 纯数字按 PMID；
 2. 匹配 `PMC\d+`（不区分大小写）时，经 Europe PMC 映射到 PMID；
 3. 以 `10.` 开头时按 DOI，先查 Semantic Scholar，失败后尝试 Europe PMC 映射；
 4. 其余按 Semantic Scholar paper ID。
 
-`{ident}` 支持 DOI 中的斜杠，例如 `/v1/literature/10.1000/example`，或将斜杠编码为 `%2F`。详情、`fulltext`、`citations`、`references`、`recommendations` 均支持这两种写法。
+DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/fulltext`，也可编码为 `%2F`。详情、`fulltext`、`citations`、`references`、`recommendations` 均通过 `ident` 寻址，操作名不会占用 DOI 的尾段。建议用客户端参数编码或 curl `--data-urlencode`，避免 DOI 中的 `&`、`#`、`+` 被解释为 URL 控制字符。
 
 上游明确不存在的资源返回 `404 not_found`，无可用 XML 全文返回 `404 fulltext_unavailable`；网络故障、限流或服务故障返回 `502 upstream_unavailable`，不会伪装成空记录。DOI 解析可以由其他上游成功兜底，但存在未恢复的上游故障、无法确认资源缺失时仍返回 `502`。
 
-#### `GET /v1/literature/{ident}`
+#### `GET /v1/literature/resolve`
 
-无查询参数，返回 `LiteratureRecord`。可能错误：`not_found`、`upstream_unavailable`、`internal_error`。
+查询参数 `ident` 见上节，返回 `LiteratureRecord`。可能错误：`validation_error`、`not_found`、`upstream_unavailable`、`internal_error`。
 
-#### `GET /v1/literature/{ident}/fulltext`
+#### `GET /v1/literature/fulltext`
 
 | 参数 | 类型 | 默认 | 说明 |
 |---|---|---|---|
+| `ident` | `string` | 必填 | 非空文献标识符，解析规则见上节。 |
 | `section` | `string` | `""` | 空字符串只返回章节目录和摘要，`text=null`；`all` 返回全部章节；其他值按章节标题做不区分大小写的子串匹配，并选择第一个匹配标题。 |
 | `max_chars` | `integer` | `20000` | `1000..100000`；正文超出时截断并令 `truncated=true`。 |
 
 全文只来自 Europe PMC，不下载 Semantic Scholar 的开放 PDF 作为兜底。返回 `FulltextResult`。可能错误：`validation_error`、`not_found`（章节不存在）、`fulltext_unavailable`、`upstream_unavailable`、`internal_error`。
 
-#### `GET /v1/literature/{ident}/citations`
-#### `GET /v1/literature/{ident}/references`
-#### `GET /v1/literature/{ident}/recommendations`
+#### `GET /v1/literature/citations`
+#### `GET /v1/literature/references`
+#### `GET /v1/literature/recommendations`
 
-三者都只调用 Semantic Scholar；查询参数均为 `limit: integer = 10`，范围 `1..50`。成功均返回 `{"items": LiteratureRecord[]}`。可能错误：`validation_error`、`not_found`、`upstream_unavailable`、`internal_error`。
+三者都只调用 Semantic Scholar；均接受必填非空 `ident`，以及 `limit: integer = 10`，范围 `1..50`。成功均返回 `{"items": LiteratureRecord[]}`。可能错误：`validation_error`、`not_found`、`upstream_unavailable`、`internal_error`。
 
 ### 4.7 Health
 
@@ -371,7 +379,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 }
 ```
 
-只有 DB 或 Redis 检查失败时 HTTP 状态为 `503`；LLM、KB 或分区表不可用只令总体状态为 `degraded`，以便只读浏览能力继续服务。
+只有 DB 或 Redis 检查失败时 HTTP 状态为 `503`；LLM、KB 或分区表不可用只令总体状态为 `degraded`，以便只读浏览能力继续服务。`200` 与 `503` 均返回 `application/json` 的 `ReadinessResponse`，不是 `Problem`；两种状态已在 OpenAPI 中显式声明。
 
 ## 5. 数据模型
 
@@ -417,7 +425,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 - 详情跳转：`/v1/answers/{answer_id}/papers/{n}`，在返回的 `paragraphs` 中定位 `id=pid`；
 - 若论文已进入共享文献库，也可用其 `pmid`/key 请求 `/v1/papers/{key}/paragraphs/{pid}`，或把 `/v1/papers/{key}/fulltext` 中的 `#p{pid}` 锚点用于页面内定位；
-- 不希望自行解析标记时，直接获取 `/v1/answers/{answer_id}/markdown` 的完整带链接稿。
+- 不希望自行解析标记时，获取 `/v1/answers/{answer_id}/markdown` 的完整带链接稿，再以 Bearer 加载其单篇 Markdown 引用目标并保留 `pN` 锚点。
 
 #### `AnswerPaper`
 
@@ -672,25 +680,26 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 
 | event | `data` 字段 |
 |---|---|
-| `stage` | `{stage, status, detail}`。`stage` 为 `queries \| search \| fulltext \| read \| kb \| synthesize`；`status` 为 `started \| finished`；`detail` 为对象。`search/finished` 包含 `candidates`、`kept`、`dropped:{year,quartile,unranked,journal}`、`papers:[{n,pmid,title,year,journal,rank_label,pmcid}]`；`read/finished` 包含 `relevant`、`total`。其他阶段也可在 `detail` 中报告该阶段计数或结果摘要。 |
-| `progress` | `{stage, current, total, pmid, title}`，其中 `stage: string`、`current: integer`、`total: integer`、`pmid: string \| null`、`title: string \| null`；逐篇进度主要来自 `fulltext`、`read`、`kb` 阶段。 |
+| `stage` | `{stage, status, detail}`。`stage` 为 `queries \| search \| fulltext \| read \| kb \| synthesize \| reindex`；`status` 为 `started \| finished`；`detail` 为对象，缺省为空对象。`search/finished` 包含 `candidates`、`kept`、`dropped:{year,quartile,unranked,journal}`、`papers:[{n,pmid,title,year,journal,rank_label,pmcid}]`；`read/finished` 包含 `relevant`、`total`。其他阶段也可在 `detail` 中报告该阶段计数或结果摘要。 |
+| `progress` | `{stage, current, total, pmid?, title?}`，其中 `stage` 为 `fulltext \| read \| kb \| reindex`；`current`、`total` 为非负整数；`pmid`、`title` 为可选 `string \| null`。 |
 | `log` | `{level, message}`；当前 `level` 为 `info \| warning`。只适合展示运行日志，不应据其文案驱动状态机。 |
 | `succeeded` | 问答任务为 `{answer_id}`；KB 重建任务为 `{items, papers}`。终态。 |
 | `failed` | `{code, message}`，其中 `code` 为 JobError 枚举。终态。 |
 | `cancelled` | `{}`。终态。 |
 
-`kb` 阶段仅在 `use_kb=true` 时出现。
+`kb` 阶段仅在问答 `use_kb=true` 时出现；`reindex` 阶段用于 KB 重建。事件数据模型位于 OpenAPI 的 `components.schemas`，由 SSE 成功响应 `content["text/event-stream"]["x-sse-events"]` 按事件名引用。该扩展描述每帧 JSON `data`，HTTP 响应本身仍是 SSE 文本，不是 JSON 数组。Redis 发布边界与 OpenAPI 共用这些模型。
 
 ### 6.3 重连、心跳与过期
 
 - 初次连接未给 `Last-Event-ID` 时，从 `0-0` 开始回放当前 Redis Stream 中仍保留的事件。
 - 断线重连时，把最后成功处理的 SSE `id` 放进 `Last-Event-ID` 请求头；服务端从该 ID **之后**续传。
+- 非法格式、前导零或超出 `0..18446744073709551615` 的游标分量返回 `422`，不会先发出 `200` 再中断流。
 - 连接空闲时约每 15 秒发送一条 SSE 注释心跳。客户端应忽略注释行。
 - 事件流默认保留 7 天，并受最大长度配置约束。订阅开始时以及活动订阅的空读周期（约 5 秒）会检查数据库终态；数据库连接只用于短期查询，不随 SSE 长连接持续占用。
 - 数据库已终态时，先回放游标之后仍保留的事件；若终态事件发布失败、已过期，或客户端游标已越过终态事件，则补发数据库中的终态并关闭。合成事件沿用最后游标（没有历史游标时为 `0-0`），客户端不得仅因 ID 与上一条相同而丢弃终态。
 - 合成 `succeeded` 使用 `job.result`，`failed` 使用 `job.error`，`cancelled` 的 `data` 为空对象。已终态任务无需等待下一个空读周期。
 
-取消是异步且协作式的：`DELETE` 成功只表示已写入取消请求。worker 在任务开始前、阶段边界和逐篇完成边界检查取消标记；它不会中断正在执行的 LLM 调用，因此取消延迟不超过当前一个流水线步骤（≤ 一步）。
+取消是异步且协作式的：`POST /v1/jobs/{job_id}/cancel` 的 `202` 只表示已写入取消请求。worker 在任务开始前、阶段边界和逐篇完成边界检查取消标记；它不会中断正在执行的 LLM 调用。客户端必须观察实际终态，不能把 `202` 当成已经取消成功；接近完成时也可能先进入 `succeeded`。
 
 ### 6.4 浏览器 `EventSource`
 
@@ -785,12 +794,12 @@ curl -s \
 对仍在 `queued` 或 `running` 的任务请求取消：
 
 ```bash
-curl -i -X DELETE \
+curl -i -X POST \
   -H 'Authorization: Bearer yaoe_replace_me_frontend' \
-  'http://localhost:8765/v1/jobs/<job_id>'
+  'http://localhost:8765/v1/jobs/<job_id>/cancel'
 ```
 
-也可对活跃 answer 使用：
+随后通过 SSE 或 `GET /v1/jobs/{job_id}` 观察实际终态。确定不再保留终态答案时，再明确发出删除请求：
 
 ```bash
 curl -i -X DELETE \
@@ -798,7 +807,7 @@ curl -i -X DELETE \
   'http://localhost:8765/v1/answers/<answer_id>'
 ```
 
-随后通过 SSE 或 `GET /v1/jobs/{job_id}` 等待 `cancelled` 终态。注意：若对终态 answer 调用 `DELETE`，语义是删除 answer 结果，不是取消。
+取消请求的重试不会删除答案；活动态答案的删除请求返回 `409`，不会隐式取消。
 
 ### 7.3 只读端点
 
@@ -830,9 +839,10 @@ curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
 
 # Europe PMC 章节
 curl -sG -H 'Authorization: Bearer yaoe_replace_me_frontend' \
+  --data-urlencode 'ident=PMC9306514' \
   --data-urlencode 'section=Conclusion' \
   --data-urlencode 'max_chars=20000' \
-  'http://localhost:8765/v1/literature/PMC9306514/fulltext'
+  'http://localhost:8765/v1/literature/fulltext'
 
 # 管理员异步重建 KB
 curl -s -X POST -H 'Authorization: Bearer yaoe_replace_me_ops' \
@@ -841,7 +851,7 @@ curl -s -X POST -H 'Authorization: Bearer yaoe_replace_me_ops' \
 
 ## 8. 前端接入建议
 
-1. 使用入库的 `backend/openapi.json` 生成请求客户端与 TypeScript/其他语言类型；运行中也可从 `/v1/openapi.json` 获取同一描述。SSE 事件的动态 `data` 形状按本文事件表处理。
+1. 使用入库的 `backend/openapi.json` 生成请求客户端与 TypeScript/其他语言类型；运行中也可从 `/v1/openapi.json` 获取同一描述。SSE 帧由流解析器处理，`data` 按 `x-sse-events` 引用的模型解析。
 2. 对需要实时阶段与逐篇进度的界面使用 SSE；后台恢复、列表页与不需要细粒度进度的客户端可轮询 `GET /v1/jobs/{job_id}`。无论哪种方式，都应以 job/answer 终态字段为最终事实。
 3. `GET /v1/kb/search` 首次请求会加载 bge-m3；实测冷启动约 15 秒并占用约 2 GiB 内存。界面应允许首请求较长，并显示明确的加载状态。
 4. `source=auto` 时 Semantic Scholar 可能因限流（常见为 429）回退 PubMed。若 `fallback_reason` 非空，可提示用户“已改用 PubMed”，不要把成功的回退结果显示为整体失败。
@@ -853,4 +863,12 @@ curl -s -X POST -H 'Authorization: Bearer yaoe_replace_me_ops' \
 - **无通用限流。** v1 只限制每个 Key 的活跃任务数，不提供按秒/分钟的请求配额响应头。
 - **无用户与租户体系。** API Key 是服务凭证，不是最终用户账号。持 `read` scope 的 Key 可读取全部 answers、papers 与 KB；job 列表/详情按 Key 隔离，`read` 与 `admin` 组合时可查看全部 job。删除与取消始终需要 `write`，且仅限创建资源的 Key；跨 Key 操作还需要 `admin`。
 - **容器内不支持机构订阅下载。** 镜像不包含 `core/vendor/`，因此 v1 容器服务不会通过机构订阅抓取付费全文；开放全文仅使用 Europe PMC，问答流水线在无全文时可使用摘要。本机原有 CLI 内核的机构订阅能力不属于本 API 协议。
-- **全文透传不下载 OA PDF 兜底。** `/v1/literature/{ident}/fulltext` 只读 Europe PMC；`LiteratureRecord.open_access_pdf` 即使存在，也只是上游元数据。
+- **全文透传不下载 OA PDF 兜底。** `/v1/literature/fulltext?ident=...` 只读 Europe PMC；`LiteratureRecord.open_access_pdf` 即使存在，也只是上游元数据。
+
+## 10. 契约迁移
+
+- 原 `DELETE /v1/jobs/{job_id}` 已移除，取消改用 `POST /v1/jobs/{job_id}/cancel`，成功接受状态由 `204` 改为 `202`，通过 `Location` 观察任务。
+- 原对活跃 answer 调用 `DELETE` 的取消行为已移除。先取 `Answer.job_id` 请求取消；`DELETE /v1/answers/{answer_id}` 只用于删除终态答案。
+- 原 `/v1/literature/{ident}` 及其操作后缀路径已移除。详情使用 `/resolve?ident=...`，其余使用 `/fulltext`、`/citations`、`/references`、`/recommendations` 加 `ident` 查询参数。不保留兼容别名。
+- 完整 Markdown 内部引用已改为 HTTP 快照资源，客户端需带 Bearer 加载并渲染锚点；CLI 本地稿仍使用文件相对链接。
+- 重新生成 SDK，使用准确的 `application/problem+json`、`text/markdown`、就绪 `503` 和 SSE 模型定义。

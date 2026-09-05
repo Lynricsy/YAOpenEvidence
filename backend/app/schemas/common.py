@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as dt
 from typing import Annotated, Generic, TypeVar
 
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field, PlainSerializer
 
 T = TypeVar("T")
@@ -16,6 +17,10 @@ def _iso_z(v: dt.datetime) -> str:
 
 
 UtcDateTime = Annotated[dt.datetime, PlainSerializer(_iso_z, return_type=str, when_used="json")]
+
+
+class MarkdownResponse(PlainTextResponse):
+    media_type = "text/markdown"
 
 
 class Page(BaseModel, Generic[T]):

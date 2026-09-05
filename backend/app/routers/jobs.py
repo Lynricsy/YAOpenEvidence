@@ -7,8 +7,9 @@
 from __future__ import annotations
 
 import json
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
@@ -19,6 +20,7 @@ from ..deps import get_db, get_redis
 from ..errors import ApiError
 from ..models import Job as JobRow
 from ..schemas.common import Page
+from ..schemas.events import EVENT_MODELS, StreamId
 from ..schemas.jobs import TERMINAL_JOB_STATUSES, Job, JobKind, JobStatus
 from ..services import events
 from ..services import jobs as jobs_service
@@ -62,12 +64,15 @@ def get_job(job_id: str, db: Session = Depends(get_db),
     return Job.model_validate(_visible(db, job_id, principal))
 
 
-@router.delete("/jobs/{job_id}", status_code=204, summary="取消任务")
+@router.post("/jobs/{job_id}/cancel", status_code=202, summary="请求取消任务",
+             response_class=Response,
+             responses={202: {"headers": {"Location": {"schema": {"type": "string"},
+                                                       "description": "任务状态地址"}}}})
 async def cancel_job(job_id: str, db: Session = Depends(get_db), redis=Depends(get_redis),  # noqa: ANN001
                      principal: Principal = Depends(require("write"))) -> Response:
     job = _visible(db, job_id, principal)
     await jobs_service.cancel(job, redis, principal)
-    return Response(status_code=204)
+    return Response(status_code=202, headers={"Location": f"/v1/jobs/{job_id}"})
 
 
 def _terminal_payload(job: JobRow) -> dict:
@@ -80,9 +85,19 @@ def _terminal_payload(job: JobRow) -> dict:
 
 @router.get("/jobs/{job_id}/events", summary="任务进度流（SSE）",
             response_class=EventSourceResponse,
-            responses={200: {"content": {"text/event-stream": {}}},
-                       404: {"description": "job not found"}})
-async def job_events(job_id: str, request: Request, db: Session = Depends(get_db),
+            responses={200: {"content": {"text/event-stream": {
+                "schema": {"type": "string", "description": "SSE 帧；data 为 JSON，模型见 x-sse-events。"},
+                "x-sse-events": {
+                    name: {"$ref": f"#/components/schemas/{model.__name__}"}
+                    for name, model in EVENT_MODELS.items()
+                },
+            }}}})
+async def job_events(job_id: str, request: Request,
+                     last_event_id: Annotated[StreamId, Header(
+                         alias="Last-Event-ID",
+                         description="上次已处理的 Stream ID：两个无前导零的无符号 64 位整数，以连字符分隔。",
+                     )] = "0-0",
+                     db: Session = Depends(get_db),
                      redis=Depends(get_redis),  # noqa: ANN001
                      principal: Principal = Depends(require("read", allow_query=True))):
     # 依赖的 session 会活到 SSE 结束，必须先归还连接；轮询另用短事务。
@@ -100,10 +115,8 @@ async def job_events(job_id: str, request: Request, db: Session = Depends(get_db
     async def terminal():
         return await run_in_threadpool(terminal_snapshot)
 
-    last_id = request.headers.get("last-event-id") or "0-0"
-
     async def stream():
-        async for entry_id, kind, data in events.subscribe(redis, job_id, last_id, terminal=terminal):
+        async for entry_id, kind, data in events.subscribe(redis, job_id, last_event_id, terminal=terminal):
             if await request.is_disconnected():
                 return
             yield {"id": entry_id, "event": kind, "data": json.dumps(data, ensure_ascii=False)}

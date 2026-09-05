@@ -33,8 +33,11 @@ def test_paper_key_cannot_escape_library(client):
 def test_paper_fulltext(client):
     response = client.get("/v1/papers/39133485/fulltext", headers=auth(READ_KEY))
     assert response.status_code == 200
-    assert "text/markdown" in response.headers["content-type"]
+    assert response.headers["content-type"] == "text/markdown; charset=utf-8"
     assert '<a id="p2">' in response.text
+    schema = client.get("/v1/openapi.json").json()
+    content = schema["paths"]["/v1/papers/{key}/fulltext"]["get"]["responses"]["200"]["content"]
+    assert content == {"text/markdown": {"schema": {"type": "string"}}}
 
 
 def test_kb_search_and_stats(client):

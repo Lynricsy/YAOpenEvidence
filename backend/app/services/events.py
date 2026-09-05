@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     import redis
     import redis.asyncio as aioredis
 
+
+from ..schemas.events import EVENT_MODELS
 TERMINAL = frozenset({"succeeded", "failed", "cancelled"})
 
 
@@ -31,8 +33,10 @@ def cancel_key(job_id: str) -> str:
 def publish(r: redis.Redis, job_id: str, event: dict, *, maxlen: int, ttl_s: int) -> str:
     """同步发布一条事件（在流水线线程里调用），返回 entry id。"""
     payload = {k: v for k, v in event.items() if k != "type"}
+    kind = event["type"]
+    EVENT_MODELS[kind].model_validate(payload)
     key = stream_key(job_id)
-    entry_id = r.xadd(key, {"type": event.get("type", "log"),
+    entry_id = r.xadd(key, {"type": kind,
                             "data": json.dumps(payload, ensure_ascii=False)},
                       maxlen=maxlen, approximate=True)
     r.expire(key, ttl_s)

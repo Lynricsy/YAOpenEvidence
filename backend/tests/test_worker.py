@@ -113,7 +113,7 @@ async def test_cancel_requested_before_start_skips_pipeline(worker_ctx, sync_red
 async def test_progress_events_land_in_job_row(worker_ctx, sync_redis, monkeypatch):
     job_id, answer_id = make_job()
 
-    def with_progress(opts, *, run_id, emit, should_cancel):
+    def with_progress(opts, *, run_id, emit, should_cancel, paper_urls):
         emit({"type": "progress", "stage": "read", "current": 2, "total": 3, "pmid": "1", "title": "t"})
         return _result(run_id)
 
@@ -138,7 +138,7 @@ async def test_reindex_job_succeeds_with_counts(worker_ctx, sync_redis, monkeypa
 
 
 async def test_reindex_job_cancelled_midway_is_terminal(worker_ctx, sync_redis, monkeypatch):
-    """运行中取消必须落到 cancelled；否则 DELETE 返回 204 就是在骗客户端。"""
+    """异步取消被接受后，worker 必须将协作式中断收敛为 cancelled。"""
     job_id, _ = make_job(kind="kb_reindex", answer=False)
 
     def cancelled(emit, should_cancel):

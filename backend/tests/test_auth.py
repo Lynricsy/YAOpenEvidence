@@ -53,3 +53,12 @@ def test_sse_accepts_access_token_query_param(client, sync_redis):
     assert client.get(f"/v1/jobs/{job_id}/events").status_code == 401
     # 普通端点不认 query token
     assert client.get(f"/v1/jobs/{job_id}", params={"access_token": READ_KEY}).status_code == 401
+
+
+def test_sse_bearer_takes_precedence_over_query_key(client):
+    job_id, _ = make_job(api_key_id="reader", status="cancelled")
+    url = f"/v1/jobs/{job_id}/events"
+    assert client.get(url, headers=auth(READ_KEY),
+                      params={"access_token": "invalid"}).status_code == 200
+    assert client.get(url, headers=auth("invalid"),
+                      params={"access_token": READ_KEY}).status_code == 401

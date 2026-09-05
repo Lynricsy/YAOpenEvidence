@@ -17,9 +17,10 @@ import journal_rank as jr
 from . import __version__
 from .auth import load_api_keys
 from .config import settings
-from .errors import register_handlers
+from .errors import PROBLEM_MEDIA_TYPE, register_handlers
 from .routers import answers, health, jobs, journals, kb, literature, papers
 from .schemas.common import Problem
+from .schemas.events import event_schemas
 
 logger = logging.getLogger("yaoe")
 
@@ -68,10 +69,32 @@ def create_app() -> FastAPI:
             CORSMiddleware,
             allow_origins=settings.cors_origins,
             allow_methods=["*"],
-            allow_headers=["Authorization", "Content-Type"],
+            allow_headers=["Authorization", "Content-Type", "Last-Event-ID"],
+            expose_headers=["Location"],
         )
     register_handlers(app)
-    problem_response = {"default": {"model": Problem, "description": "Problem Details (RFC 9457)"}}
+    # 不传 model：FastAPI 会按成功响应的媒体类型为附加模型自动补 content。
+    problem_content = {
+        PROBLEM_MEDIA_TYPE: {"schema": {"$ref": "#/components/schemas/Problem"}},
+    }
+    problem_response = {
+        "default": {"description": "Problem Details (RFC 9457)", "content": problem_content},
+        422: {"description": "Request validation failed", "content": problem_content},
+    }
     for module in (health, answers, jobs, papers, kb, journals, literature):
         app.include_router(module.router, prefix="/v1", responses=problem_response)
+
+    original_openapi = app.openapi
+
+    def openapi() -> dict:
+        if app.openapi_schema is not None:
+            return app.openapi_schema
+        schema = original_openapi()
+        # 纯 content 引用不会触发 FastAPI 的模型收集，集中注册共享组件。
+        components = schema.setdefault("components", {}).setdefault("schemas", {})
+        components["Problem"] = Problem.model_json_schema(ref_template="#/components/schemas/{model}")
+        components.update(event_schemas())
+        return schema
+
+    app.openapi = openapi
     return app

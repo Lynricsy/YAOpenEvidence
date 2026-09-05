@@ -275,15 +275,16 @@ def fulltext(ident: str, section: str = "", max_chars: int = 20000) -> FulltextR
     selected_section: str | None = None
     text: str | None = None
     if section:
-        if section.lower() == "all":
-            matches = source_sections
+        section_query = section.lower()
+        if section_query == "all":
             selected_section = "all"
+            text = "\n\n".join(f"## {title}\n{body}" for title, body in source_sections)
         else:
-            matches = [item for item in source_sections if section.lower() in item[0].lower()]
-            if not matches:
+            match = next((item for item in source_sections if section_query in item[0].lower()), None)
+            if match is None:
                 raise ApiError(404, "not_found", f"section '{section}' not found")
-            selected_section = matches[0][0]
-        text = "\n\n".join(f"## {title}\n{body}" for title, body in matches)
+            selected_section, body = match
+            text = f"## {selected_section}\n{body}"
 
     truncated = text is not None and len(text) > max_chars
     if truncated:

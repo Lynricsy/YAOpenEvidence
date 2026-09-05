@@ -100,7 +100,7 @@ def test_fulltext_unavailable_is_problem_detail(client, monkeypatch):
     )
 
     response = client.get(
-        "/v1/literature/PMC123/fulltext",
+        "/v1/literature/fulltext?ident=PMC123",
         headers=auth(READ_KEY),
     )
 
@@ -119,28 +119,28 @@ def test_fulltext_directory_section_and_all(client, monkeypatch):
     monkeypatch.setattr(literature, "epmc_citation", lambda pmcid: f"CITATION: {pmcid}")
     headers = auth(READ_KEY)
 
-    directory = client.get("/v1/literature/PMC9306514/fulltext", headers=headers)
+    directory = client.get("/v1/literature/fulltext?ident=PMC9306514", headers=headers)
     assert directory.status_code == 200
     assert len(directory.json()["sections"]) == 2
     assert directory.json()["text"] is None
     assert directory.json()["abstract"]
 
     result = client.get(
-        "/v1/literature/PMC9306514/fulltext?section=result",
+        "/v1/literature/fulltext?ident=PMC9306514&section=result",
         headers=headers,
     )
     assert result.status_code == 200
     assert "## Results" in result.json()["text"]
 
     missing = client.get(
-        "/v1/literature/PMC9306514/fulltext?section=nope",
+        "/v1/literature/fulltext?ident=PMC9306514&section=nope",
         headers=headers,
     )
     assert missing.status_code == 404
     assert missing.json()["code"] == "not_found"
 
     all_sections = client.get(
-        "/v1/literature/PMC9306514/fulltext?section=all&max_chars=1000",
+        "/v1/literature/fulltext?ident=PMC9306514&section=all&max_chars=1000",
         headers=headers,
     )
     assert all_sections.status_code == 200
@@ -224,7 +224,7 @@ def test_filtered_pubmed_limit_survives_overfetch(client, upstream_http, source)
 
 
 @pytest.mark.parametrize("path,fail_fetch", [
-    ("/v1/literature/123", True),
+    ("/v1/literature/resolve?ident=123", True),
     ("/v1/literature/search?q=x&source=pubmed", False),
     ("/v1/literature/search?q=x&source=pubmed", True),
 ])
@@ -248,16 +248,16 @@ def test_epmc_fulltext_failure_is_not_missing(client, upstream_http, ident):
         return httpx.Response(503)
 
     upstream_http(handle)
-    response = client.get(f"/v1/literature/{ident}/fulltext", headers=auth(READ_KEY))
+    response = client.get("/v1/literature/fulltext", params={"ident": ident}, headers=auth(READ_KEY))
     assert response.status_code == 502
     assert response.json()["code"] == "upstream_unavailable"
 
 
 @pytest.mark.parametrize("path", [
-    "/v1/literature/missing-s2",
-    "/v1/literature/missing-s2/citations",
-    "/v1/literature/missing-s2/references",
-    "/v1/literature/missing-s2/recommendations",
+    "/v1/literature/resolve?ident=missing-s2",
+    "/v1/literature/citations?ident=missing-s2",
+    "/v1/literature/references?ident=missing-s2",
+    "/v1/literature/recommendations?ident=missing-s2",
 ])
 def test_s2_missing_is_not_upstream_failure(client, upstream_http, path):
     upstream_http(lambda request: httpx.Response(404))
@@ -266,10 +266,20 @@ def test_s2_missing_is_not_upstream_failure(client, upstream_http, path):
     assert response.json()["code"] == "not_found"
 
 
-@pytest.mark.parametrize("ident", ["10.1000/example", "10.1000%2Fexample", "123"])
-@pytest.mark.parametrize("resource", ["", "/fulltext", "/citations", "/references", "/recommendations"])
+@pytest.mark.parametrize("resource,ident", [
+    ("resolve", "10.1000/fulltext"),
+    ("resolve", "10.1000%2Fcitations"),
+    ("resolve", "10.1000/references"),
+    ("resolve", "10.1000%2Frecommendations"),
+    ("resolve", "123"),
+    ("fulltext", "10.1000%2Ffulltext"),
+    ("citations", "10.1000%2Fcitations"),
+    ("references", "10.1000%2Freferences"),
+    ("recommendations", "10.1000%2Frecommendations"),
+])
 def test_identifiers_reach_each_literature_resource(client, upstream_http, ident, resource):
-    paper = {"paperId": "resolved", "title": "Resolved paper", "externalIds": {"DOI": "10.1000/example"}}
+    doi = ident.replace("%2F", "/")
+    paper = {"paperId": "resolved", "title": "Resolved paper", "externalIds": {"DOI": doi}}
 
     def handle(request):
         path = request.url.path
@@ -278,29 +288,33 @@ def test_identifiers_reach_each_literature_resource(client, upstream_http, ident
         if request.url.host == "www.ebi.ac.uk":
             if path.endswith("/fullTextXML"):
                 return httpx.Response(200, text="<article><abstract><p>Resolved abstract</p></abstract></article>")
+            assert request.url.params["query"] in {f'DOI:"{doi}"', "PMCID:PMC123"}
             return httpx.Response(200, json={"resultList": {"result": [{"pmcid": "PMC123", "title": "Resolved paper"}]}})
-        expected = "PMID:123" if ident == "123" else "DOI:10.1000/example"
+        expected = "PMID:123" if ident == "123" else f"DOI:{doi}"
         assert expected in path
-        if resource == "/citations":
+        if resource == "citations":
+            assert path.endswith(f"/{expected}/citations")
             return httpx.Response(200, json={"data": [{"citingPaper": paper}]})
-        if resource == "/references":
+        if resource == "references":
+            assert path.endswith(f"/{expected}/references")
             return httpx.Response(200, json={"data": [{"citedPaper": paper}]})
-        if resource == "/recommendations":
+        if resource == "recommendations":
+            assert path.endswith(f"/{expected}")
             return httpx.Response(200, json={"recommendedPapers": [paper]})
         return httpx.Response(200, json=paper)
 
     upstream_http(handle)
-    response = client.get(f"/v1/literature/{ident}{resource}", headers=auth(READ_KEY))
+    response = client.get(f"/v1/literature/{resource}?ident={ident}", headers=auth(READ_KEY))
     assert response.status_code == 200
     body = response.json()
-    if resource == "/fulltext":
+    if resource == "fulltext":
         assert body["abstract"] == "Resolved abstract"
-    elif resource:
+    elif resource != "resolve":
         assert body["items"][0]["title"] == "Resolved paper"
     elif ident == "123":
         assert body["pmid"] == "123"
     else:
-        assert body["doi"] == "10.1000/example"
+        assert body["doi"] == doi
 
 
 @pytest.mark.parametrize("s2_status,epmc_status,expected", [(404, 503, 502), (503, 200, 502), (404, 200, 404)])
@@ -311,11 +325,11 @@ def test_doi_fallback_preserves_failure(client, upstream_http, s2_status, epmc_s
         return httpx.Response(epmc_status, json={"resultList": {"result": []}})
 
     upstream_http(handle)
-    response = client.get("/v1/literature/10.1000/example", headers=auth(READ_KEY))
+    response = client.get("/v1/literature/resolve?ident=10.1000/example", headers=auth(READ_KEY))
     assert response.status_code == expected
 
 
-@pytest.mark.parametrize("path", ["/v1/literature/PMC123", "/v1/literature/123/fulltext"])
+@pytest.mark.parametrize("path", ["/v1/literature/resolve?ident=PMC123", "/v1/literature/fulltext?ident=123"])
 def test_epmc_identifier_lookup_failure_is_not_missing(client, upstream_http, path):
     upstream_http(lambda request: httpx.Response(503))
     response = client.get(path, headers=auth(READ_KEY))
@@ -329,5 +343,42 @@ def test_fulltext_citation_failure_is_upstream_error(client, upstream_http):
         return httpx.Response(503)
 
     upstream_http(handle)
-    response = client.get("/v1/literature/PMC123/fulltext", headers=auth(READ_KEY))
+    response = client.get("/v1/literature/fulltext?ident=PMC123", headers=auth(READ_KEY))
     assert response.status_code == 502
+
+
+@pytest.mark.parametrize("resource", ["resolve", "fulltext", "citations", "references", "recommendations"])
+def test_ident_is_required_and_nonempty(client, resource):
+    for query in ("", "?ident="):
+        response = client.get(f"/v1/literature/{resource}{query}", headers=auth(READ_KEY))
+        assert response.status_code == 422
+        assert response.json()["code"] == "validation_error"
+
+
+@pytest.mark.parametrize("suffix", ["", "/fulltext", "/citations", "/references", "/recommendations"])
+def test_old_identifier_paths_are_removed(client, suffix):
+    response = client.get(f"/v1/literature/10.1000%2Fexample{suffix}", headers=auth(READ_KEY))
+    assert response.status_code == 404
+
+
+def test_fulltext_selects_only_first_case_insensitive_match(client, monkeypatch):
+    sections = [
+        ("Abstract", "Summary"),
+        ("Primary RESULTS", "First findings"),
+        ("Secondary results", "Second findings"),
+    ]
+    monkeypatch.setattr(literature, "resolve_pmcid", lambda ident: ("PMC123", ""))
+    monkeypatch.setattr(literature, "epmc_fulltext_sections", lambda pmcid: sections)
+    monkeypatch.setattr(literature, "epmc_citation", lambda pmcid: "Citation")
+
+    response = client.get(
+        "/v1/literature/fulltext",
+        params={"ident": "PMC123", "section": "rEsUlT"},
+        headers=auth(READ_KEY),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["section"] == "Primary RESULTS"
+    assert body["text"] == "## Primary RESULTS\nFirst findings"
+    assert body["sections"] == [{"title": title, "chars": len(text)} for title, text in sections]

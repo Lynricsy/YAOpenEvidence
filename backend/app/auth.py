@@ -14,12 +14,16 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import Depends, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import APIKeyQuery, HTTPAuthorizationCredentials, HTTPBearer
 
 from .errors import ApiError
 
 SCOPES = ("read", "write", "admin")
 _bearer = HTTPBearer(auto_error=False, description="静态 API Key（Authorization: Bearer <api_key>）")
+_sse_query = APIKeyQuery(
+    name="access_token", scheme_name="SSEAccessToken", auto_error=False,
+    description="仅 SSE 可使用的 API Key；优先使用 Bearer，避免凭证进入 URL 日志。",
+)
 
 
 @dataclass(frozen=True)
@@ -59,13 +63,6 @@ def load_api_keys(path: Path, *, auth_disabled: bool = False) -> dict[str, Princ
     return out
 
 
-def _token(request: Request, creds: HTTPAuthorizationCredentials | None, allow_query: bool) -> str:
-    if creds is not None and creds.scheme.lower() == "bearer":
-        return creds.credentials.strip()
-    if allow_query:
-        return (request.query_params.get("access_token") or "").strip()
-    return ""
-
 
 def _match(principals: dict[str, Principal], token: str) -> Principal | None:
     # 逐 key 常数时间比较：key 数量是个位数，遍历成本可忽略
@@ -83,11 +80,11 @@ def require(*scopes: str, allow_query: bool = False) -> Callable[..., Principal]
     if unknown:
         raise ValueError(f"unknown scopes: {sorted(unknown)}")
 
-    def dependency(request: Request,
-                   creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> Principal:
+    def authenticate(request: Request, creds: HTTPAuthorizationCredentials | None,
+                     access_token: str | None = None) -> Principal:
         if getattr(request.app.state, "auth_disabled", False):
             return ANONYMOUS
-        token = _token(request, creds, allow_query)
+        token = creds.credentials.strip() if creds is not None else (access_token or "").strip()
         if not token:
             raise ApiError(401, "unauthenticated", "missing API key",
                            headers={"WWW-Authenticate": "Bearer"})
@@ -98,5 +95,16 @@ def require(*scopes: str, allow_query: bool = False) -> Callable[..., Principal]
         if not needed <= principal.scopes:
             raise ApiError(403, "forbidden", f"requires scope(s): {', '.join(sorted(needed))}")
         return principal
+
+    def dependency(request: Request,
+                   creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> Principal:
+        return authenticate(request, creds)
+
+    if allow_query:
+        def sse_dependency(request: Request,
+                           creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
+                           access_token: str | None = Depends(_sse_query)) -> Principal:
+            return authenticate(request, creds, access_token)
+        return sse_dependency
 
     return dependency

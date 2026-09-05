@@ -107,7 +107,9 @@ async def run_ask_job(ctx: dict, job_id: str) -> None:
     opts = to_ask_options(options)
     try:
         res = await asyncio.to_thread(ask.run_ask, opts, run_id=answer_id, emit=emit,
-                                      should_cancel=should_cancel)
+                                      should_cancel=should_cancel,
+                                      paper_urls={n: f"/v1/answers/{answer_id}/papers/{n}/markdown"
+                                                  for n in range(1, opts.papers + 1)})
     except ask.PipelineCancelled:
         _terminate(ctx, job_id, "cancelled")
         return

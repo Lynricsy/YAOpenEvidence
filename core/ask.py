@@ -427,14 +427,19 @@ def _short_authors(a: str) -> str:
     return ", ".join(names[:3]) + (" et al." if len(names) > 3 else "")
 
 
-def ref_line(p: dict, papers_dir_rel: str) -> str:
+def paper_link(p: dict, target: str | dict[int, str]) -> str:
+    """CLI 使用相对文件路径，HTTP 使用本次阅读快照的资源 URL。"""
+    return target[p["n"]] if isinstance(target, dict) else f"{target}/{p['md_file']}"
+
+
+def ref_line(p: dict, papers_dir_rel: str | dict[int, str]) -> str:
     p["authors"] = _short_authors(p["authors"])
     ids = " ".join(x for x in [f"PMID:{p['pmid']}" if p["pmid"] else "", f"DOI:{p['doi']}" if p.get("doi") else "",
                                p.get("pmcid", "")] if x)
     src = {"pmc": "全文(PMC)", "pdf": "全文(OA PDF)", "inst": "全文(机构订阅)", "abstract": "仅摘要"}[p["source"]]
     rank = jr.label(p.get("rank"))
     return (f"[{p['n']}] {p['authors']} ({p['year']}). {p['title']} *{p['journal']}* 〔{rank}〕. {ids} 〔{src}〕 "
-            f"[原文]({papers_dir_rel}/{p['md_file']})")
+            f"[原文]({paper_link(p, papers_dir_rel)})")
 
 
 MARK_GROUP_RE = re.compile(r"\[((?:\d{1,2}¶\d{1,4}\??|\d{1,2})(?:\s*[,，;]\s*(?:\d{1,2}¶\d{1,4}\??|\d{1,2}))*)\]")
@@ -442,11 +447,11 @@ MARK_RE = re.compile(r"(\d{1,2})¶(\d{1,4})(\??)")
 
 
 def resolve_markers(body: str, by_n: dict[int, dict],
-                    papers_dir_rel: str | None) -> tuple[str, list[tuple[int, int]]]:
+                    papers_dir_rel: str | dict[int, str] | None) -> tuple[str, list[tuple[int, int]]]:
     """归一化正文里的 [3¶12] / [3¶26, 3¶29] / [2¶4, 5] 标记，并收集 (n, pid)。
 
     `papers_dir_rel` 为 None 时输出裸标记 `[n¶pid]`（HTTP 场景：前端自己决定跳哪儿）；
-    给了相对目录就输出指向段落锚点的 Markdown 链接（CLI 场景：answers/<id>.md 可直接点）。
+    给了相对目录或资源映射就输出指向本次原文段落锚点的 Markdown 链接。
     未知段落一律降级为 `[n]`。
     """
     used: list[tuple[int, int]] = []
@@ -463,7 +468,7 @@ def resolve_markers(body: str, by_n: dict[int, dict],
             used.append((n, pid))
         if papers_dir_rel is None:
             return f"[{n}¶{pid}]"
-        return f"[{n}¶{pid}]({papers_dir_rel}/{p['md_file']}#p{pid})"
+        return f"[{n}¶{pid}]({paper_link(p, papers_dir_rel)}#p{pid})"
 
     def _group(m: re.Match) -> str:
         toks = [t.strip() for t in re.split(r"[,，;]", m.group(1)) if t.strip()]
@@ -507,7 +512,7 @@ def cited_passages(used: list[tuple[int, int]], by_n: dict[int, dict]) -> list[d
     return out
 
 
-def location_appendix(passages: list[dict], by_n: dict[int, dict], papers_dir_rel: str) -> str:
+def location_appendix(passages: list[dict], by_n: dict[int, dict], papers_dir_rel: str | dict[int, str]) -> str:
     """'原文定位' section: for every cited paragraph show where it is and the verified quote / paragraph text."""
     lines = ["**原文定位 / Source passages**（点击 ¶ 链接可跳到原文段落；完整核实清单见各篇 `_citations.json`）"]
 
@@ -526,7 +531,7 @@ def location_appendix(passages: list[dict], by_n: dict[int, dict], papers_dir_re
             cur = n
             lines.append(f"\n[{n}] {p['title'][:100]} — {p['journal']} ({p['year']}) 〔{p['source']}〕")
         loc = it["sec"] + (f", p.{it['page']}" if it.get("page") else "")
-        link = f"{papers_dir_rel}/{p['md_file']}#p{it['pid']}"
+        link = f"{paper_link(p, papers_dir_rel)}#p{it['pid']}"
         if it["quotes"]:
             for qu in it["quotes"][:2]:
                 lines.append(f"- [¶{it['pid']}]({link}) {loc}: “{qu}”")
@@ -573,7 +578,8 @@ class AskResult:
 
 
 def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_emit,
-            should_cancel: Callable[[], bool] = lambda: False) -> AskResult:
+            should_cancel: Callable[[], bool] = lambda: False,
+            paper_urls: dict[int, str] | None = None) -> AskResult:
     """整条问答流水线。CLI 与 HTTP worker 共用；进度通过 `emit` 推出，取消通过 `should_cancel` 轮询。
 
     失败用异常表达（NoPapers / NothingRelevant / LLMUnavailable / PipelineCancelled），
@@ -724,9 +730,10 @@ def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_e
     by_n = {p["n"]: p for p in used}
     raw_body = synthesize(opts.question, used, emit=emit)
     body_md, used_marks = resolve_markers(raw_body, by_n, None)
-    linked_body, _ = resolve_markers(raw_body, by_n, papers_dir_rel)
+    link_target = paper_urls if paper_urls is not None else papers_dir_rel
+    linked_body, _ = resolve_markers(raw_body, by_n, link_target)
     citations = cited_passages(used_marks, by_n)
-    refs = "\n".join(ref_line(p, papers_dir_rel) for p in used)
+    refs = "\n".join(ref_line(p, link_target) for p in used)
     n_full = sum(p["source"] != "abstract" for p in used)
     kb_note, hits = "", []
     if store is not None and opts.kb_hits:
@@ -737,7 +744,7 @@ def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_e
                 f"- {h['text']} — {h.get('title', '')[:80]} ({h.get('year')}) PMID:{h.get('pmid')} ¶{h.get('pid')}" for h in hits)
     answer = (f"# Q: {opts.question}\n\n筛选条件：{flt.describe()}　|　阅读 {len(used)} 篇（{n_full} 篇全文）\n\n{linked_body}\n\n"
               f"**参考文献 / References**（{n_full}/{len(used)} 篇读了全文）\n{refs}\n\n"
-              f"{location_appendix(citations, by_n, papers_dir_rel)}{kb_note}\n\n"
+              f"{location_appendix(citations, by_n, link_target)}{kb_note}\n\n"
               f"*This is a literature summary for research/educational use, not medical advice.*\n")
     out = os.path.join(ANSWERS_DIR, f"{run_id}.md")
     with open(out, "w", encoding="utf-8") as f:

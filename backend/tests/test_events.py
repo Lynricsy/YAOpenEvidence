@@ -7,6 +7,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 
 import httpx
 import redis.asyncio as aioredis
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -113,11 +114,13 @@ def test_other_keys_job_is_invisible(client, sync_redis):
 
 def test_cancel_sets_flag_and_terminal_job_conflicts(client, sync_redis):
     job_id, _ = make_job(api_key_id="writer")
-    assert client.delete(f"/v1/jobs/{job_id}", headers=auth(WRITE_KEY)).status_code == 204
+    response = client.post(f"/v1/jobs/{job_id}/cancel", headers=auth(WRITE_KEY))
+    assert response.status_code == 202
+    assert response.headers["location"] == f"/v1/jobs/{job_id}"
     assert sync_redis.exists(events.cancel_key(job_id))
 
     done_id, _ = make_job(api_key_id="writer", status="succeeded")
-    r = client.delete(f"/v1/jobs/{done_id}", headers=auth(WRITE_KEY))
+    r = client.post(f"/v1/jobs/{done_id}/cancel", headers=auth(WRITE_KEY))
     assert r.status_code == 409
     assert r.json()["code"] == "conflict"
 
@@ -201,7 +204,7 @@ async def test_fifteen_live_streams_leave_database_available(tmp_path, sync_redi
         with Session(engine) as db:
             db.add(Job(id="live", kind="ask", status="running", api_key_id="reader", params={}))
             db.commit()
-        first = events.publish(sync_redis, "live", {"type": "stage", "stage": "search"}, **PUB)
+        first = events.publish(sync_redis, "live", {"type": "stage", "stage": "search", "status": "started"}, **PUB)
         async with AsyncExitStack() as stack:
             for _ in range(15):
                 output = await stack.enter_async_context(live_sse(app, "/v1/jobs/live/events"))
@@ -220,7 +223,7 @@ async def test_fifteen_live_streams_leave_database_available(tmp_path, sync_redi
 
 async def test_live_subscription_converges_when_database_finishes(sync_redis):
     job_id, _ = make_job(api_key_id="reader", status="running")
-    first = events.publish(sync_redis, job_id, {"type": "stage", "stage": "search"}, **PUB)
+    first = events.publish(sync_redis, job_id, {"type": "stage", "stage": "search", "status": "started"}, **PUB)
     redis = aioredis.from_url(settings.redis_url)
     try:
         async with live_sse(streaming_app(redis), f"/v1/jobs/{job_id}/events") as output:
@@ -249,3 +252,42 @@ async def test_resume_after_terminal_entry_still_closes(sync_redis):
             assert got == [{"id": last, "event": "cancelled", "data": {}}]
     finally:
         await redis.aclose()
+
+
+@pytest.mark.parametrize("last_id", [
+    "not-a-stream-id", "1-0junk", "$", "01-0",
+    "18446744073709551616-0", "0-18446744073709551616",
+])
+def test_invalid_cursor_returns_problem_before_streaming(client, last_id):
+    job_id, _ = make_job(api_key_id="reader", status="cancelled")
+    response = client.get(f"/v1/jobs/{job_id}/events",
+                          headers={**auth(READ_KEY), "Last-Event-ID": last_id})
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("application/problem+json")
+    assert response.json()["code"] == "validation_error"
+    assert response.json()["errors"][0]["loc"] == ["header", "Last-Event-ID"]
+
+
+def test_largest_cursor_is_valid_for_redis_and_terminal_replay(client):
+    job_id, _ = make_job(api_key_id="reader", status="cancelled")
+    cursor = "18446744073709551615-18446744073709551615"
+    response = client.get(f"/v1/jobs/{job_id}/events",
+                          headers={**auth(READ_KEY), "Last-Event-ID": cursor})
+    assert response.status_code == 200
+    assert parse_sse(response.text) == [{"id": cursor, "event": "cancelled", "data": {}}]
+
+
+def test_cancel_retry_never_deletes_answer(client, worker_ctx):
+    from app.worker import run_ask_job
+
+    created = client.post("/v1/answers", json={"question": "cancel retry"},
+                          headers=auth(WRITE_KEY)).json()
+    url = f"/v1/jobs/{created['job_id']}/cancel"
+    assert client.post(url, headers=auth(WRITE_KEY)).status_code == 202
+    assert client.post(url, headers=auth(WRITE_KEY)).status_code == 202
+    asyncio.run(run_ask_job(worker_ctx, created["job_id"]))
+    assert client.post(url, headers=auth(WRITE_KEY)).status_code == 409
+    answer = client.get(f"/v1/answers/{created['id']}", headers=auth(WRITE_KEY))
+    assert answer.status_code == 200
+    assert answer.json()["status"] == "cancelled"
+    assert client.delete(f"/v1/jobs/{created['job_id']}", headers=auth(WRITE_KEY)).status_code == 405

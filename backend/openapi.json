@@ -19,9 +19,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Health V1 Health Get"
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -29,7 +27,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -52,9 +60,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Ready V1 Health Ready Get"
+                  "$ref": "#/components/schemas/ReadinessResponse"
                 }
               }
             }
@@ -62,9 +68,29 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database or Redis unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
                 }
               }
             }
@@ -108,7 +134,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -200,7 +236,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -247,7 +293,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -260,7 +316,7 @@
         "tags": [
           "answers"
         ],
-        "summary": "取消任务或删除结果",
+        "summary": "删除终态答案",
         "operationId": "delete_answer_v1_answers__answer_id__delete",
         "security": [
           {
@@ -285,7 +341,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -322,7 +388,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "text/plain": {
+              "text/markdown": {
                 "schema": {
                   "type": "string"
                 }
@@ -332,7 +398,84 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "text/plain": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/answers/{answer_id}/papers/{n}/markdown": {
+      "get": {
+        "tags": [
+          "answers"
+        ],
+        "summary": "本次阅读原文快照（含段落锚点的 Markdown）",
+        "operationId": "get_answer_paper_markdown_v1_answers__answer_id__papers__n__markdown_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "answer_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Answer Id"
+            }
+          },
+          {
+            "name": "n",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "N"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem Details (RFC 9457)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -389,7 +532,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -493,7 +646,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -540,7 +703,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -548,13 +721,15 @@
             }
           }
         }
-      },
-      "delete": {
+      }
+    },
+    "/v1/jobs/{job_id}/cancel": {
+      "post": {
         "tags": [
           "jobs"
         ],
-        "summary": "取消任务",
-        "operationId": "cancel_job_v1_jobs__job_id__delete",
+        "summary": "请求取消任务",
+        "operationId": "cancel_job_v1_jobs__job_id__cancel_post",
         "security": [
           {
             "HTTPBearer": []
@@ -572,13 +747,31 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Successful Response"
+          "202": {
+            "description": "Successful Response",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "任务状态地址"
+              }
+            }
           },
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -598,6 +791,9 @@
         "security": [
           {
             "HTTPBearer": []
+          },
+          {
+            "SSEAccessToken": []
           }
         ],
         "parameters": [
@@ -609,27 +805,73 @@
               "type": "string",
               "title": "Job Id"
             }
+          },
+          {
+            "name": "Last-Event-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 41,
+              "pattern": "^(0|[1-9][0-9]{0,19})-(0|[1-9][0-9]{0,19})$",
+              "description": "上次已处理的 Stream ID：两个无前导零的无符号 64 位整数，以连字符分隔。",
+              "default": "0-0",
+              "title": "Last-Event-Id"
+            },
+            "description": "上次已处理的 Stream ID：两个无前导零的无符号 64 位整数，以连字符分隔。"
           }
         ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
-              "text/event-stream": {}
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "SSE 帧；data 为 JSON，模型见 x-sse-events。"
+                },
+                "x-sse-events": {
+                  "stage": {
+                    "$ref": "#/components/schemas/StageEventData"
+                  },
+                  "progress": {
+                    "$ref": "#/components/schemas/ProgressEventData"
+                  },
+                  "log": {
+                    "$ref": "#/components/schemas/LogEventData"
+                  },
+                  "succeeded": {
+                    "$ref": "#/components/schemas/SucceededEventData"
+                  },
+                  "failed": {
+                    "$ref": "#/components/schemas/FailedEventData"
+                  },
+                  "cancelled": {
+                    "$ref": "#/components/schemas/CancelledEventData"
+                  }
+                }
+              }
             }
           },
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
               }
             }
           },
-          "404": {
-            "description": "job not found"
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
         }
       }
@@ -695,7 +937,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -742,7 +994,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -789,7 +1051,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -845,7 +1117,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -892,7 +1174,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -929,7 +1221,7 @@
           "200": {
             "description": "Successful Response",
             "content": {
-              "text/plain": {
+              "text/markdown": {
                 "schema": {
                   "type": "string"
                 }
@@ -939,7 +1231,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "text/plain": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1031,7 +1333,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1062,7 +1374,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1098,7 +1420,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1161,7 +1493,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1339,7 +1681,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1349,13 +1701,13 @@
         }
       }
     },
-    "/v1/literature/{ident}/fulltext": {
+    "/v1/literature/fulltext": {
       "get": {
         "tags": [
           "literature"
         ],
         "summary": "读取 PMC 全文",
-        "operationId": "get_fulltext_v1_literature__ident__fulltext_get",
+        "operationId": "get_fulltext_v1_literature_fulltext_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1364,10 +1716,11 @@
         "parameters": [
           {
             "name": "ident",
-            "in": "path",
+            "in": "query",
             "required": true,
             "schema": {
               "type": "string",
+              "minLength": 1,
               "title": "Ident"
             }
           },
@@ -1408,7 +1761,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1418,13 +1781,13 @@
         }
       }
     },
-    "/v1/literature/{ident}/citations": {
+    "/v1/literature/citations": {
       "get": {
         "tags": [
           "literature"
         ],
         "summary": "获取引用文献",
-        "operationId": "get_citations_v1_literature__ident__citations_get",
+        "operationId": "get_citations_v1_literature_citations_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1433,10 +1796,11 @@
         "parameters": [
           {
             "name": "ident",
-            "in": "path",
+            "in": "query",
             "required": true,
             "schema": {
               "type": "string",
+              "minLength": 1,
               "title": "Ident"
             }
           },
@@ -1467,7 +1831,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1477,13 +1851,13 @@
         }
       }
     },
-    "/v1/literature/{ident}/references": {
+    "/v1/literature/references": {
       "get": {
         "tags": [
           "literature"
         ],
         "summary": "获取参考文献",
-        "operationId": "get_references_v1_literature__ident__references_get",
+        "operationId": "get_references_v1_literature_references_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1492,10 +1866,11 @@
         "parameters": [
           {
             "name": "ident",
-            "in": "path",
+            "in": "query",
             "required": true,
             "schema": {
               "type": "string",
+              "minLength": 1,
               "title": "Ident"
             }
           },
@@ -1526,7 +1901,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1536,13 +1921,13 @@
         }
       }
     },
-    "/v1/literature/{ident}/recommendations": {
+    "/v1/literature/recommendations": {
       "get": {
         "tags": [
           "literature"
         ],
         "summary": "获取推荐文献",
-        "operationId": "get_recommendations_v1_literature__ident__recommendations_get",
+        "operationId": "get_recommendations_v1_literature_recommendations_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1551,10 +1936,11 @@
         "parameters": [
           {
             "name": "ident",
-            "in": "path",
+            "in": "query",
             "required": true,
             "schema": {
               "type": "string",
+              "minLength": 1,
               "title": "Ident"
             }
           },
@@ -1585,7 +1971,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -1595,13 +1991,13 @@
         }
       }
     },
-    "/v1/literature/{ident}": {
+    "/v1/literature/resolve": {
       "get": {
         "tags": [
           "literature"
         ],
         "summary": "获取单篇文献",
-        "operationId": "get_literature_v1_literature__ident__get",
+        "operationId": "get_literature_v1_literature_resolve_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1610,10 +2006,11 @@
         "parameters": [
           {
             "name": "ident",
-            "in": "path",
+            "in": "query",
             "required": true,
             "schema": {
               "type": "string",
+              "minLength": 1,
               "title": "Ident"
             }
           }
@@ -1632,7 +2029,17 @@
           "default": {
             "description": "Problem Details (RFC 9457)",
             "content": {
-              "application/json": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation failed",
+            "content": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
                 }
@@ -2315,6 +2722,24 @@
         "title": "Citation",
         "description": "答案正文引到的一个原文段落。"
       },
+      "DependencyCheck": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "detail"
+        ],
+        "title": "DependencyCheck"
+      },
       "Fact": {
         "properties": {
           "fact": {
@@ -2477,6 +2902,30 @@
           "chars"
         ],
         "title": "FulltextSection"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "time"
+        ],
+        "title": "HealthResponse"
       },
       "Job": {
         "properties": {
@@ -3325,78 +3774,6 @@
         ],
         "title": "ParagraphList"
       },
-      "Problem": {
-        "properties": {
-          "type": {
-            "type": "string",
-            "title": "Type",
-            "examples": [
-              "urn:yaoe:error:not_found"
-            ]
-          },
-          "title": {
-            "type": "string",
-            "title": "Title",
-            "examples": [
-              "Not Found"
-            ]
-          },
-          "status": {
-            "type": "integer",
-            "title": "Status",
-            "examples": [
-              404
-            ]
-          },
-          "detail": {
-            "type": "string",
-            "title": "Detail",
-            "examples": [
-              "answer 'abc' not found"
-            ]
-          },
-          "instance": {
-            "type": "string",
-            "title": "Instance",
-            "examples": [
-              "/v1/answers/abc"
-            ]
-          },
-          "code": {
-            "type": "string",
-            "title": "Code",
-            "examples": [
-              "not_found"
-            ]
-          },
-          "errors": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Errors"
-          }
-        },
-        "type": "object",
-        "required": [
-          "type",
-          "title",
-          "status",
-          "detail",
-          "instance",
-          "code"
-        ],
-        "title": "Problem",
-        "description": "RFC 9457 Problem Details。`code` 是稳定枚举，`detail` 仅供人读。"
-      },
       "RankInfo": {
         "properties": {
           "title": {
@@ -3513,6 +3890,55 @@
         ],
         "title": "RankResult"
       },
+      "ReadinessChecks": {
+        "properties": {
+          "db": {
+            "$ref": "#/components/schemas/DependencyCheck"
+          },
+          "redis": {
+            "$ref": "#/components/schemas/DependencyCheck"
+          },
+          "llm": {
+            "$ref": "#/components/schemas/DependencyCheck"
+          },
+          "kb": {
+            "$ref": "#/components/schemas/DependencyCheck"
+          },
+          "ranks": {
+            "$ref": "#/components/schemas/DependencyCheck"
+          }
+        },
+        "type": "object",
+        "required": [
+          "db",
+          "redis",
+          "llm",
+          "kb",
+          "ranks"
+        ],
+        "title": "ReadinessChecks"
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status"
+          },
+          "checks": {
+            "$ref": "#/components/schemas/ReadinessChecks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "ReadinessResponse"
+      },
       "VerifiedQuote": {
         "properties": {
           "claimed_pid": {
@@ -3590,6 +4016,266 @@
         ],
         "title": "VerifiedQuote",
         "description": "模型笔记里的一条引文及其核实结果。"
+      },
+      "Problem": {
+        "description": "RFC 9457 Problem Details。`code` 是稳定枚举，`detail` 仅供人读。",
+        "properties": {
+          "type": {
+            "examples": [
+              "urn:yaoe:error:not_found"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "title": {
+            "examples": [
+              "Not Found"
+            ],
+            "title": "Title",
+            "type": "string"
+          },
+          "status": {
+            "examples": [
+              404
+            ],
+            "title": "Status",
+            "type": "integer"
+          },
+          "detail": {
+            "examples": [
+              "answer 'abc' not found"
+            ],
+            "title": "Detail",
+            "type": "string"
+          },
+          "instance": {
+            "examples": [
+              "/v1/answers/abc"
+            ],
+            "title": "Instance",
+            "type": "string"
+          },
+          "code": {
+            "examples": [
+              "not_found"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Errors"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance",
+          "code"
+        ],
+        "title": "Problem",
+        "type": "object"
+      },
+      "AnswerSucceededData": {
+        "additionalProperties": false,
+        "properties": {
+          "answer_id": {
+            "title": "Answer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer_id"
+        ],
+        "title": "AnswerSucceededData",
+        "type": "object"
+      },
+      "CancelledEventData": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "CancelledEventData",
+        "type": "object"
+      },
+      "FailedEventData": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "FailedEventData",
+        "type": "object"
+      },
+      "LogEventData": {
+        "additionalProperties": false,
+        "properties": {
+          "level": {
+            "enum": [
+              "info",
+              "warning"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "message"
+        ],
+        "title": "LogEventData",
+        "type": "object"
+      },
+      "ProgressEventData": {
+        "additionalProperties": false,
+        "properties": {
+          "stage": {
+            "enum": [
+              "fulltext",
+              "read",
+              "kb",
+              "reindex"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "current": {
+            "minimum": 0,
+            "title": "Current",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "pmid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Pmid"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Title"
+          }
+        },
+        "required": [
+          "stage",
+          "current",
+          "total"
+        ],
+        "title": "ProgressEventData",
+        "type": "object"
+      },
+      "ReindexSucceededData": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "minimum": 0,
+            "title": "Items",
+            "type": "integer"
+          },
+          "papers": {
+            "minimum": 0,
+            "title": "Papers",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "papers"
+        ],
+        "title": "ReindexSucceededData",
+        "type": "object"
+      },
+      "StageEventData": {
+        "additionalProperties": false,
+        "properties": {
+          "stage": {
+            "enum": [
+              "queries",
+              "search",
+              "fulltext",
+              "read",
+              "kb",
+              "synthesize",
+              "reindex"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "started",
+              "finished"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          }
+        },
+        "required": [
+          "stage",
+          "status"
+        ],
+        "title": "StageEventData",
+        "type": "object"
+      },
+      "SucceededEventData": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/AnswerSucceededData"
+          },
+          {
+            "$ref": "#/components/schemas/ReindexSucceededData"
+          }
+        ],
+        "title": "SucceededEventData"
       }
     },
     "securitySchemes": {
@@ -3597,6 +4283,12 @@
         "type": "http",
         "description": "静态 API Key（Authorization: Bearer <api_key>）",
         "scheme": "bearer"
+      },
+      "SSEAccessToken": {
+        "type": "apiKey",
+        "description": "仅 SSE 可使用的 API Key；优先使用 Bearer，避免凭证进入 URL 日志。",
+        "in": "query",
+        "name": "access_token"
       }
     }
   }

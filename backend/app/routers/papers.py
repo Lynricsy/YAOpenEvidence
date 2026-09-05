@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
 from ..auth import require
-from ..schemas.common import Page
+from ..schemas.common import MarkdownResponse, Page
 from ..schemas.papers import Fact, PaperMeta, Paragraph
 from ..services import papers as service
 
@@ -49,9 +48,9 @@ def get_facts(key: str, _principal=Depends(_read)) -> dict:
     return {"items": service.get_facts(key)}
 
 
-@router.get("/{key}/fulltext", response_class=PlainTextResponse, summary="读取带段落锚点的全文")
-def get_fulltext(key: str, _principal=Depends(_read)) -> PlainTextResponse:
+@router.get("/{key}/fulltext", response_class=MarkdownResponse, summary="读取带段落锚点的全文")
+def get_fulltext(key: str, _principal=Depends(_read)) -> MarkdownResponse:
     path = service.fulltext_path(key)
     with open(path, encoding="utf-8") as f:
         content = f.read()
-    return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
+    return MarkdownResponse(content)

@@ -7,9 +7,11 @@ db 或 redis 挂了才返回 503——LLM 或 kb 不可用时 API 仍能提供�
 from __future__ import annotations
 
 import datetime as dt
+from typing import Literal
 
 import httpx
 from fastapi import APIRouter, Request, Response
+from pydantic import BaseModel
 from sqlalchemy import text
 from starlette.concurrency import run_in_threadpool
 
@@ -20,15 +22,40 @@ from picos_paths import KB_DIR
 
 from .. import __version__
 from ..db import SessionLocal
+from ..schemas.common import UtcDateTime
 
 router = APIRouter(tags=["health"])
+
+
+class HealthResponse(BaseModel):
+    status: Literal["ok"]
+    version: str
+    time: UtcDateTime
+
+
+class DependencyCheck(BaseModel):
+    ok: bool
+    detail: str
+
+
+class ReadinessChecks(BaseModel):
+    db: DependencyCheck
+    redis: DependencyCheck
+    llm: DependencyCheck
+    kb: DependencyCheck
+    ranks: DependencyCheck
+
+
+class ReadinessResponse(BaseModel):
+    status: Literal["ok", "degraded"]
+    checks: ReadinessChecks
 
 
 def _now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-@router.get("/health", summary="存活探针")
+@router.get("/health", response_model=HealthResponse, summary="存活探针")
 def health() -> dict:
     return {"status": "ok", "version": __version__, "time": _now()}
 
@@ -69,7 +96,8 @@ async def _check_llm() -> dict:
         return {"ok": False, "detail": f"{ask.LLM_BASE} unreachable: {e}"}
 
 
-@router.get("/health/ready", summary="就绪探针")
+@router.get("/health/ready", response_model=ReadinessResponse, summary="就绪探针",
+            responses={503: {"model": ReadinessResponse, "description": "Database or Redis unavailable"}})
 async def ready(request: Request, response: Response) -> dict:
     checks: dict[str, dict] = {}
     try:
