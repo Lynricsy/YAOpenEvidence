@@ -10,6 +10,7 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 .
 ├── core/                    # picosgpt-core：检索、全文解析、PICOS 阅读、知识库与本机 CLI
 ├── backend/                 # yaoe-backend：FastAPI、数据库迁移、arq worker 与后端测试
+├── frontend/                # React 19、Vite、TypeScript、Tailwind 与 shadcn/ui 浏览器前端
 ├── docs/                    # 面向 API 使用者的协议文档
 ├── compose.yaml             # Redis、迁移、API、worker 与 test profile
 ├── compose.fake-llm.yaml    # 确定性假 LLM 的 Compose 覆盖配置
@@ -18,6 +19,8 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 ```
 
 根 `pyproject.toml` 定义 uv workspace，成员为 `core/` 的 `picosgpt-core` 与 `backend/` 的 `yaoe-backend`。HTTP 层复用内核包，不另写一套检索或问答逻辑。
+
+前端开发：在 `frontend/` 执行 `pnpm install`、`pnpm gen:api`、`pnpm typecheck`、`pnpm dev`。Vite 默认监听 `http://localhost:5173`，将 `/v1` 同源代理到本机 API 的 `8765` 端口；生成的 API 类型随代码入库。生产构建使用 `pnpm build`。
 
 ## 架构
 

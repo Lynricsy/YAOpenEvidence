@@ -18,3 +18,7 @@ backend/api_keys.toml
 
 # 知识库跨进程写锁（运行期间不得删除）
 core/kb.lock
+
+# Web 构建产物
+frontend/node_modules/
+frontend/dist/

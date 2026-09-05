@@ -16,3 +16,4 @@ core/*.bak_*
 var
 backend/api_keys.toml
 .env
+frontend
