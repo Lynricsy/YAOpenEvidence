@@ -170,7 +170,9 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 | `kb_hits` | `integer` | 否 | `0` | `0..20`，综合后附带的既有 KB 命中数。 |
 | `max_chars` | `integer` | 否 | `28000` | 单篇送入流水线的字符预算，`4000..60000`。 |
 
-成功返回 `202 Accepted`、响应头 `Location: /v1/answers/{answer_id}`（其中占位符取响应体的 `id`），响应体为状态为 `queued` 的 `Answer`。可能错误：`forbidden`、`validation_error`、`too_many_jobs`、`upstream_unavailable`、`internal_error`。
+成功返回 `202 Accepted`、响应头 `Location: /v1/answers/{answer_id}`（其中占位符取响应体的 `id`），响应体为 `Answer`，通常处于 `queued`；若 worker 已推进任务，也可能返回更新后的状态。可能错误：`forbidden`、`validation_error`、`too_many_jobs`、`upstream_unavailable`、`internal_error`。
+
+answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入队失败返回 `502 upstream_unavailable`，两者均保存为 `failed`，带失败信息与结束时间；失败答案可通过列表定位，并正常调用 `DELETE` 删除。
 
 #### `GET /v1/answers`
 
@@ -281,6 +283,8 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 
 无请求体与查询参数，需要 `admin`。返回 `202 Accepted` 与状态为 `queued` 的 `Job`（`kind="kb_reindex"`）。可能错误：`forbidden`、`upstream_unavailable`、`internal_error`。
 
+重建与增量入库、逐篇文献保存使用同一跨进程写锁，搜索仍可读取当前完整索引。等待写锁时支持取消，最后一篇处理完成以及暂存写入完成后、发布前都会再次检查取消；未发布的取消快照不会替换线上索引。
+
 ### 4.5 Journals
 
 #### `GET /v1/journals/rank`
@@ -304,7 +308,7 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 | `journals` | 可重复 `string` | `[]` | 期刊过滤。 |
 | `open_access_only` | `boolean` | `false` | 仅对 Semantic Scholar 检索生效。 |
 
-返回 `LiteratureSearchResult`。`source=auto` 回退时，结果的 `source` 为 `pubmed`，`fallback_reason` 给出 S2 失败原因；直接指定 `source=s2` 时不回退。可能错误：`validation_error`、`upstream_unavailable`、`internal_error`。
+返回 `LiteratureSearchResult`。`items` 不超过请求的 `limit`，即使 PubMed 为期刊或分区过滤扩大候选池；`total` 仍是上游命中总数，不是本地过滤后的数量。`source=auto` 回退时，结果的 `source` 为 `pubmed`，`fallback_reason` 给出 S2 失败原因；直接指定 `source=s2` 时不回退。可能错误：`validation_error`、`upstream_unavailable`、`internal_error`。
 
 #### 标识符 `{ident}` 的解析
 
@@ -314,6 +318,10 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 2. 匹配 `PMC\d+`（不区分大小写）时，经 Europe PMC 映射到 PMID；
 3. 以 `10.` 开头时按 DOI，先查 Semantic Scholar，失败后尝试 Europe PMC 映射；
 4. 其余按 Semantic Scholar paper ID。
+
+`{ident}` 支持 DOI 中的斜杠，例如 `/v1/literature/10.1000/example`，或将斜杠编码为 `%2F`。详情、`fulltext`、`citations`、`references`、`recommendations` 均支持这两种写法。
+
+上游明确不存在的资源返回 `404 not_found`，无可用 XML 全文返回 `404 fulltext_unavailable`；网络故障、限流或服务故障返回 `502 upstream_unavailable`，不会伪装成空记录。DOI 解析可以由其他上游成功兜底，但存在未恢复的上游故障、无法确认资源缺失时仍返回 `502`。
 
 #### `GET /v1/literature/{ident}`
 
@@ -332,7 +340,7 @@ v1 没有通用请求速率限制。唯一配额是每个 API Key 的活跃任�
 #### `GET /v1/literature/{ident}/references`
 #### `GET /v1/literature/{ident}/recommendations`
 
-三者都只调用 Semantic Scholar；查询参数均为 `limit: integer = 10`，范围 `1..50`。成功均返回 `{"items": LiteratureRecord[]}`。可能错误：`validation_error`、`upstream_unavailable`、`internal_error`。
+三者都只调用 Semantic Scholar；查询参数均为 `limit: integer = 10`，范围 `1..50`。成功均返回 `{"items": LiteratureRecord[]}`。可能错误：`validation_error`、`not_found`、`upstream_unavailable`、`internal_error`。
 
 ### 4.7 Health
 
@@ -678,7 +686,9 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 - 初次连接未给 `Last-Event-ID` 时，从 `0-0` 开始回放当前 Redis Stream 中仍保留的事件。
 - 断线重连时，把最后成功处理的 SSE `id` 放进 `Last-Event-ID` 请求头；服务端从该 ID **之后**续传。
 - 连接空闲时约每 15 秒发送一条 SSE 注释心跳。客户端应忽略注释行。
-- 事件流默认保留 7 天，并受最大长度配置约束。任务已经终态但 Redis Stream 已过期时，服务端只发送一条 `id: 0-0` 的合成终态事件后关闭。合成 `succeeded` 使用数据库中的 `job.result`，`failed` 使用 `job.error`，`cancelled` 的 `data` 为空对象。
+- 事件流默认保留 7 天，并受最大长度配置约束。订阅开始时以及活动订阅的空读周期（约 5 秒）会检查数据库终态；数据库连接只用于短期查询，不随 SSE 长连接持续占用。
+- 数据库已终态时，先回放游标之后仍保留的事件；若终态事件发布失败、已过期，或客户端游标已越过终态事件，则补发数据库中的终态并关闭。合成事件沿用最后游标（没有历史游标时为 `0-0`），客户端不得仅因 ID 与上一条相同而丢弃终态。
+- 合成 `succeeded` 使用 `job.result`，`failed` 使用 `job.error`，`cancelled` 的 `data` 为空对象。已终态任务无需等待下一个空读周期。
 
 取消是异步且协作式的：`DELETE` 成功只表示已写入取消请求。worker 在任务开始前、阶段边界和逐篇完成边界检查取消标记；它不会中断正在执行的 LLM 调用，因此取消延迟不超过当前一个流水线步骤（≤ 一步）。
 
