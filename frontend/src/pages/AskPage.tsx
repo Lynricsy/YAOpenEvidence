@@ -8,7 +8,13 @@ import { Hero } from '@/components/ask/Hero'
 import { AnswerView } from '@/components/ask/AnswerView'
 import { EmptyState } from '@/components/common/EmptyState'
 import { DeleteAnswerDialog } from '@/components/common/DeleteAnswerDialog'
-import { PaperSheet } from '@/components/PaperSheet'
+import { ReaderPane, ReaderSheet } from '@/components/ask/ReaderPane'
+import {
+  Group,
+  Panel,
+  Separator as ResizeSeparator,
+  type Layout,
+} from 'react-resizable-panels'
 import { BREAKPOINTS, useMediaQuery } from '@/lib/useMediaQuery'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,6 +49,15 @@ export default function AskPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [sseOpen, setSseOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
+  // 分栏宽度只在挂载时读一次；写入交给 onLayoutChanged。
+  const [readerLayout] = useState<Layout | undefined>(() => {
+    try {
+      const saved = localStorage.getItem('yaoe.reader-layout')
+      return saved ? (JSON.parse(saved) as Layout) : undefined
+    } catch {
+      return undefined
+    }
+  })
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isXl = useMediaQuery(BREAKPOINTS.xl)
   const is2xl = useMediaQuery(BREAKPOINTS['2xl'])
@@ -81,10 +96,33 @@ export default function AskPage() {
     filterSummary: describeFilters(filters),
     onOpenFilters: filterColumn ? null : () => setFilterOpen(true),
   }
+  const closeReader = () =>
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous)
+      next.delete('paper')
+      next.delete('pid')
+      return next
+    })
+  const readerProps = {
+    answerId: answer?.id ?? '',
+    n: paperN ?? 0,
+    pid: paperPid,
+    papers: answer?.papers ?? [],
+    citations: answer?.citations ?? [],
+    onClose: closeReader,
+  }
   return (
     <div className="flex min-h-0 flex-1">
       {filterColumn && <FilterColumn value={filters} onChange={update} />}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <Group
+        orientation="horizontal"
+        className="min-w-0 flex-1"
+        defaultLayout={readerLayout}
+        onLayoutChanged={(layout) =>
+          localStorage.setItem('yaoe.reader-layout', JSON.stringify(layout))
+        }
+      >
+        <Panel id="answer" minSize="40%" className="flex h-full flex-col">
         <div
           className="min-h-0 flex-1 overflow-y-auto"
           data-testid="answer-scroll"
@@ -127,9 +165,25 @@ export default function AskPage() {
               />
             )
           )}
-        </div>
-        {answerId && <ComposerDock {...composer} />}
-      </div>
+          </div>
+          {answerId && <ComposerDock {...composer} />}
+        </Panel>
+        {readerOpen && isXl && (
+          <>
+            <ResizeSeparator className="reader-separator" />
+            <Panel
+              id="reader"
+              defaultSize="45%"
+              minSize={360}
+              maxSize="60%"
+              className="h-full"
+            >
+              <ReaderPane {...readerProps} />
+            </Panel>
+          </>
+        )}
+      </Group>
+      {readerOpen && !isXl && <ReaderSheet {...readerProps} />}
       <FilterSheet
         open={filterOpen}
         onOpenChange={setFilterOpen}
@@ -141,23 +195,6 @@ export default function AskPage() {
         onClose={() => setDeleteId(null)}
         onDeleted={() => navigate('/history')}
       />
-      {answer && paperN !== null && (
-        <PaperSheet
-          answerId={answer.id}
-          n={paperN}
-          pid={paperPid}
-          papers={answer.papers ?? []}
-          citations={answer.citations ?? []}
-          onClose={() =>
-            setSearchParams((previous) => {
-              const next = new URLSearchParams(previous)
-              next.delete('paper')
-              next.delete('pid')
-              return next
-            })
-          }
-        />
-      )}
     </div>
   )
 }
