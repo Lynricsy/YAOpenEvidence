@@ -49,11 +49,27 @@ export default function AskPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [sseOpen, setSseOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
-  // 分栏宽度只在挂载时读一次；写入交给 onLayoutChanged。
+  // 分栏宽度只在挂载时读一次；写入交给 onLayoutChanged。localStorage 可被手改，
+  // 只有两个面板 id 都是 0–100 的有限数才采用，否则退回库的默认布局。
   const [readerLayout] = useState<Layout | undefined>(() => {
     try {
       const saved = localStorage.getItem('yaoe.reader-layout')
-      return saved ? (JSON.parse(saved) as Layout) : undefined
+      if (!saved) return undefined
+      const parsed: unknown = JSON.parse(saved)
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+        return undefined
+      const entries = Object.entries(parsed as Record<string, unknown>)
+      const valid =
+        entries.length === 2 &&
+        ['answer', 'reader'].every((id) => id in (parsed as object)) &&
+        entries.every(
+          ([, size]) =>
+            typeof size === 'number' &&
+            Number.isFinite(size) &&
+            size >= 0 &&
+            size <= 100,
+        )
+      return valid ? (parsed as Layout) : undefined
     } catch {
       return undefined
     }
