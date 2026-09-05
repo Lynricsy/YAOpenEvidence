@@ -123,48 +123,48 @@ export default function AskPage() {
         }
       >
         <Panel id="answer" minSize="40%" className="flex h-full flex-col">
-        <div
-          className="min-h-0 flex-1 overflow-y-auto"
-          data-testid="answer-scroll"
-        >
-          {!answerId ? (
-            <Hero {...composer} onExample={fill} />
-          ) : answerQuery.isPending ? (
-            <div className="mx-auto min-h-[60dvh] w-full max-w-[760px] space-y-5 px-5 py-8 md:px-8 md:py-10">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          ) : answerQuery.error ? (
-            <EmptyState
-              icon={AlertCircle}
-              title={
-                answerQuery.error instanceof ApiError &&
-                answerQuery.error.status === 404
-                  ? '答案不存在或无权访问'
-                  : problemMessage(answerQuery.error)
-              }
-              action={
-                <Button variant="outline" onClick={() => navigate('/')}>
-                  返回提问
-                </Button>
-              }
-            />
-          ) : (
-            answer && (
-              <AnswerView
-                answer={answer}
-                live={live}
-                connection={connection}
-                onOpenPaper={openPaper}
-                onReask={() => {
-                  update(fromAnswerOptions(answer.options ?? {}))
-                  fill(answer.question)
-                }}
-                onDelete={() => setDeleteId(answer.id)}
+          <div
+            className="min-h-0 flex-1 overflow-y-auto"
+            data-testid="answer-scroll"
+          >
+            {!answerId ? (
+              <Hero {...composer} onExample={fill} />
+            ) : answerQuery.isPending ? (
+              <div className="mx-auto min-h-[60dvh] w-full max-w-[760px] space-y-5 px-5 py-8 md:px-8 md:py-10">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : answerQuery.error ? (
+              <EmptyState
+                icon={AlertCircle}
+                title={
+                  answerQuery.error instanceof ApiError &&
+                  answerQuery.error.status === 404
+                    ? '答案不存在或无权访问'
+                    : problemMessage(answerQuery.error)
+                }
+                action={
+                  <Button variant="outline" onClick={() => navigate('/')}>
+                    返回提问
+                  </Button>
+                }
               />
-            )
-          )}
+            ) : (
+              answer && (
+                <AnswerView
+                  answer={answer}
+                  live={live}
+                  connection={connection}
+                  onOpenPaper={openPaper}
+                  onReask={() => {
+                    update(fromAnswerOptions(answer.options ?? {}))
+                    fill(answer.question)
+                  }}
+                  onDelete={() => setDeleteId(answer.id)}
+                />
+              )
+            )}
           </div>
           {answerId && <ComposerDock {...composer} />}
         </Panel>

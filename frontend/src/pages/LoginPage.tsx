@@ -54,10 +54,13 @@ export default function LoginPage() {
         </div>
         <m.div variants={fadeUp} initial="hidden" animate="show">
           <h1 className="font-serif text-[34px] font-semibold leading-tight tracking-tight">
-            让每一条结论，<br />都能回到原文。
+            让每一条结论，
+            <br />
+            都能回到原文。
           </h1>
           <p className="mt-5 max-w-md text-[15px] leading-7 text-muted-foreground">
-            YAOpenEvidence 从 PubMed / Europe PMC 检索并逐篇核实，生成带段落级引用定位的循证综述。
+            YAOpenEvidence 从 PubMed / Europe PMC
+            检索并逐篇核实，生成带段落级引用定位的循证综述。
           </p>
           <ul className="mt-8 space-y-3 text-sm">
             <li className="flex items-center gap-2.5">
@@ -97,76 +100,76 @@ export default function LoginPage() {
           <h2 className="mt-2 mb-8 font-serif text-2xl font-semibold">
             登录工作台
           </h2>
-        <form
-          className="space-y-5"
-          onSubmit={async (e) => {
-            e.preventDefault()
-            if (pending || wait) return
-            setPending(true)
-            try {
-              await login(username.trim(), password)
-              navigate(next, { replace: true })
-            } catch (error) {
-              toast.error(
-                error instanceof ApiError && error.code === 'unauthenticated'
-                  ? '用户名或密码错误'
-                  : problemMessage(error),
-              )
-              if (
-                error instanceof ApiError &&
-                error.code === 'login_rate_limited'
-              )
-                setWait(error.retryAfter ?? 60)
-            } finally {
-              setPending(false)
-            }
-          }}
-        >
-          <div className="space-y-2">
-            <Label htmlFor="username">用户名</Label>
-            <Input
-              id="username"
-              className="h-10"
-              autoComplete="username"
-              autoFocus
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">密码</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={show ? 'text' : 'password'}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-10 pr-11"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="absolute top-0.5 right-1"
-                aria-label={show ? '隐藏密码' : '显示密码'}
-                onClick={() => setShow(!show)}
-              >
-                {show ? <EyeOff /> : <Eye />}
-              </Button>
-            </div>
-          </div>
-          <Button
-            className="mt-2 h-10 w-full"
-            disabled={pending || wait > 0 || !username.trim() || !password}
+          <form
+            className="space-y-5"
+            onSubmit={async (e) => {
+              e.preventDefault()
+              if (pending || wait) return
+              setPending(true)
+              try {
+                await login(username.trim(), password)
+                navigate(next, { replace: true })
+              } catch (error) {
+                toast.error(
+                  error instanceof ApiError && error.code === 'unauthenticated'
+                    ? '用户名或密码错误'
+                    : problemMessage(error),
+                )
+                if (
+                  error instanceof ApiError &&
+                  error.code === 'login_rate_limited'
+                )
+                  setWait(error.retryAfter ?? 60)
+              } finally {
+                setPending(false)
+              }
+            }}
           >
-            {pending ? <Loader2 className="animate-spin" /> : null}
-            {wait ? wait + ' 秒后重试' : '登录'}
-            {!pending && <ArrowRight className="ml-auto" />}
-          </Button>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="username">用户名</Label>
+              <Input
+                id="username"
+                className="h-10"
+                autoComplete="username"
+                autoFocus
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">密码</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={show ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-10 pr-11"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute top-0.5 right-1"
+                  aria-label={show ? '隐藏密码' : '显示密码'}
+                  onClick={() => setShow(!show)}
+                >
+                  {show ? <EyeOff /> : <Eye />}
+                </Button>
+              </div>
+            </div>
+            <Button
+              className="mt-2 h-10 w-full"
+              disabled={pending || wait > 0 || !username.trim() || !password}
+            >
+              {pending ? <Loader2 className="animate-spin" /> : null}
+              {wait ? wait + ' 秒后重试' : '登录'}
+              {!pending && <ArrowRight className="ml-auto" />}
+            </Button>
+          </form>
           <p className="mt-8 text-center text-xs text-muted-foreground lg:hidden">
             仅供科研与教学参考，不构成医疗建议
           </p>

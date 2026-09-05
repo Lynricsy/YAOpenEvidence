@@ -155,7 +155,10 @@ export default function AccountPage() {
                   onChange={(event) => setConfirmation(event.target.value)}
                 />
                 {confirmation && !matches && (
-                  <p id="confirm-password-error" className="text-xs text-danger">
+                  <p
+                    id="confirm-password-error"
+                    className="text-xs text-danger"
+                  >
                     两次输入的新密码不一致
                   </p>
                 )}

@@ -1,13 +1,13 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from './store'
 import { Loader2, ShieldAlert } from 'lucide-react'
-import { EmptyState } from '@/components/EmptyState'
+import { EmptyState } from '@/components/common/EmptyState'
 export function RequireAuth({ admin = false }: { admin?: boolean }) {
   const { user, ready, isAdmin } = useAuth()
   const location = useLocation()
   if (!ready)
     return (
-      <div className="grid min-h-screen place-items-center">
+      <div className="grid min-h-dvh place-items-center">
         <Loader2 className="animate-spin" aria-label="正在验证会话" />
       </div>
     )

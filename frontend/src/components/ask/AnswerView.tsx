@@ -59,10 +59,7 @@ export function AnswerView({
     <article className="mx-auto w-full max-w-[760px] px-5 py-8 md:px-8 md:py-10">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <StatusBadge status={answer.status} />
-        <time
-          dateTime={answer.created_at}
-          title={dateTime(answer.created_at)}
-        >
+        <time dateTime={answer.created_at} title={dateTime(answer.created_at)}>
           {relativeTime(answer.created_at)}
         </time>
         {answer.n_papers != null && (

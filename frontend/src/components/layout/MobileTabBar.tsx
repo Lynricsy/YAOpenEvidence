@@ -17,7 +17,9 @@ export function MobileTabBar() {
   const [open, setOpen] = useState(false)
   const more = [
     { to: '/search', label: '查文献', icon: Search },
-    ...(isAdmin ? [{ to: '/admin/users', label: '用户管理', icon: Users }] : []),
+    ...(isAdmin
+      ? [{ to: '/admin/users', label: '用户管理', icon: Users }]
+      : []),
     { to: '/account', label: '账号设置', icon: Settings },
   ]
   return (

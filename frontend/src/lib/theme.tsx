@@ -35,9 +35,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
     localStorage.setItem('yaoe.theme', theme)
     // 仅在明暗真正切换时做视图过渡；首帧与同色重渲染直接落地，避免无谓的整页快照。
-    const changed = lastResolved.current !== null && lastResolved.current !== resolved
+    const changed =
+      lastResolved.current !== null && lastResolved.current !== resolved
     lastResolved.current = resolved
-    if (changed && document.startViewTransition) document.startViewTransition(apply)
+    if (changed && document.startViewTransition)
+      document.startViewTransition(apply)
     else apply()
   }, [theme, resolved])
   return (

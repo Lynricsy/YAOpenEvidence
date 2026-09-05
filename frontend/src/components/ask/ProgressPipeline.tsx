@@ -185,7 +185,9 @@ export function ProgressPipeline({
               <p
                 className={cn(
                   'text-xs md:mt-2',
-                  state ? 'font-medium text-foreground' : 'text-muted-foreground',
+                  state
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground',
                 )}
               >
                 {label}

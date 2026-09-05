@@ -228,7 +228,8 @@ export default function HistoryPage() {
                     const cancelling =
                       !!answer.job_id &&
                       (cancelRequested.has(answer.job_id) ||
-                        (cancel.isPending && cancel.variables === answer.job_id))
+                        (cancel.isPending &&
+                          cancel.variables === answer.job_id))
                     return (
                       <ListRow
                         key={answer.id}
@@ -332,7 +333,7 @@ export default function HistoryPage() {
             </>
           )
         )}
-        </div>
+      </div>
       <DeleteAnswerDialog
         id={deleteId}
         onClose={() => setDeleteId(null)}

@@ -219,7 +219,9 @@ function PaperReader({
                         </blockquote>
                         <div className="metadata">
                           {quote.sec && <span>{quote.sec}</span>}
-                          {quote.page != null && <span>第 {quote.page} 页</span>}
+                          {quote.page != null && (
+                            <span>第 {quote.page} 页</span>
+                          )}
                           {quote.pid != null && (
                             <Button
                               variant="outline"

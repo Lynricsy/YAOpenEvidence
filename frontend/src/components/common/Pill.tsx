@@ -2,12 +2,7 @@ import type { ComponentProps } from 'react'
 import { cn } from 'cn'
 
 export type Tone =
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'primary'
+  'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'primary'
 
 /**
  * 统一的语义色小标签。`tone` 通过 `data-tone` 映射到 `--tone`；

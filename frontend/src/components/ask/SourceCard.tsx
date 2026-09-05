@@ -102,9 +102,7 @@ export function SourceCard({
           {!compact && (
             <>
               <SourceBadge source={paper.source} />
-              {paper.relevance != null && (
-                <Pill>相关性 {paper.relevance}</Pill>
-              )}
+              {paper.relevance != null && <Pill>相关性 {paper.relevance}</Pill>}
               <Pill tone={verified === total ? 'success' : 'warning'}>
                 引文核实 {verified}/{total}
               </Pill>

@@ -20,11 +20,11 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 
 根 `pyproject.toml` 定义 uv workspace，成员为 `core/` 的 `picosgpt-core` 与 `backend/` 的 `yaoe-backend`。HTTP 层复用内核包，不另写一套检索或问答逻辑。
 
-前端开发：在 `frontend/` 执行 `pnpm install`、`pnpm gen:api`、`pnpm typecheck`、`pnpm dev`。Vite 默认监听 `http://localhost:5173`，将 `/v1` 同源代理到本机 API 的 `8765` 端口；生成的 API 类型随代码入库。生产构建使用 `pnpm build`。
+前端开发：在 `frontend/` 执行 `pnpm install`、`pnpm gen:api`、`pnpm typecheck`、`pnpm dev`。Vite 默认监听 `http://localhost:5173`，将 `/v1` 同源代理到本机 API 的 `8765` 端口，设置 `YAOE_API_PROXY` 可改写该代理目标（例如指向 Compose 映射出的端口）；生成的 API 类型随代码入库。生产构建使用 `pnpm build`。
 
-浏览器工作台包含文献筛选与实时问答、段落级引用和原文阅读、问答历史、账号设置、管理员用户管理，以及文献库、知识库和上游文献检索。鉴权采用 Bearer 会话；问答仅本人和管理员可见，文献与衍生知识库仍共享，不应提交敏感患者信息。
+浏览器工作台包含文献筛选与实时问答、段落级引用和原文阅读、问答历史、账号设置、管理员用户管理，以及文献库、知识库和上游文献检索。界面为「学术编辑风」：可折叠的全局左侧导航栏、提问页筛选列、大屏答案与原文并排分栏，标题与正文数字使用自托管的 Noto Serif SC 与 Inter（经 `@fontsource-variable` 随构建产物分发，运行时不请求第三方 CDN）。鉴权采用 Bearer 会话；问答仅本人和管理员可见，文献与衍生知识库仍共享，不应提交敏感患者信息。
 
-`pnpm format` 统一前端代码格式，`pnpm typecheck` 检查应用与 Vite 配置，`pnpm test` 运行引用、筛选与任务事件回归；`pnpm gen:api` 从入库 OpenAPI 生成类型，并保留服务端默认字段的可选性。修改 API 契约后需要重新生成。明暗主题默认跟随系统；筛选和手动主题设置保存在当前浏览器。
+`pnpm format` 统一前端代码格式，`pnpm typecheck` 检查应用与 Vite 配置，`pnpm test` 运行引用、筛选与任务事件回归；`pnpm gen:api` 从入库 OpenAPI 生成类型，并保留服务端默认字段的可选性。修改 API 契约后需要重新生成。明暗主题默认跟随系统；筛选、手动主题、侧边栏折叠状态与阅读器分栏宽度保存在当前浏览器。
 
 ## 架构
 
