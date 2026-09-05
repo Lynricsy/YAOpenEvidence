@@ -81,10 +81,9 @@ export default function LibraryPage() {
                     {paper.title || paper.key}
                   </Link>
                   <p className="metadata break-words">
-                    {paper.authors}
-                    {paper.authors && ' · '}
-                    <i>{paper.journal}</i>
-                    {paper.year && ' (' + paper.year + ')'}
+                    {paper.authors && <span>{paper.authors}</span>}
+                    {paper.journal && <i>{paper.journal}</i>}
+                    {paper.year && <span>{paper.year}</span>}
                   </p>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <RankBadge quartile={paper.quartile} />

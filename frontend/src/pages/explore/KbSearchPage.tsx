@@ -270,12 +270,11 @@ export default function KbSearchPage() {
                   )}
                   <p className="break-words text-sm font-medium">{hit.title}</p>
                   <p className="metadata break-words">
-                    {hit.authors}
-                    {hit.authors && ' · '}
-                    <i>{hit.journal}</i>
-                    {hit.year && ' (' + hit.year + ')'}
+                    {hit.authors && <span>{hit.authors}</span>}
+                    {hit.journal && <i>{hit.journal}</i>}
+                    {hit.year && <span>{hit.year}</span>}
                   </p>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <RankBadge quartile={hit.quartile} />
                     <SourceBadge source={hit.source} />
                     <span className="metadata">

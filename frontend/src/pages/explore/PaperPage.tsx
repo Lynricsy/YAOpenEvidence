@@ -65,12 +65,12 @@ export default function PaperPage() {
               <h1 className="break-words font-serif text-[22px] font-semibold leading-snug md:text-2xl">
                 {paper.data.title || key}
               </h1>
-              <p className="metadata mt-3 break-words">{paper.data.authors}</p>
-              <p className="metadata">
-                <i>{paper.data.journal}</i>
-                {paper.data.year && ' (' + paper.data.year + ')'}
+              <p className="metadata mt-3 break-words">
+                {paper.data.authors && <span>{paper.data.authors}</span>}
+                {paper.data.journal && <i>{paper.data.journal}</i>}
+                {paper.data.year && <span>{paper.data.year}</span>}
               </p>
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 <RankBadge quartile={paper.data.quartile} />
                 <SourceBadge source={paper.data.source} />
                 {paper.data.types?.map((type) => (
@@ -79,7 +79,9 @@ export default function PaperPage() {
                   </Pill>
                 ))}
               </div>
-              <PaperLinks pmid={paper.data.pmid} doi={paper.data.doi} />
+              <div className="mt-3">
+                <PaperLinks pmid={paper.data.pmid} doi={paper.data.doi} />
+              </div>
             </header>
             <Tabs value={tab} onValueChange={setTab} className="mt-6 min-w-0">
               <TabsListUnderline>

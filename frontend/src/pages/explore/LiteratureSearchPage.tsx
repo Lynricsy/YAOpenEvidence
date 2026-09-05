@@ -244,7 +244,7 @@ export default function LiteratureSearchPage() {
               </SelectContent>
             </Select>
             <Select value={limit} onValueChange={setLimit}>
-              <SelectTrigger aria-label="条数" className="h-10 md:w-24">
+              <SelectTrigger aria-label="条数" className="h-10 w-full md:w-24">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
