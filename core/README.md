@@ -74,6 +74,8 @@ cd <项目根>              # 本仓库为 core/
 原子知识 = 模型从全文抽出的一句话事实（含人群/干预/对照/结局/数字，中英双语），每条带来源段落 `pid` 和逐字 `quote`，并经过同样的核实。
 所有事实和段落向量化后追加到 `kb/`（bge-m3 embedding，模型放在 `models/BAAI/bge-m3`；没有模型时退化为哈希词袋向量）。
 
+索引保存为单个 `kb/index.npz` 快照，旧三文件索引会在下次入库时迁移。CLI 与 HTTP worker 共用 `kb.lock`，串行执行增量写入和重建；重建期间检索仍可读取完整的旧代。共享目录与文件锁的部署要求见[项目说明](../README.md#cli-与-api-共存)。
+
 ```bash
 ./PICOSGpt kb search "SGLT2 HFpEF 心衰住院"     # 语义检索（中英文均可）
 ./PICOSGpt kb search "..." --kind paragraph      # 只搜原文段落

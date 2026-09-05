@@ -12,24 +12,25 @@ from starlette.concurrency import run_in_threadpool
 class KbService:
     """共享 KnowledgeStore，避免为每次请求重复加载昂贵的 Embedder。
 
-    worker 会用一次 rename 换掉整份索引（kb/index.npz），因此按该文件的 mtime
-    感知新索引，并在原实例上重载，保留已经加载的 Embedder。旧的三文件布局
-    仍受支持，此时退回看 meta.jsonl。
+    worker 一次 rename 换代，按 inode、mtime_ns、size 感知新索引。
+    原实例只交换快照引用，活动检索继续持有旧代，Embedder 始终复用。
+    旧三文件布局退回观察 meta.jsonl。
     """
 
     def __init__(self) -> None:
         self._store: KnowledgeStore | None = None
-        self._mtime: float | None = None
+        self._mtime: tuple[int, int, int] | None = None
         self._lock = threading.Lock()
 
     @staticmethod
-    def _index_mtime() -> float:
+    def _index_mtime() -> tuple[int, int, int]:
         for name in (INDEX_FILE, "meta.jsonl"):
             try:
-                return os.path.getmtime(os.path.join(KB_DIR, name))
+                stat = os.stat(os.path.join(KB_DIR, name))
+                return stat.st_ino, stat.st_mtime_ns, stat.st_size
             except FileNotFoundError:
                 continue
-        return 0.0
+        return 0, 0, 0
 
     def get_store(self) -> KnowledgeStore:
         with self._lock:

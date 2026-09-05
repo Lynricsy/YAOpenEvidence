@@ -12,3 +12,6 @@ smk_*.zip
 var/
 backend/api_keys.toml
 .env
+
+# 知识库跨进程写锁（运行期间不得删除）
+core/kb.lock

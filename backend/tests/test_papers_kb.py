@@ -84,3 +84,53 @@ def test_journal_rank_requires_query(client):
     response = client.get("/v1/journals/rank", headers=auth(READ_KEY))
     assert response.status_code == 422
     assert response.json()["code"] == "validation_error"
+
+
+def test_cached_search_survives_same_mtime_generation_change(tmp_path, monkeypatch):
+    import asyncio
+    import os
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    import knowledge_store as ks
+    from app.services import kb as service_module
+
+    class Embedder:
+        name = "test-cache"
+
+        def encode(self, texts):
+            return ks.np.array([[1.0, 0.0] for _ in texts], dtype="float32")
+
+    path = tmp_path / ks.INDEX_FILE
+    info = {"embedder": "test-cache", "dim": 2}
+    ks.write_index(str(path), [{"pmid": "1001", "kind": "paragraph"}],
+                   ks.np.array([[1.0, 0.0]], dtype="float32"), info)
+    monkeypatch.setattr(service_module, "KB_DIR", str(tmp_path))
+    embedder = Embedder()
+    store = ks.KnowledgeStore(str(tmp_path), embedder)
+    service = service_module.KbService()
+    service._store = store
+    service._mtime = service._index_mtime()
+    scored, resume = threading.Event(), threading.Event()
+    real_argsort = ks.np.argsort
+
+    def gated_argsort(scores):
+        scored.set()
+        assert resume.wait(10)
+        return real_argsort(scores)
+
+    monkeypatch.setattr(ks.np, "argsort", gated_argsort)
+    with ThreadPoolExecutor() as pool:
+        result = pool.submit(asyncio.run, service.search("query"))
+        try:
+            assert scored.wait(10)
+            old_stat = path.stat()
+            ks.write_index(str(path), [{"pmid": "2001", "kind": "paragraph"}],
+                           ks.np.array([[0.0, 1.0]], dtype="float32"), info)
+            os.utime(path, ns=(old_stat.st_atime_ns, old_stat.st_mtime_ns))
+            assert service.stats()["papers"] == 1
+        finally:
+            resume.set()
+        assert result.result(timeout=10)[0]["pmid"] == "1001"
+    assert asyncio.run(service.search("query"))[0]["pmid"] == "2001"
+    assert service.get_store().embedder is embedder

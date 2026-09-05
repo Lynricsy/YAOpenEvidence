@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import json
 import shutil
+import multiprocessing
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -49,14 +52,14 @@ def _staging_leftovers(kb_dir: Path) -> list[Path]:
 
 def test_cancelled_reindex_leaves_live_index_intact(kb: Path):
     before = _live(kb)
-    calls = {"n": 0}
+    cancel = threading.Event()
 
-    def cancel_on_second() -> bool:
-        calls["n"] += 1
-        return calls["n"] > 1
+    def progress(event):
+        if event.get("type") == "progress" and event.get("current") == 1:
+            cancel.set()
 
     with pytest.raises(ks.ReindexCancelled):
-        ks.reindex(should_cancel=cancel_on_second)
+        ks.reindex(emit=progress, should_cancel=cancel.is_set)
 
     assert _live(kb) == before
     assert _staging_leftovers(kb) == []
@@ -117,7 +120,7 @@ def test_failed_promote_keeps_previous_generation(kb: Path, monkeypatch):
     real_replace = ks.os.replace
 
     def fail_on_promote(src, dst):
-        if str(dst).endswith(ks.INDEX_FILE):
+        if str(dst) == str(kb / ks.INDEX_FILE):
             raise OSError("power loss during rename")
         return real_replace(src, dst)
 
@@ -134,14 +137,11 @@ def test_failed_promote_keeps_previous_generation(kb: Path, monkeypatch):
 def test_failed_snapshot_write_keeps_previous_generation(kb: Path, monkeypatch):
     """写快照途中崩溃（写到一半的 tmp）不影响线上索引，也不留半成品。"""
     before = _live(kb)
-    calls = {"n": 0}
     real_savez = ks.np.savez
 
     def die_midway(f, **arrays):
-        calls["n"] += 1
         real_savez(f, **arrays)             # 先写点东西进去，模拟半成品
-        if calls["n"] >= 2:
-            raise OSError("disk full")
+        raise OSError("disk full")
 
     monkeypatch.setattr(ks.np, "savez", die_midway)
     with pytest.raises(OSError):
@@ -153,26 +153,230 @@ def test_failed_snapshot_write_keeps_previous_generation(kb: Path, monkeypatch):
     assert _staging_leftovers(kb) == []
 
 
-def test_index_is_a_single_file(kb: Path):
-    """多文件布局无法原子更新，因此线上索引必须只有一个权威文件。"""
-    assert sorted(p.name for p in kb.iterdir()) == [ks.INDEX_FILE]
-
-
-def test_legacy_three_file_layout_is_read_then_migrated(tmp_path, monkeypatch):
+def test_legacy_three_file_layout_is_read_then_migrated(tmp_path):
     """已有部署的 kb/ 是旧布局，必须能直接读，并在下一次保存时自动迁移。"""
     kb_dir = tmp_path / "kb"
     kb_dir.mkdir()
     meta = [{"pmid": "1", "kind": "fact", "pid": 1, "text": "legacy fact"}]
     (kb_dir / "meta.jsonl").write_text(json.dumps(meta[0], ensure_ascii=False) + "\n", encoding="utf-8")
-    ks.np.save(kb_dir / "vectors.npy", ks.np.zeros((1, 4), dtype="float32"))
-    (kb_dir / "info.json").write_text(json.dumps({"embedder": "hash-bow-v1", "dim": 4}), encoding="utf-8")
+    ks.np.save(kb_dir / "vectors.npy", ks.np.array([[1.0, 0.0]], dtype="float32"))
+    (kb_dir / "info.json").write_text(
+        json.dumps({"embedder": _TinyEmbedder.name, "dim": 2}), encoding="utf-8")
 
-    store = ks.KnowledgeStore(kb_dir=str(kb_dir))
-    assert store.stats()["items"] == 1
-    assert store.stats()["embedder"] == "hash-bow-v1"
-    assert ks.index_info(str(kb_dir))["items"] == 1     # 探针也认旧布局
+    store = ks.KnowledgeStore(kb_dir=str(kb_dir), embedder=_TinyEmbedder())
+    assert store.search("legacy")[0]["text"] == "legacy fact"
+    assert ks.index_info(str(kb_dir))["items"] == 1
 
-    store._save()
-    assert (kb_dir / ks.INDEX_FILE).exists()
-    assert sorted(p.name for p in kb_dir.iterdir()) == [ks.INDEX_FILE]
-    assert ks.KnowledgeStore(kb_dir=str(kb_dir)).meta == meta
+    _add(store, "2")
+    restored = ks.KnowledgeStore(kb_dir=str(kb_dir), embedder=_TinyEmbedder())
+    assert {hit["pmid"] for hit in restored.search("query")} == {"1", "2"}
+    assert restored.stats()["papers"] == 2
+    assert all(not (kb_dir / name).exists() for name in ks.LEGACY_FILES)
+
+
+class _TinyEmbedder:
+    name = "test-two-dimensional"
+
+    def encode(self, texts):
+        return ks.np.array([[1.0, 0.0] for _ in texts], dtype="float32")
+
+
+def _add(store, pmid):
+    return store.add_paper({"pmid": pmid, "title": pmid},
+                           [{"id": 1, "sec": "", "text": pmid}], [])
+
+
+def _process_add(kb_dir, pmid, ready, proceed):
+    store = ks.KnowledgeStore(kb_dir, _TinyEmbedder())
+    ready.set()
+    assert proceed.wait(10)
+    _add(store, pmid)
+
+
+def test_preloaded_writers_preserve_both_papers(tmp_path):
+    first = ks.KnowledgeStore(str(tmp_path / "kb"), _TinyEmbedder())
+    second = ks.KnowledgeStore(first.dir, _TinyEmbedder())
+    _add(first, "1001")
+    _add(second, "2001")
+    assert _pmids(Path(first.dir)) == {"1001", "2001"}
+
+
+def test_process_writers_reload_latest_baseline(tmp_path):
+    ctx = multiprocessing.get_context("spawn")
+    proceed = ctx.Event()
+    ready = [ctx.Event(), ctx.Event()]
+    kb_dir = str(tmp_path / "kb")
+    processes = [ctx.Process(target=_process_add, args=(kb_dir, pmid, signal, proceed))
+                 for pmid, signal in zip(("1001", "2001"), ready)]
+    try:
+        for process in processes:
+            process.start()
+        assert all(signal.wait(10) for signal in ready)
+        proceed.set()
+        for process in processes:
+            process.join(15)
+            assert process.exitcode == 0
+        assert _pmids(Path(kb_dir)) == {"1001", "2001"}
+    finally:
+        proceed.set()
+        for process in processes:
+            if process.is_alive():
+                process.terminate()
+            process.join(5)
+
+
+def test_search_keeps_metadata_from_scored_generation(tmp_path, monkeypatch):
+    store = ks.KnowledgeStore(str(tmp_path / "kb"), _TinyEmbedder())
+    _add(store, "1001")
+    scored, resume = threading.Event(), threading.Event()
+    real_argsort = ks.np.argsort
+
+    def gated_argsort(scores):
+        scored.set()
+        assert resume.wait(10)
+        return real_argsort(scores)
+
+    monkeypatch.setattr(ks.np, "argsort", gated_argsort)
+    with ThreadPoolExecutor() as pool:
+        result = pool.submit(store.search, "query")
+        try:
+            assert scored.wait(10)
+            ks.write_index(store.index_path, [{"pmid": "2001", "kind": "paragraph"}],
+                           ks.np.array([[0.0, 1.0]], dtype="float32"), store.info)
+            store._load()
+        finally:
+            resume.set()
+        assert result.result(timeout=10)[0]["pmid"] == "1001"
+    assert store.search("query")[0]["pmid"] == "2001"
+
+
+def test_reindex_and_waiting_add_preserve_new_paper(kb, monkeypatch):
+    entered, resume, waiting = threading.Event(), threading.Event(), threading.Event()
+    real_glob = ks.glob_dirs
+    real_flock = ks.fcntl.flock
+    writer = ks.KnowledgeStore(str(kb))
+
+    def gated_glob():
+        entered.set()
+        assert resume.wait(10)
+        return real_glob()
+
+    def observed_flock(fd, operation):
+        try:
+            return real_flock(fd, operation)
+        except BlockingIOError:
+            waiting.set()
+            raise
+
+    monkeypatch.setattr(ks, "glob_dirs", gated_glob)
+    monkeypatch.setattr(ks.fcntl, "flock", observed_flock)
+    with ThreadPoolExecutor() as pool:
+        rebuild = pool.submit(ks.reindex)
+        try:
+            assert entered.wait(10)
+            add = pool.submit(_add, writer, "3001")
+            assert waiting.wait(10)
+        finally:
+            resume.set()
+        rebuild.result(timeout=20)
+        add.result(timeout=20)
+    assert _pmids(kb) == {"39133485", "20000001", "3001"}
+
+
+@pytest.mark.parametrize("empty", [False, True])
+def test_cancel_before_publish_preserves_old_generation(kb, empty):
+    before = (kb / ks.INDEX_FILE).read_bytes()
+    if empty:
+        for directory in Path(ks.LIB_DIR).iterdir():
+            shutil.rmtree(directory)
+    cancel = threading.Event()
+
+    def emit(event):
+        if (empty and event["type"] == "stage") or (
+                event["type"] == "progress" and event["current"] == event["total"]):
+            cancel.set()
+
+    with pytest.raises(ks.ReindexCancelled):
+        ks.reindex(emit=emit, should_cancel=cancel.is_set)
+    assert (kb / ks.INDEX_FILE).read_bytes() == before
+    assert _staging_leftovers(kb) == []
+
+
+def test_cancel_while_waiting_for_writer_lock(kb, monkeypatch):
+    before = (kb / ks.INDEX_FILE).read_bytes()
+    waiting, cancel = threading.Event(), threading.Event()
+    real_flock = ks.fcntl.flock
+
+    def observed_flock(fd, operation):
+        try:
+            return real_flock(fd, operation)
+        except BlockingIOError:
+            waiting.set()
+            raise
+
+    monkeypatch.setattr(ks.fcntl, "flock", observed_flock)
+    with ThreadPoolExecutor() as pool, ks._writer_lock(str(kb)):
+        rebuild = pool.submit(ks.reindex, should_cancel=cancel.is_set)
+        assert waiting.wait(10)
+        cancel.set()
+        with pytest.raises(ks.ReindexCancelled):
+            rebuild.result(timeout=10)
+    assert (kb / ks.INDEX_FILE).read_bytes() == before
+
+
+def test_library_save_finishes_before_reindex_reads(kb, monkeypatch):
+    writing, resume, waiting = threading.Event(), threading.Event(), threading.Event()
+    real_dump, real_flock = ks.json.dump, ks.fcntl.flock
+
+    def gated_dump(value, file, **kwargs):
+        result = real_dump(value, file, **kwargs)
+        if file.name.endswith("paragraphs.json"):
+            writing.set()
+            assert resume.wait(10)
+        return result
+
+    def observed_flock(fd, operation):
+        try:
+            return real_flock(fd, operation)
+        except BlockingIOError:
+            waiting.set()
+            raise
+
+    monkeypatch.setattr(ks.json, "dump", gated_dump)
+    monkeypatch.setattr(ks.fcntl, "flock", observed_flock)
+    with ThreadPoolExecutor() as pool:
+        save = pool.submit(ks.save_to_library, {"pmid": "3001"},
+                           [{"id": 1, "sec": "", "text": "new paper"}], [], "")
+        try:
+            assert writing.wait(10)
+            rebuild = pool.submit(ks.reindex)
+            assert waiting.wait(10)
+        finally:
+            resume.set()
+        save.result(timeout=10)
+        rebuild.result(timeout=20)
+    assert _pmids(kb) == {"39133485", "20000001", "3001"}
+
+
+def test_cancel_during_last_encode_cannot_publish_when_thread_resumes(kb, monkeypatch):
+    before = (kb / ks.INDEX_FILE).read_bytes()
+    shutil.rmtree(Path(ks.LIB_DIR) / "20000001")
+    encoding, resume, cancel = threading.Event(), threading.Event(), threading.Event()
+    real_encode = ks.Embedder.encode
+
+    def gated_encode(self, texts):
+        encoding.set()
+        assert resume.wait(10)
+        return real_encode(self, texts)
+
+    monkeypatch.setattr(ks.Embedder, "encode", gated_encode)
+    with ThreadPoolExecutor() as pool:
+        rebuild = pool.submit(ks.reindex, should_cancel=cancel.is_set)
+        try:
+            assert encoding.wait(10)
+            cancel.set()
+        finally:
+            resume.set()
+        with pytest.raises(ks.ReindexCancelled):
+            rebuild.result(timeout=20)
+    assert (kb / ks.INDEX_FILE).read_bytes() == before

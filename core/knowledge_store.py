@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import fcntl
 import hashlib
 import json
 import math
@@ -31,6 +32,8 @@ import re
 import shutil
 import sys
 import tempfile
+import time
+from contextlib import contextmanager, nullcontext
 from typing import Callable, Optional
 
 import numpy as np
@@ -363,6 +366,28 @@ def index_info(kb_dir: str = KB_DIR) -> Optional[dict]:
     return {**info, "items": items}
 
 
+
+@contextmanager
+def _writer_lock(kb_dir: str, should_cancel: Callable[[], bool] = lambda: False):
+    """同一路径的线程、进程共用锁；锁文件不能随索引换代或清理而删除。"""
+    path = os.path.realpath(kb_dir) + ".lock"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a+b") as lock:
+        while True:
+            if should_cancel():
+                raise ReindexCancelled("cancelled while waiting for knowledge store")
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                time.sleep(0.05)
+        try:
+            if should_cancel():
+                raise ReindexCancelled("cancelled before rebuilding")
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
 # ====================================================================== store
 class KnowledgeStore:
     """向量库。整份索引是**一个文件**（`kb/index.npz`）。
@@ -380,10 +405,22 @@ class KnowledgeStore:
         self.index_path = os.path.join(kb_dir, INDEX_FILE)
         self._legacy = tuple(os.path.join(kb_dir, n) for n in LEGACY_FILES)
         self._embedder = embedder
-        self.meta: list[dict] = []
-        self.vecs: Optional[np.ndarray] = None
-        self.info = {"embedder": None, "dim": None}
+        self._snapshot: tuple[list[dict], Optional[np.ndarray], dict] = (
+            [], None, {"embedder": None, "dim": None})
+        self._staging = False
         self._load()
+
+    @property
+    def meta(self) -> list[dict]:
+        return self._snapshot[0]
+
+    @property
+    def vecs(self) -> Optional[np.ndarray]:
+        return self._snapshot[1]
+
+    @property
+    def info(self) -> dict:
+        return self._snapshot[2]
 
     @property
     def embedder(self) -> Embedder:
@@ -393,40 +430,48 @@ class KnowledgeStore:
 
     def _load(self) -> None:
         if os.path.exists(self.index_path):
-            self.meta, self.vecs, self.info = read_index(self.index_path)
+            self._snapshot = read_index(self.index_path)
             return
         self._load_legacy()
 
     def _load_legacy(self) -> None:
         """读旧的三文件布局，让已有 kb/ 无需先重建也能用；下一次保存即完成迁移。"""
         meta_path, vec_path, info_path = self._legacy
-        self.meta, self.vecs = [], None
-        self.info = {"embedder": None, "dim": None}
+        meta, vecs = [], None
+        info = {"embedder": None, "dim": None}
         if os.path.exists(meta_path):
             with open(meta_path, encoding="utf-8") as f:
-                self.meta = [json.loads(l) for l in f if l.strip()]
+                meta = [json.loads(l) for l in f if l.strip()]
         if os.path.exists(vec_path):
-            self.vecs = np.load(vec_path)
+            vecs = np.load(vec_path)
         if os.path.exists(info_path):
             with open(info_path, encoding="utf-8") as f:
-                self.info = json.load(f)
-        if self.vecs is not None and len(self.meta) != len(self.vecs):
-            log(f"[kb] WARNING meta/vector length mismatch ({len(self.meta)} vs {len(self.vecs)}); run `reindex`")
-            n = min(len(self.meta), len(self.vecs))
-            self.meta, self.vecs = self.meta[:n], self.vecs[:n]
+                info = json.load(f)
+        if vecs is not None and len(meta) != len(vecs):
+            log(f"[kb] WARNING meta/vector length mismatch ({len(meta)} vs {len(vecs)}); run `reindex`")
+            n = min(len(meta), len(vecs))
+            meta, vecs = meta[:n], vecs[:n]
+        self._snapshot = meta, vecs, info
 
     def indexed_pmids(self) -> set[str]:
         return {m["pmid"] for m in self.meta if m.get("pmid")}
 
     def add_paper(self, meta: dict, paras: list[dict], facts: list[dict], replace: bool = True) -> int:
         """Index one paper's facts and paragraphs. Returns number of items added."""
+        with nullcontext() if self._staging else _writer_lock(self.dir):
+            if not self._staging:
+                self._load()
+            return self._add_paper(meta, paras, facts, replace)
+
+    def _add_paper(self, meta: dict, paras: list[dict], facts: list[dict], replace: bool) -> int:
         pmid = str(meta.get("pmid") or meta.get("doi") or meta.get("title"))
-        if self.info.get("embedder") and self.info["embedder"] != self.embedder.name:
-            log(f"[kb] WARNING index built with {self.info['embedder']} but current embedder is {self.embedder.name}; run `reindex`")
+        old_meta, old_vecs, info = self._snapshot
+        if info.get("embedder") and info["embedder"] != self.embedder.name:
+            log(f"[kb] WARNING index built with {info['embedder']} but current embedder is {self.embedder.name}; run `reindex`")
         if replace and pmid in self.indexed_pmids():
-            keep = [i for i, m in enumerate(self.meta) if m.get("pmid") != pmid]
-            self.meta = [self.meta[i] for i in keep]
-            self.vecs = self.vecs[keep] if self.vecs is not None and len(keep) else None
+            keep = [i for i, m in enumerate(old_meta) if m.get("pmid") != pmid]
+            old_meta = [old_meta[i] for i in keep]
+            old_vecs = old_vecs[keep] if old_vecs is not None and len(keep) else None
         base = {k: meta.get(k) for k in ("pmid", "doi", "pmcid", "title", "year", "journal", "quartile", "source", "authors")}
         items, texts = [], []
         for fct in facts:
@@ -441,19 +486,15 @@ class KnowledgeStore:
         if not items:
             return 0
         v = self.embedder.encode(texts)
-        self.vecs = v if self.vecs is None or len(self.vecs) == 0 else np.vstack([self.vecs, v])
-        self.meta.extend(items)
-        self.info = {"embedder": self.embedder.name, "dim": int(v.shape[1])}
-        self._save()
+        vecs = v if old_vecs is None or len(old_vecs) == 0 else np.vstack([old_vecs, v])
+        snapshot = (old_meta + items, vecs, {"embedder": self.embedder.name, "dim": int(v.shape[1])})
+        if not self._staging:
+            self._persist(snapshot)
+        self._snapshot = snapshot
         return len(items)
 
-    def _save(self) -> None:
-        """把整代索引写成一个文件，再一次 os.replace 换上去。
-
-        只有一次 rename，所以读者要么看到上一代、要么看到这一代，不存在
-        「向量已换、元数据没换」的中间态（那会让向量对错论文）。
-        """
-        write_index(self.index_path, self.meta, self.vecs, self.info)
+    def _persist(self, snapshot: tuple[list[dict], Optional[np.ndarray], dict]) -> None:
+        write_index(self.index_path, *snapshot)
         for path in self._legacy:          # 迁移完成：旧布局留着只会误导读者
             try:
                 os.remove(path)
@@ -461,14 +502,15 @@ class KnowledgeStore:
                 pass
 
     def search(self, query: str, top_k: int = 8, kind: str = "", pmids: Optional[set[str]] = None) -> list[dict]:
-        if self.vecs is None or not len(self.meta):
+        meta, vecs, _ = self._snapshot
+        if vecs is None or not len(meta):
             return []
         q = self.embedder.encode([query])[0]
-        scores = self.vecs @ q
+        scores = vecs @ q
         order = np.argsort(-scores)
         out = []
         for i in order:
-            m = self.meta[int(i)]
+            m = meta[int(i)]
             if kind and m["kind"] != kind:
                 continue
             if pmids and m.get("pmid") not in pmids:
@@ -479,15 +521,22 @@ class KnowledgeStore:
         return out
 
     def stats(self) -> dict:
+        meta, _, info = self._snapshot
         kinds: dict[str, int] = {}
-        for m in self.meta:
+        for m in meta:
             kinds[m["kind"]] = kinds.get(m["kind"], 0) + 1
         # 计算值优先于快照里记的 items：后者只是给健康检查省一次全量加载
-        return {**self.info, "items": len(self.meta), "papers": len(self.indexed_pmids()), "by_kind": kinds}
+        return {**info, "items": len(meta), "papers": len({m["pmid"] for m in meta if m.get("pmid")}), "by_kind": kinds}
 
 
 # ====================================================================== library (persistent per-paper files)
 def save_to_library(meta: dict, paras: list[dict], facts: list[dict], fulltext_md: str) -> str:
+    # 保存四份文献文件时阻止重建读取未完成的文献。
+    with _writer_lock(KB_DIR):
+        return _save_to_library(meta, paras, facts, fulltext_md)
+
+
+def _save_to_library(meta: dict, paras: list[dict], facts: list[dict], fulltext_md: str) -> str:
     key = re.sub(r"[^A-Za-z0-9._-]+", "_", str(meta.get("pmid") or meta.get("doi") or meta.get("title"))[:80])
     d = os.path.join(LIB_DIR, key)
     os.makedirs(d, exist_ok=True)
@@ -527,10 +576,17 @@ def reindex(emit: Callable[[dict], None] = lambda e: None,
     `emit` 收结构化进度事件（供 HTTP worker 推给 SSE），`should_cancel` 在
     逐篇边界轮询。
     """
+    # 锁覆盖目录视图、编码、暂存和发布；新增写者等待后必须重新加载基线。
+    with _writer_lock(KB_DIR, should_cancel):
+        return _reindex_locked(emit, should_cancel)
+
+
+def _reindex_locked(emit: Callable[[dict], None], should_cancel: Callable[[], bool]) -> tuple[int, int]:
     os.makedirs(KB_DIR, exist_ok=True)
     staging = tempfile.mkdtemp(prefix=".kb-reindex-", dir=os.path.dirname(os.path.abspath(KB_DIR)))
     try:
         store = KnowledgeStore(kb_dir=staging)
+        store._staging = True
         dirs = sorted(glob_dirs())
         emit({"type": "stage", "stage": "reindex", "status": "started", "detail": {"papers": len(dirs)}})
         n, done = 0, 0
@@ -547,7 +603,12 @@ def reindex(emit: Callable[[dict], None] = lambda e: None,
             done += 1
             emit({"type": "progress", "stage": "reindex", "current": i, "total": len(dirs),
                   "pmid": str(meta.get("pmid") or ""), "title": str(meta.get("title") or "")})
-        _promote_index(staging, n)
+        if should_cancel():
+            raise ReindexCancelled(f"cancelled after {done}/{len(dirs)} papers")
+        store._persist(store._snapshot)
+        if should_cancel():
+            raise ReindexCancelled("cancelled before publishing")
+        _promote_index(staging)
         emit({"type": "stage", "stage": "reindex", "status": "finished",
               "detail": {"items": n, "papers": done}})
         return n, done
@@ -555,16 +616,9 @@ def reindex(emit: Callable[[dict], None] = lambda e: None,
         shutil.rmtree(staging, ignore_errors=True)
 
 
-def _promote_index(staging: str, n_items: int) -> None:
-    """换代：一次 rename。library 为空时如实清空线上索引（含旧布局残留）。"""
+def _promote_index(staging: str) -> None:
+    """换代：空库也发布完整快照，避免删除文件与活动加载之间的竞态。"""
     live = os.path.join(KB_DIR, INDEX_FILE)
-    if not n_items:
-        for path in (live, *(os.path.join(KB_DIR, n) for n in LEGACY_FILES)):
-            try:
-                os.remove(path)
-            except FileNotFoundError:
-                pass
-        return
     os.replace(os.path.join(staging, INDEX_FILE), live)
     for name in LEGACY_FILES:              # 迁移完成，旧布局不再是事实来源
         try:
