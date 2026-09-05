@@ -28,6 +28,8 @@ def _rank_info(info: dict | None) -> RankInfo | None:
 
 
 def _upstream_error(exc: lit.UpstreamError) -> ApiError:
+    if isinstance(exc, lit.UpstreamNotFound):
+        return ApiError(404, "not_found", f"{exc.source}: {exc.detail}")
     return ApiError(502, "upstream_unavailable", f"{exc.source}: {exc.detail}")
 
 
@@ -206,19 +208,24 @@ def resolve(ident: str) -> LiteratureRecord:
         return _pubmed_record(pmid, ident)
 
     if ident.lower().startswith("10."):
+        s2_error = None
         try:
             paper = lit.s2_paper(f"DOI:{ident}")
             if paper.get("paperId"):
                 return from_s2(paper)
-        except lit.UpstreamError:
+        except lit.UpstreamNotFound:
             pass
+        except lit.UpstreamError as exc:
+            s2_error = exc
         try:
             pmcid, _ = lit.resolve_pmcid(ident)
             pmid = lit.pmcid_to_pmid(pmcid) if pmcid else ""
-        except lit.UpstreamError:
-            pmid = ""
+        except lit.UpstreamError as exc:
+            raise _upstream_error(exc) from exc
         if pmid:
             return _pubmed_record(pmid, ident)
+        if s2_error is not None:
+            raise _upstream_error(s2_error) from s2_error
         raise ApiError(404, "not_found", f"literature '{ident}' not found")
 
     try:

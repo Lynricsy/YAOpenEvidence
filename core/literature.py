@@ -58,6 +58,10 @@ class UpstreamError(Exception):
         self.detail = detail
 
 
+class UpstreamNotFound(UpstreamError):
+    """上游明确返回 404，与暂时不可用分开处理。"""
+
+
 # ---------------------------------------------------------------- Semantic Scholar
 def headers() -> dict[str, str]:
     h = {"User-Agent": "PICOSGpt-medlit-codex/1.0"}
@@ -86,7 +90,7 @@ def s2_get(path: str, params: dict[str, Any]) -> dict:
             delay *= 2
             continue
         if r.status_code == 404:
-            raise UpstreamError("semantic_scholar", "not found")
+            raise UpstreamNotFound("semantic_scholar", "not found")
         raise UpstreamError("semantic_scholar", f"HTTP {r.status_code}: {r.text[:300]}")
     raise UpstreamError("semantic_scholar", f"gave up after retries ({last}); rate limited, retry later")
 
@@ -168,6 +172,8 @@ def s2_recommendations(paper_id: str, limit: int = 10) -> list[dict]:
             time.sleep(delay)
             delay *= 2
             continue
+        if r.status_code == 404:
+            raise UpstreamNotFound("semantic_scholar", "not found")
         raise UpstreamError("semantic_scholar", f"HTTP {r.status_code}: {r.text[:200]}")
     raise UpstreamError("semantic_scholar", f"gave up after retries ({last}); rate limited, retry later")
 
@@ -179,27 +185,35 @@ def s2_authors(name: str, limit: int = 5) -> list[dict]:
 
 
 # ---------------------------------------------------------------- PubMed (NCBI E-utilities)
+def _get_optional(source: str, url: str, params: dict[str, Any]) -> Optional[httpx.Response]:
+    """仅真实 404 返回 None；暂时故障重试后保留异常语义。"""
+    delay = 1.0
+    last = ""
+    for attempt in range(3):
+        try:
+            r = httpx.get(url, params=params, timeout=TIMEOUT)
+        except httpx.HTTPError as exc:
+            last = f"network error: {exc}"
+        else:
+            if r.status_code == 200:
+                return r
+            if r.status_code == 404:
+                return None
+            last = f"HTTP {r.status_code}"
+            if r.status_code != 429 and not 500 <= r.status_code < 600:
+                raise UpstreamError(source, last)
+        if attempt < 2:
+            time.sleep(delay)
+            delay *= 2
+    raise UpstreamError(source, f"gave up after retries ({last})")
+
+
 def ncbi_get(path: str, params: dict[str, Any]) -> Optional[httpx.Response]:
-    """成功返回 Response，彻底失败返回 None（调用方决定是降级还是抛 UpstreamError）。"""
+    """成功返回 Response，404 返回 None，服务故障抛 UpstreamError。"""
     if NCBI_API_KEY:
         params = {**params, "api_key": NCBI_API_KEY}
     params = {**params, "tool": CONTACT_TOOL, "email": CONTACT_EMAIL}
-    delay = 1.0
-    for _ in range(3):
-        try:
-            r = httpx.get(f"{NCBI}/{path}", params=params, timeout=TIMEOUT)
-        except httpx.HTTPError:
-            time.sleep(delay)
-            delay *= 2
-            continue
-        if r.status_code == 200:
-            return r
-        if r.status_code in (429, 500, 502, 503):
-            time.sleep(delay)
-            delay *= 2
-            continue
-        return None
-    return None
+    return _get_optional("pubmed", f"{NCBI}/{path}", params)
 
 
 def pubmed_fetch_records(pmids: list[str]) -> list[dict]:
@@ -257,9 +271,9 @@ def pubmed_search_records(query: str, limit: int = 10, year_from: int = 0, year_
     term = query
     if ptypes:
         term = f"({term}) AND (" + " OR ".join(f'"{t}"[Publication Type]' for t in ptypes) + ")"
-    if zones or jwords:
-        limit = min(int(limit) * 4, 100)
-    params: dict[str, Any] = {"db": "pubmed", "term": term, "retmax": max(1, min(int(limit), 100)),
+    limit = max(1, min(int(limit), 100))
+    fetch_limit = min(limit * 4, 100) if zones or jwords else limit
+    params: dict[str, Any] = {"db": "pubmed", "term": term, "retmax": fetch_limit,
                               "sort": "relevance", "retmode": "json"}
     if year_from:
         params["mindate"] = str(year_from)
@@ -267,7 +281,7 @@ def pubmed_search_records(query: str, limit: int = 10, year_from: int = 0, year_
         params["datetype"] = "pdat"
     r = ncbi_get("esearch.fcgi", params)
     if r is None:
-        raise UpstreamError("pubmed", "search failed (network/rate limit)")
+        return 0, []
     js = r.json().get("esearchresult", {})
     ids = js.get("idlist") or []
     total = int(js.get("count") or 0)
@@ -278,19 +292,35 @@ def pubmed_search_records(query: str, limit: int = 10, year_from: int = 0, year_
         recs = [p for p in recs if any(w in p["journal"].lower() for w in jwords)]
     if zones:
         recs = [p for p in recs if jr.passes(jr.lookup(issn=p.get("issn", ""), title=p["journal"]), zones)]
-    return total, recs
+    return total, recs[:limit]
 
 
 # ---------------------------------------------------------------- Europe PMC
+def _epmc_results(query: str) -> list[dict]:
+    r = _get_optional("europepmc", f"{EPMC}/search",
+                      {"query": query, "format": "json", "resultType": "lite"})
+    if r is None:
+        return []
+    try:
+        return (r.json().get("resultList") or {}).get("result") or []
+    except ValueError as exc:
+        raise UpstreamError("europepmc", "invalid JSON response") from exc
+
+
+def _epmc_fulltext(pmcid: str) -> Optional[ET.Element]:
+    r = _get_optional("europepmc", f"{EPMC}/{pmcid}/fullTextXML", {})
+    if r is None:
+        return None
+    try:
+        return ET.fromstring(r.text)
+    except ET.ParseError as exc:
+        raise UpstreamError("europepmc", "invalid XML response") from exc
+
+
 def pmcid_to_pmid(pmcid: str) -> str:
     """PMC id（如 PMC9306514）-> PMID；映射不到返回 ''。"""
-    try:
-        r = httpx.get(f"{EPMC}/search", params={"query": f"PMCID:{pmcid}", "format": "json", "resultType": "lite"},
-                      timeout=TIMEOUT)
-        res = (r.json().get("resultList") or {}).get("result") or []
-        return (res[0].get("pmid") or "") if res else ""
-    except Exception:  # noqa: BLE001
-        return ""
+    res = _epmc_results(f"PMCID:{pmcid}")
+    return (res[0].get("pmid") or "") if res else ""
 
 
 def resolve_pmcid(ident: str) -> tuple[str, str]:
@@ -313,7 +343,7 @@ def resolve_pmcid(ident: str) -> tuple[str, str]:
         # Semantic Scholar id -> 先查它的 DOI/PMID
         try:
             ext = (s2_get(f"/paper/{ident}", {"fields": "externalIds"}) or {}).get("externalIds") or {}
-        except UpstreamError:
+        except UpstreamNotFound:
             ext = {}
         if ext.get("PubMedCentral"):
             return "PMC" + str(ext["PubMedCentral"]).replace("PMC", ""), ""
@@ -323,11 +353,7 @@ def resolve_pmcid(ident: str) -> tuple[str, str]:
             q = f'DOI:"{ext["DOI"]}"'
         else:
             return "", "could not map id to PubMed/DOI"
-    try:
-        r = httpx.get(f"{EPMC}/search", params={"query": q, "format": "json", "resultType": "lite"}, timeout=TIMEOUT)
-        res = (r.json().get("resultList") or {}).get("result") or []
-    except Exception as e:  # noqa: BLE001
-        return "", f"Europe PMC lookup failed: {e}"
+    res = _epmc_results(q)
     if not res:
         return "", "not found in Europe PMC"
     pmcid = res[0].get("pmcid") or ""
@@ -337,12 +363,7 @@ def resolve_pmcid(ident: str) -> tuple[str, str]:
 
 def epmc_citation(pmcid: str) -> str:
     """PMC 文章的一行书目信息（标题、作者、期刊、年份、各种 id）。"""
-    try:
-        r = httpx.get(f"{EPMC}/search", params={"query": f"PMCID:{pmcid}", "format": "json", "resultType": "lite"},
-                      timeout=TIMEOUT)
-        res = (r.json().get("resultList") or {}).get("result") or []
-    except Exception:  # noqa: BLE001
-        res = []
+    res = _epmc_results(f"PMCID:{pmcid}")
     if not res:
         return f"{pmcid}"
     a = res[0]
@@ -352,13 +373,9 @@ def epmc_citation(pmcid: str) -> str:
 
 def epmc_fulltext_sections(pmcid: str) -> list[tuple[str, str]]:
     """[(章节标题, 整段文本)]；没有 XML 全文时返回 []。"""
-    try:
-        r = httpx.get(f"{EPMC}/{pmcid}/fullTextXML", timeout=TIMEOUT)
-    except httpx.HTTPError:
+    root = _epmc_fulltext(pmcid)
+    if root is None:
         return []
-    if r.status_code != 200 or not r.text.strip().startswith("<"):
-        return []
-    root = ET.fromstring(r.text)
     sections: list[tuple[str, str]] = []
     abstract = root.find(".//abstract")
     if abstract is not None:
@@ -380,13 +397,9 @@ def epmc_fulltext_sections(pmcid: str) -> list[tuple[str, str]]:
 def epmc_fulltext_paragraphs(pmcid: str) -> list[tuple[str, list[str]]]:
     """同 epmc_fulltext_sections，但保留段落边界：[(章节路径, [段落, ...])]。
     嵌套 <sec> 标题用 ' / ' 连接；表格/图注也算段落。"""
-    try:
-        r = httpx.get(f"{EPMC}/{pmcid}/fullTextXML", timeout=TIMEOUT)
-    except httpx.HTTPError:
+    root = _epmc_fulltext(pmcid)
+    if root is None:
         return []
-    if r.status_code != 200 or not r.text.strip().startswith("<"):
-        return []
-    root = ET.fromstring(r.text)
     out: list[tuple[str, list[str]]] = []
 
     def txt(el: ET.Element) -> str:

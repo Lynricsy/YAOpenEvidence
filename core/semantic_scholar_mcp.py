@@ -143,8 +143,8 @@ def get_paper(paper_id: str) -> str:
         paper_id: Semantic Scholar paperId, or "DOI:10.xxx/..", "PMID:12345", "PMC1234567", "ARXIV:2101.00001".
     Returns abstract only. For the full text of an open-access paper use get_fulltext.
     """
-    paper_id = lit.norm_s2_id(paper_id)
     try:
+        paper_id = lit.norm_s2_id(paper_id)
         return _fmt_full(lit.s2_paper(paper_id))
     except lit.UpstreamError as e:
         if paper_id.upper().startswith("PMID:"):
@@ -258,14 +258,20 @@ def pubmed_fetch(pmids: str) -> str:
         if not x:
             continue
         if x.upper().startswith("PMC"):
-            mapped = lit.pmcid_to_pmid(x.upper())
+            try:
+                mapped = lit.pmcid_to_pmid(x.upper())
+            except lit.UpstreamError as e:
+                return f"ERROR: {e}"
             if not mapped:
                 return f"{x} is a PMC id, not a PMID, and could not be mapped. Use get_fulltext('{x}') instead."
             x = mapped
         ids.append(x)
-    recs = lit.pubmed_fetch_records(ids[:20])
+    try:
+        recs = lit.pubmed_fetch_records(ids[:20])
+    except lit.UpstreamError as e:
+        return f"ERROR: {e}"
     if not recs:
-        return "No records found (check PMIDs) or PubMed unreachable."
+        return "No records found (check PMIDs)."
     return "\n\n".join(_fmt_pubmed(i + 1, p, with_abstract=True) for i, p in enumerate(recs))
 
 
@@ -283,7 +289,10 @@ def get_fulltext(paper_id: str, section: str = "", max_chars: int = 20000) -> st
         max_chars: cap on returned characters (context window is limited; keep <= 20000).
     Works only for open-access papers in PMC. Paywalled papers: use read_pdf on a locally downloaded file.
     """
-    pmcid, note = lit.resolve_pmcid(paper_id)
+    try:
+        pmcid, note = lit.resolve_pmcid(paper_id)
+    except lit.UpstreamError as e:
+        pmcid, note = "", str(e)
     if not pmcid:
         # try Semantic Scholar open-access PDF as a fallback
         try:
@@ -304,13 +313,20 @@ def get_fulltext(paper_id: str, section: str = "", max_chars: int = 20000) -> st
             except Exception as e:  # noqa: BLE001
                 note += f"; OA pdf download failed: {e}"
         return f"Full text not available: {note}. The abstract (get_paper / pubmed_fetch) is the best you can get without institutional access."
-    secs = lit.epmc_fulltext_sections(pmcid)
+    try:
+        secs = lit.epmc_fulltext_sections(pmcid)
+    except lit.UpstreamError as e:
+        return f"ERROR: {e}"
     if not secs:
         return f"{pmcid} exists but Europe PMC has no XML full text (may be embargoed). Try get_paper for the abstract."
+    try:
+        citation = lit.epmc_citation(pmcid)
+    except lit.UpstreamError as e:
+        citation = f"{pmcid} (citation unavailable: {e})"
     if not section:
         titles = "\n".join(f"  - {t} ({len(x)} chars)" for t, x in secs)
         abstract = next((x for t, x in secs if t == "Abstract"), "")
-        return (f"{lit.epmc_citation(pmcid)}\nFull text available. Sections:\n{titles}\n\n"
+        return (f"{citation}\nFull text available. Sections:\n{titles}\n\n"
                 f"Call get_fulltext again with section=<title> (or 'all') to read.\n\nAbstract: {abstract[:3000]}")
     if section.lower() == "all":
         text = "\n\n".join(f"## {t}\n{x}" for t, x in secs)
@@ -321,7 +337,7 @@ def get_fulltext(paper_id: str, section: str = "", max_chars: int = 20000) -> st
         text = "\n\n".join(f"## {t}\n{x}" for t, x in matches)
     if len(text) > max_chars:
         text = text[:max_chars] + f"\n... truncated at {max_chars} chars; ask for a narrower section."
-    return f"{lit.epmc_citation(pmcid)}\n" + text
+    return f"{citation}\n" + text
 
 
 @mcp.tool(annotations=RO)

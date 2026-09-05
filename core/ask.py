@@ -218,11 +218,15 @@ def epmc_search(query: str, limit: int, fulltext_only: bool, flt: Filters) -> li
 
 def pubmed_search(query: str, limit: int, flt: Filters) -> list[dict]:
     params = {"db": "pubmed", "term": query, "retmax": limit, "sort": "relevance", "retmode": "json", **flt.pubmed_year_params()}
-    r = lit.ncbi_get("esearch.fcgi", params)
-    if r is None:
+    try:
+        r = lit.ncbi_get("esearch.fcgi", params)
+        if r is None:
+            return []
+        ids = r.json().get("esearchresult", {}).get("idlist") or []
+        recs = lit.pubmed_fetch_records(ids)
+    except lit.UpstreamError:
+        # 单个检索源不可用时保留其他来源的结果。
         return []
-    ids = r.json().get("esearchresult", {}).get("idlist") or []
-    recs = lit.pubmed_fetch_records(ids)
     return [{"pmid": p["pmid"], "pmcid": p["pmc"], "doi": p["doi"], "title": p["title"], "year": p["year"],
              "journal": p["journal"], "issn": p.get("issn", ""),
              "authors": ", ".join(p["authors"][:3]) + (" et al." if len(p["authors"]) > 3 else ""),
@@ -288,7 +292,11 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int, *, emit: Emit = print_e
     paras: list[dict] = []
     source = "abstract"
     if p.get("pmcid"):
-        secs = lit.epmc_fulltext_paragraphs(p["pmcid"])
+        try:
+            secs = lit.epmc_fulltext_paragraphs(p["pmcid"])
+        except lit.UpstreamError as exc:
+            emit({"type": "log", "level": "warning", "message": str(exc)})
+            secs = []
         if secs:
             keep = [(t, ps) for t, ps in secs if not any(t.lower().startswith(s) for s in SKIP_SECS)]
             paras = ks.paragraphs_from_sections(keep)
@@ -322,7 +330,11 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int, *, emit: Emit = print_e
                 source = "inst" if paras else "abstract"
     if not paras:
         if not p.get("abstract") and pmid:
-            recs = lit.pubmed_fetch_records([pmid])
+            try:
+                recs = lit.pubmed_fetch_records([pmid])
+            except lit.UpstreamError as exc:
+                emit({"type": "log", "level": "warning", "message": str(exc)})
+                recs = []
             if recs:
                 p["abstract"] = recs[0]["abstract"]
                 p["types"] = recs[0]["types"]

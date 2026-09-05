@@ -59,15 +59,7 @@ def search(
     )
 
 
-@router.get("/{ident}", response_model=LiteratureRecord, summary="获取单篇文献")
-def get_literature(
-    ident: str,
-    _principal: Principal = Depends(require("read")),
-) -> LiteratureRecord:
-    return service.resolve(ident)
-
-
-@router.get("/{ident}/fulltext", response_model=FulltextResult, summary="读取 PMC 全文")
+@router.get("/{ident:path}/fulltext", response_model=FulltextResult, summary="读取 PMC 全文")
 def get_fulltext(
     ident: str,
     section: str = "",
@@ -77,7 +69,7 @@ def get_fulltext(
     return service.fulltext(ident, section=section, max_chars=max_chars)
 
 
-@router.get("/{ident}/citations", response_model=LiteratureRecordList, summary="获取引用文献")
+@router.get("/{ident:path}/citations", response_model=LiteratureRecordList, summary="获取引用文献")
 def get_citations(
     ident: str,
     limit: int = Query(10, ge=1, le=50),
@@ -86,7 +78,7 @@ def get_citations(
     return LiteratureRecordList(items=service.citations(ident, limit))
 
 
-@router.get("/{ident}/references", response_model=LiteratureRecordList, summary="获取参考文献")
+@router.get("/{ident:path}/references", response_model=LiteratureRecordList, summary="获取参考文献")
 def get_references(
     ident: str,
     limit: int = Query(10, ge=1, le=50),
@@ -95,10 +87,19 @@ def get_references(
     return LiteratureRecordList(items=service.references(ident, limit))
 
 
-@router.get("/{ident}/recommendations", response_model=LiteratureRecordList, summary="获取推荐文献")
+@router.get("/{ident:path}/recommendations", response_model=LiteratureRecordList, summary="获取推荐文献")
 def get_recommendations(
     ident: str,
     limit: int = Query(10, ge=1, le=50),
     _principal: Principal = Depends(require("read")),
 ) -> LiteratureRecordList:
     return LiteratureRecordList(items=service.recommendations(ident, limit))
+
+
+# 通配详情最后注册，避免吞掉 search 和 DOI 的子资源。
+@router.get("/{ident:path}", response_model=LiteratureRecord, summary="获取单篇文献")
+def get_literature(
+    ident: str,
+    _principal: Principal = Depends(require("read")),
+) -> LiteratureRecord:
+    return service.resolve(ident)
