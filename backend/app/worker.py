@@ -62,7 +62,7 @@ def _set_status(db: Session, job: Job, answer: Answer | None, status: str, *,
 
 
 def _terminate(ctx: dict, job_id: str, status: str, error: dict | None = None) -> None:
-    """落终态（jobs + answers 同一事务）并发出终态事件，事件与 DB 不会各说各话。"""
+    """先提交数据库终态，再发布事件；发布丢失由 SSE 根据数据库补齐。"""
     with SessionLocal() as db:
         job = _job(db, job_id)
         if job is not None:

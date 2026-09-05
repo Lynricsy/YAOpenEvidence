@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..errors import ApiError
-from ..models import Job
+from ..models import Answer, Job, utcnow
 from ..schemas.jobs import TERMINAL_JOB_STATUSES
 from . import events
 
@@ -23,16 +23,26 @@ def new_id() -> str:
 
 
 async def enqueue(arq, db: Session, *, kind: str, params: dict, api_key_id: str | None,
-                  fn_name: str, job_id: str | None = None) -> Job:
+                  fn_name: str, job_id: str | None = None, answer: Answer | None = None) -> Job:
     job = Job(id=job_id or new_id(), kind=kind, status="queued", api_key_id=api_key_id,
               params=params, progress=None, error=None, result=None)
     db.add(job)
+    if answer is not None:
+        # 先落父行，再在同一事务中建立关联，worker 只会看到完整记录。
+        db.flush()
+        answer.job_id = job.id
+        db.add(answer)
     db.commit()
     try:
         await arq.enqueue_job(fn_name, job.id, _job_id=job.id)
     except Exception as e:  # noqa: BLE001
         job.status = "failed"
         job.error = {"code": "internal_error", "message": f"enqueue failed: {e}"}
+        job.finished_at = utcnow()
+        if answer is not None:
+            answer.status = "failed"
+            answer.error = job.error
+            answer.finished_at = job.finished_at
         db.commit()
         raise ApiError(502, "upstream_unavailable", f"redis unavailable: {e}") from e
     return job

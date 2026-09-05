@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
+from starlette.concurrency import run_in_threadpool
 
 from ..auth import Principal, require
 from ..deps import get_db, get_redis
@@ -84,21 +85,25 @@ def _terminal_payload(job: JobRow) -> dict:
 async def job_events(job_id: str, request: Request, db: Session = Depends(get_db),
                      redis=Depends(get_redis),  # noqa: ANN001
                      principal: Principal = Depends(require("read", allow_query=True))):
-    job = _visible(db, job_id, principal)
-    if job.status in TERMINAL_JOB_STATUSES and not await events.has_stream(redis, job_id):
-        # 流已过期：只能从 DB 合成终态，让客户端别一直等
-        payload = _terminal_payload(job)
-        status = job.status
+    # 依赖的 session 会活到 SSE 结束，必须先归还连接；轮询另用短事务。
+    bind = db.get_bind()
+    await run_in_threadpool(_visible, db, job_id, principal)
+    await run_in_threadpool(db.close)
 
-        async def once():
-            yield {"id": "0-0", "event": status, "data": json.dumps(payload, ensure_ascii=False)}
+    def terminal_snapshot():
+        with Session(bind=bind) as snapshot:
+            job = _visible(snapshot, job_id, principal)
+            if job.status in TERMINAL_JOB_STATUSES:
+                return job.status, _terminal_payload(job)
+        return None
 
-        return EventSourceResponse(once())
+    async def terminal():
+        return await run_in_threadpool(terminal_snapshot)
 
     last_id = request.headers.get("last-event-id") or "0-0"
 
     async def stream():
-        async for entry_id, kind, data in events.subscribe(redis, job_id, last_id):
+        async for entry_id, kind, data in events.subscribe(redis, job_id, last_id, terminal=terminal):
             if await request.is_disconnected():
                 return
             yield {"id": entry_id, "event": kind, "data": json.dumps(data, ensure_ascii=False)}

@@ -6,6 +6,10 @@ import json
 
 import pytest
 
+import redis.asyncio as aioredis
+from redis.exceptions import ConnectionError as RedisConnectionError
+
+from app.config import settings
 import ask
 import knowledge_store as ks
 from app.db import SessionLocal
@@ -14,6 +18,7 @@ from app.services import events
 from app.worker import run_ask_job, run_kb_reindex_job
 
 from .conftest import make_job
+from .test_events import finish_sse, live_sse, streaming_app
 
 
 def _result(answer_id: str) -> ask.AskResult:
@@ -185,3 +190,42 @@ def test_quartiles_and_journals_map_to_cli_strings():
     opts = to_ask_options({"question": "q", "quartiles": [2, 1, 1], "journals": ["Lancet", "JAMA"]})
     assert opts.quartile == "Q1,Q2"
     assert opts.journal == "Lancet,JAMA"
+
+
+@pytest.mark.parametrize("status", ["succeeded", "failed"])
+async def test_terminal_xadd_failure_converges_after_stage_replay(
+        worker_ctx, sync_redis, monkeypatch, status):
+    job_id, answer_id = make_job(api_key_id="reader")
+
+    def run(opts, *, emit, **kwargs):
+        emit({"type": "stage", "stage": "search", "status": "started"})
+        if status == "failed":
+            raise ask.NoPapers("nothing found")
+        return _result(answer_id)
+
+    xadd = sync_redis.xadd
+
+    def fail_terminal(name, fields, *args, **kwargs):
+        if fields.get("type") in events.TERMINAL:
+            raise RedisConnectionError("terminal XADD unavailable")
+        return xadd(name, fields, *args, **kwargs)
+
+    monkeypatch.setattr(ask, "run_ask", run)
+    monkeypatch.setattr(sync_redis, "xadd", fail_terminal)
+    with pytest.raises(RedisConnectionError, match="terminal XADD"):
+        await run_ask_job(worker_ctx, job_id)
+
+    # 保留真实 stage 流而不是删流；终态已经由真实 worker 事务提交。
+    redis = aioredis.from_url(settings.redis_url)
+    try:
+        async with live_sse(streaming_app(redis), f"/v1/jobs/{job_id}/events") as output:
+            got = await finish_sse(output)
+        assert [e["event"] for e in got] == ["stage", status]
+        assert got[0]["data"]["stage"] == "search"
+        if status == "succeeded":
+            assert got[1]["data"] == {"answer_id": answer_id}
+        else:
+            assert got[1]["data"] == {"code": "no_papers", "message": "nothing found"}
+    finally:
+        await redis.aclose()
+        await worker_ctx["redis_async"].aclose()

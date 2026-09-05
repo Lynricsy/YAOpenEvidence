@@ -10,7 +10,7 @@ Pub/Sub 没有历史。entry id 直接当 SSE 的 `id:`，两边天然对齐。
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -52,13 +52,23 @@ def _decode(fields: dict) -> tuple[str, dict]:
 
 
 async def subscribe(r: aioredis.Redis, job_id: str, last_id: str = "0-0",
-                    *, block_ms: int = 5000) -> AsyncIterator[tuple[str, str, dict]]:
-    """从 `last_id` 之后逐条 yield (entry_id, type, data)，遇终态事件即结束。"""
+                    *, block_ms: int = 5000,
+                    terminal: Callable[[], Awaitable[tuple[str, dict] | None]] | None = None,
+                    ) -> AsyncIterator[tuple[str, str, dict]]:
+    """按游标回放；空读时核对 DB，补齐发布失败或已过期的终态。"""
     key = stream_key(job_id)
     cursor = last_id or "0-0"
+    pending_terminal = await terminal() if terminal is not None else None
     while True:
-        batch = await r.xread({key: cursor}, count=100, block=block_ms)
+        # DB 已终态时先排空并发到达的事件，保持真实 Stream 的顺序和 ID。
+        batch = await r.xread({key: cursor}, count=100,
+                              block=None if pending_terminal else block_ms)
         if not batch:
+            if pending_terminal is not None:
+                yield cursor, pending_terminal[0], pending_terminal[1]
+                return
+            if terminal is not None:
+                pending_terminal = await terminal()
             continue
         for _stream, entries in batch:
             for entry_id, fields in entries:
@@ -67,10 +77,6 @@ async def subscribe(r: aioredis.Redis, job_id: str, last_id: str = "0-0",
                 yield cursor, kind, data
                 if kind in TERMINAL:
                     return
-
-
-async def has_stream(r: aioredis.Redis, job_id: str) -> bool:
-    return bool(await r.exists(stream_key(job_id)))
 
 
 async def request_cancel(r: aioredis.Redis, job_id: str, ttl_s: int) -> None:

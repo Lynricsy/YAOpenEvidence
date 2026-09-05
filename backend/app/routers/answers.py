@@ -61,12 +61,8 @@ async def create_answer(payload: AnswerCreate, response: Response,
     row = AnswerRow(id=answer_id, job_id=None, api_key_id=principal.key_id, status="queued",
                     question=payload.question, queries=[], options=options, papers=[],
                     citations=[], kb_hits=[])
-    db.add(row)
-    db.commit()
-    job = await jobs_service.enqueue(arq, db, kind="ask", params={"answer_id": answer_id, **options},
-                                     api_key_id=principal.key_id, fn_name="run_ask_job")
-    row.job_id = job.id
-    db.commit()
+    await jobs_service.enqueue(arq, db, kind="ask", params={"answer_id": answer_id, **options},
+                                     api_key_id=principal.key_id, fn_name="run_ask_job", answer=row)
     db.refresh(row)
     response.headers["Location"] = f"/v1/answers/{answer_id}"
     return Answer.model_validate(row)

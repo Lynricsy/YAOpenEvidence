@@ -2,6 +2,18 @@
 from __future__ import annotations
 
 import json
+import asyncio
+from contextlib import AsyncExitStack, asynccontextmanager
+
+import httpx
+import redis.asyncio as aioredis
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from app.auth import load_api_keys
+from app.deps import get_db
+from app.main import create_app
+from app.models import Base
 
 from app.config import settings
 from app.db import SessionLocal
@@ -123,3 +135,117 @@ def test_job_list_scopes_to_own_key_unless_admin(client, sync_redis):
     assert client.get("/v1/jobs", headers=auth(ADMIN_KEY)).json()["total"] == 2
     assert client.get("/v1/jobs", params={"kind": "kb_reindex"},
                       headers=auth(ADMIN_KEY)).json()["total"] == 0
+
+
+def streaming_app(redis):
+    app = create_app()
+    app.state.redis = redis
+    app.state.auth_disabled = False
+    app.state.principals = load_api_keys(settings.api_keys_file)
+    return app
+
+
+@asynccontextmanager
+async def live_sse(app, path, *, headers=None):
+    """直接驱动 ASGI 收发，响应持续打开，不用会缓冲完整响应的测试 transport。"""
+    incoming, outgoing = asyncio.Queue(), asyncio.Queue()
+    await incoming.put({"type": "http.request", "body": b"", "more_body": False})
+    scope = {
+        "type": "http", "asgi": {"version": "3.0", "spec_version": "2.4"},
+        "http_version": "1.1", "method": "GET", "scheme": "http",
+        "path": path, "raw_path": path.encode(), "query_string": b"", "root_path": "",
+        "headers": [(k.lower().encode(), v.encode())
+                    for k, v in (headers or auth(READ_KEY)).items()],
+        "client": ("127.0.0.1", 1234), "server": ("test", 80),
+    }
+    task = asyncio.create_task(app(scope, incoming.get, outgoing.put))
+    try:
+        start = await asyncio.wait_for(outgoing.get(), 3)
+        assert start["type"] == "http.response.start"
+        assert start["status"] == 200
+        yield outgoing
+    finally:
+        await incoming.put({"type": "http.disconnect"})
+        try:
+            await asyncio.wait_for(task, 3)
+        finally:
+            if not task.done():
+                task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+
+async def finish_sse(outgoing):
+    chunks = []
+    while True:
+        message = await asyncio.wait_for(outgoing.get(), 8)
+        assert message["type"] == "http.response.body"
+        chunks.append(message.get("body", b""))
+        if not message.get("more_body", False):
+            return parse_sse(b"".join(chunks).decode())
+
+
+async def test_fifteen_live_streams_leave_database_available(tmp_path, sync_redis):
+    # SQLite 文件配默认 QueuePool（5+10），让第十六个普通请求暴露连接泄漏。
+    engine = create_engine(f"sqlite:///{tmp_path / 'sse.db'}",
+                           connect_args={"check_same_thread": False}, pool_timeout=0.2)
+    Base.metadata.create_all(engine)
+    redis = aioredis.from_url(settings.redis_url)
+    app = streaming_app(redis)
+
+    def db_session():
+        with Session(engine) as db:
+            yield db
+
+    app.dependency_overrides[get_db] = db_session
+    try:
+        with Session(engine) as db:
+            db.add(Job(id="live", kind="ask", status="running", api_key_id="reader", params={}))
+            db.commit()
+        first = events.publish(sync_redis, "live", {"type": "stage", "stage": "search"}, **PUB)
+        async with AsyncExitStack() as stack:
+            for _ in range(15):
+                output = await stack.enter_async_context(live_sse(app, "/v1/jobs/live/events"))
+                chunk = await asyncio.wait_for(output.get(), 3)
+                assert parse_sse(chunk["body"].decode())[0]["id"] == first
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
+                                         base_url="http://test") as client:
+                response = await asyncio.wait_for(client.get("/v1/jobs/live", headers=auth(READ_KEY)), 3)
+                assert response.status_code == 200
+                assert response.json()["status"] == "running"
+    finally:
+        app.dependency_overrides.clear()
+        await redis.aclose()
+        engine.dispose()
+
+
+async def test_live_subscription_converges_when_database_finishes(sync_redis):
+    job_id, _ = make_job(api_key_id="reader", status="running")
+    first = events.publish(sync_redis, job_id, {"type": "stage", "stage": "search"}, **PUB)
+    redis = aioredis.from_url(settings.redis_url)
+    try:
+        async with live_sse(streaming_app(redis), f"/v1/jobs/{job_id}/events") as output:
+            chunk = await asyncio.wait_for(output.get(), 3)
+            assert parse_sse(chunk["body"].decode())[0]["id"] == first
+            with SessionLocal() as db:
+                job = db.get(Job, job_id)
+                job.status = "failed"
+                job.error = {"code": "no_papers", "message": "nothing found"}
+                db.commit()
+            got = await finish_sse(output)
+            assert [(e["event"], e["data"]) for e in got] == [
+                ("failed", {"code": "no_papers", "message": "nothing found"})]
+    finally:
+        await redis.aclose()
+
+
+async def test_resume_after_terminal_entry_still_closes(sync_redis):
+    job_id, _ = make_job(api_key_id="reader", status="cancelled")
+    last = events.publish(sync_redis, job_id, {"type": "cancelled"}, **PUB)
+    redis = aioredis.from_url(settings.redis_url)
+    try:
+        async with live_sse(streaming_app(redis), f"/v1/jobs/{job_id}/events",
+                            headers={**auth(READ_KEY), "Last-Event-ID": last}) as output:
+            got = await finish_sse(output)
+            assert got == [{"id": last, "event": "cancelled", "data": {}}]
+    finally:
+        await redis.aclose()

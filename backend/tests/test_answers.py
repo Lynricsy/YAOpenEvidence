@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 
 import pytest
+from redis.exceptions import ConnectionError as RedisConnectionError
+from sqlalchemy import select
 
 from app.db import SessionLocal
 from app.models import Answer, Job
@@ -192,3 +194,51 @@ def test_answer_paper_detail_reads_run_artifacts(client, data_root: Path):
 
     assert client.get(f"/v1/answers/{answer_id}/papers/2",
                       headers=auth(READ_KEY)).status_code == 404
+
+
+def test_enqueue_failure_persists_linked_failures_and_allows_delete(client, arq, monkeypatch):
+    async def unavailable(fn_name, job_id, **kwargs):
+        # 入队边界从独立连接读取，验证 worker 启动前完整事务已经可见。
+        with SessionLocal() as db:
+            job = db.get(Job, job_id)
+            answer = db.get(Answer, job.params["answer_id"])
+            assert answer.job_id == job_id
+            assert answer.status == job.status == "queued"
+        raise RedisConnectionError("queue unavailable")
+
+    monkeypatch.setattr(arq, "enqueue_job", unavailable)
+    response = _create(client)
+    assert response.status_code == 502
+    assert response.json()["code"] == "upstream_unavailable"
+    with SessionLocal() as db:
+        answer = db.scalars(select(Answer)).one()
+        job = db.get(Job, answer.job_id)
+        answer_id, job_id = answer.id, job.id
+        assert answer.status == job.status == "failed"
+        assert answer.error == job.error
+        assert job.error["code"] == "internal_error"
+        assert answer.finished_at is not None and job.finished_at is not None
+    response = client.get(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY))
+    assert response.json()["status"] == "failed"
+    assert response.json()["job_id"] == job_id
+    assert client.delete(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY)).status_code == 204
+    assert client.get(f"/v1/answers/{answer_id}", headers=auth(WRITE_KEY)).status_code == 404
+
+
+def test_worker_completion_during_enqueue_is_not_overwritten(client, arq, monkeypatch):
+    async def finish_immediately(fn_name, job_id, **kwargs):
+        with SessionLocal() as db:
+            job = db.get(Job, job_id)
+            answer = db.get(Answer, job.params["answer_id"])
+            assert answer.job_id == job_id
+            job.status = "succeeded"
+            job.result = {"answer_id": answer.id}
+            answer.status = "ready"
+            db.commit()
+
+    monkeypatch.setattr(arq, "enqueue_job", finish_immediately)
+    response = _create(client)
+    assert response.status_code == 202
+    assert response.json()["status"] == "ready"
+    job = client.get(f"/v1/jobs/{response.json()['job_id']}", headers=auth(WRITE_KEY))
+    assert job.json()["status"] == "succeeded"
