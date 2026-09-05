@@ -134,9 +134,14 @@ export default function AskPage() {
         orientation="horizontal"
         className="min-w-0 flex-1"
         defaultLayout={readerLayout}
-        onLayoutChanged={(layout) =>
+        // 该回调在初始挂载与约束重算时也会触发（meta.isUserInteraction=false）。
+        // 阅读器关闭时组内只有 answer 一个面板，若无条件写入就会把用户拖出的
+        // 两栏宽度覆盖成单键布局，下次加载再被校验丢弃。只存真实拖拽/键盘调整。
+        onLayoutChanged={(layout, meta) => {
+          if (!meta.isUserInteraction) return
+          if (!('answer' in layout) || !('reader' in layout)) return
           localStorage.setItem('yaoe.reader-layout', JSON.stringify(layout))
-        }
+        }}
       >
         <Panel id="answer" minSize="40%" className="flex h-full flex-col">
           <div
