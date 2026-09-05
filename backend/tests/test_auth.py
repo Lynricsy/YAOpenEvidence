@@ -21,6 +21,13 @@ def test_invalid_key_is_unauthenticated(client):
     assert r.json()["code"] == "unauthenticated"
 
 
+def test_unicode_query_token_is_unauthenticated(client):
+    r = client.get("/v1/jobs/nonexistent/events", params={"access_token": "\u00e9"})
+    assert r.status_code == 401
+    assert r.json()["code"] == "unauthenticated"
+    assert r.headers["www-authenticate"] == "Bearer"
+
+
 def test_read_scope_cannot_create_answers(client):
     r = client.post("/v1/answers", json={"question": "问题"}, headers=auth(READ_KEY))
     assert r.status_code == 403

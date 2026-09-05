@@ -69,8 +69,9 @@ def _token(request: Request, creds: HTTPAuthorizationCredentials | None, allow_q
 
 def _match(principals: dict[str, Principal], token: str) -> Principal | None:
     # 逐 key 常数时间比较：key 数量是个位数，遍历成本可忽略
+    candidate = token.encode("utf-8")
     for known, principal in principals.items():
-        if hmac.compare_digest(known, token):
+        if hmac.compare_digest(known.encode("utf-8"), candidate):
             return principal
     return None
 

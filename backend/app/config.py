@@ -6,11 +6,13 @@ LLM_BASE / LOCAL_QWEN_KEY / LLM_MODEL 环境变量（见 ask.py），不在这�
 """
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
+from typing import Annotated
 
 from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from picos_paths import VAR_DIR
 
@@ -22,7 +24,7 @@ class Settings(BaseSettings):
     database_url: str = ""                      # 空 -> sqlite:///{VAR_DIR}/api.sqlite3
     api_keys_file: Path = Path("api_keys.toml")
     auth_disabled: bool = False
-    cors_origins: list[str] = []
+    cors_origins: Annotated[list[str], NoDecode] = []
 
     host: str = "127.0.0.1"
     port: int = 8765
@@ -37,7 +39,9 @@ class Settings(BaseSettings):
     @classmethod
     def _split_origins(cls, v: object) -> object:
         """允许 `YAOE_CORS_ORIGINS=http://a,http://b`，不必写 JSON 数组。"""
-        if isinstance(v, str) and not v.strip().startswith("["):
+        if isinstance(v, str):
+            if v.strip().startswith("["):
+                return json.loads(v)
             return [x.strip() for x in v.split(",") if x.strip()]
         return v
 
