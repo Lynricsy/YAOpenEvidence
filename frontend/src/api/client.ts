@@ -9,7 +9,9 @@ export function expireSession() {
   authStore.clear()
   if (!redirecting && location.pathname !== '/login') {
     redirecting = true
-    window.location.assign('/login?next=' + encodeURIComponent(location.pathname + location.search))
+    window.location.assign(
+      '/login?next=' + encodeURIComponent(location.pathname + location.search),
+    )
   }
 }
 api.use({
@@ -19,7 +21,11 @@ api.use({
     return request
   },
   async onResponse({ request, response }) {
-    if (response.status === 401 && new URL(request.url).pathname !== '/v1/auth/login') expireSession()
+    if (
+      response.status === 401 &&
+      new URL(request.url).pathname !== '/v1/auth/login'
+    )
+      expireSession()
     if (!response.ok) throw await toApiError(response)
     return response
   },

@@ -1,85 +1,261 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.99 0.002 220); --foreground: oklch(0.25 0.014 240);
-  --card: oklch(1 0 0); --card-foreground: var(--foreground);
-  --popover: oklch(1 0 0); --popover-foreground: var(--foreground);
-  --primary: oklch(0.52 0.12 220); --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.955 0.006 220); --secondary-foreground: oklch(0.36 0.025 220);
-  --muted: oklch(0.968 0.004 220); --muted-foreground: oklch(0.52 0.016 240);
-  --accent: oklch(0.95 0.018 220); --accent-foreground: oklch(0.38 0.09 220);
-  --destructive: oklch(0.58 0.2 25); --border: oklch(0.91 0.008 220);
-  --input: oklch(0.87 0.012 220); --ring: var(--primary); --radius: 0.625rem;
-  --q1: oklch(0.52 0.14 160); --q2: oklch(0.52 0.13 230); --q3: oklch(0.55 0.12 70); --q4: oklch(0.53 0.02 260);
+  --background: oklch(0.99 0.002 220);
+  --foreground: oklch(0.25 0.014 240);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.52 0.12 220);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.955 0.006 220);
+  --secondary-foreground: oklch(0.36 0.025 220);
+  --muted: oklch(0.968 0.004 220);
+  --muted-foreground: oklch(0.52 0.016 240);
+  --accent: oklch(0.95 0.018 220);
+  --accent-foreground: oklch(0.38 0.09 220);
+  --destructive: oklch(0.58 0.2 25);
+  --border: oklch(0.91 0.008 220);
+  --input: oklch(0.87 0.012 220);
+  --ring: var(--primary);
+  --radius: 0.625rem;
+  --q1: oklch(0.52 0.14 160);
+  --q2: oklch(0.52 0.13 230);
+  --q3: oklch(0.55 0.12 70);
+  --q4: oklch(0.53 0.02 260);
 }
 .dark {
-  --background: oklch(0.18 0.006 220); --foreground: oklch(0.92 0.008 220);
-  --card: oklch(0.205 0.007 220); --card-foreground: var(--foreground);
-  --popover: oklch(0.23 0.009 220); --popover-foreground: var(--foreground);
-  --primary: oklch(0.72 0.11 220); --primary-foreground: oklch(0.19 0.015 220);
-  --secondary: oklch(0.27 0.008 220); --secondary-foreground: oklch(0.9 0.006 220);
-  --muted: oklch(0.23 0.007 220); --muted-foreground: oklch(0.7 0.014 220);
-  --accent: oklch(0.29 0.025 220); --accent-foreground: oklch(0.8 0.085 220);
-  --destructive: oklch(0.7 0.17 25); --border: oklch(0.32 0.008 220); --input: oklch(0.39 0.012 220);
-  --q1: oklch(0.73 0.13 160); --q2: oklch(0.74 0.11 230); --q3: oklch(0.78 0.13 70); --q4: oklch(0.72 0.02 260);
+  --background: oklch(0.18 0.006 220);
+  --foreground: oklch(0.92 0.008 220);
+  --card: oklch(0.205 0.007 220);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.23 0.009 220);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.72 0.11 220);
+  --primary-foreground: oklch(0.19 0.015 220);
+  --secondary: oklch(0.27 0.008 220);
+  --secondary-foreground: oklch(0.9 0.006 220);
+  --muted: oklch(0.23 0.007 220);
+  --muted-foreground: oklch(0.7 0.014 220);
+  --accent: oklch(0.29 0.025 220);
+  --accent-foreground: oklch(0.8 0.085 220);
+  --destructive: oklch(0.7 0.17 25);
+  --border: oklch(0.32 0.008 220);
+  --input: oklch(0.39 0.012 220);
+  --q1: oklch(0.73 0.13 160);
+  --q2: oklch(0.74 0.11 230);
+  --q3: oklch(0.78 0.13 70);
+  --q4: oklch(0.72 0.02 260);
 }
 @theme inline {
-  --color-background: var(--background); --color-foreground: var(--foreground);
-  --color-card: var(--card); --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive); --color-border: var(--border);
-  --color-input: var(--input); --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px); --radius-md: calc(var(--radius) - 2px); --radius-lg: var(--radius); --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 @layer base {
-  * { @apply border-border outline-ring/50; letter-spacing: 0; }
-  body { @apply bg-background text-foreground; margin: 0; font-family: ui-sans-serif, system-ui, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
-  button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
-  button, input, textarea { font: inherit; }
-  ::selection { background: color-mix(in oklch, var(--primary) 23%, transparent); }
-  mark { background: oklch(0.91 0.12 88); color: oklch(0.3 0.035 65); border-radius: 2px; padding: 0 2px; }
+  * {
+    @apply border-border outline-ring/50;
+    letter-spacing: 0;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    font-family:
+      ui-sans-serif, system-ui, 'PingFang SC', 'Noto Sans CJK SC',
+      'Microsoft YaHei', sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 23%, transparent);
+  }
+  mark {
+    background: oklch(0.91 0.12 88);
+    color: oklch(0.3 0.035 65);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
 }
 @layer components {
-  .app-header { @apply sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6; }
-  .brand { @apply flex min-w-0 items-center gap-2.5 text-base font-semibold; }
-  .top-nav { @apply relative flex h-full items-center gap-1.5 border-b-2 border-transparent px-3 text-xs text-muted-foreground transition-colors hover:text-foreground; }
-  .top-nav.active { @apply border-primary text-primary; }
-  .mobile-nav { @apply flex items-center gap-3 rounded-md px-3 py-3 text-muted-foreground hover:bg-accent; }
-  .mobile-nav.active { @apply bg-accent text-primary; }
-  .avatar { @apply grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground; }
-  .page { @apply mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-10; }
-  .page-heading { @apply mb-7 flex flex-wrap items-center justify-between gap-4; }
-  .page-title { @apply text-2xl font-semibold; }
-  .section-eyebrow { @apply flex items-center gap-2 text-xs font-medium text-primary; }
-  .empty-state { @apply flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center; }
-  .toolbar { @apply mb-6 flex flex-wrap items-center gap-3; }
-  .form-section { @apply space-y-5 border-b py-7; }
-  .field-label { @apply mb-2 block text-xs font-medium text-muted-foreground; }
-  .list-row { @apply min-w-0 border-b py-5; }
-  .metadata { @apply flex flex-wrap items-center gap-x-3 gap-y-2 text-xs leading-6 text-muted-foreground; }
-  .status-neutral { @apply border-border bg-muted text-muted-foreground; }
-  .status-blue { @apply border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300; }
-  .status-green { @apply border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300; }
-  .status-red { @apply border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300; }
-  .status-amber { @apply border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300; }
-  .login-page { @apply flex min-h-dvh flex-col items-center justify-center px-5 py-12; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 80px 80px; }
-  .login-wordmark { @apply mb-9 flex items-center gap-3 bg-background px-3 text-xl font-semibold; }
-  .login-panel { @apply w-full max-w-[400px] rounded-lg border bg-card p-8 shadow-sm; }
-  .markdown-view { @apply prose prose-sm max-w-none dark:prose-invert; overflow-wrap: anywhere; --tw-prose-links: var(--primary); font-size: 14px; line-height: 1.95; }
-  .markdown-view h1 { font-size: 22px; }
-  .markdown-view h2 { font-size: 19px; }
-  .markdown-view h3 { font-size: 16px; }
-  .markdown-view pre { overflow-x: auto; }
-  .markdown-view table { display: block; max-width: 100%; overflow-x: auto; }
-  .markdown-view img { max-width: 100%; height: auto; }
-  .paragraph-highlight { outline: 2px solid color-mix(in oklch, var(--primary) 60%, transparent); outline-offset: 5px; border-radius: 4px; background: color-mix(in oklch, var(--primary) 5%, transparent); }
-  .error-panel { @apply rounded-md border border-destructive/25 bg-destructive/5 p-5 text-sm leading-7; }
+  .app-header {
+    @apply sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b bg-background/95 px-4 backdrop-blur md:px-6;
+  }
+  .brand {
+    @apply flex min-w-0 items-center gap-2.5 text-base font-semibold;
+  }
+  .top-nav {
+    @apply relative flex h-full items-center gap-1.5 border-b-2 border-transparent px-3 text-xs text-muted-foreground transition-colors hover:text-foreground;
+  }
+  .top-nav.active {
+    @apply border-primary text-primary;
+  }
+  .mobile-nav {
+    @apply flex items-center gap-3 rounded-md px-3 py-3 text-muted-foreground hover:bg-accent;
+  }
+  .mobile-nav.active {
+    @apply bg-accent text-primary;
+  }
+  .avatar {
+    @apply grid size-7 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground;
+  }
+  .page {
+    @apply mx-auto w-full max-w-6xl px-5 py-8 md:px-10 md:py-10;
+  }
+  .page-heading {
+    @apply mb-7 flex flex-wrap items-center justify-between gap-4;
+  }
+  .page-title {
+    @apply text-2xl font-semibold;
+  }
+  .section-eyebrow {
+    @apply flex items-center gap-2 text-xs font-medium text-primary;
+  }
+  .empty-state {
+    @apply flex min-h-64 flex-col items-center justify-center px-6 py-12 text-center;
+  }
+  .toolbar {
+    @apply mb-6 flex flex-wrap items-center gap-3;
+  }
+  .form-section {
+    @apply space-y-5 border-b py-7;
+  }
+  .field-label {
+    @apply mb-2 block text-xs font-medium text-muted-foreground;
+  }
+  .list-row {
+    @apply min-w-0 border-b py-5;
+  }
+  .metadata {
+    @apply flex flex-wrap items-center gap-x-3 gap-y-2 text-xs leading-6 text-muted-foreground;
+  }
+  .status-neutral {
+    @apply border-border bg-muted text-muted-foreground;
+  }
+  .status-blue {
+    @apply border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300;
+  }
+  .status-green {
+    @apply border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300;
+  }
+  .status-red {
+    @apply border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300;
+  }
+  .status-amber {
+    @apply border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300;
+  }
+  .login-page {
+    @apply flex min-h-dvh flex-col items-center justify-center px-5 py-12;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+  .login-wordmark {
+    @apply mb-9 flex items-center gap-3 bg-background px-3 text-xl font-semibold;
+  }
+  .login-panel {
+    @apply w-full max-w-[400px] rounded-lg border bg-card p-8 shadow-sm;
+  }
+  .markdown-view {
+    @apply prose prose-sm max-w-none dark:prose-invert;
+    overflow-wrap: anywhere;
+    --tw-prose-links: var(--primary);
+    font-size: 14px;
+    line-height: 1.95;
+  }
+  .markdown-view h1 {
+    font-size: 22px;
+  }
+  .markdown-view h2 {
+    font-size: 19px;
+  }
+  .markdown-view h3 {
+    font-size: 16px;
+  }
+  .markdown-view pre {
+    overflow-x: auto;
+  }
+  .markdown-view table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .markdown-view img {
+    max-width: 100%;
+    height: auto;
+  }
+  .paragraph-highlight {
+    outline: 2px solid color-mix(in oklch, var(--primary) 60%, transparent);
+    outline-offset: 5px;
+    border-radius: 4px;
+    background: color-mix(in oklch, var(--primary) 5%, transparent);
+  }
+  .error-panel {
+    @apply rounded-md border border-destructive/25 bg-destructive/5 p-5 text-sm leading-7;
+  }
 }
-@media (max-width: 767px) { .brand { font-size: 14px; gap: 7px; } .app-header { gap: 4px; padding-inline: 8px; } .app-header .brand svg { width: 23px; } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+@media (max-width: 767px) {
+  .brand {
+    font-size: 14px;
+    gap: 7px;
+  }
+  .app-header {
+    gap: 4px;
+    padding-inline: 8px;
+  }
+  .app-header .brand svg {
+    width: 23px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-citation],
+[data-source-number] {
+  --citation-ink: var(--citation-color);
+  color: var(--citation-ink);
+  background-color: color-mix(in srgb, var(--citation-color) 7%, transparent);
+  border-color: color-mix(in srgb, var(--citation-ink) 30%, transparent);
+}
+.dark [data-citation],
+.dark [data-source-number] {
+  --citation-ink: color-mix(in srgb, var(--citation-color) 65%, white);
+}

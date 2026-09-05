@@ -6,5 +6,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  server: { proxy: { '/v1': { target: 'http://127.0.0.1:8765', changeOrigin: false } } },
+  server: {
+    proxy: { '/v1': { target: 'http://127.0.0.1:8765', changeOrigin: false } },
+  },
 })
