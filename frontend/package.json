@@ -10,7 +10,7 @@
     "lint": "oxlint",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run",
-    "gen:api": "openapi-typescript ../backend/openapi.json -o src/api/schema.d.ts",
+    "gen:api": "openapi-typescript ../backend/openapi.json --default-non-nullable false -o src/api/schema.d.ts",
     "preview": "vite preview"
   },
   "dependencies": {

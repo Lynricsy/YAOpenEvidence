@@ -620,12 +620,12 @@ export interface components {
              * Queries
              * @default []
              */
-            queries: string[];
+            queries?: string[];
             /**
              * Options
              * @default {}
              */
-            options: {
+            options?: {
                 [key: string]: unknown;
             };
             /** Started At */
@@ -634,19 +634,19 @@ export interface components {
              * Papers
              * @default []
              */
-            papers: components["schemas"]["AnswerPaper"][];
+            papers?: components["schemas"]["AnswerPaper"][];
             /** Body Md */
             body_md?: string | null;
             /**
              * Citations
              * @default []
              */
-            citations: components["schemas"]["Citation"][];
+            citations?: components["schemas"]["Citation"][];
             /**
              * Kb Hits
              * @default []
              */
-            kb_hits: components["schemas"]["KbHit"][];
+            kb_hits?: components["schemas"]["KbHit"][];
         };
         /**
          * AnswerCreate
@@ -659,7 +659,7 @@ export interface components {
              * Papers
              * @default 8
              */
-            papers: number;
+            papers?: number;
             /** Years */
             years?: number | null;
             /** Year From */
@@ -670,37 +670,37 @@ export interface components {
              * Quartiles
              * @default []
              */
-            quartiles: number[];
+            quartiles?: number[];
             /**
              * Journals
              * @default []
              */
-            journals: string[];
+            journals?: string[];
             /**
              * Keep Unranked
              * @default false
              */
-            keep_unranked: boolean;
+            keep_unranked?: boolean;
             /**
              * Use Paywall
              * @default true
              */
-            use_paywall: boolean;
+            use_paywall?: boolean;
             /**
              * Use Kb
              * @default true
              */
-            use_kb: boolean;
+            use_kb?: boolean;
             /**
              * Kb Hits
              * @default 0
              */
-            kb_hits: number;
+            kb_hits?: number;
             /**
              * Max Chars
              * @default 28000
              */
-            max_chars: number;
+            max_chars?: number;
         };
         /** AnswerPaper */
         AnswerPaper: {
@@ -710,75 +710,75 @@ export interface components {
              * Pmid
              * @default
              */
-            pmid: string;
+            pmid?: string;
             /**
              * Doi
              * @default
              */
-            doi: string;
+            doi?: string;
             /**
              * Pmcid
              * @default
              */
-            pmcid: string;
+            pmcid?: string;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /**
              * Year
              * @default
              */
-            year: string;
+            year?: string;
             /**
              * Journal
              * @default
              */
-            journal: string;
+            journal?: string;
             /**
              * Issn
              * @default
              */
-            issn: string;
+            issn?: string;
             /**
              * Authors
              * @default
              */
-            authors: string;
+            authors?: string;
             /**
              * Quartile
              * @default
              */
-            quartile: string;
+            quartile?: string;
             /**
              * Rank Label
              * @default
              */
-            rank_label: string;
+            rank_label?: string;
             /**
              * Source
              * @default abstract
              * @enum {string}
              */
-            source: "pmc" | "pdf" | "inst" | "abstract";
+            source?: "pmc" | "pdf" | "inst" | "abstract";
             /** Relevance */
             relevance?: number | null;
             /**
              * N Paragraphs
              * @default 0
              */
-            n_paragraphs: number;
+            n_paragraphs?: number;
             /**
              * N Citations
              * @default 0
              */
-            n_citations: number;
+            n_citations?: number;
             /**
              * N Citations Verified
              * @default 0
              */
-            n_citations_verified: number;
+            n_citations_verified?: number;
         };
         /** AnswerPaperDetail */
         AnswerPaperDetail: {
@@ -788,100 +788,100 @@ export interface components {
              * Pmid
              * @default
              */
-            pmid: string;
+            pmid?: string;
             /**
              * Doi
              * @default
              */
-            doi: string;
+            doi?: string;
             /**
              * Pmcid
              * @default
              */
-            pmcid: string;
+            pmcid?: string;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /**
              * Year
              * @default
              */
-            year: string;
+            year?: string;
             /**
              * Journal
              * @default
              */
-            journal: string;
+            journal?: string;
             /**
              * Issn
              * @default
              */
-            issn: string;
+            issn?: string;
             /**
              * Authors
              * @default
              */
-            authors: string;
+            authors?: string;
             /**
              * Quartile
              * @default
              */
-            quartile: string;
+            quartile?: string;
             /**
              * Rank Label
              * @default
              */
-            rank_label: string;
+            rank_label?: string;
             /**
              * Source
              * @default abstract
              * @enum {string}
              */
-            source: "pmc" | "pdf" | "inst" | "abstract";
+            source?: "pmc" | "pdf" | "inst" | "abstract";
             /** Relevance */
             relevance?: number | null;
             /**
              * N Paragraphs
              * @default 0
              */
-            n_paragraphs: number;
+            n_paragraphs?: number;
             /**
              * N Citations
              * @default 0
              */
-            n_citations: number;
+            n_citations?: number;
             /**
              * N Citations Verified
              * @default 0
              */
-            n_citations_verified: number;
+            n_citations_verified?: number;
             /**
              * Notes Md
              * @default
              */
-            notes_md: string;
+            notes_md?: string;
             /**
              * Citations
              * @default []
              */
-            citations: components["schemas"]["VerifiedQuote"][];
+            citations?: components["schemas"]["VerifiedQuote"][];
             /**
              * Facts
              * @default []
              */
-            facts: components["schemas"]["Fact"][];
+            facts?: components["schemas"]["Fact"][];
             /**
              * Paragraphs
              * @default []
              */
-            paragraphs: components["schemas"]["Paragraph"][];
+            paragraphs?: components["schemas"]["Paragraph"][];
             /**
              * Fulltext Md
              * @default
              */
-            fulltext_md: string;
+            fulltext_md?: string;
         };
         /** AnswerSummary */
         AnswerSummary: {
@@ -919,14 +919,14 @@ export interface components {
              * Pmid
              * @default
              */
-            pmid: string;
+            pmid?: string;
             /** Pid */
             pid: number;
             /**
              * Sec
              * @default
              */
-            sec: string;
+            sec?: string;
             /** Page */
             page?: number | null;
             /** Text */
@@ -935,12 +935,12 @@ export interface components {
              * Quotes
              * @default []
              */
-            quotes: string[];
+            quotes?: string[];
             /**
              * From Marker
              * @default true
              */
-            from_marker: boolean;
+            from_marker?: boolean;
         };
         /** CreateUserRequest */
         CreateUserRequest: {
@@ -956,7 +956,7 @@ export interface components {
              * @default user
              * @enum {string}
              */
-            role: "user" | "admin";
+            role?: "user" | "admin";
         };
         /** DependencyCheck */
         DependencyCheck: {
@@ -973,12 +973,12 @@ export interface components {
              * Fact Zh
              * @default
              */
-            fact_zh: string;
+            fact_zh?: string;
             /**
              * Kind
              * @default finding
              */
-            kind: string;
+            kind?: string;
             /** Pid */
             pid?: number | null;
             /** Sec */
@@ -989,17 +989,17 @@ export interface components {
              * Quote
              * @default
              */
-            quote: string;
+            quote?: string;
             /**
              * Score
              * @default 0
              */
-            score: number;
+            score?: number;
             /**
              * Verified
              * @default false
              */
-            verified: boolean;
+            verified?: boolean;
         };
         /** FactList */
         FactList: {
@@ -1018,7 +1018,7 @@ export interface components {
              * Abstract
              * @default
              */
-            abstract: string;
+            abstract?: string;
             /** Section */
             section?: string | null;
             /** Text */
@@ -1027,7 +1027,7 @@ export interface components {
              * Truncated
              * @default false
              */
-            truncated: boolean;
+            truncated?: boolean;
         };
         /** FulltextSection */
         FulltextSection: {
@@ -1068,7 +1068,7 @@ export interface components {
              * Params
              * @default {}
              */
-            params: {
+            params?: {
                 [key: string]: unknown;
             };
             progress?: components["schemas"]["JobProgress"] | null;
@@ -1111,47 +1111,47 @@ export interface components {
              * Pmid
              * @default
              */
-            pmid: string;
+            pmid?: string;
             /**
              * Doi
              * @default
              */
-            doi: string;
+            doi?: string;
             /**
              * Pmcid
              * @default
              */
-            pmcid: string;
+            pmcid?: string;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /**
              * Year
              * @default
              */
-            year: string;
+            year?: string;
             /**
              * Journal
              * @default
              */
-            journal: string;
+            journal?: string;
             /**
              * Quartile
              * @default
              */
-            quartile: string;
+            quartile?: string;
             /**
              * Source
              * @default
              */
-            source: string;
+            source?: string;
             /**
              * Authors
              * @default
              */
-            authors: string;
+            authors?: string;
             /** Pid */
             pid?: number | null;
             /** Sec */
@@ -1214,7 +1214,7 @@ export interface components {
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /** Abstract */
             abstract?: string | null;
             /** Year */
@@ -1227,12 +1227,12 @@ export interface components {
              * Authors
              * @default []
              */
-            authors: string[];
+            authors?: string[];
             /**
              * Types
              * @default []
              */
-            types: string[];
+            types?: string[];
             /** Cited By */
             cited_by?: number | null;
             /** Open Access Pdf */
@@ -1279,7 +1279,7 @@ export interface components {
              * @default bearer
              * @constant
              */
-            token_type: "bearer";
+            token_type?: "bearer";
             /** Expires At */
             expires_at: string;
             user: components["schemas"]["UserRead"];
@@ -1336,69 +1336,69 @@ export interface components {
              * Pmid
              * @default
              */
-            pmid: string;
+            pmid?: string;
             /**
              * Doi
              * @default
              */
-            doi: string;
+            doi?: string;
             /**
              * Pmcid
              * @default
              */
-            pmcid: string;
+            pmcid?: string;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /**
              * Year
              * @default
              */
-            year: string;
+            year?: string;
             /**
              * Journal
              * @default
              */
-            journal: string;
+            journal?: string;
             /**
              * Issn
              * @default
              */
-            issn: string;
+            issn?: string;
             /**
              * Quartile
              * @default
              */
-            quartile: string;
+            quartile?: string;
             /**
              * Authors
              * @default
              */
-            authors: string;
+            authors?: string;
             /**
              * Source
              * @default
              */
-            source: string;
+            source?: string;
             /**
              * Types
              * @default []
              */
-            types: string[];
+            types?: string[];
             /** Indexed At */
             indexed_at?: string | null;
             /**
              * N Paragraphs
              * @default 0
              */
-            n_paragraphs: number;
+            n_paragraphs?: number;
             /**
              * N Facts
              * @default 0
              */
-            n_facts: number;
+            n_facts?: number;
         };
         /** Paragraph */
         Paragraph: {
@@ -1443,12 +1443,12 @@ export interface components {
              * Title
              * @default
              */
-            title: string;
+            title?: string;
             /**
              * Issns
              * @default []
              */
-            issns: string[];
+            issns?: string[];
             /** Zone */
             zone: number;
             /** Quartile */
@@ -1461,17 +1461,17 @@ export interface components {
              * Categories
              * @default
              */
-            categories: string;
+            categories?: string;
             /**
              * Top
              * @default false
              */
-            top: boolean;
+            top?: boolean;
             /**
              * Source
              * @default
              */
-            source: string;
+            source?: string;
         };
         /** RankQuery */
         RankQuery: {
@@ -1479,12 +1479,12 @@ export interface components {
              * Issn
              * @default
              */
-            issn: string;
+            issn?: string;
             /**
              * Title
              * @default
              */
-            title: string;
+            title?: string;
         };
         /** RankResult */
         RankResult: {
@@ -1552,19 +1552,19 @@ export interface components {
              * Score
              * @default 0
              */
-            score: number;
+            score?: number;
             /**
              * Verified
              * @default false
              */
-            verified: boolean;
+            verified?: boolean;
             /** Note Section */
             note_section?: string | null;
             /**
              * Key Finding
              * @default false
              */
-            key_finding: boolean;
+            key_finding?: boolean;
         };
         /**
          * Problem
@@ -1605,7 +1605,7 @@ export interface components {
              * Errors
              * @default null
              */
-            errors: {
+            errors?: {
                 [key: string]: unknown;
             }[] | null;
         };
@@ -1648,12 +1648,12 @@ export interface components {
              * Pmid
              * @default null
              */
-            pmid: string | null;
+            pmid?: string | null;
             /**
              * Title
              * @default null
              */
-            title: string | null;
+            title?: string | null;
         };
         /** ReindexSucceededData */
         ReindexSucceededData: {
