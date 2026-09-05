@@ -65,10 +65,10 @@ export function ExternalLink({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
     >
       {children}
-      <ArrowUpRight className="size-3.5 shrink-0" />
+      <ArrowUpRight className="size-3 shrink-0" />
     </a>
   )
 }
@@ -82,7 +82,7 @@ export function PaperLinks({
   pdf?: string | null
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-3">
       {pmid && (
         <ExternalLink
           href={
