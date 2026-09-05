@@ -1,52 +1,6 @@
 import type { ReactNode } from 'react'
-import { ArrowUpRight, Check, LoaderCircle, RotateCw, X } from 'lucide-react'
-import { problemMessage } from '@/api/errors'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { ArrowUpRight } from 'lucide-react'
 
-export function Loading({ children = '正在加载…' }: { children?: ReactNode }) {
-  return (
-    <div
-      role="status"
-      className="flex items-center gap-2 py-8 text-sm text-muted-foreground"
-    >
-      <LoaderCircle className="size-4 shrink-0 animate-spin" />
-      {children}
-    </div>
-  )
-}
-export function QueryError({
-  error,
-  retry,
-}: {
-  error: unknown
-  retry: () => unknown
-}) {
-  return (
-    <div
-      role="alert"
-      className="error-panel flex flex-wrap items-center justify-between gap-3"
-    >
-      <span className="min-w-0 break-words">{problemMessage(error)}</span>
-      <Button variant="outline" size="sm" onClick={() => void retry()}>
-        <RotateCw />
-        重试
-      </Button>
-    </div>
-  )
-}
-export function Verified({ value }: { value?: boolean | null }) {
-  if (value == null) return null
-  return (
-    <Badge
-      variant="outline"
-      className={value ? 'status-green' : 'status-amber'}
-    >
-      {value ? <Check className="size-3" /> : <X className="size-3" />}
-      {value ? '已核实' : '未核实'}
-    </Badge>
-  )
-}
 export function ExternalLink({
   href,
   children,
