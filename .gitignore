@@ -1,5 +1,8 @@
 .agent-logs/
 
+# Generated orb portal state
+.amp/portals/*
+
 # Python 缓存
 __pycache__/
 *.py[cod]

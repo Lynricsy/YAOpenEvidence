@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+SECONDS=0
+
+echo 'Installing missing system dependencies...'
+missing=()
+for package in redis-server redis-tools libgomp1; do
+  if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -qx 'install ok installed'; then
+    missing+=("$package")
+  fi
+done
+if ((${#missing[@]})); then
+  time sudo apt-get update
+  time sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing[@]}"
+fi
+
+# uv is supplied by the Amp orb base image. Keep its cache and .venv in snapshots.
+echo 'Preparing Python 3.12...'
+time uv python install 3.12
+echo 'Syncing locked workspace and development dependencies (CPU PyTorch)...'
+time uv sync --locked --all-packages --python 3.12
+
+# No .env copy: the template targets Docker's host gateway, not native orb services.
+# No credentials, model downloads, or databases from the current environment are saved.
+echo "Setup completed in ${SECONDS}s. Redis is started by .agents/resume."

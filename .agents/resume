@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+echo 'Ensuring local development Redis is running...'
+amp orb services ensure
+redis-cli -h 127.0.0.1 -p 6379 ping
