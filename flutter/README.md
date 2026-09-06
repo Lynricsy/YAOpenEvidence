@@ -11,7 +11,7 @@
 | Flutter | `3.47.2` stable（Dart 3.13.2），由 `.fvmrc` 固定；命令一律 `fvm flutter …` / `fvm dart …` |
 | 平台 | `android`、`linux`、`windows`（iOS/macOS 归 `apple/`，Web 归 `frontend/`） |
 | Linux 桌面构建 | `clang`、`cmake`、`ninja`、`pkg-config`、`gtk3`、`libsecret` |
-| Android 构建 | Android SDK（platform 36 / build-tools 36）+ JDK 17 |
+| Android 构建 | Android SDK（platform 37 + build-tools 36 起）+ JDK 17；`android/app/build.gradle.kts` 固定 `compileSdk = 37`（插件 AAR 已按 37 发布，模板默认 36 会在 `checkDebugAarMetadata` 失败） |
 
 ```bash
 cd flutter
@@ -70,7 +70,7 @@ fvm flutter build linux --release
 ANDROID_HOME=/opt/android-sdk fvm flutter build apk --debug
 ```
 
-Windows 目录随 `flutter create` 入库，但只能在 Windows 主机上构建（本仓库的 CI/开发机为 Linux）。
+APK 产物在 `build/app/outputs/flutter-apk/`。Windows 目录随 `flutter create` 入库，但只能在 Windows 主机上构建（本仓库的 CI/开发机为 Linux）。
 
 ## 端到端冒烟
 
@@ -103,6 +103,6 @@ integration_test/            # 端到端冒烟
 
 ## 平台行为差异
 
-- 令牌存储：Android 走 EncryptedSharedPreferences，Linux 依赖桌面会话的 Secret Service（libsecret），Windows 用 DPAPI。若平台不可用（例如无 keyring 的 CI/Xvfb 环境），`TokenStore` 回退为明文偏好，并在账号页显示提示，不阻塞登录。
+- 令牌存储：Android 走 EncryptedSharedPreferences，Linux 依赖桌面会话的 Secret Service（libsecret），Windows 用 DPAPI。Linux 上先看 `DBUS_SESSION_BUS_ADDRESS` / `SECRET_SERVICE_ADDRESS`：没有可用会话（CI、容器、Xvfb）时直接走明文偏好——libsecret 此时只发 GLib 警告，插件转不成 Dart 异常，硬写会终止进程。回退状态在账号页显示「当前平台无安全存储，令牌以明文保存」，不阻塞登录。
 - 明文 `http://` 只允许 localhost、`.local`/`.localhost`、`::1` 与私有网段；公网地址必须 `https://`。
 - 动效只用框架内置能力，并尊重系统「减弱动效」设置。
