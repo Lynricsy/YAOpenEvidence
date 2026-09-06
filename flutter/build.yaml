@@ -1,0 +1,10 @@
+targets:
+  $default:
+    builders:
+      # 后端字段全为 snake_case；请求体省略 null（years / year_from 互斥，后端按字段存在性校验）。
+      json_serializable:
+        options:
+          field_rename: snake
+          include_if_null: false
+          create_to_json: true
+          explicit_to_json: true
