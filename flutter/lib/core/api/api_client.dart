@@ -88,59 +88,118 @@ class ApiClient {
 
   /// 订阅任务事件流。断线重连由调用方负责（传入上一次收到的 `Last-Event-ID`）。
   /// [onOpen] 在响应头到达且状态为 2xx 时回调一次，供 UI 点亮连接指示灯。
+  ///
+  /// 空闲看门狗自己拿 `Timer` 实现，不用 `Stream.timeout`：后者在被 `fake_async`
+  /// 接管时不转发完成事件，重连逻辑就无法在测试里被驱动。
   Stream<SseEvent> events({
     required String jobId,
     required String lastEventId,
     void Function()? onOpen,
-  }) async* {
+  }) {
     final path = '/jobs/${encodePathComponent(jobId)}/events';
-    final request = http.Request('GET', _uri(path, const {}));
-    request.headers['Accept'] = 'text/event-stream';
-    request.headers['Last-Event-ID'] = lastEventId;
-    final token = this.token();
-    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    final controller = StreamController<SseEvent>();
+    StreamSubscription<List<int>>? subscription;
+    Timer? idle;
 
-    final http.StreamedResponse response;
-    try {
-      response = await _client.send(request);
-    } on ApiError {
-      rethrow;
-    } catch (error) {
-      throw Transport(error);
+    Future<void> stop() async {
+      idle?.cancel();
+      idle = null;
+      await subscription?.cancel();
+      subscription = null;
     }
 
-    if (!_isSuccess(response.statusCode, const {})) {
-      List<int> body;
+    Future<void> start() async {
+      final request = http.Request('GET', _uri(path, const {}));
+      request.headers['Accept'] = 'text/event-stream';
+      request.headers['Last-Event-ID'] = lastEventId;
+      final token = this.token();
+      if (token != null) request.headers['Authorization'] = 'Bearer $token';
+
+      final http.StreamedResponse response;
       try {
-        body = await response.stream.toBytes();
-      } catch (_) {
-        body = const [];
+        response = await _client.send(request);
+      } on ApiError catch (error) {
+        controller.addError(error);
+        await controller.close();
+        return;
+      } catch (error) {
+        controller.addError(Transport(error));
+        await controller.close();
+        return;
       }
-      throw _failure(
-        status: response.statusCode,
-        headers: response.headers,
-        body: body,
-        path: path,
+
+      if (!_isSuccess(response.statusCode, const {})) {
+        List<int> body;
+        try {
+          body = await response.stream.toBytes();
+        } catch (_) {
+          body = const [];
+        }
+        controller.addError(
+          _failure(
+            status: response.statusCode,
+            headers: response.headers,
+            body: body,
+            path: path,
+          ),
+        );
+        await controller.close();
+        return;
+      }
+      onOpen?.call();
+
+      final parser = SseParser();
+      // 分块解码：多字节字符可能跨块切开，必须用增量解码器。
+      final decoder = utf8.decoder.startChunkedConversion(
+        _SseTextSink((text) {
+          for (final event in parser.feed(text)) {
+            controller.add(event);
+          }
+        }),
+      );
+
+      void armIdle() {
+        idle?.cancel();
+        idle = Timer(streamIdleTimeout, () {
+          controller.addError(
+            const Transport('事件流空闲超过 90 秒，判定为断流'),
+          );
+          stop().whenComplete(controller.close);
+        });
+      }
+
+      armIdle();
+      subscription = response.stream.listen(
+        (chunk) {
+          armIdle();
+          decoder.add(chunk);
+        },
+        onError: (Object error) {
+          // cancelOnError 已经取消了源订阅，这里必须先置空：
+          // 在源回调里再 cancel 一次会把 done 的派发压到下一轮事件循环之后。
+          subscription = null;
+          idle?.cancel();
+          idle = null;
+          controller.addError(error is ApiError ? error : Transport(error));
+          controller.close();
+        },
+        onDone: () {
+          subscription = null;
+          idle?.cancel();
+          idle = null;
+          decoder.close();
+          for (final event in parser.flush()) {
+            controller.add(event);
+          }
+          controller.close();
+        },
+        cancelOnError: true,
       );
     }
-    onOpen?.call();
 
-    final parser = SseParser();
-    final chunks = utf8.decoder.bind(response.stream.timeout(streamIdleTimeout));
-    try {
-      await for (final chunk in chunks) {
-        for (final event in parser.feed(chunk)) {
-          yield event;
-        }
-      }
-    } on ApiError {
-      rethrow;
-    } catch (error) {
-      throw Transport(error);
-    }
-    for (final event in parser.flush()) {
-      yield event;
-    }
+    controller.onListen = () => start();
+    controller.onCancel = stop;
+    return controller.stream;
   }
 
   Future<http.Response> _send(
@@ -233,4 +292,17 @@ class ApiClient {
       retryAfter: retryAfter,
     );
   }
+}
+
+/// 把增量解码出的文本片段回调出去。
+class _SseTextSink implements Sink<String> {
+  _SseTextSink(this._onText);
+
+  final void Function(String text) _onText;
+
+  @override
+  void add(String data) => _onText(data);
+
+  @override
+  void close() {}
 }
