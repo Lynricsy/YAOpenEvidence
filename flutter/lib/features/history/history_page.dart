@@ -1,13 +1,243 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../app/answers_version.dart';
+import '../../app/theme/tokens.dart';
+import '../../core/api/api_error.dart';
+import '../../core/api/endpoints.dart';
+import '../../core/models/answers.dart';
+import '../../core/models/page.dart' as models;
+import '../../core/session/session_controller.dart';
+import '../../shared/format.dart';
+import '../../shared/widgets/badges.dart';
+import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/loadable.dart';
+import '../../shared/widgets/page_header.dart';
+import '../../shared/widgets/pagination.dart';
+import 'history_controller.dart';
 
-/// TODO_STEP_PLACEHOLDER：本页在后续步骤实现。
-class HistoryPage extends StatelessWidget {
+class HistoryPage extends ConsumerWidget {
   const HistoryPage({super.key});
 
   @override
-  Widget build(BuildContext context) => const Scaffold(
-    body: EmptyState(icon: Icons.history, title: '历史'),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final page = ref.watch(historyControllerProvider);
+    final controller = ref.read(historyControllerProvider.notifier);
+    return SingleChildScrollView(
+      child: PageBody(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const PageHeader(title: '问答历史'),
+            TextField(
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search_outlined),
+                hintText: '搜索问题…',
+              ),
+              onChanged: controller.setQuery,
+            ),
+            const SizedBox(height: YaoeTokens.space3),
+            Wrap(
+              spacing: YaoeTokens.space2,
+              runSpacing: YaoeTokens.space2,
+              children: [
+                ChoiceChip(
+                  label: const Text('全部'),
+                  selected: controller.status == null,
+                  onSelected: (_) => controller.setStatus(null),
+                ),
+                for (final status in AnswerStatus.values)
+                  ChoiceChip(
+                    label: Text(answerStatusLabel(status)),
+                    selected: controller.status == status,
+                    onSelected: (_) => controller.setStatus(status),
+                  ),
+              ],
+            ),
+            const SizedBox(height: YaoeTokens.space4),
+            AsyncValueView<models.Page<AnswerSummary>>(
+              value: page,
+              keepPreviousOnRefresh: false,
+              onRetry: () => unawaited(controller.reload()),
+              builder: (data) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (data.items.isEmpty)
+                    const EmptyState(
+                      icon: Icons.history,
+                      title: '暂无问答记录',
+                      description: '没有符合当前条件的问答。',
+                    )
+                  else
+                    for (final summary in data.items)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: YaoeTokens.space3,
+                        ),
+                        child: _HistoryCard(
+                          key: ValueKey(summary.id),
+                          summary: summary,
+                        ),
+                      ),
+                  Pager(
+                    total: data.total,
+                    limit: HistoryController.limit,
+                    offset: controller.offset,
+                    onChange: controller.setOffset,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HistoryCard extends ConsumerStatefulWidget {
+  const _HistoryCard({super.key, required this.summary});
+
+  final AnswerSummary summary;
+
+  @override
+  ConsumerState<_HistoryCard> createState() => _HistoryCardState();
+}
+
+class _HistoryCardState extends ConsumerState<_HistoryCard> {
+  bool _busy = false;
+
+  Future<void> _performAction() async {
+    if (_busy) return;
+    final summary = widget.summary;
+    final cancelling = summary.status.isActive;
+    setState(() => _busy = true);
+    try {
+      final confirmed = await showConfirm(
+        context,
+        title: cancelling ? '取消问答任务？' : '删除问答？',
+        body: cancelling ? '任务将停止，已产生的材料仍会保留。' : '此问答将被永久删除，无法恢复。',
+        destructive: !cancelling,
+      );
+      if (!confirmed || !mounted) return;
+      final client = ref.read(apiClientProvider);
+      final controller = ref.read(historyControllerProvider.notifier);
+      final version = ref.read(answersVersionProvider.notifier);
+      if (cancelling) {
+        final jobId = summary.jobId;
+        if (jobId == null) return;
+        try {
+          await client.cancelJob(jobId);
+        } on ApiError catch (error) {
+          if (error.status != 409) rethrow;
+        }
+        if (mounted) await controller.reload();
+      } else {
+        await client.deleteAnswer(summary.id);
+        if (mounted) {
+          final current = ref.read(historyControllerProvider).value;
+          if (current != null &&
+              current.items.length == 1 &&
+              current.items.single.id == summary.id &&
+              controller.offset > 0) {
+            controller.setOffset(controller.offset - HistoryController.limit);
+          }
+        }
+        version.bump();
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessageOf(error))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = widget.summary;
+    final theme = Theme.of(context);
+    final active = summary.status.isActive;
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.go('/a/${summary.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(YaoeTokens.space4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                summary.question,
+                style: theme.textTheme.titleSmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: YaoeTokens.space2),
+              Wrap(
+                spacing: YaoeTokens.space3,
+                runSpacing: YaoeTokens.space2,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  StatusBadge(status: summary.status),
+                  if (summary.filtersLabel?.isNotEmpty ?? false)
+                    Text(summary.filtersLabel!, style: theme.textTheme.bodySmall),
+                  Text(
+                    relativeTime(summary.createdAt),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  if (summary.nPapers != null)
+                    Text(
+                      '${summary.nPapers} 篇文献',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                ],
+              ),
+              if (summary.status == AnswerStatus.failed) ...[
+                const SizedBox(height: YaoeTokens.space2),
+                Text(
+                  jobErrorMessage(summary.error?.code ?? 'internal_error'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ],
+              if (!active || summary.jobId != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    tooltip: active ? '取消' : '删除',
+                    onPressed: _busy ? null : _performAction,
+                    icon: _busy
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            active
+                                ? Icons.stop_circle_outlined
+                                : Icons.delete_outline,
+                            color: active ? null : theme.colorScheme.error,
+                          ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
