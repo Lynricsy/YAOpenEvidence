@@ -18,18 +18,32 @@ const password = String.fromEnvironment('YAOE_E2E_PASSWORD');
 
 const question = 'SGLT2抑制剂对HFpEF患者有什么获益？';
 
-Future<void> pumpUntil(
+const minute = Duration(minutes: 1);
+
+Future<void> pumpUntilTrue(
   WidgetTester tester,
-  Finder finder, {
+  bool Function() ready, {
   Duration timeout = const Duration(minutes: 10),
+  String what = '条件',
 }) async {
   final deadline = DateTime.now().add(timeout);
   while (DateTime.now().isBefore(deadline)) {
     await tester.pump(const Duration(milliseconds: 500));
-    if (finder.evaluate().isNotEmpty) return;
+    if (ready()) return;
   }
-  fail('等待超时：$finder');
+  fail('等待超时：$what');
 }
+
+Future<void> pumpUntil(
+  WidgetTester tester,
+  Finder finder, {
+  Duration timeout = const Duration(minutes: 10),
+}) => pumpUntilTrue(
+  tester,
+  () => finder.evaluate().isNotEmpty,
+  timeout: timeout,
+  what: '$finder',
+);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -43,15 +57,25 @@ void main() {
         child: const App(),
       ),
     );
-    await tester.pumpAndSettle();
+    // 会话引导是真实 I/O,pumpAndSettle 不等它;等到登录表单或已登录的提问页。
+    final loginForm = find.byType(TextFormField);
+    final askPage = find.byType(AskPage);
+    await pumpUntilTrue(
+      tester,
+      () => loginForm.evaluate().isNotEmpty || askPage.evaluate().isNotEmpty,
+      timeout: minute,
+      what: '登录页或提问页',
+    );
 
-    // 登录页：服务器地址 / 用户名 / 密码。
-    final fields = find.byType(TextFormField);
-    await tester.enterText(fields.at(0), api);
-    await tester.enterText(fields.at(1), user);
-    await tester.enterText(fields.at(2), password);
-    await tester.tap(find.text('登录'));
-    await pumpUntil(tester, find.byType(AskPage));
+    // 本机可能残留上次冒烟的会话;只有真在登录页时才走登录流程。
+    if (loginForm.evaluate().isNotEmpty) {
+      await tester.enterText(loginForm.at(0), api);
+      await tester.enterText(loginForm.at(1), user);
+      await tester.enterText(loginForm.at(2), password);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('登录'));
+      await pumpUntil(tester, askPage, timeout: minute);
+    }
 
     // 只读 1 篇、关闭知识库，把冒烟时间压到最短。
     final container = ProviderScope.containerOf(
@@ -68,7 +92,7 @@ void main() {
           ),
         );
     container.read(askDraftProvider.notifier).set(question);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.byIcon(Icons.arrow_upward).first);
     await pumpUntil(tester, find.byType(AnswerPage));

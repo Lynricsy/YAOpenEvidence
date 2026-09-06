@@ -28,12 +28,17 @@ class _AskPageState extends ConsumerState<AskPage> {
   void initState() {
     super.initState();
     _controller.text = ref.read(askDraftProvider);
+    // 边输入边写回草稿：Riverpod 3 禁止在 dispose 里碰 ref，
+    // 所以不能等到离开页面再存。
+    _controller.addListener(_saveDraft);
   }
+
+  void _saveDraft() =>
+      ref.read(askDraftProvider.notifier).set(_controller.text);
 
   @override
   void dispose() {
-    // 离开页面时保留草稿，回来还能接着写。
-    ref.read(askDraftProvider.notifier).set(_controller.text);
+    _controller.removeListener(_saveDraft);
     _controller.dispose();
     super.dispose();
   }
