@@ -114,7 +114,7 @@ final class AnswerScreenModel {
     private func startMonitorIfNeeded(client: APIClient) {
         guard let session, let answer = current, answer.status.isActive, let jobID = answer.jobId else { return }
         if monitor == nil {
-            monitor = JobLiveMonitor(jobID: jobID, client: client, session: session) { [weak self] live, event in
+            monitor = JobLiveMonitor(jobID: jobID, client: client) { [weak self] live, event in
                 self?.handle(live: live, event: event)
             }
         }

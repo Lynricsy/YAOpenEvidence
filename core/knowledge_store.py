@@ -569,9 +569,11 @@ def reindex(emit: Callable[[dict], None] = lambda e: None,
             should_cancel: Callable[[], bool] = lambda: False) -> tuple[int, int]:
     """从 library/ 重建 kb/（换 embedder 后必须做）。返回 (入库条目数, 论文数)。
 
-    先在同一文件系统上的临时目录里**完整**构建，成功后把整代索引一次
-    os.replace 换上去。原来的做法是先删线上索引再逐篇写，一旦崩溃、超时或
-    被取消，留下的就是空的或半成品索引，而 API 正在读同一份 kb/。
+    先在 kb/ **内部**的临时目录里完整构建，成功后把整代索引一次 os.replace 换上
+    去。原来的做法是先删线上索引再逐篇写，一旦崩溃、超时或被取消，留下的就是空
+    的或半成品索引，而 API 正在读同一份 kb/。暂存目录必须与线上索引同处一个挂载
+    点：放在 kb/ 的父目录时，容器里 kb/ 是独立 bind mount，发布那一步会以
+    `EXDEV: Invalid cross-device link` 失败。
 
     `emit` 收结构化进度事件（供 HTTP worker 推给 SSE），`should_cancel` 在
     逐篇边界轮询。
@@ -583,7 +585,7 @@ def reindex(emit: Callable[[dict], None] = lambda e: None,
 
 def _reindex_locked(emit: Callable[[dict], None], should_cancel: Callable[[], bool]) -> tuple[int, int]:
     os.makedirs(KB_DIR, exist_ok=True)
-    staging = tempfile.mkdtemp(prefix=".kb-reindex-", dir=os.path.dirname(os.path.abspath(KB_DIR)))
+    staging = tempfile.mkdtemp(prefix=".kb-reindex-", dir=KB_DIR)
     try:
         store = KnowledgeStore(kb_dir=staging)
         store._staging = True

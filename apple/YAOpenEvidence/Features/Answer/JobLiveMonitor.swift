@@ -25,27 +25,25 @@ final class JobLiveMonitor {
     private(set) var live = JobLive.empty
     private(set) var connection: Connection = .idle
 
+    /// 是否已在订阅中：页面重新出现时用它避免重复 `start()`。
+    var isRunning: Bool { task != nil }
+
     private let jobID: String
     private let client: APIClient
-    private let session: SessionStore
     private let onEvent: (JobLive, SSEEvent) -> Void
     private var task: Task<Void, Never>?
     /// 已消费到的 Redis Stream 位置：暂停后再续订从这里继续，避免重放造成日志重复。
     private var lastEventID = "0-0"
-    /// 事件流是否正在运行（暂停后可再次 `start()`）。
+    /// 暂停后再续订算新一代：旧任务收尾时不得把新任务的 `task` 清空。
     private var generation = 0
-
-    var isRunning: Bool { task != nil }
 
     init(
         jobID: String,
         client: APIClient,
-        session: SessionStore,
         onEvent: @escaping (JobLive, SSEEvent) -> Void
     ) {
         self.jobID = jobID
         self.client = client
-        self.session = session
         self.onEvent = onEvent
     }
 
@@ -98,12 +96,12 @@ final class JobLiveMonitor {
 
             first = false
             connection = .reconnecting
-            // 重连前探活：令牌已失效就直接登出，不再空转重试。
+            // 重连前探活：令牌已失效就停连，不再空转重试。会话由 `APIClient`
+            // 的 onUnauthorized 统一清理（那里带会话代次，不会误杀新登录）。
             do {
                 _ = try await client.me()
             } catch {
                 if error.status == 401 {
-                    session.expire()
                     connection = .closed
                     return
                 }

@@ -78,7 +78,7 @@ final class KbModel {
         do {
             let job = try await client.reindexKb()
             await noteJobFinished(job)
-            let monitor = JobLiveMonitor(jobID: job.id, client: client, session: session) { [weak self] live, _ in
+            let monitor = JobLiveMonitor(jobID: job.id, client: client) { [weak self] live, _ in
                 guard let self, live.terminal != nil else { return }
                 Task { await self.refreshJob() }
             }

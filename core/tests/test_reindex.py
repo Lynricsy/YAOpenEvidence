@@ -47,7 +47,7 @@ def _live(kb_dir: Path) -> dict:
 
 
 def _staging_leftovers(kb_dir: Path) -> list[Path]:
-    return [p for p in kb_dir.parent.iterdir() if p.name.startswith(".kb-reindex-")]
+    return [p for p in kb_dir.iterdir() if p.name.startswith(".kb-reindex-")]
 
 
 def test_cancelled_reindex_leaves_live_index_intact(kb: Path):
@@ -96,6 +96,28 @@ def test_successful_reindex_replaces_index(kb: Path):
     assert after["items"] == items
     assert after["papers"] == 1
     assert _staging_leftovers(kb) == []
+
+
+def test_staging_lives_inside_kb_dir(kb: Path, monkeypatch):
+    """暂存目录必须和线上索引同一个挂载点，否则发布那一次 os.replace 会 EXDEV 失败。
+
+    容器里 kb/ 是独立 bind mount：暂存放到 kb/ 的父目录时，重建每次都会以
+    `Invalid cross-device link` 失败。这里直接盯住「暂存建在 kb/ 内」这个不变量。
+    """
+    seen: list[str] = []
+    real_mkdtemp = ks.tempfile.mkdtemp
+
+    def recording_mkdtemp(*args, **kwargs):
+        path = real_mkdtemp(*args, **kwargs)
+        seen.append(path)
+        return path
+
+    monkeypatch.setattr(ks.tempfile, "mkdtemp", recording_mkdtemp)
+    ks.reindex()
+
+    staging = [p for p in seen if Path(p).name.startswith(".kb-reindex-")]
+    assert len(staging) == 1
+    assert Path(staging[0]).parent.resolve() == kb.resolve()
 
 
 def test_reindex_of_empty_library_clears_index(kb: Path):
