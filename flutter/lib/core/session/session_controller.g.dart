@@ -33,7 +33,7 @@ final class SessionControllerProvider
   SessionController create() => SessionController();
 }
 
-String _$sessionControllerHash() => r'4d98c1f6e951a5516291ea3d06b8e120533c6b43';
+String _$sessionControllerHash() => r'83a89019f09b3c0db1dc0efce1ed67f6c41c2f6b';
 
 abstract class _$SessionController extends $AsyncNotifier<SessionState> {
   FutureOr<SessionState> build();
@@ -97,7 +97,7 @@ final class ApiClientProvider
   }
 }
 
-String _$apiClientHash() => r'78609d6c534b66c2acc36d8e9f4ead061665b2a2';
+String _$apiClientHash() => r'6c2f0e38660ee955adfff63b921b0b11f4a3075f';
 
 @ProviderFor(currentUser)
 final currentUserProvider = CurrentUserProvider._();
@@ -138,7 +138,7 @@ final class CurrentUserProvider
   }
 }
 
-String _$currentUserHash() => r'7a7d7653189eaa6b83cc65f84f9578077d317cd6';
+String _$currentUserHash() => r'90dab06957efba86a031f76c03ee75feb5d48f5e';
 
 @ProviderFor(isAdmin)
 final isAdminProvider = IsAdminProvider._();
