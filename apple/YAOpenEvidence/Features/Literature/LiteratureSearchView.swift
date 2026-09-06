@@ -83,6 +83,7 @@ struct LiteratureSearchView: View {
         @Bindable var model = model
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                searchField
                 controls
                 results
             }
@@ -92,9 +93,8 @@ struct LiteratureSearchView: View {
             .padding(.vertical, 16)
         }
         .navigationTitle("查文献")
-        .searchable(text: $model.query, prompt: "检索 PubMed / Semantic Scholar")
-        .onSubmit(of: .search) { Task { await model.search() } }
         .accountToolbar()
+        .refreshable { await model.search() }
         .task { model.configure(session: session) }
         .sheet(isPresented: $showFilters) {
             LiteratureFilterSheet(filters: $model.filters, source: model.source)
@@ -112,6 +112,15 @@ struct LiteratureSearchView: View {
             HStack(spacing: 10) { controlItems }
             VStack(alignment: .leading, spacing: 10) { controlItems }
         }
+    }
+
+    /// 搜索框直接放在页面里：search 角色的 Tab 在 iOS 上不会常驻显示 `.searchable` 输入框。
+    private var searchField: some View {
+        @Bindable var model = model
+        return TextField("检索 PubMed / Semantic Scholar", text: $model.query)
+            .textFieldStyle(.roundedBorder)
+            .autocorrectionDisabled()
+            .onSubmit { Task { await model.search() } }
     }
 
     @ViewBuilder

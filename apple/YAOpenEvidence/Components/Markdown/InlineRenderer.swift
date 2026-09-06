@@ -40,6 +40,14 @@ enum InlineRenderer {
         return output
     }
 
+    /// VoiceOver 朗读文本：把 `[1¶45]` 这类标记换成可读的中文描述。
+    static func spokenText(_ runs: [InlineRun]) -> String {
+        runs.map { run in
+            guard let citation = run.citation else { return run.text }
+            return "，引用 第 \(citation.n) 篇" + (citation.pid.map { " 段落 \($0)" } ?? "") + "，"
+        }.joined()
+    }
+
     /// 在 run 序列里给命中的引文片段打高亮（每条 quote 只标注首次出现）。
     static func highlighting(_ runs: [InlineRun], quotes: [String]) -> [InlineRun] {
         let plain = MarkdownDocument.plainText(of: runs)

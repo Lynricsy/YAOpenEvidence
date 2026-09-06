@@ -52,6 +52,7 @@ struct MarkdownDocumentView: View {
                     in: .rect(cornerRadius: 8)
                 )
                 .animation(.easeOut(duration: 0.6), value: flashAnchor)
+                .accessibilityLabel(InlineRenderer.spokenText(runs))
                 .modifier(AnchorID(anchor: anchor))
 
         case .blockQuote(let inner):

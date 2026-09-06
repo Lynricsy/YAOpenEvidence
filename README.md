@@ -11,6 +11,7 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 ├── core/                    # picosgpt-core：检索、全文解析、PICOS 阅读、知识库与本机 CLI
 ├── backend/                 # yaoe-backend：FastAPI、数据库迁移、arq worker 与后端测试
 ├── frontend/                # React 19、Vite、TypeScript、Tailwind 与 shadcn/ui 浏览器前端
+├── apple/                   # SwiftUI 多平台客户端（iPhone / iPad / Mac）与本地 YAOEKit 包
 ├── docs/                    # 面向 API 使用者的协议文档
 ├── compose.yaml             # nginx web、Redis、迁移、API、worker 与 test profile
 ├── compose.fake-llm.yaml    # 确定性假 LLM 的 Compose 覆盖配置
@@ -25,6 +26,23 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 浏览器工作台包含文献筛选与实时问答、段落级引用和原文阅读、问答历史、账号设置、管理员用户管理，以及文献库、知识库和上游文献检索。界面为「学术编辑风」：可折叠的全局左侧导航栏、提问页筛选列、大屏答案与原文并排分栏，标题与正文数字使用自托管的 Noto Serif SC 与 Inter（经 `@fontsource-variable` 随构建产物分发，运行时不请求第三方 CDN）。鉴权采用 Bearer 会话；问答仅本人和管理员可见，文献与衍生知识库仍共享，不应提交敏感患者信息。
 
 `pnpm format` 统一前端代码格式，`pnpm typecheck` 检查应用与 Vite 配置，`pnpm test` 运行引用、筛选与任务事件回归；`pnpm gen:api` 从入库 OpenAPI 生成类型，并保留服务端默认字段的可选性。修改 API 契约后需要重新生成。明暗主题默认跟随系统；筛选、手动主题、侧边栏折叠状态与阅读器分栏宽度保存在当前浏览器。
+
+## Apple 客户端（SwiftUI）
+
+`apple/` 是与浏览器工作台功能对等的原生客户端：单一多平台 target 覆盖 iPhone、iPad 与 Mac，最低 iOS 26 / macOS 26，Swift 6 语言模式 + 严格并发。`apple/YAOEKit/` 是本地 SwiftPM 包，承载 Codable 模型、`APIClient` actor、SSE 解析与全部纯逻辑（筛选归一化、引用标记、任务事件归约、Markdown 解析），可脱离 App 用 `swift test` 验证；`apple/YAOpenEvidence/` 只放 SwiftUI 视图与页面模型。
+
+```bash
+brew install xcodegen
+export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer   # 或已切换的 xcode-select
+cd apple && xcodegen generate                                          # 生成 YAOpenEvidence.xcodeproj，不入库
+xcodebuild -project YAOpenEvidence.xcodeproj -scheme YAOpenEvidence -destination 'platform=macOS' build
+xcodebuild -project YAOpenEvidence.xcodeproj -scheme YAOpenEvidence -destination 'platform=iOS Simulator,name=iPhone 17' build
+cd YAOEKit && swift test
+```
+
+工程描述集中在 `apple/project.yml`（XcodeGen），Bundle ID 为 `plus.ling.YAOpenEvidence`；仓库内没有开发者账号，默认使用 ad-hoc 签名（`CODE_SIGN_IDENTITY = "-"`），换成自己的团队时改这三行签名设置即可。App 沙箱只申请 `network.client`，ATS 仅放开本地网络：明文 `http://` 服务器地址必须是 localhost 或私有网段，公网主机需使用 https。
+
+客户端首屏要求填写服务器地址（默认 `http://localhost:8765`）与账号密码；令牌存 Keychain，`expires_at`、用户资料与服务器地址存 UserDefaults，任何受保护端点返回 401 即清会话回登录页。问答进度走 `GET /v1/jobs/{id}/events` 的 SSE：1 秒起指数退避重连（上限 10 秒）、重连前用 `/v1/auth/me` 探活、SSE 未连通时每 5 秒兜底轮询答案。界面遵循 Apple HIG（系统字体与语义色、`sidebarAdaptable` 侧栏、regular 宽度用检查器展示原文阅读器），只保留品牌深青 accent、8 色引用色板与 Q1–Q4 分区色。
 
 ## 架构
 

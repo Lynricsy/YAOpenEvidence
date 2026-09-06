@@ -24,5 +24,7 @@ struct RootView: View {
             Alert(title: Text(message.title), message: Text(message.body), dismissButton: .default(Text("好")))
         }
         .preferredColorScheme(theme.colorScheme)
+        // 界面文案是简体中文，日期与数字格式跟着一起走，避免出现「1 second ago」这类混排。
+        .environment(\.locale, Locale(identifier: "zh-Hans"))
     }
 }

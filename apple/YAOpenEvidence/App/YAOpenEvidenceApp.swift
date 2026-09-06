@@ -25,6 +25,7 @@ struct YAOpenEvidenceApp: App {
                 .environment(session)
                 .environment(app)
                 .environment(errors)
+                .environment(\.locale, Locale(identifier: "zh-Hans"))
                 .frame(width: 480)
         }
         #endif
