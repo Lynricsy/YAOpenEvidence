@@ -47,49 +47,4 @@ enum InlineRenderer {
             return "，引用 第 \(citation.n) 篇" + (citation.pid.map { " 段落 \($0)" } ?? "") + "，"
         }.joined()
     }
-
-    /// 在 run 序列里给命中的引文片段打高亮（每条 quote 只标注首次出现）。
-    static func highlighting(_ runs: [InlineRun], quotes: [String]) -> [InlineRun] {
-        let plain = MarkdownDocument.plainText(of: runs)
-        guard !plain.isEmpty else { return runs }
-        let characters = Array(plain)
-
-        var ranges: [Range<Int>] = []
-        for quote in quotes {
-            let needle = quote.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard needle.count >= 4, let found = plain.range(of: needle) else { continue }
-            let start = plain.distance(from: plain.startIndex, to: found.lowerBound)
-            let end = plain.distance(from: plain.startIndex, to: found.upperBound)
-            ranges.append(start ..< end)
-        }
-        guard !ranges.isEmpty else { return runs }
-
-        var marked = [Bool](repeating: false, count: characters.count)
-        for range in ranges {
-            for index in range where index < marked.count { marked[index] = true }
-        }
-
-        var output: [InlineRun] = []
-        var cursor = 0
-        for run in runs {
-            let length = run.text.count
-            guard length > 0 else { continue }
-            var segmentStart = 0
-            var index = 1
-            while index <= length {
-                let boundary = index == length || marked[cursor + index] != marked[cursor + segmentStart]
-                if boundary {
-                    let slice = String(characters[(cursor + segmentStart) ..< (cursor + index)])
-                    var piece = run
-                    piece.text = slice
-                    if marked[cursor + segmentStart] { piece.style.insert(.highlight) }
-                    output.append(piece)
-                    segmentStart = index
-                }
-                index += 1
-            }
-            cursor += length
-        }
-        return output
-    }
 }

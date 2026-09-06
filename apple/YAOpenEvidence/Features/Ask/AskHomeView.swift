@@ -82,7 +82,10 @@ struct AskHomeView: View {
                 }
             }
             .accountToolbar()
-            .task(id: app.newQuestionToken) { inputFocused = true }
+            // 只有主动「新建问答」才抢焦点：一进 App 就弹键盘会挡住底部 Tab 栏。
+            .task(id: app.newQuestionToken) {
+                if app.newQuestionToken > 0 { inputFocused = true }
+            }
     }
 
     private func submit() {

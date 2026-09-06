@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(SessionStore.self) private var session
+    @Environment(AppModel.self) private var app
     @Environment(ErrorPresenter.self) private var errors
     @AppStorage("yaoe.theme") private var theme = AppTheme.system
 
@@ -19,7 +20,11 @@ struct RootView: View {
             }
         }
         .animation(.default, value: session.phase)
-        .task { await session.bootstrap() }
+        .task {
+            // 会话结束时清掉上一个账号的草稿与导航栈。
+            session.onSessionEnded = { app.resetForNewSession() }
+            await session.bootstrap()
+        }
         .alert(item: $errors.pending) { message in
             Alert(title: Text(message.title), message: Text(message.body), dismissButton: .default(Text("好")))
         }

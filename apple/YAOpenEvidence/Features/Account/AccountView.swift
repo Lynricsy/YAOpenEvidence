@@ -143,12 +143,33 @@ struct ChangePasswordView: View {
             defer { pending = false }
             do {
                 try await client.changePassword(current: current, new: next)
-                // 后端会注销全部会话，本地必须同步登出。
+                // 后端会注销全部会话，本地必须同步登出，并立刻清掉已输入的密码。
+                current = ""
+                next = ""
+                confirm = ""
                 await session.logout()
                 errors.presentInfo("密码已修改，请重新登录")
             } catch {
                 message = (error as? APIError)?.userMessage ?? "网络连接失败，请稍后重试"
             }
         }
+    }
+}
+
+/// macOS 的「设置」是独立窗口，不受 `RootView` 的登录分支控制：
+/// 会话结束后必须自己回到未登录状态，不能继续展示上一个账号的表单。
+struct AccountSettingsScene: View {
+    @Environment(SessionStore.self) private var session
+
+    var body: some View {
+        Group {
+            if session.phase == .signedIn {
+                AccountView()
+            } else {
+                ContentUnavailableView("未登录", systemImage: "person.crop.circle.badge.xmark")
+                    .padding(24)
+            }
+        }
+        .id(session.user?.id ?? "signed-out")
     }
 }

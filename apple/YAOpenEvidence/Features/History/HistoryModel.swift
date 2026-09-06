@@ -18,12 +18,15 @@ final class HistoryModel {
     var offset = 0
 
     private var session: SessionStore?
+    private var app: AppModel?
     private var errors: ErrorPresenter?
     private var searchTask: Task<Void, Never>?
     private var pollTask: Task<Void, Never>?
+    private var requestSeq = 0
 
     /// 离开页面时取消防抖与轮询。
     func teardown() {
+        requestSeq += 1
         searchTask?.cancel()
         searchTask = nil
         pollTask?.cancel()
@@ -45,24 +48,30 @@ final class HistoryModel {
     var canPrevious: Bool { offset > 0 }
     var canNext: Bool { offset + Self.pageSize < total }
 
-    func configure(session: SessionStore, errors: ErrorPresenter) {
+    func configure(session: SessionStore, app: AppModel, errors: ErrorPresenter) {
         self.session = session
+        self.app = app
         self.errors = errors
     }
 
     func load() async {
         guard let client = session?.client else { return }
+        requestSeq += 1
+        let seq = requestSeq
+        let snapshot = (status: status, query: query.trimmingCharacters(in: .whitespaces), offset: offset)
         if page.value == nil { page = .loading }
         do {
             let result = try await client.answers(
-                status: status,
-                q: query.trimmingCharacters(in: .whitespaces),
+                status: snapshot.status,
+                q: snapshot.query,
                 limit: Self.pageSize,
-                offset: offset
+                offset: snapshot.offset
             )
+            guard seq == requestSeq else { return }
             page = .loaded(result)
             schedulePollIfNeeded()
         } catch {
+            guard seq == requestSeq else { return }
             page = .failed(error.userMessage)
         }
     }
@@ -89,7 +98,7 @@ final class HistoryModel {
         guard let client = session?.client, let jobID = item.jobId else { return }
         do {
             try await client.cancelJob(id: jobID)
-            await load()
+            app?.noteAnswersChanged()
         } catch {
             errors?.present(error)
         }
@@ -101,7 +110,7 @@ final class HistoryModel {
             try await client.deleteAnswer(id: item.id)
             // 删掉本页最后一项时回退一页，避免停在空页。
             if items.count == 1, offset > 0 { offset = max(0, offset - Self.pageSize) }
-            await load()
+            app?.noteAnswersChanged()
         } catch {
             errors?.present(error)
         }

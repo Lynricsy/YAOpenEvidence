@@ -201,8 +201,10 @@ public extension APIClient {
         try await json(Endpoint(path: "/health", requiresAuth: false))
     }
 
+    /// 就绪探针是唯一「非 2xx 也返回业务模型」的端点：503 仍是 `ReadinessResponse`，
+    /// 里面才有各依赖的失败原因，不能当成 Problem 丢掉。
     func ready() async throws(APIError) -> ReadinessResponse {
-        try await json(Endpoint(path: "/health/ready", requiresAuth: false))
+        try await json(Endpoint(path: "/health/ready", requiresAuth: false, alsoAccept: [503]))
     }
 
     // MARK: - 私有工具

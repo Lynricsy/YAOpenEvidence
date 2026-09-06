@@ -13,6 +13,7 @@ final class UsersModel {
 
     private var session: SessionStore?
     private var errors: ErrorPresenter?
+    private var requestSeq = 0
 
     var items: [UserRead] { page.value?.items ?? [] }
     var total: Int { page.value?.total ?? 0 }
@@ -31,10 +32,16 @@ final class UsersModel {
 
     func load() async {
         guard let client = session?.client else { return }
+        requestSeq += 1
+        let seq = requestSeq
+        let snapshot = offset
         if page.value == nil { page = .loading }
         do {
-            page = .loaded(try await client.users(limit: Self.pageSize, offset: offset))
+            let result = try await client.users(limit: Self.pageSize, offset: snapshot)
+            guard seq == requestSeq else { return }
+            page = .loaded(result)
         } catch {
+            guard seq == requestSeq else { return }
             page = .failed(error.userMessage)
         }
     }
@@ -133,8 +140,15 @@ struct UsersView: View {
             }
         }
         .overlay {
-            if model.items.isEmpty, !model.page.isLoading {
-                ContentUnavailableView("暂无用户", systemImage: "person.2")
+            switch model.page {
+            case .idle, .loading:
+                ProgressView()
+            case .failed(let message):
+                ErrorPanel(message: message, retry: { Task { await model.load() } })
+            case .loaded(let page):
+                if page.items.isEmpty {
+                    ContentUnavailableView("暂无用户", systemImage: "person.2")
+                }
             }
         }
         .navigationTitle("用户")

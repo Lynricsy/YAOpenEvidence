@@ -14,7 +14,7 @@ struct ParagraphMarkdownView: View {
         guard let focusPid, !quotes.isEmpty else { return parsed }
         return parsed.map { block in
             guard case .paragraph(let runs, let anchor) = block, anchor == focusPid else { return block }
-            return .paragraph(runs: InlineRenderer.highlighting(runs, quotes: quotes), anchor: anchor)
+            return .paragraph(runs: MarkdownDocument.highlighting(runs, quotes: quotes), anchor: anchor)
         }
     }
 

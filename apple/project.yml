@@ -25,6 +25,8 @@ targets:
       path: YAOpenEvidence/Info.plist
       properties:
         CFBundleDisplayName: YAOpenEvidence
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         UILaunchScreen: {}

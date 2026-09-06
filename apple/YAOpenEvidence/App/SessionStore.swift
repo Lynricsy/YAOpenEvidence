@@ -37,6 +37,11 @@ final class SessionStore {
     private let tokens = TokenBox()
     private let keychain = KeychainStore.sessionToken
     private let defaults = UserDefaults.standard
+    /// 会话代次：每建一个客户端 +1，用来丢弃旧会话迟到的 401。
+    private var generation = 0
+
+    /// 会话结束（登出 / 失效 / 换服务器）时的回调，供上层清空会话级界面状态。
+    var onSessionEnded: (@MainActor () -> Void)?
 
     var isAdmin: Bool { user?.role == .admin }
 
@@ -97,8 +102,10 @@ final class SessionStore {
         clear()
     }
 
-    /// 令牌失效（任何受保护端点返回 401）。
-    func expire() {
+    /// 令牌失效（受保护端点返回 401）。只有当 401 来自当前这次会话时才清空：
+    /// 旧会话的在途请求可能在重新登录之后才返回，不能把新令牌一起踹掉。
+    func expire(generation: Int? = nil) {
+        if let generation, generation != self.generation { return }
         guard phase != .signedOut else { return }
         clear()
     }
@@ -106,12 +113,14 @@ final class SessionStore {
     // MARK: - 私有
 
     private func makeClient(baseURL: URL) -> APIClient {
+        generation += 1
+        let generation = generation
         let tokens = tokens
         return APIClient(
             baseURL: baseURL,
             tokenProvider: { tokens.token },
             onUnauthorized: { [weak self] in
-                Task { @MainActor in self?.expire() }
+                Task { @MainActor in self?.expire(generation: generation) }
             }
         )
     }
@@ -122,12 +131,16 @@ final class SessionStore {
     }
 
     private func clear() {
+        let wasSignedIn = phase == .signedIn
         tokens.set(nil)
         keychain.delete()
         defaults.removeObject(forKey: Keys.expiresAt)
         defaults.removeObject(forKey: Keys.user)
+        // 让旧会话迟到的 401 无法再命中当前代次。
+        generation += 1
         client = nil
         user = nil
         phase = .signedOut
+        if wasSignedIn { onSessionEnded?() }
     }
 }

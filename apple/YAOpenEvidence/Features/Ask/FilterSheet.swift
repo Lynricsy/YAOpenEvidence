@@ -213,23 +213,25 @@ struct FilterSheet: View {
         }
     }
 
+    /// 只处理期刊列表本身：整表 `normalized()` 会把用户正在编辑、尚未通过校验的年份悄悄改掉。
     private func toggleJournal(_ value: String, app: AppModel) {
-        if app.filters.journals.contains(value) {
-            app.filters.journals.removeAll { $0 == value }
+        let journal = value.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !journal.isEmpty, journal.count <= 100 else { return }
+        if app.filters.journals.contains(journal) {
+            app.filters.journals.removeAll { $0 == journal }
         } else {
-            app.filters.journals.append(value)
-            app.filters = app.filters.normalized()
+            app.filters.journals.append(journal)
         }
     }
 
     private func addJournal(app: AppModel) {
-        let value = journalDraft.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !value.isEmpty, value.count <= 100, !app.filters.journals.contains(value) else {
-            journalDraft = ""
-            return
-        }
-        app.filters.journals.append(value)
-        app.filters = app.filters.normalized()
+        toggleJournalIfAbsent(journalDraft, app: app)
         journalDraft = ""
+    }
+
+    private func toggleJournalIfAbsent(_ value: String, app: AppModel) {
+        let journal = value.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !journal.isEmpty, journal.count <= 100, !app.filters.journals.contains(journal) else { return }
+        app.filters.journals.append(journal)
     }
 }

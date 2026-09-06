@@ -7,12 +7,6 @@ struct PaperDetailView: View {
 
     @Environment(SessionStore.self) private var session
 
-    private struct Material {
-        var meta: PaperMeta
-        var fulltext: String
-        var facts: [Fact]
-    }
-
     private enum Tab: String, CaseIterable, Identifiable {
         case fulltext
         case facts
@@ -21,14 +15,33 @@ struct PaperDetailView: View {
         var label: String { self == .fulltext ? "全文" : "事实" }
     }
 
-    @State private var state: Loadable<Material> = .idle
+    @State private var meta: Loadable<PaperMeta> = .idle
+    @State private var fulltext: Loadable<String> = .idle
+    @State private var facts: Loadable<[Fact]> = .idle
+    @State private var metaNotFound = false
     @State private var tab: Tab = .fulltext
     @State private var focusPid: Int?
 
     var body: some View {
-        LoadableView(state: state, retry: { Task { await load() } }) { material in
-            VStack(alignment: .leading, spacing: 0) {
-                header(material.meta)
+        Group {
+            if metaNotFound {
+                ContentUnavailableView("文献不存在", systemImage: "doc.questionmark")
+            } else {
+                LoadableView(state: meta, retry: { Task { await loadMeta() } }) { meta in
+                    material(meta)
+                }
+            }
+        }
+        .navigationTitle("文献详情")
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+        #endif
+            .task(id: route) { await load() }
+    }
+
+    private func material(_ meta: PaperMeta) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+                header(meta)
                 Picker("视图", selection: $tab) {
                     ForEach(Tab.allCases) { item in
                         Text(item.label).tag(item)
@@ -41,30 +54,32 @@ struct PaperDetailView: View {
 
                 switch tab {
                 case .fulltext:
-                    ParagraphMarkdownView(markdown: material.fulltext, focusPid: focusPid)
+                    LoadableView(state: fulltext, retry: { Task { await loadFulltext() } }) { text in
+                        if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            ContentUnavailableView("暂无全文", systemImage: "doc.plaintext")
+                        } else {
+                            ParagraphMarkdownView(markdown: text, focusPid: focusPid)
+                        }
+                    }
                 case .facts:
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 12) {
-                            if material.facts.isEmpty {
-                                ContentUnavailableView("没有抽取到事实", systemImage: "list.bullet.rectangle")
-                            }
-                            ForEach(Array(material.facts.enumerated()), id: \.offset) { _, fact in
-                                FactRow(fact: fact) { pid in
-                                    tab = .fulltext
-                                    focusPid = pid
+                    LoadableView(state: facts, retry: { Task { await loadFacts() } }) { facts in
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 12) {
+                                if facts.isEmpty {
+                                    ContentUnavailableView("没有抽取到事实", systemImage: "list.bullet.rectangle")
+                                }
+                                ForEach(Array(facts.enumerated()), id: \.offset) { _, fact in
+                                    FactRow(fact: fact) { pid in
+                                        tab = .fulltext
+                                        focusPid = pid
+                                    }
                                 }
                             }
+                            .padding(16)
                         }
-                        .padding(16)
                     }
                 }
             }
-        }
-        .navigationTitle("文献详情")
-        #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-        #endif
-            .task(id: route) { await load() }
     }
 
     private func header(_ meta: PaperMeta) -> some View {
@@ -112,21 +127,55 @@ struct PaperDetailView: View {
     }
 
     private func load() async {
-        guard let client = session.client else { return }
-        if state.value == nil { state = .loading }
+        meta = .loading
+        metaNotFound = false
+        fulltext = .loading
+        facts = .loading
         focusPid = route.pid
+        async let metaRequest: Void = loadMeta()
+        async let fulltextRequest: Void = loadFulltext()
+        async let factsRequest: Void = loadFacts()
+        _ = await (metaRequest, fulltextRequest, factsRequest)
+    }
+
+    private func loadMeta() async {
+        guard let client = session.client else { return }
+        metaNotFound = false
+        meta = .loading
         do {
-            async let meta = client.paper(key: route.key)
-            async let fulltext = client.paperFulltext(key: route.key)
-            async let facts = client.paperFacts(key: route.key)
-            state = .loaded(Material(
-                meta: try await meta,
-                fulltext: try await fulltext,
-                facts: try await facts.items
-            ))
+            let result = try await client.paper(key: route.key)
+            guard !Task.isCancelled else { return }
+            meta = .loaded(result)
         } catch {
-            let apiError = error as? APIError
-            state = .failed(apiError?.status == 404 ? "文献不存在" : (apiError?.userMessage ?? "网络连接失败，请稍后重试"))
+            guard !Task.isCancelled else { return }
+            metaNotFound = error.status == 404
+            meta = .failed(error.userMessage)
+        }
+    }
+
+    private func loadFulltext() async {
+        guard let client = session.client else { return }
+        fulltext = .loading
+        do {
+            let result = try await client.paperFulltext(key: route.key)
+            guard !Task.isCancelled else { return }
+            fulltext = .loaded(result)
+        } catch {
+            guard !Task.isCancelled else { return }
+            fulltext = .failed(error.userMessage)
+        }
+    }
+
+    private func loadFacts() async {
+        guard let client = session.client else { return }
+        facts = .loading
+        do {
+            let result = try await client.paperFacts(key: route.key)
+            guard !Task.isCancelled else { return }
+            facts = .loaded(result.items)
+        } catch {
+            guard !Task.isCancelled else { return }
+            facts = .failed(error.userMessage)
         }
     }
 }

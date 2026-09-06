@@ -53,15 +53,23 @@ struct HistoryView: View {
             }
         }
         .overlay {
-            if model.items.isEmpty, !model.page.isLoading {
-                if model.hasFilter {
-                    ContentUnavailableView("没有匹配的问答", systemImage: "magnifyingglass")
-                } else {
-                    ContentUnavailableView {
-                        Label("还没有问答", systemImage: "clock")
-                    } actions: {
-                        Button("去提问") { app.requestNewQuestion() }
-                            .buttonStyle(.borderedProminent)
+            switch model.page {
+            case .idle, .loading:
+                ProgressView()
+                    .controlSize(.large)
+            case .failed(let message):
+                ErrorPanel(message: message, retry: { Task { await model.load() } })
+            case .loaded(let page):
+                if page.items.isEmpty {
+                    if model.hasFilter {
+                        ContentUnavailableView("没有符合条件的问答", systemImage: "magnifyingglass")
+                    } else {
+                        ContentUnavailableView {
+                            Label("还没有问答，去提问", systemImage: "clock")
+                        } actions: {
+                            Button("新建问答") { app.requestNewQuestion() }
+                                .buttonStyle(.borderedProminent)
+                        }
                     }
                 }
             }
@@ -82,7 +90,7 @@ struct HistoryView: View {
         .accountToolbar()
         .refreshable { await model.load() }
         .task {
-            model.configure(session: session, errors: errors)
+            model.configure(session: session, app: app, errors: errors)
             await model.load()
         }
         .task(id: app.answersVersion) {

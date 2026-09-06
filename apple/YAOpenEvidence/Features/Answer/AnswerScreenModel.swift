@@ -26,6 +26,8 @@ final class AnswerScreenModel {
     private var app: AppModel?
     private var errors: ErrorPresenter?
     private var pollTask: Task<Void, Never>?
+    /// answer GET 的请求序号：多个刷新在途时只采用最新一次的结果。
+    private var fetchSeq = 0
 
     init(answerID: String) {
         self.answerID = answerID
@@ -65,13 +67,28 @@ final class AnswerScreenModel {
 
     func load() async {
         guard let client = session?.client else { return }
-        if answer.value == nil { answer = .loading }
+        await fetch(showLoading: answer.value == nil)
+        startMonitorIfNeeded(client: client)
+        startPollingIfNeeded()
+    }
+
+    func reload() async {
+        await fetch(showLoading: false)
+    }
+
+    /// 唯一的 answer 读取入口。序号守卫保证旧的在途结果不会覆盖新结果
+    /// （每个 stage 事件都会触发刷新，running 的旧响应可能晚于终态响应到达）。
+    private func fetch(showLoading: Bool) async {
+        guard let client = session?.client else { return }
+        if showLoading { answer = .loading }
+        fetchSeq += 1
+        let seq = fetchSeq
         do {
             let loaded = try await client.answer(id: answerID)
+            guard seq == fetchSeq else { return }
             apply(loaded)
-            startMonitorIfNeeded(client: client)
-            startPollingIfNeeded()
         } catch {
+            // 已有内容时保留旧状态，交给轮询继续重试；只有首屏失败才显示错误页。
             if answer.value == nil { answer = .failed(error.userMessage) }
         }
     }
@@ -81,6 +98,11 @@ final class AnswerScreenModel {
         if loaded.status == .ready, loaded.bodyMd == nil || loaded.bodyMd?.isEmpty == true {
             Task { await loadLegacyMarkdown() }
         }
+        // 只有确认答案已进入终态才停轮询：终态刷新失败时轮询是唯一兜底。
+        if !loaded.status.isActive {
+            pollTask?.cancel()
+            pollTask = nil
+        }
     }
 
     private func loadLegacyMarkdown() async {
@@ -88,13 +110,15 @@ final class AnswerScreenModel {
         legacyMarkdown = try? await client.answerMarkdown(id: answerID)
     }
 
+    /// 首次进入创建监视器；从其他 Tab 回到本页时续订同一个监视器（保留已收到的阶段与日志位置）。
     private func startMonitorIfNeeded(client: APIClient) {
-        guard monitor == nil, let session,
-              let answer = current, answer.status.isActive, let jobID = answer.jobId else { return }
-        let monitor = JobLiveMonitor(jobID: jobID, client: client, session: session) { [weak self] live, event in
-            self?.handle(live: live, event: event)
+        guard let session, let answer = current, answer.status.isActive, let jobID = answer.jobId else { return }
+        if monitor == nil {
+            monitor = JobLiveMonitor(jobID: jobID, client: client, session: session) { [weak self] live, event in
+                self?.handle(live: live, event: event)
+            }
         }
-        self.monitor = monitor
+        guard let monitor, !monitor.isRunning else { return }
         monitor.start()
     }
 
@@ -117,15 +141,7 @@ final class AnswerScreenModel {
         if live.terminal != nil {
             app?.noteAnswersChanged()
             monitor?.stop()
-            pollTask?.cancel()
-            pollTask = nil
         }
-    }
-
-    func reload() async {
-        guard let client = session?.client else { return }
-        guard let loaded = try? await client.answer(id: answerID) else { return }
-        apply(loaded)
     }
 
     // MARK: - 操作

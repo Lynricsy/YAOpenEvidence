@@ -37,6 +37,9 @@ struct ReaderPane: View {
     @State private var state: Loadable<Material> = .idle
     @State private var tab: Tab = .fulltext
     @State private var focusPid: Int?
+    /// 当前 state 里装的是第几篇，用来在换文献时立刻丢弃旧材料。
+    @State private var loadedN: Int?
+    @State private var requestSeq = 0
 
     var body: some View {
         LoadableView(state: state, retry: { Task { await load() } }) { material in
@@ -73,12 +76,24 @@ struct ReaderPane: View {
 
     private func load() async {
         guard let client = session.client else { return }
-        if state.value == nil { state = .loading }
+        // 换文献时必须丢掉上一篇的材料：否则标题已经是「第 2 篇」，正文还停在第 1 篇。
+        if loadedN != target.n {
+            state = .loading
+            tab = .fulltext
+            loadedN = target.n
+        } else if state.value == nil {
+            state = .loading
+        }
         focusPid = target.pid
+        requestSeq += 1
+        let seq = requestSeq
+        let n = target.n
         do {
-            let detail = try await client.answerPaper(id: answerID, n: target.n)
+            let detail = try await client.answerPaper(id: answerID, n: n)
+            guard seq == requestSeq else { return }
             state = .loaded(Material(detail: detail))
         } catch {
+            guard seq == requestSeq else { return }
             guard error.status == 404 else {
                 state = .failed(error.userMessage)
                 return
@@ -89,11 +104,14 @@ struct ReaderPane: View {
             }
             // 旧版导入的答案没有逐篇材料，回落到原文快照。
             do {
-                let markdown = try await client.answerPaperMarkdown(id: answerID, n: target.n)
+                let markdown = try await client.answerPaperMarkdown(id: answerID, n: n)
+                guard seq == requestSeq else { return }
                 state = .loaded(Material(legacyMarkdown: markdown))
                 tab = .fulltext
             } catch {
-                state = .failed("此答案没有逐篇材料（旧版导入）")
+                guard seq == requestSeq else { return }
+                // 只有回落端点同样 404 才能断定是旧版导入；断网、500 要如实报错。
+                state = .failed(error.status == 404 ? "此答案没有逐篇材料（旧版导入）" : error.userMessage)
             }
         }
     }

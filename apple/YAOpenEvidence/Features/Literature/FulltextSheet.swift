@@ -11,6 +11,8 @@ struct FulltextSheet: View {
     @State private var state: Loadable<FulltextResult> = .idle
     @State private var section: String = ""
     @State private var loadingSection = false
+    @State private var sectionError: String?
+    @State private var requestSeq = 0
 
     private static let maxChars = 20000
 
@@ -46,6 +48,9 @@ struct FulltextSheet: View {
 
                     if loadingSection {
                         ProgressView().frame(maxWidth: .infinity)
+                    }
+                    if let sectionError {
+                        ErrorPanel(message: sectionError, retry: { Task { await load(section: section) } })
                     }
 
                     if let text = result.text, !text.isEmpty {
@@ -88,17 +93,25 @@ struct FulltextSheet: View {
             state = .failed("无可用全文")
             return
         }
+        requestSeq += 1
+        let seq = requestSeq
+        section = target
+        sectionError = nil
         if state.value == nil { state = .loading } else { loadingSection = true }
-        defer { loadingSection = false }
+        defer {
+            if seq == requestSeq { loadingSection = false }
+        }
         do {
             let result = try await client.literatureFulltext(ident: ident, section: target, maxChars: Self.maxChars)
-            section = target
+            guard seq == requestSeq else { return }
             state = .loaded(result)
         } catch {
-            if error.code == "fulltext_unavailable" || error.status == 404 {
-                state = .failed("无可用全文")
-            } else if state.value == nil {
-                state = .failed(error.userMessage)
+            guard seq == requestSeq else { return }
+            let message = error.code == "fulltext_unavailable" ? "无可用全文" : error.userMessage
+            if state.value != nil {
+                sectionError = message
+            } else {
+                state = .failed(message)
             }
         }
     }

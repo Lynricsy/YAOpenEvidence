@@ -21,7 +21,7 @@ struct YAOpenEvidenceApp: App {
         }
         #if os(macOS)
         Settings {
-            AccountView()
+            AccountSettingsScene()
                 .environment(session)
                 .environment(app)
                 .environment(errors)

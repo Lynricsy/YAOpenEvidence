@@ -52,7 +52,7 @@ public actor APIClient {
             throw APIError.transport(underlying: error)
         }
         guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
-        guard (200 ..< 300).contains(http.statusCode) else {
+        guard (200 ..< 300).contains(http.statusCode) || endpoint.alsoAccept.contains(http.statusCode) else {
             throw failure(status: http.statusCode, headers: http, body: data, path: endpoint.path)
         }
         return (data, http)
@@ -63,7 +63,13 @@ public actor APIClient {
             url: baseURL.appending(path: "/\(YAOEKit.apiVersion)\(endpoint.path)"),
             resolvingAgainstBaseURL: false
         )
-        if !endpoint.query.isEmpty { components?.queryItems = endpoint.query }
+        // 不能用 `queryItems`：它保留字面 `+`，而 FastAPI 按表单规则把 `+` 解成空格，
+        // 会静默改写 `HER2+`、DOI 与全文章节名。这里自己按 unreserved 字符集编码。
+        if !endpoint.query.isEmpty {
+            components?.percentEncodedQuery = endpoint.query
+                .map { "\(Endpoint.encodeQueryComponent($0.name))=\(Endpoint.encodeQueryComponent($0.value ?? ""))" }
+                .joined(separator: "&")
+        }
         guard let url = components?.url else { throw APIError.invalidResponse }
 
         var request = URLRequest(url: url)

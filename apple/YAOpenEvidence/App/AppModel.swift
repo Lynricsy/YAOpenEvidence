@@ -77,6 +77,19 @@ final class AppModel {
         }
     }
 
+    /// 会话结束时清空会话级状态：草稿与导航栈属于上一个账号，不能带到下一个账号。
+    /// 主题与筛选是设备级偏好，保留。
+    func resetForNewSession() {
+        selection = .ask
+        askPath = []
+        historyPath = []
+        libraryPath = []
+        kbPath = []
+        askDraft = ""
+        answersVersion = 0
+        newQuestionToken = 0
+    }
+
     private func saveFilters() {
         guard let data = try? JSONCoding.encoder.encode(filters) else { return }
         UserDefaults.standard.set(data, forKey: Self.filtersKey)

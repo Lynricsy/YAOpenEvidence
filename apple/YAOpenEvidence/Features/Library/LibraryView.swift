@@ -18,6 +18,7 @@ final class LibraryModel {
 
     private var session: SessionStore?
     private var searchTask: Task<Void, Never>?
+    private var requestSeq = 0
 
     var items: [PaperMeta] { page.value?.items ?? [] }
     var total: Int { page.value?.total ?? 0 }
@@ -35,20 +36,23 @@ final class LibraryModel {
     }
 
     func teardown() {
+        requestSeq += 1
         searchTask?.cancel()
         searchTask = nil
     }
 
     func load() async {
         guard let client = session?.client else { return }
+        requestSeq += 1
+        let seq = requestSeq
+        let snapshot = (q: query.trimmingCharacters(in: .whitespaces), offset: offset)
         if page.value == nil { page = .loading }
         do {
-            page = .loaded(try await client.papers(
-                q: query.trimmingCharacters(in: .whitespaces),
-                limit: Self.pageSize,
-                offset: offset
-            ))
+            let result = try await client.papers(q: snapshot.q, limit: Self.pageSize, offset: snapshot.offset)
+            guard seq == requestSeq else { return }
+            page = .loaded(result)
         } catch {
+            guard seq == requestSeq else { return }
             page = .failed(error.userMessage)
         }
     }
@@ -66,6 +70,7 @@ final class LibraryModel {
     }
 
     private func debounceSearch() {
+        requestSeq += 1
         searchTask?.cancel()
         searchTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
@@ -111,11 +116,18 @@ struct LibraryView: View {
             }
         }
         .overlay {
-            if model.items.isEmpty, !model.page.isLoading {
-                ContentUnavailableView(
-                    model.hasQuery ? "未找到文献" : "文献库为空",
-                    systemImage: "books.vertical"
-                )
+            switch model.page {
+            case .idle, .loading:
+                ProgressView()
+            case .failed(let message):
+                ErrorPanel(message: message, retry: { Task { await model.load() } })
+            case .loaded(let page):
+                if page.items.isEmpty {
+                    ContentUnavailableView(
+                        model.hasQuery ? "未找到文献" : "文献库为空",
+                        systemImage: "books.vertical"
+                    )
+                }
             }
         }
         .navigationTitle("文献库")

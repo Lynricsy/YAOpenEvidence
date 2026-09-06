@@ -3,7 +3,7 @@ import YAOEKit
 
 /// 上游检索的筛选条件（年份部分与提问筛选共用取值规则）。
 struct LiteratureFilters: Hashable {
-    var yearMode: AskFilters.YearMode = .any
+    var yearMode: AskFilters.YearMode = .recent
     var years = 3
     var yearFrom: Int?
     var yearTo: Int?
@@ -37,6 +37,7 @@ final class LiteratureModel {
     var result: Loadable<LiteratureSearchResult> = .idle
 
     private var session: SessionStore?
+    private var requestSeq = 0
 
     static let limitOptions = [10, 20, 30]
 
@@ -47,11 +48,17 @@ final class LiteratureModel {
     func search() async {
         guard let client = session?.client else { return }
         let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        result = .loading
+        guard !text.isEmpty, filters.yearProbe.isYearRangeValid() else { return }
+        requestSeq += 1
+        let seq = requestSeq
+        let snapshot = request(text)
+        if result.value == nil { result = .loading }
         do {
-            result = .loaded(try await client.literatureSearch(request(text)))
+            let response = try await client.literatureSearch(snapshot)
+            guard seq == requestSeq else { return }
+            result = .loaded(response)
         } catch {
+            guard seq == requestSeq else { return }
             result = .failed(error.userMessage)
         }
     }
@@ -85,6 +92,11 @@ struct LiteratureSearchView: View {
             VStack(alignment: .leading, spacing: 16) {
                 searchField
                 controls
+                if !model.filters.yearProbe.isYearRangeValid() {
+                    Text("请填写有效起始年，结束年不得早于起始年。")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
                 results
             }
             .frame(maxWidth: 820)
@@ -145,7 +157,7 @@ struct LiteratureSearchView: View {
 
         Button("检索") { Task { await model.search() } }
             .buttonStyle(.borderedProminent)
-            .disabled(model.query.trimmingCharacters(in: .whitespaces).isEmpty)
+            .disabled(model.query.trimmingCharacters(in: .whitespaces).isEmpty || !model.filters.yearProbe.isYearRangeValid())
     }
 
     @ViewBuilder
@@ -211,10 +223,7 @@ struct LiteratureCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            ViewThatFits(in: .horizontal) {
-                badges
-                VStack(alignment: .leading, spacing: 6) { badges }
-            }
+            badges
 
             if record.abstract?.isEmpty == false || record.tldr?.isEmpty == false {
                 DisclosureGroup("摘要", isExpanded: $showAbstract) {
@@ -262,13 +271,13 @@ struct LiteratureCard: View {
 
     @ViewBuilder
     private var badges: some View {
-        HStack(spacing: 6) {
+        FlowLayout {
             if let rank = record.rank {
                 RankBadge(quartile: rank.quartile)
                 if rank.top { Pill(text: "Top", tone: .accentColor) }
             }
-            ForEach(record.types.prefix(2), id: \.self) { type in
-                Pill(text: type)
+            ForEach(record.types, id: \.self) { type in
+                Pill(text: LiteratureFilters.publicationTypeOptions.first { $0.value == type }?.label ?? type)
             }
             if let cited = record.citedBy {
                 Pill(text: "被引 \(cited)")

@@ -159,26 +159,27 @@ public enum MarkdownDocument {
         _ markup: any Markup,
         style: InlineStyle,
         link: URL?,
+        allowMarkers: Bool = true,
         into builder: inout InlineBuilder,
         _ context: Context
     ) {
         switch markup {
         case let text as Markdown.Text:
-            appendText(text, style: style, link: link, into: &builder, context)
+            appendText(text, style: style, link: link, allowMarkers: allowMarkers, into: &builder, context)
 
         case let emphasis as Emphasis:
             for child in emphasis.children {
-                appendInline(child, style: style.union(.italic), link: link, into: &builder, context)
+                appendInline(child, style: style.union(.italic), link: link, allowMarkers: allowMarkers, into: &builder, context)
             }
 
         case let strong as Strong:
             for child in strong.children {
-                appendInline(child, style: style.union(.bold), link: link, into: &builder, context)
+                appendInline(child, style: style.union(.bold), link: link, allowMarkers: allowMarkers, into: &builder, context)
             }
 
         case let struck as Strikethrough:
             for child in struck.children {
-                appendInline(child, style: style.union(.strikethrough), link: link, into: &builder, context)
+                appendInline(child, style: style.union(.strikethrough), link: link, allowMarkers: allowMarkers, into: &builder, context)
             }
 
         case let code as InlineCode:
@@ -191,9 +192,11 @@ public enum MarkdownDocument {
             if let ref = Citations.parseAnswerLink(destination) {
                 builder.append(text, style: style, link: nil, citation: ref)
             } else {
+                // 普通链接的标签不再识别裸标记：`[[1]](https://example.com)` 必须留在原链接上，
+                // 否则点击会跳到第 1 篇文献（与 Web 端跳过整个 link 子树一致）。
                 let url = URL(string: destination)
                 for child in inlineLink.children {
-                    appendInline(child, style: style, link: url ?? link, into: &builder, context)
+                    appendInline(child, style: style, link: url ?? link, allowMarkers: false, into: &builder, context)
                 }
             }
 
@@ -212,7 +215,7 @@ public enum MarkdownDocument {
 
         case let container as any InlineContainer:
             for child in container.children {
-                appendInline(child, style: style, link: link, into: &builder, context)
+                appendInline(child, style: style, link: link, allowMarkers: allowMarkers, into: &builder, context)
             }
 
         default:
@@ -248,33 +251,38 @@ public enum MarkdownDocument {
         _ node: Markdown.Text,
         style: InlineStyle,
         link: URL?,
+        allowMarkers: Bool,
         into builder: inout InlineBuilder,
         _ context: Context
     ) {
-        guard let limit = context.citationLimit, limit >= 1 else {
+        guard allowMarkers, let limit = context.citationLimit, limit >= 1 else {
             builder.append(node.string, style: style, link: link, citation: nil)
             return
         }
-        // 源码里存在 `\[` 转义时，改用原始片段判断，避免把被转义的标记当引用。
+
+        // cmark 的行内节点在缩进段落、续行等情形下列号会偏移，实体引用也会让源码与解析结果不等长。
+        // 因此只有「反转义后与解析结果完全一致」的源码片段才可信；否则退回解析后的文本，
+        // 宁可把 `&#91;1]` 这种实体拼出来的方括号当成引用，也绝不拿错位切片重建正文（会丢字）。
         let raw = context.rawText(node.range)
-        let escaped = raw?.contains("\\[") == true
-        let text = escaped ? (raw ?? node.string) : node.string
+        let trustedRaw = raw.flatMap { unescape($0) == node.string ? $0 : nil }
+        let text = trustedRaw ?? node.string
 
         var cursor = text.startIndex
         for marker in Citations.markers(in: text) {
             guard marker.ref.n >= 1, marker.ref.n <= limit else { continue }
-            if escaped, marker.range.lowerBound > text.startIndex,
+            // 只有可信源码才能判断转义：`\[1]` 不是引用。
+            if trustedRaw != nil, marker.range.lowerBound > text.startIndex,
                text[text.index(before: marker.range.lowerBound)] == "\\" { continue }
             if cursor < marker.range.lowerBound {
                 let segment = String(text[cursor ..< marker.range.lowerBound])
-                builder.append(escaped ? unescape(segment) : segment, style: style, link: link, citation: nil)
+                builder.append(trustedRaw == nil ? segment : unescape(segment), style: style, link: link, citation: nil)
             }
             builder.append(String(text[marker.range]), style: style, link: link, citation: marker.ref)
             cursor = marker.range.upperBound
         }
         if cursor < text.endIndex {
             let segment = String(text[cursor...])
-            builder.append(escaped ? unescape(segment) : segment, style: style, link: link, citation: nil)
+            builder.append(trustedRaw == nil ? segment : unescape(segment), style: style, link: link, citation: nil)
         }
     }
 

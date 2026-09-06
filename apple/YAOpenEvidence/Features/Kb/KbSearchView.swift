@@ -12,10 +12,12 @@ final class KbModel {
 
     var reindexJob: Job?
     var reindexMonitor: JobLiveMonitor?
+    var reindexPending = false
 
     private var session: SessionStore?
     private var errors: ErrorPresenter?
     private var pollTask: Task<Void, Never>?
+    private var requestSeq = 0
 
     static let topKOptions = [5, 8, 15, 30]
 
@@ -25,9 +27,17 @@ final class KbModel {
     }
 
     func teardown() {
+        requestSeq += 1
         reindexMonitor?.stop()
         pollTask?.cancel()
         pollTask = nil
+    }
+
+    /// 回到页面时续订重建任务的事件流与兜底轮询；任务已终态则什么都不做。
+    func resume() {
+        guard let job = reindexJob, job.status.isActive else { return }
+        if let monitor = reindexMonitor, !monitor.isRunning { monitor.start() }
+        startPolling()
     }
 
     func loadStats() async {
@@ -44,10 +54,16 @@ final class KbModel {
         guard let client = session?.client else { return }
         let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
-        results = .loading
+        requestSeq += 1
+        let seq = requestSeq
+        let snapshot = (q: text, kind: kind, topK: topK)
+        if results.value == nil { results = .loading }
         do {
-            results = .loaded(try await client.kbSearch(q: text, kind: kind, topK: topK))
+            let result = try await client.kbSearch(q: snapshot.q, kind: snapshot.kind, topK: snapshot.topK)
+            guard seq == requestSeq else { return }
+            results = .loaded(result)
         } catch {
+            guard seq == requestSeq else { return }
             results = .failed(error.userMessage)
         }
     }
@@ -55,20 +71,22 @@ final class KbModel {
     // MARK: - 重建索引（管理员）
 
     func reindex() async {
+        guard !reindexPending, reindexJob?.status.isActive != true else { return }
         guard let client = session?.client, let session else { return }
+        reindexPending = true
+        defer { reindexPending = false }
         do {
             let job = try await client.reindexKb()
-            reindexJob = job
+            await noteJobFinished(job)
             let monitor = JobLiveMonitor(jobID: job.id, client: client, session: session) { [weak self] live, _ in
                 guard let self, live.terminal != nil else { return }
-                Task {
-                    await self.refreshJob()
-                    await self.loadStats()
-                }
+                Task { await self.refreshJob() }
             }
             reindexMonitor = monitor
-            monitor.start()
-            startPolling()
+            if job.status.isActive {
+                monitor.start()
+                startPolling()
+            }
         } catch {
             errors?.present(error)
         }
@@ -89,9 +107,18 @@ final class KbModel {
     private func refreshJob() async {
         guard let client = session?.client, let id = reindexJob?.id else { return }
         guard let job = try? await client.job(id: id) else { return }
+        guard reindexJob?.id == id, reindexJob?.status.isActive == true else { return }
+        await noteJobFinished(job)
+    }
+
+    private func noteJobFinished(_ job: Job) async {
+        let firstSuccess = job.status == .succeeded &&
+            (reindexJob?.id != job.id || reindexJob?.status != .succeeded)
         reindexJob = job
         if !job.status.isActive {
             reindexMonitor?.stop()
+            if firstSuccess { await loadStats() }
+            guard reindexJob?.id == job.id else { return }
             pollTask?.cancel()
             pollTask = nil
         }
@@ -135,6 +162,7 @@ struct KbSearchView: View {
         .refreshable { await model.loadStats() }
         .task {
             model.configure(session: session, errors: errors)
+            model.resume()
             await model.loadStats()
         }
         .onDisappear { model.teardown() }
@@ -171,9 +199,9 @@ struct KbSearchView: View {
             HStack {
                 Text("索引维护").font(.headline)
                 Spacer()
-                Button("重建索引") { Task { await model.reindex() } }
+                Button(model.reindexPending ? "提交中…" : "重建索引") { Task { await model.reindex() } }
                     .buttonStyle(.bordered)
-                    .disabled(model.reindexJob?.status.isActive == true)
+                    .disabled(model.reindexPending || model.reindexJob?.status.isActive == true)
             }
 
             if let job = model.reindexJob {

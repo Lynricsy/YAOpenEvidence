@@ -30,6 +30,12 @@ final class JobLiveMonitor {
     private let session: SessionStore
     private let onEvent: (JobLive, SSEEvent) -> Void
     private var task: Task<Void, Never>?
+    /// 已消费到的 Redis Stream 位置：暂停后再续订从这里继续，避免重放造成日志重复。
+    private var lastEventID = "0-0"
+    /// 事件流是否正在运行（暂停后可再次 `start()`）。
+    private var generation = 0
+
+    var isRunning: Bool { task != nil }
 
     init(
         jobID: String,
@@ -43,19 +49,26 @@ final class JobLiveMonitor {
         self.onEvent = onEvent
     }
 
+    /// 订阅事件流。已终态或已在运行时是空操作，可在页面重新出现时安全重复调用。
     func start() {
-        guard task == nil else { return }
-        task = Task { await run() }
+        guard task == nil, live.terminal == nil else { return }
+        generation += 1
+        let generation = generation
+        task = Task { [weak self] in
+            await self?.run()
+            guard let self, self.generation == generation else { return }
+            task = nil
+        }
     }
 
+    /// 暂停订阅（离开页面）。保留 `live` 与 `lastEventID`，回到页面后 `start()` 可续订。
     func stop() {
         task?.cancel()
         task = nil
-        connection = .closed
+        connection = live.terminal == nil ? .idle : .closed
     }
 
     private func run() async {
-        var lastEventID = "0-0"
         var delay = Duration.seconds(1)
         var first = true
 
