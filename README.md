@@ -12,6 +12,7 @@ API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md
 ├── backend/                 # yaoe-backend：FastAPI、数据库迁移、arq worker 与后端测试
 ├── frontend/                # React 19、Vite、TypeScript、Tailwind 与 shadcn/ui 浏览器前端
 ├── apple/                   # SwiftUI 多平台客户端（iPhone / iPad / Mac）与本地 YAOEKit 包
+├── flutter/                 # Flutter 客户端（Android / Linux / Windows）
 ├── docs/                    # 面向 API 使用者的协议文档
 ├── compose.yaml             # nginx web、Redis、迁移、API、worker 与 test profile
 ├── compose.fake-llm.yaml    # 确定性假 LLM 的 Compose 覆盖配置
@@ -43,6 +44,26 @@ cd YAOEKit && swift test
 工程描述集中在 `apple/project.yml`（XcodeGen），Bundle ID 为 `plus.ling.YAOpenEvidence`；仓库内没有开发者账号，默认使用 ad-hoc 签名（`CODE_SIGN_IDENTITY = "-"`），换成自己的团队时改这三行签名设置即可。App 沙箱只申请 `network.client`，ATS 仅放开本地网络：明文 `http://` 服务器地址必须是 localhost 或私有网段，公网主机需使用 https。
 
 客户端首屏要求填写服务器地址（默认 `http://localhost:8765`）与账号密码；令牌存 Keychain，`expires_at`、用户资料与服务器地址存 UserDefaults，任何受保护端点返回 401 即清会话回登录页。问答进度走 `GET /v1/jobs/{id}/events` 的 SSE：1 秒起指数退避重连（上限 10 秒）、重连前用 `/v1/auth/me` 探活、SSE 未连通时每 5 秒兜底轮询答案。界面遵循 Apple HIG（系统字体与语义色、`sidebarAdaptable` 侧栏、regular 宽度用检查器展示原文阅读器），只保留品牌深青 accent、8 色引用色板与 Q1–Q4 分区色。
+
+## Flutter 客户端（Android / Linux / Windows）
+
+`flutter/` 是第三个功能对等客户端，覆盖 Apple 平台之外的手机与桌面：Flutter 3.47.2（Dart 3.13）、Material 3 + 自定义设计令牌、Riverpod 3 状态管理、go_router 18 路由、freezed 4 模型。SDK 版本由 `flutter/.fvmrc` 固定，所有命令走 `fvm`。iOS/macOS 由 `apple/` 覆盖、Web 由 `frontend/` 覆盖，故未生成对应平台目录。
+
+```bash
+cd flutter
+fvm install                      # 按 .fvmrc 安装 3.47.2
+tool/fetch_fonts.sh              # 下载并裁剪自带字体（产物已入库，仅需更新时执行）
+fvm flutter pub get
+fvm dart run build_runner build  # 生成 *.g.dart / *.freezed.dart（已入库）
+fvm flutter analyze && fvm flutter test
+fvm flutter run -d linux         # 或 -d <android-device>
+```
+
+分层：`lib/core/`（模型、`ApiClient` + SSE、纯逻辑）、`lib/app/`（主题令牌、路由、会话无关的全局状态）、`lib/features/`（按页面分包）、`lib/shared/`（跨页组件与格式化）。纯逻辑与 API 层逐字对照 `apple/YAOEKit/`，测试用例集同源移植，可用 `fvm flutter test` 单独验证。
+
+界面沿用 web 的「学术编辑风」：暖纸色背景 + 深青主色、衬线标题（自带裁剪版 Noto Serif SC）、正文数字用 Inter、8 色引用色板与 Q1–Q4 分区色。布局三档自适应：`< 768` 底部导航 + 「更多」表单、`768–1279` 折叠图标侧栏、`≥ 1280` 240 px 可折叠侧栏（`Ctrl/Cmd+B`）并支持答案与原文并排分栏（分隔条可拖拽，比例持久化）。令牌存系统安全存储（Android EncryptedSharedPreferences、Linux libsecret、Windows DPAPI）；平台无安全存储时回退为明文偏好并在账号页显式提示。明文 `http://` 服务器地址同样只允许本地网络，公网必须 https。
+
+构建：Linux 桌面需要 `clang`、`cmake`、`ninja`、`gtk3`、`libsecret`；Android 需要 Android SDK 与 JDK 17（`fvm flutter config --android-sdk ... --jdk-dir ...`）。Windows 目录随模板入库，但只能在 Windows 主机上构建。
 
 ## 架构
 
