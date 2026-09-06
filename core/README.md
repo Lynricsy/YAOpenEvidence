@@ -114,12 +114,12 @@ PICOSGpt/
 ├── test_mcp.py / test_fulltext.py   工具自测
 ├── litellm_config.yaml      LiteLLM 配置
 ├── AGENTS.md                Codex 的系统指令（检索工作流 + 回答格式）
-├── answers/                 每次问答的输出
-├── library/                 持久保存的每篇文献（全文 + 段落 + 原子知识）
-├── kb/                      向量知识库（index.npz：整份索引一个文件，换代靠一次 rename）
+├── answers/                 每次问答的输出（归档时的历史输出已入库，新输出不入库）
+├── library/                 持久保存的每篇文献（全文 + 段落 + 原子知识；归档时的种子文献已入库，是 `kb reindex` 的数据源，新增文献不入库）
+├── kb/                      向量知识库（index.npz：整份索引一个文件，换代靠一次 rename；不入库，用 `kb reindex` 从 library/ 重建）
 ├── data/journal_ranks/      期刊分区表
 ├── models/                  embedding 模型（bge-m3，不入库，见 §6.1 重建）
-├── pdfs/                    本地 PDF（手动放入或 paywall 下载）
+├── pdfs/                    本地 PDF（手动放入或 paywall 下载，不入库）
 ├── logs/                    服务日志
 └── vendor/                  项目自带的 Python 依赖（pypdf / playwright），不污染 conda 环境
 ```

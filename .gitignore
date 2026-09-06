@@ -22,9 +22,7 @@ core/kb.lock
 # core 运行期数据（本地积累，不入库；已随 smk 归档提交的种子数据仍保持跟踪）
 core/answers/
 core/library/
-core/kb/index.npz
-core/kb/index.npz.tmp
-core/kb/.kb-reindex-*/
+core/kb/
 core/pdfs/
 core/models/
 
