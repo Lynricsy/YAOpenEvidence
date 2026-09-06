@@ -22,3 +22,12 @@ core/kb.lock
 # Web 构建产物
 frontend/node_modules/
 frontend/dist/
+
+# Apple 客户端构建产物
+apple/*.xcodeproj/
+apple/**/xcuserdata/
+apple/**/.build/
+apple/**/.swiftpm/
+apple/**/DerivedData/
+apple/YAOpenEvidence/Info.plist
+apple/YAOpenEvidence/YAOpenEvidence.entitlements
