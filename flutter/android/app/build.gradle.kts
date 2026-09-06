@@ -6,7 +6,9 @@ plugins {
 
 android {
     namespace = "plus.ling.yaopenevidence"
-    compileSdk = flutter.compileSdkVersion
+    // 依赖(flutter_secure_storage 等)已发布为 compileSdk 37 的 AAR,
+    // 模板默认的 flutter.compileSdkVersion(36) 会在 checkDebugAarMetadata 失败。
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -15,10 +17,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "plus.ling.yaopenevidence"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
@@ -31,8 +30,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // 仓库内没有发布证书,用 debug 签名让 `flutter build apk --release` 可跑通。
             signingConfig = signingConfigs.getByName("debug")
         }
     }
