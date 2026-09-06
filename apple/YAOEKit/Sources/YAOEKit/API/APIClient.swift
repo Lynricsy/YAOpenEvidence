@@ -134,9 +134,18 @@ public actor APIClient {
                         for try await byte in bytes { body.append(byte) }
                         throw onFailure(http.statusCode, http, body)
                     }
+                    // 不能用 `bytes.lines`：Foundation 的行序列会吞掉空行，
+                    // 而空行正是 SSE 的帧分隔符，用它会导致一帧都派发不出来。
                     var parser = SSEParser()
-                    for try await line in bytes.lines {
-                        if let event = parser.feed(line: line) { continuation.yield(event) }
+                    var line = [UInt8]()
+                    for try await byte in bytes {
+                        guard byte != UInt8(ascii: "\n") else {
+                            let text = String(decoding: line, as: UTF8.self)
+                            line.removeAll(keepingCapacity: true)
+                            if let event = parser.feed(line: text) { continuation.yield(event) }
+                            continue
+                        }
+                        line.append(byte)
                     }
                     continuation.finish()
                 } catch let error as APIError {
