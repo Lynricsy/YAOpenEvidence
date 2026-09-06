@@ -38,3 +38,10 @@ apple/**/.swiftpm/
 apple/**/DerivedData/
 apple/YAOpenEvidence/Info.plist
 apple/YAOpenEvidence/YAOpenEvidence.entitlements
+
+# Flutter 客户端构建产物与本地工具链状态
+flutter/build/
+flutter/.dart_tool/
+flutter/.fvm/
+flutter/android/local.properties
+flutter/android/.gradle/

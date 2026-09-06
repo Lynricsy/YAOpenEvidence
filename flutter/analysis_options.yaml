@@ -1,0 +1,36 @@
+include: package:flutter_lints/flutter.yaml
+
+# 新版 analyzer 插件系统（Dart 3.9+）：插件声明在顶层 plugins，插件 lint 默认关闭，需显式开启。
+plugins:
+  riverpod_lint:
+    version: ^3.1.9
+    diagnostics:
+      async_value_nullable_pattern: true
+      avoid_build_context_in_providers: true
+      avoid_public_notifier_properties: true
+      avoid_ref_inside_state_dispose: true
+      functional_ref: true
+      missing_provider_scope: true
+      notifier_build: true
+      notifier_extends: true
+      only_use_keep_alive_inside_keep_alive: true
+      protected_notifier_properties: true
+      provider_parameters: true
+      riverpod_syntax_error: true
+      unsupported_provider_value: true
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - build/**
+    - android/**
+    - windows/**
+    - linux/**
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    unawaited_futures: true
+    avoid_print: true

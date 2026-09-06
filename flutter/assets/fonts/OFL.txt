@@ -1,0 +1,8 @@
+本目录字体均以 SIL Open Font License 1.1 授权：
+
+- NotoSerifSC-VF.ttf — Noto Serif SC，Copyright 2014-2021 Adobe (http://www.adobe.com/)，
+  取自 https://github.com/notofonts/noto-cjk/raw/main/Serif/Variable/TTF/Subset/NotoSerifSC-VF.ttf，用 pyftsubset 裁剪字符集，保留 wght 轴。
+- InterVariable.ttf — Inter，Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)，
+  取自 https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip，未修改。
+
+许可全文：https://openfontlicense.org/open-font-license-official-text/
