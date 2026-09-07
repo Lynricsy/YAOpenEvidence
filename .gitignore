@@ -48,3 +48,6 @@ flutter/.dart_tool/
 flutter/.fvm/
 flutter/android/local.properties
 flutter/android/.gradle/
+
+# IPA/归档产物
+build/
