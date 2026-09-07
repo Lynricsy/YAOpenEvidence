@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../core/session/session_controller.dart';
+import '../../shared/widgets/brand_logo.dart';
 import 'app_sidebar.dart';
 import 'mobile_tab_bar.dart';
 import 'more_sheet.dart';
@@ -34,6 +35,15 @@ class AppShell extends ConsumerWidget {
     if (isCompact) {
       return Scaffold(
         appBar: AppBar(
+          // 手机顶栏没有抽屉也没有返回键（详情页在分支内自带页头），
+          // leading 留给品牌标识；标题仍是当前分支名。
+          leadingWidth: 44,
+          leading: const Padding(
+            padding: EdgeInsets.only(left: YaoeTokens.space3),
+            child: Center(
+              child: BrandLogo(size: 22, semanticLabel: 'YAOpenEvidence'),
+            ),
+          ),
           title: Text(navItemForBranch(branch)?.label ?? 'YAOpenEvidence'),
           actions: const [UserMenu(compact: true)],
         ),
@@ -41,11 +51,8 @@ class AppShell extends ConsumerWidget {
         bottomNavigationBar: MobileTabBar(
           currentBranch: branch,
           onSelect: _goBranch,
-          onMore: () => showMoreSheet(
-            context,
-            isAdmin: isAdmin,
-            onSelect: _goBranch,
-          ),
+          onMore: () =>
+              showMoreSheet(context, isAdmin: isAdmin, onSelect: _goBranch),
         ),
       );
     }
@@ -101,8 +108,7 @@ class _SidebarShortcut extends StatelessWidget {
     if (!enabled) return child;
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyB, control: true):
-            _guarded,
+        const SingleActivator(LogicalKeyboardKey.keyB, control: true): _guarded,
         const SingleActivator(LogicalKeyboardKey.keyB, meta: true): _guarded,
       },
       // 需要焦点在子树内才能收到按键：外壳挂载时先接住焦点，

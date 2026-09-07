@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ 由系统绘制启动画面：不配置这两项就会用启动器图标 + 主题底色，
+         冷启动时先闪一下默认图标。样式不会与 values/styles.xml 合并，
+         因此这里必须把 windowBackground 一并写全。 -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/brand_canvas</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/brand_splash</item>
+    </style>
+</resources>

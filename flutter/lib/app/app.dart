@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/session/session_controller.dart';
+import '../shared/widgets/brand_logo.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
@@ -63,7 +64,7 @@ class _SplashPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('YAOpenEvidence', style: theme.textTheme.headlineSmall),
+            BrandLockup(logoSize: 40, textStyle: theme.textTheme.headlineSmall),
             const SizedBox(height: 16),
             const SizedBox(
               width: 20,

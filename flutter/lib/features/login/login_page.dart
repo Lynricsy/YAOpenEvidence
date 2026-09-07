@@ -8,6 +8,7 @@ import '../../core/api/api_error.dart';
 import '../../core/session/prefs.dart';
 import '../../core/session/server_url.dart';
 import '../../core/session/session_controller.dart';
+import '../../shared/widgets/brand_logo.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -102,10 +103,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'YAOpenEvidence',
-                    style: theme.textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
+                  BrandLockup(
+                    logoSize: 44,
+                    textStyle: theme.textTheme.headlineMedium,
                   ),
                   const SizedBox(height: YaoeTokens.space2),
                   Text(

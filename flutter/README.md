@@ -33,6 +33,30 @@ tool/fetch_fonts.sh    # 需要 curl、unzip、uvx（fonttools）
 
 脚本会下载 Noto Serif SC 可变字体并用 `pyftsubset` 裁到「拉丁 + 标点 + CJK 基本区 + 全宽符号」（保留 `wght` 轴），再从 Inter 发布包取 `InterVariable.ttf`，同时写入 `assets/fonts/OFL.txt`。
 
+## 品牌资源
+
+标识（圆角书页 + 核验勾）的唯一源是仓库根的 [docs/assets/logo.svg](../docs/assets/logo.svg)，位图与图标由 `tools/generate_brand_assets.py` 生成后入库，客户端不引入 SVG 运行库：
+
+```bash
+python tools/generate_brand_assets.py     # 需要 rsvg-convert
+```
+
+| 位置 | 用途 |
+|---|---|
+| `assets/brand/logo-{light,dark}.png` + `2.0x/`、`3.0x/` | Dart 界面的品牌标识，`pubspec.yaml` 只声明 1x 路径，密度变体按目录约定解析 |
+| `assets/brand/app-icon.png` | Linux 窗口图标（运行时按可执行文件相对路径从 bundle 读取） |
+| `android/app/src/main/res/mipmap-{density}/ic_launcher.png` | 旧启动器的 legacy 图标 |
+| `android/app/src/main/res/drawable-{density}/ic_launcher_foreground{,_dark}.png` | 自适应图标前景（浅/深） |
+| `android/app/src/main/res/drawable/ic_launcher_monochrome.xml` | Android 13+ 主题图标（生成器从 `docs/assets/logo-mono.svg` 转矢量） |
+| `android/app/src/main/res/drawable-{density}/brand_splash{,_dark}.png` | 启动画面图形（浅/深） |
+| `windows/runner/resources/app_icon.ico` | 可执行文件与窗口图标（`Runner.rc` 的 `IDI_APP_ICON`） |
+
+界面接入统一走 `lib/shared/widgets/brand_logo.dart`：`BrandLogo` 按 `Theme.of(context).brightness` 选浅/深资源并固定宽高，`BrandLockup` 是「标识 + 文字」组合（语义由文字承载，图形不重复朗读）。落点为登录页、会话恢复启动页、侧栏页头（展开为组合标记、折叠为竖排标识）、手机顶栏 `leading`、提问页 Hero 标签。列表与导航里的书本图标是功能图标，保持不变。
+
+Android 侧：`mipmap-anydpi-v26/ic_launcher.xml` 与 `mipmap-night-anydpi-v26/ic_launcher.xml` 给出浅/深自适应图标（背景取 `@color/brand_canvas`，浅 `#F7FAF9` / 深 `#182C30`）；`drawable/launch_background.xml` 与 `drawable-night/launch_background.xml` 是 API 31 以下的启动窗口背景；`values-v31/styles.xml` 与 `values-night-v31/styles.xml` 用 `windowSplashScreenBackground` + `windowSplashScreenAnimatedIcon` 接管 Android 12+ 的系统启动画面，避免冷启动闪默认图标。night 限定符的优先级高于版本限定符，因此深色下 `drawable-night` 会盖掉同名的浅色资源。
+
+桌面侧：Windows 由 `Runner.rc` 把 ICO 编进可执行文件，窗口类图标沿用 `IDI_APP_ICON`。Linux 用 `gtk_window_set_default_icon_from_file()` 读 bundle 内的 `data/flutter_assets/assets/brand/app-icon.png`（按 `/proc/self/exe` 定位，不依赖工作目录；读不到只告警，不影响启动）。构建还会在 bundle 的 `share/applications/` 与 `share/icons/hicolor/512x512/apps/` 输出 `.desktop` 和应用图标，应用 ID 均为 `plus.ling.yaopenevidence`，供 Wayland/GNOME 等桌面匹配；打包方需将这些目录安装到系统或用户的标准位置，并让 `yaopenevidence` 可执行文件处于 `PATH` 中。构建本身不会修改系统桌面配置。Android 应用标签及 Windows/Linux 窗口标题统一显示 `YAOpenEvidence`，包名与可执行文件名不变。
+
 ## 代码生成
 
 模型（freezed + json_serializable）与 provider（riverpod_generator）依赖生成代码，`*.g.dart` / `*.freezed.dart` **入库**（与 `frontend/src/api/schema.d.ts` 的策略一致）：

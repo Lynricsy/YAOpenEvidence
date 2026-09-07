@@ -19,9 +19,28 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
+// 设置窗口图标为品牌标识。图标随 Flutter bundle 一起安装，路径按可执行文件
+// 定位（<bundle>/data/flutter_assets/...），不依赖启动时的工作目录。
+static void set_brand_default_icon() {
+  g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", nullptr);
+  if (exe_path == nullptr) {
+    return;
+  }
+  g_autofree gchar* bundle_dir = g_path_get_dirname(exe_path);
+  g_autofree gchar* icon_path =
+      g_build_filename(bundle_dir, "data", "flutter_assets", "assets", "brand",
+                       "app-icon.png", nullptr);
+  g_autoptr(GError) error = nullptr;
+  if (!gtk_window_set_default_icon_from_file(icon_path, &error)) {
+    // 缺图标不该影响启动：只告警，窗口退回主题默认图标。
+    g_warning("Failed to load window icon %s: %s", icon_path, error->message);
+  }
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
+  set_brand_default_icon();
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
@@ -45,11 +64,11 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "yaopenevidence");
+    gtk_header_bar_set_title(header_bar, "YAOpenEvidence");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "yaopenevidence");
+    gtk_window_set_title(window, "YAOpenEvidence");
   }
 
   gtk_window_set_default_size(window, 1280, 720);

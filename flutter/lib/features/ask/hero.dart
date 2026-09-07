@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/tokens.dart';
+import '../../shared/widgets/brand_logo.dart';
 
 /// 提问页示例问题（文案与 Web 端一致）。
 const askExamples = <String>[
@@ -26,11 +27,8 @@ class AskHero extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.menu_book_outlined,
-              size: 14,
-              color: theme.colorScheme.primary,
-            ),
+            // 品牌标记；语义由紧随的文字承载。
+            const BrandLogo(size: 18),
             const SizedBox(width: YaoeTokens.space1),
             Text(
               '循证医学文献问答',
@@ -43,10 +41,11 @@ class AskHero extends StatelessWidget {
         const SizedBox(height: YaoeTokens.space4),
         Text(
           '请提出您的临床或科研问题',
-          style: (wide
-                  ? theme.textTheme.displaySmall
-                  : theme.textTheme.headlineMedium)
-              ?.copyWith(height: 1.2),
+          style:
+              (wide
+                      ? theme.textTheme.displaySmall
+                      : theme.textTheme.headlineMedium)
+                  ?.copyWith(height: 1.2),
         ),
         const SizedBox(height: YaoeTokens.space3),
         Text(
@@ -99,10 +98,7 @@ class AskExamples extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        example,
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      child: Text(example, style: theme.textTheme.bodySmall),
                     ),
                     Icon(
                       Icons.north_east,

@@ -10,6 +10,7 @@ import '../../core/api/endpoints.dart';
 import '../../core/models/answers.dart';
 import '../../core/session/prefs.dart';
 import '../../core/session/session_controller.dart';
+import '../../shared/widgets/brand_logo.dart';
 import 'nav_items.dart';
 import 'user_menu.dart';
 
@@ -19,20 +20,18 @@ part 'app_sidebar.g.dart';
 @Riverpod(keepAlive: true)
 class SidebarCollapsed extends _$SidebarCollapsed {
   @override
-  bool? build() => switch (ref.watch(prefsProvider).getString(
-    PrefKeys.sidebar,
-  )) {
-    'collapsed' => true,
-    'expanded' => false,
-    _ => null,
-  };
+  bool? build() =>
+      switch (ref.watch(prefsProvider).getString(PrefKeys.sidebar)) {
+        'collapsed' => true,
+        'expanded' => false,
+        _ => null,
+      };
 
   Future<void> set(bool collapsed) async {
     state = collapsed;
-    await ref.read(prefsProvider).setString(
-      PrefKeys.sidebar,
-      collapsed ? 'collapsed' : 'expanded',
-    );
+    await ref
+        .read(prefsProvider)
+        .setString(PrefKeys.sidebar, collapsed ? 'collapsed' : 'expanded');
   }
 
   Future<void> toggle(bool current) => set(!current);
@@ -70,38 +69,49 @@ class AppSidebar extends ConsumerWidget {
         .where((item) => item.branch != 6)
         .toList();
 
+    final width = collapsed
+        ? YaoeTokens.sidebarCollapsedWidth
+        : YaoeTokens.sidebarExpandedWidth;
+
     return AnimatedContainer(
       duration: YaoeTokens.motionFast,
       curve: YaoeTokens.motionCurve,
-      width: collapsed
-          ? YaoeTokens.sidebarCollapsedWidth
-          : YaoeTokens.sidebarExpandedWidth,
+      width: width,
       decoration: BoxDecoration(
         color: context.yaoe.sidebar,
         border: Border(
           right: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _Header(collapsed: collapsed, onToggle: onToggle),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(
-                vertical: YaoeTokens.space2,
+      // 折叠动画只过渡容器宽度，内容始终按折叠/展开的目标宽度布局再裁剪：
+      // 否则中间帧里图标 + 文字要挤进几十像素，会触发 RenderFlex 溢出。
+      child: ConstraintsTransformBox(
+        alignment: Alignment.centerLeft,
+        clipBehavior: Clip.hardEdge,
+        // tighten 会被既有上下界夹住，这里必须直接替换宽度约束。
+        constraintsTransform: (constraints) =>
+            constraints.copyWith(minWidth: width, maxWidth: width),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _Header(collapsed: collapsed, onToggle: onToggle),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  vertical: YaoeTokens.space2,
+                ),
+                children: [
+                  for (final group in NavGroup.values)
+                    ..._groupSection(context, ref, group, items),
+                ],
               ),
-              children: [
-                for (final group in NavGroup.values)
-                  ..._groupSection(context, ref, group, items),
-              ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(YaoeTokens.space2),
-            child: UserMenu(compact: collapsed),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(YaoeTokens.space2),
+              child: UserMenu(compact: collapsed),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -152,6 +162,34 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final toggle = IconButton(
+      tooltip: collapsed ? '展开侧栏 (Ctrl+B)' : '折叠侧栏 (Ctrl+B)',
+      onPressed: onToggle,
+      icon: Icon(
+        collapsed ? Icons.chevron_right : Icons.chevron_left,
+        size: 18,
+      ),
+    );
+
+    if (collapsed) {
+      // 折叠宽度只有 64：品牌标识与折叠按钮竖排，横排必然溢出。
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          YaoeTokens.space2,
+          YaoeTokens.space4,
+          YaoeTokens.space2,
+          YaoeTokens.space2,
+        ),
+        child: Column(
+          children: [
+            const BrandLogo(size: 24, semanticLabel: 'YAOpenEvidence'),
+            const SizedBox(height: YaoeTokens.space2),
+            toggle,
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         YaoeTokens.space3,
@@ -161,22 +199,14 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (!collapsed)
-            Expanded(
-              child: Text(
-                'YAOpenEvidence',
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall,
-              ),
-            ),
-          IconButton(
-            tooltip: collapsed ? '展开侧栏 (Ctrl+B)' : '折叠侧栏 (Ctrl+B)',
-            onPressed: onToggle,
-            icon: Icon(
-              collapsed ? Icons.chevron_right : Icons.chevron_left,
-              size: 18,
+          Expanded(
+            child: BrandLockup(
+              logoSize: 24,
+              mainAxisAlignment: MainAxisAlignment.start,
+              textStyle: theme.textTheme.titleSmall,
             ),
           ),
+          toggle,
         ],
       ),
     );
