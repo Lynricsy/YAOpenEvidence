@@ -82,6 +82,16 @@ struct MainTabView: View {
             }
         }
         .tabViewStyle(.sidebarAdaptable)
+        // 侧栏（iPad regular 与 Mac）顶部的品牌标识；compact 的底部 Tab 栏没有这块区域，
+        // 手机上的品牌标识由提问首页承载。
+        .tabViewSidebarHeader {
+            HStack(spacing: 8) {
+                BrandLogo(size: 22)
+                Text("YAOpenEvidence")
+                    .font(.system(.headline, design: .serif, weight: .semibold))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
         .task(id: app.answersVersion) { await loadRecent() }
     }
 

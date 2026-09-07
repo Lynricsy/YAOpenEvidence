@@ -19,9 +19,13 @@ struct AskHomeView: View {
         @Bindable var app = app
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Label("循证医学文献问答", systemImage: "book.closed")
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(Color.accentColor)
+                // 首页品牌标识：图形与登录页同源（随系统外观切换），文字继续用强调色。
+                HStack(spacing: 6) {
+                    BrandLogo(size: 18)
+                    Text("循证医学文献问答")
+                }
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(Color.accentColor)
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("请提出您的临床或科研问题")

@@ -58,9 +58,7 @@ struct LoginView: View {
 
     private var brand: some View {
         VStack(spacing: 12) {
-            Image(systemName: "book.closed.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(Color.accentColor)
+            BrandLogo(size: 72)
             Text("YAOpenEvidence")
                 .font(.system(.largeTitle, design: .serif, weight: .semibold))
             Text("让每一条结论，都能回到原文。")

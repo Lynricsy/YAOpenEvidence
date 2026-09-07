@@ -11,8 +11,12 @@ struct RootView: View {
         Group {
             switch session.phase {
             case .checking:
-                ProgressView("正在验证会话")
-                    .controlSize(.large)
+                // 会话恢复期与启动屏视觉衔接：同一枚标识 + 同一系统背景色。
+                VStack(spacing: 16) {
+                    BrandLogo(size: 64, label: "YAOpenEvidence")
+                    ProgressView("正在验证会话")
+                        .controlSize(.large)
+                }
             case .signedOut:
                 LoginView()
             case .signedIn:

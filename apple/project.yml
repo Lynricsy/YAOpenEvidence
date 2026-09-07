@@ -29,7 +29,9 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-        UILaunchScreen: {}
+        # 系统启动屏使用动态背景，固定尺寸标志由 RootView 的会话恢复态承载。
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
