@@ -47,7 +47,8 @@ def fake_llm(system: str, user: str, max_tokens: int = 2000, think: bool = False
     if system.startswith("You are a meticulous clinical research analyst"):
         pid, quote = _cited(user)
         return (
-            "### Relevance\n2\n"   # 真实模型写 '### Relevance (2)' 或 '### Relevance\n2'，不回抄 (0-3)
+            # 照抄 READ_SYS 里的标题（真实模型的行为）：解析器必须跳过标题里的取值范围
+            "### Relevance (0-3)\n2 — directly addresses the question.\n"
             "### P — Patient / 研究对象\nAdults described by the paper.\n"
             "### I — Intervention / 干预措施\nThe intervention the paper reports.\n"
             "### C — Comparator / 对照方式\nThe comparator the paper reports.\n"

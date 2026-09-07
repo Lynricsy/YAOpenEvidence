@@ -379,15 +379,28 @@ Rules: never add information that is not in the text; write "Not reported" for a
 if the paper is not relevant say Relevance 0 and stop."""
 
 
+# 分值可能写在标题行之后（`### Relevance (0-3)` 换行 `2 — …`）或标题行内（`### Relevance (2)`）。
+# 标题里的取值范围必须跳过：直接取 `Relevance` 之后的第一个数字会把范围下限 0 当成分值，
+# 而 READ_SYS 要求模型逐字照抄该标题，于是每篇都判为不相关，整轮问答以 nothing_relevant 失败。
+REL_RE = re.compile(r"Relevance[^\n]*?(?::|\n)\s*\**\s*([0-3])\b(?!\s*[-–—]\s*\d)")
+REL_INLINE_RE = re.compile(r"Relevance\s*[:(]\s*\**\s*([0-3])\b(?!\s*[-–—]\s*\d)")
+
+
+def parse_relevance(notes: str) -> int:
+    """取阅读笔记里的 0-3 分值；实在解析不出时按 1 处理，宁可多读一篇也不误杀证据。"""
+    m = REL_RE.search(notes) or REL_INLINE_RE.search(notes)
+    return int(m.group(1)) if m else 1
+
+
 def read_paper(i: int, p: dict, question_en: str, *, emit: Emit = print_emit) -> dict:
     if not p.get("text"):
         p["notes"] = "### Relevance (0-3)\n0 (no text available)"
+        p["relevance"] = 0   # 不显式写 0 的话，下游 p.get("relevance", 1) 会把无正文的文献当成相关
         p["cites"] = []
         return p
     user = f"QUESTION: {question_en}\n\nPAPER [{i}] {p['title']} ({p['year']}, {p['journal']}) — source: {p['source']}\n\n{p['text']}"
     p["notes"] = llm(READ_SYS, user, max_tokens=2000, emit=emit)
-    m = re.search(r"Relevance.*?(\d)", p["notes"], re.S)
-    p["relevance"] = int(m.group(1)) if m else 1
+    p["relevance"] = parse_relevance(p["notes"])
     p["cites"] = ks.verify_citations(p["notes"], p["paras"])
     # rewrite the notes so the synthesis model sees corrected/verified paragraph ids: (¶12: "...") -> [n¶12]
     def _fix(m: re.Match) -> str:

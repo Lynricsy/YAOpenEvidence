@@ -122,3 +122,19 @@ def test_llm_unavailable_raises_instead_of_empty_string(monkeypatch):
         ask.llm("sys", "user", emit=warnings.append)
     assert len(warnings) == 3
     assert all(w["level"] == "warning" for w in warnings)
+
+
+@pytest.mark.parametrize(("notes", "expected"), [
+    # 提示词要求逐字照抄 `### Relevance (0-3)`，分值写在下一行：曾把范围下限 0 当分值，整轮问答被判无相关文献
+    ("### Relevance (0-3)\n2 — directly addresses the question.\n### P — Patient\nAdults.", 2),
+    ("### Relevance (0-3)\n**0** — reports neither drug separately.", 0),
+    ("### Relevance (2)\n### P — Patient\nAdults.", 2),          # 分值写在标题行内
+    ("### Relevance (0-3)\nScore not stated.", 1),               # 解析不出时保守纳入
+])
+def test_parse_relevance_reads_the_score_not_the_range(notes, expected):
+    assert ask.parse_relevance(notes) == expected
+
+
+def test_papers_without_text_are_not_treated_as_relevant():
+    p = ask.read_paper(1, {"pmid": "1", "text": ""}, "question")
+    assert p["relevance"] == 0
