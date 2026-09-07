@@ -8,7 +8,7 @@ YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问�
 
 API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md)；CLI 内核的详细用法见 [core/README.md](core/README.md)。
 
-品牌标志以展开的书页与核验勾表达「回到文献原文核实证据」，沿用界面的深青主色。透明底矢量资源：[彩色 SVG](docs/assets/logo.svg)、[单色 SVG](docs/assets/logo-mono.svg)，均为 `256 × 256` 画布，无字体或外部资源依赖。单色版适用于深色背景、印刷及水印；内联 SVG 时通过 CSS `color` 换色，作为独立图片使用时默认黑色。
+品牌标志以展开的圆角书页与核验勾表达「回到文献原文核实证据」，沿用界面的深青主色，书脊转角与书页断口采用圆润处理。透明底矢量资源：[彩色 SVG](docs/assets/logo.svg)、[单色 SVG](docs/assets/logo-mono.svg)，均为 `256 × 256` 画布，无字体或外部资源依赖。单色版适用于深色背景、印刷及水印；内联 SVG 时通过 CSS `color` 换色，作为独立图片使用时默认黑色。
 
 ## 仓库布局
 
