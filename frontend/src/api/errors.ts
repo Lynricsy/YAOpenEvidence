@@ -64,6 +64,11 @@ export function problemMessage(error: unknown): string {
       : '登录尝试过多，请稍后再试'
   if (error.code === 'upstream_unavailable')
     return '上游服务不可用：' + error.detail
+  // 反向代理打不到 api 时返回的是 HTML 错误页，解析不出 code，会落到 internal_error。
+  // 这类故障在网关层，不在后端代码里，必须与真正的 500 区分开，否则排查方向被带偏。
+  if (error.status === 502 || error.status === 504)
+    return '无法连接到后端服务（网关 ' + error.status + '），请确认 API 服务正在运行'
+  if (error.status === 503) return '服务暂不可用，请稍后重试'
   return messages[error.code] ?? '服务器内部错误'
 }
 export function jobErrorMessage(code: string): string {
