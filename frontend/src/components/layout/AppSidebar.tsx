@@ -1,13 +1,9 @@
 import { Link, NavLink, useNavigate } from 'react-router'
-import {
-  BookOpenCheck,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Plus,
-} from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react'
 import { cn } from 'cn'
 import { useAnswers } from '@/api/queries'
 import { useAuth } from '@/auth/store'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { statusTone } from '@/components/common/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -101,9 +97,7 @@ export function AppSidebar({
           className="flex min-w-0 items-center gap-2"
           aria-label="YAOpenEvidence 首页"
         >
-          <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
-            <BookOpenCheck className="size-4" />
-          </span>
+          <BrandLogo size={28} />
           {!collapsed && (
             <span className="truncate font-serif text-[15px] font-semibold tracking-tight">
               YAOpenEvidence

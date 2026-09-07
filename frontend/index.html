@@ -4,16 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
-    <meta
-      name="theme-color"
-      media="(prefers-color-scheme: light)"
-      content="#f7f5f0"
-    />
-    <meta
-      name="theme-color"
-      media="(prefers-color-scheme: dark)"
-      content="#232120"
-    />
+    <!-- theme-color 只能有一个生效值，媒体查询版本无法反映手动选择的主题；
+         因此这里给出浅色初值，由启动脚本与 ThemeProvider 按已解析主题同步。 -->
+    <meta name="theme-color" content="#f7f5f0" />
+    <link rel="icon" href="/brand/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <title>YAOpenEvidence · 循证医学文献问答</title>
   </head>
   <body>
@@ -25,6 +22,9 @@
           (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
         if (d) document.documentElement.classList.add('dark')
         document.documentElement.style.colorScheme = d ? 'dark' : 'light'
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute('content', d ? '#232120' : '#f7f5f0')
       } catch (e) {}
     </script>
     <div id="root"></div>

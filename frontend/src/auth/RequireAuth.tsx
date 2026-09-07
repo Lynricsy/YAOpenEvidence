@@ -1,16 +1,12 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from './store'
-import { Loader2, ShieldAlert } from 'lucide-react'
+import { ShieldAlert } from 'lucide-react'
+import { BrandSplash } from '@/components/common/BrandSplash'
 import { EmptyState } from '@/components/common/EmptyState'
 export function RequireAuth({ admin = false }: { admin?: boolean }) {
   const { user, ready, isAdmin } = useAuth()
   const location = useLocation()
-  if (!ready)
-    return (
-      <div className="grid min-h-dvh place-items-center">
-        <Loader2 className="animate-spin" aria-label="正在验证会话" />
-      </div>
-    )
+  if (!ready) return <BrandSplash label="正在验证会话" />
   if (!user)
     return (
       <Navigate

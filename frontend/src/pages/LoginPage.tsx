@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import {
-  BookOpenCheck,
   ArrowRight,
   Loader2,
   Eye,
@@ -14,6 +13,7 @@ import * as m from 'motion/react-m'
 import { toast } from 'sonner'
 import { useAuth } from '@/auth/store'
 import { ApiError, problemMessage } from '@/api/errors'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,9 +45,7 @@ export default function LoginPage() {
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
       <div className="hidden lg:flex flex-col justify-between border-r bg-sidebar p-12">
         <div className="flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
-            <BookOpenCheck className="size-4" />
-          </span>
+          <BrandLogo size={32} />
           <span className="font-serif text-lg font-semibold tracking-tight">
             YAOpenEvidence
           </span>
@@ -89,9 +87,7 @@ export default function LoginPage() {
           className="w-full max-w-sm"
         >
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
-            <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
-              <BookOpenCheck className="size-4" />
-            </span>
+            <BrandLogo size={32} />
             <span className="font-serif text-base font-semibold tracking-tight">
               YAOpenEvidence
             </span>

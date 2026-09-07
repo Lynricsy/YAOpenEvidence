@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
-import { Loader2 } from 'lucide-react'
 import { Navigate, Route, Routes } from 'react-router'
 import { RequireAuth } from '@/auth/RequireAuth'
+import { BrandSplash } from '@/components/common/BrandSplash'
 import { AppShell } from '@/components/layout/AppShell'
 const AskPage = lazy(() => import('@/pages/AskPage'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
@@ -17,17 +17,7 @@ const LiteratureSearchPage = lazy(
 
 export default function App() {
   return (
-    <Suspense
-      fallback={
-        <div
-          role="status"
-          className="flex min-h-dvh items-center justify-center text-muted-foreground"
-        >
-          <Loader2 className="size-5 animate-spin" />
-          <span className="sr-only">正在加载…</span>
-        </div>
-      }
-    >
+    <Suspense fallback={<BrandSplash label="正在加载…" />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<RequireAuth />}>

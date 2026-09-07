@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "YAOpenEvidence · 循证医学文献问答",
+  "short_name": "YAOpenEvidence",
+  "description": "从 PubMed / Europe PMC 检索并逐篇核实，生成可回溯到原文段落的循证综述。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#f7f5f0",
+  "icons": [
+    {
+      "src": "/brand/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

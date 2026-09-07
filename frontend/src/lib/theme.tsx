@@ -7,6 +7,9 @@ import {
   type ReactNode,
 } from 'react'
 export type Theme = 'system' | 'light' | 'dark'
+// 浏览器 UI 色与 index.html 启动脚本保持同一组取值：
+// theme-color 无法按 .dark 类生效，只能在解析出主题后写回 <meta>。
+const THEME_COLOR = { light: '#f7f5f0', dark: '#232120' }
 const Context = createContext<{
   theme: Theme
   setTheme: (theme: Theme) => void
@@ -32,6 +35,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const apply = () => {
       document.documentElement.classList.toggle('dark', resolved === 'dark')
       document.documentElement.style.colorScheme = resolved
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', THEME_COLOR[resolved])
     }
     localStorage.setItem('yaoe.theme', theme)
     // 仅在明暗真正切换时做视图过渡；首帧与同色重渲染直接落地，避免无谓的整页快照。

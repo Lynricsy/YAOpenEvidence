@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { BookOpenCheck } from 'lucide-react'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { UserMenu } from './UserMenu'
 
 export function MobileTopBar() {
@@ -10,9 +10,7 @@ export function MobileTopBar() {
         className="flex min-w-0 items-center gap-2"
         aria-label="YAOpenEvidence 首页"
       >
-        <span className="grid size-6 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground">
-          <BookOpenCheck className="size-3.5" />
-        </span>
+        <BrandLogo size={24} />
         <span className="truncate font-serif text-sm font-semibold tracking-tight">
           YAOpenEvidence
         </span>

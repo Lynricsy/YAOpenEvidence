@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
-import { ArrowUpRight, BookOpenCheck } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
 import * as m from 'motion/react-m'
+import { BrandLogo } from '@/components/common/BrandLogo'
 import { fadeUp } from '@/lib/motion'
 import { Composer, type ComposerProps } from './Composer'
 
@@ -23,9 +24,15 @@ export function Hero({
   }, [focusToken, inputRef])
   return (
     <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center px-6 py-12">
-      <m.div variants={fadeUp} initial="hidden" animate="show" custom={0}>
-        <p className="inline-flex items-center gap-2 text-xs font-medium tracking-wide text-primary">
-          <BookOpenCheck className="size-3.5" />
+      <m.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="show"
+        custom={0}
+        className="flex items-center gap-3"
+      >
+        <BrandLogo size={40} label="YAOpenEvidence" />
+        <p className="text-xs font-medium tracking-wide text-primary">
           循证医学文献问答
         </p>
       </m.div>
