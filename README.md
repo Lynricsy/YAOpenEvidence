@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/assets/logo.svg" width="112" height="112" alt="YAOpenEvidence：书页与证据核验勾" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg" />
+    <img src="docs/assets/logo.svg" width="112" height="112" alt="YAOpenEvidence：书页与证据核验勾" />
+  </picture>
 </p>
 
 # YAOpenEvidence
@@ -8,7 +11,23 @@ YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问�
 
 API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md)；CLI 内核的详细用法见 [core/README.md](core/README.md)。
 
-品牌标志以展开的圆角书页与核验勾表达「回到文献原文核实证据」，沿用界面的深青主色，书脊转角与书页断口采用圆润处理。透明底矢量资源：[彩色 SVG](docs/assets/logo.svg)、[单色 SVG](docs/assets/logo-mono.svg)，均为 `256 × 256` 画布，无字体或外部资源依赖。单色版适用于深色背景、印刷及水印；内联 SVG 时通过 CSS `color` 换色，作为独立图片使用时默认黑色。
+品牌标志以展开的圆角书页与核验勾表达「回到文献原文核实证据」。透明底矢量资源：[浅色背景版](docs/assets/logo.svg)、[深色背景版](docs/assets/logo-dark.svg)、[单色版](docs/assets/logo-mono.svg)，均为 `256 × 256` 画布，无字体或外部资源依赖。深色背景版使用浅青书页与薄荷绿核验勾；单色版内联时可通过 CSS `color` 换色，作为独立图片使用时默认黑色。
+
+三端使用同一组品牌资源，应用内标志沿用各端现有主题机制，不另设主题开关：
+
+| 客户端 | 品牌入口与系统资源 |
+| --- | --- |
+| Web | 登录、会话恢复、桌面侧栏及折叠态、手机顶栏、问答首页；自适应 SVG favicon、ICO、主屏幕图标与 Web Manifest。应用内手动主题优先于系统设置。 |
+| Apple | 登录、会话恢复、问答首页、原生侧栏；图片集自动选择浅色/深色版本，iOS 应用图标提供常规、深色与着色版本，macOS 提供完整尺寸图标。系统启动屏使用动态背景色。 |
+| Flutter | 登录、会话恢复、侧栏及折叠态、手机顶栏、问答首页；Android 启动屏、自适应及主题单色图标，Windows ICO 与 Linux 窗口图标。应用内跟随 `ThemeMode`；启动器外观由操作系统决定。 |
+
+修改 SVG 母版后，在仓库根目录执行以下命令同步各端资源；依赖 Python 3.12+ 与 `rsvg-convert`（librsvg），无需额外 Python 包：
+
+```bash
+python tools/generate_brand_assets.py
+```
+
+生成器以 `docs/assets/logo.svg` 为彩色母版、`docs/assets/logo-mono.svg` 为 Android 单色母版，输出平台所需 SVG、PNG 与多尺寸 ICO。生成资源随代码入库，正常构建客户端不需要图形转换工具；不要直接修改生成的图片。macOS、Windows 与 Linux 的桌面图标使用固定中性浅底，应用内 Logo 仍支持双主题。
 
 ## 仓库布局
 
