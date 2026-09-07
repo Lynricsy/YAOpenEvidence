@@ -1,8 +1,14 @@
+<p align="center">
+  <img src="docs/assets/logo.svg" width="112" height="112" alt="YAOpenEvidence：书页与证据核验勾" />
+</p>
+
 # YAOpenEvidence
 
 YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问题出发，由 LLM 生成检索式，经 PubMed 与 Europe PMC 检索并获取全文，再按 PICOS 框架逐篇阅读、把引文逐条回到原文核实、将原子知识写入本地知识库，最终生成带段落级引用定位的综述。系统提供浏览器工作台、本机使用的 `core/PICOSGpt` CLI，以及 `/v1` REST + SSE API。
 
 API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md)；CLI 内核的详细用法见 [core/README.md](core/README.md)。
+
+品牌标志以展开的书页与核验勾表达「回到文献原文核实证据」，沿用界面的深青主色。透明底矢量资源：[彩色 SVG](docs/assets/logo.svg)、[单色 SVG](docs/assets/logo-mono.svg)，均为 `256 × 256` 画布，无字体或外部资源依赖。单色版适用于深色背景、印刷及水印；内联 SVG 时通过 CSS `color` 换色，作为独立图片使用时默认黑色。
 
 ## 仓库布局
 

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">YAOpenEvidence 单色标志</title>
+  <desc id="logo-desc">展开的书页与核验勾。内联使用时通过 CSS color 设置标志颜色。</desc>
+  <path fill="currentColor" fill-rule="evenodd" d="M32 52C66 44 96 50 120 68V208C96 190 66 184 32 192V52ZM56 79C70 78 85 80 100 87A5 5 0 0 1 96 97C82 91 70 88 56 89A5 5 0 0 1 56 79ZM56 107C70 106 85 108 100 115A5 5 0 0 1 96 125C82 119 70 116 56 117A5 5 0 0 1 56 107ZM56 135C70 134 85 136 100 143A5 5 0 0 1 96 153C82 147 70 144 56 145A5 5 0 0 1 56 135Z"/>
+  <path fill="currentColor" d="M136 68C160 50 190 44 224 52V84L208 100V66C181 63 157 70 136 86V68ZM208 150L224 134V192C190 184 160 190 136 208V184C156 172 181 168 208 172V150Z"/>
+  <path stroke="currentColor" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" d="M148 123L172 147L223 96"/>
+</svg>

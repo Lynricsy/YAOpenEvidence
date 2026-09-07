@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">YAOpenEvidence 标志</title>
+  <desc id="logo-desc">展开的深青色书页与青绿色核验勾，代表回到文献原文核实证据。</desc>
+  <path fill="#17616B" d="M32 52C66 44 96 50 120 68V208C96 190 66 184 32 192V52Z"/>
+  <path fill="#17616B" d="M136 68C160 50 190 44 224 52V84L208 100V66C181 63 157 70 136 86V68ZM208 150L224 134V192C190 184 160 190 136 208V184C156 172 181 168 208 172V150Z"/>
+  <path stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" d="M56 84C71 83 84 86 98 92M56 112C71 111 84 114 98 120M56 140C71 139 84 142 98 148"/>
+  <path stroke="#279C87" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" d="M148 123L172 147L223 96"/>
+</svg>
