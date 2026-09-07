@@ -318,6 +318,8 @@ uv run --directory backend yaoe import-answers
 
 ### 常见问题
 
+- **改了 `core/` 或 `backend/` 源码但线上行为没变**：Dockerfile 是把源码 `COPY` 进镜像，不是挂载，容器跑的是构建时的副本，重启容器不生效。必须重建后重启：`docker compose up -d --build api worker`。改了 `frontend/` 则重建 `web`。
+- **验证重建是否真的上线**：不要只看容器 `Up`。先经浏览器同源地址探活 `curl http://localhost:39109/v1/health/ready`（走 nginx，可一并验证代理层是否通），再用 `docker compose exec worker python -c "import ask; ..."` 确认容器内的代码确实是新版本。`nginx.conf` 已改为经 Docker DNS 动态解析 `api`，因此单独重建 API 不再需要连带重启 `web`。
 - **KB 索引与 embedder 不一致**：使用 admin key 调用 `POST /v1/kb/reindex`，或在 `core/` 下运行 `./PICOSGpt kb reindex`。不要用一套 embedding 维度读取另一套索引。
 - **首次 KB 检索较慢**：bge-m3 首次请求会惰性加载，实测约需 15 秒并占用约 2 GiB 内存。
 - **容器内无法使用机构订阅下载**：镜像不包含 `core/vendor/`，`paywall_fetch` 不可用；v1 容器部署明确不支持该下载路径。本机 CLI 仍可按内核文档配置。

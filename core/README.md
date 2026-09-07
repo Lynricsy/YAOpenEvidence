@@ -140,6 +140,8 @@ PICOSGpt/
 | 机构订阅 | 需先在**有显示器的机器**上登录一次生成 `sd_state.json`，见下 |
 | 本地 PDF | 放到 `pdfs/`，Codex 里说 "用 read_pdf 读 xxx.pdf" |
 
+`ask` 流水线的自动级联只有前三级：PMC XML → Unpaywall PDF → 机构订阅 PDF（需 `sd_state.json`），都拿不到就退回摘要。**`pdfs/` 下的本地 PDF 不参与该级联**，只是 Codex/MCP `read_pdf` 的输入。机构订阅那级还要求 `vendor/` 里的 playwright 可导入，容器镜像不含 `vendor/`，故只有本机 CLI 走得通。
+
 机构订阅登录（一次性）：
 ```bash
 # 在有浏览器的机器上：
