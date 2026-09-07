@@ -3,6 +3,9 @@
 # Generated orb portal state
 .amp/portals/*
 
+# 终端本地拖放文件
+.orca/
+
 # Python 缓存
 __pycache__/
 *.py[cod]
