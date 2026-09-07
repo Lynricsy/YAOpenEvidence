@@ -129,6 +129,9 @@ def test_llm_unavailable_raises_instead_of_empty_string(monkeypatch):
     ("### Relevance (0-3)\n2 — directly addresses the question.\n### P — Patient\nAdults.", 2),
     ("### Relevance (0-3)\n**0** — reports neither drug separately.", 0),
     ("### Relevance (2)\n### P — Patient\nAdults.", 2),          # 分值写在标题行内
+    ("Relevance 0", 0),                                          # READ_SYS 末句要求的裸写法：不相关就此收尾
+    ("Relevance 0\n", 0),
+    ("### Relevance 0-3\n1", 1),                                 # 标题里的范围不带括号时也不能当分值
     ("### Relevance (0-3)\nScore not stated.", 1),               # 解析不出时保守纳入
 ])
 def test_parse_relevance_reads_the_score_not_the_range(notes, expected):

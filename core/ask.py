@@ -379,17 +379,25 @@ Rules: never add information that is not in the text; write "Not reported" for a
 if the paper is not relevant say Relevance 0 and stop."""
 
 
-# 分值可能写在标题行之后（`### Relevance (0-3)` 换行 `2 — …`）或标题行内（`### Relevance (2)`）。
-# 标题里的取值范围必须跳过：直接取 `Relevance` 之后的第一个数字会把范围下限 0 当成分值，
+# 分值有三种写法：标题行之后（`### Relevance (0-3)` 换行 `2 — …`）、标题行内（`### Relevance (2)`），
+# 以及 READ_SYS 末句要求的裸写法（`Relevance 0`，不相关时模型就此收尾）。
+# 三者都必须跳过标题里的取值范围：直接取 `Relevance` 之后的第一个数字会把范围下限 0 当成分值，
 # 而 READ_SYS 要求模型逐字照抄该标题，于是每篇都判为不相关，整轮问答以 nothing_relevant 失败。
-REL_RE = re.compile(r"Relevance[^\n]*?(?::|\n)\s*\**\s*([0-3])\b(?!\s*[-–—]\s*\d)")
-REL_INLINE_RE = re.compile(r"Relevance\s*[:(]\s*\**\s*([0-3])\b(?!\s*[-–—]\s*\d)")
+_NOT_A_RANGE = r"\b(?!\s*[-–—]\s*\d)"
+REL_PATTERNS = (
+    re.compile(r"Relevance[^\n]*?(?::|\n)\s*\**\s*([0-3])" + _NOT_A_RANGE),
+    re.compile(r"Relevance\s*[:(]\s*\**\s*([0-3])" + _NOT_A_RANGE),
+    re.compile(r"Relevance\s+\**\s*([0-3])" + _NOT_A_RANGE),
+)
 
 
 def parse_relevance(notes: str) -> int:
     """取阅读笔记里的 0-3 分值；实在解析不出时按 1 处理，宁可多读一篇也不误杀证据。"""
-    m = REL_RE.search(notes) or REL_INLINE_RE.search(notes)
-    return int(m.group(1)) if m else 1
+    for pat in REL_PATTERNS:
+        m = pat.search(notes)
+        if m:
+            return int(m.group(1))
+    return 1
 
 
 def read_paper(i: int, p: dict, question_en: str, *, emit: Emit = print_emit) -> dict:
