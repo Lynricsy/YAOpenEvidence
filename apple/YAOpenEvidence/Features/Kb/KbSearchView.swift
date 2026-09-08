@@ -145,8 +145,7 @@ struct KbSearchView: View {
         @Bindable var model = model
         ScrollView {
             VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
-                statsCard
-                if session.isAdmin { reindexCard }
+                libraryCard
                 resultList
             }
             .frame(maxWidth: Metrics.contentMaxWidth)
@@ -179,33 +178,99 @@ struct KbSearchView: View {
         .onDisappear { model.teardown() }
     }
 
-    // MARK: - 统计
+    // MARK: - 知识库概览（统计 + 重建索引合为一张卡）
+
+    /// 面向 kind 的构成项：标签、数量、色标。
+    private struct KindSlice: Identifiable {
+        let label: String
+        let value: Int
+        let tone: Color
+        var id: String { label }
+    }
+
+    private func slices(_ byKind: [String: Int]) -> [KindSlice] {
+        byKind
+            // 后端可能返回尚无中文文案的 kind，跳过它们而不是把原始标识抛给用户。
+            .compactMap { key, value -> KindSlice? in
+                guard let label = KbLabels.kindLabel(key), value > 0 else { return nil }
+                return KindSlice(label: label, value: value, tone: KbLabels.kindTone(key))
+            }
+            .sorted { ($0.value, $1.label) > ($1.value, $0.label) }
+    }
 
     @ViewBuilder
-    private var statsCard: some View {
+    private var libraryCard: some View {
         LoadableView(state: model.stats, retry: { Task { await model.loadStats() } }) { stats in
-            HStack(spacing: 16) {
-                StatBlock(title: "知识条目", value: stats.items)
-                StatBlock(title: "文献", value: stats.papers)
-                // 后端可能返回尚无中文文案的 kind，跳过它们而不是把原始标识抛给用户。
-                ForEach(stats.byKind.keys.sorted(), id: \.self) { key in
-                    if let label = KbLabels.kindLabel(key) {
-                        StatBlock(title: label, value: stats.byKind[key] ?? 0)
-                    }
+            let kinds = slices(stats.byKind)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(stats.items.formatted())
+                        .font(.system(size: 34, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                    Text("条知识")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 8)
+                    Label("\(stats.papers.formatted()) 篇文献", systemImage: "text.book.closed")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                if !kinds.isEmpty {
+                    composition(kinds)
+                }
+
+                if session.isAdmin {
+                    Divider()
+                    reindexRow
                 }
             }
-            .card(padding: 16)
+            .card(padding: 18)
+            .sensoryFeedback(.success, trigger: model.reindexJob?.status == .succeeded)
         }
     }
 
-    // MARK: - 重建索引
+    /// 构成条：按 kind 数量占比分段，比四个并排数字更能看出知识库的组成。
+    private func composition(_ kinds: [KindSlice]) -> some View {
+        let total = max(1, kinds.reduce(0) { $0 + $1.value })
+        return VStack(alignment: .leading, spacing: 8) {
+            GeometryReader { proxy in
+                HStack(spacing: 2) {
+                    ForEach(kinds) { slice in
+                        Capsule()
+                            .fill(slice.tone)
+                            .frame(width: max(4, proxy.size.width * CGFloat(slice.value) / CGFloat(total)))
+                    }
+                }
+            }
+            .frame(height: 6)
+
+            FlowLayout(spacing: 14, lineSpacing: 6) {
+                ForEach(kinds) { slice in
+                    HStack(spacing: 5) {
+                        Circle()
+                            .fill(slice.tone)
+                            .frame(width: 7, height: 7)
+                        Text(slice.label)
+                            .foregroundStyle(.secondary)
+                        Text(slice.value.formatted())
+                            .fontWeight(.medium)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+                    }
+                    .font(.caption)
+                }
+            }
+        }
+    }
 
     @ViewBuilder
-    private var reindexCard: some View {
+    private var reindexRow: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("重建索引").font(.headline)
+                    Text("重建索引").font(.subheadline.weight(.semibold))
                     Text("重新计算全部条目的向量索引，期间检索仍可用。")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -214,6 +279,7 @@ struct KbSearchView: View {
                 Button(model.reindexPending ? "提交中…" : "重建") { Task { await model.reindex() } }
                     .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
+                    .controlSize(.small)
                     .disabled(model.reindexPending || model.reindexJob?.status.isActive == true)
             }
 
@@ -237,8 +303,6 @@ struct KbSearchView: View {
                 }
             }
         }
-        .card(padding: 16)
-        .sensoryFeedback(.success, trigger: model.reindexJob?.status == .succeeded)
     }
 
     // MARK: - 检索
@@ -270,23 +334,6 @@ struct KbSearchView: View {
     }
 }
 
-private struct StatBlock: View {
-    let title: String
-    let value: Int
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value.formatted())
-                .font(.title2.weight(.semibold))
-                .monospacedDigit()
-                .contentTransition(.numericText())
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
 enum KbLabels {
     /// 知识库条目类型文案（含事实 kind）。未知类型返回 nil——后端原始标识不面向用户。
     static func kindLabel(_ key: String) -> String? {
@@ -298,6 +345,20 @@ enum KbLabels {
         case "limitation": "局限"
         case "background": "背景"
         default: nil
+        }
+    }
+
+    /// 构成条与图例的色标。占比最大的「段落」用品牌强调色，其余取彼此可辨的冷色；
+    /// 刻意不用橙/红——那两色在本 App 里表示告警状态。
+    static func kindTone(_ key: String) -> Color {
+        switch key {
+        case "paragraph": .accentColor
+        case "fact": .indigo
+        case "finding": .green
+        case "method": .cyan
+        case "limitation": .pink
+        case "background": .purple
+        default: .secondary
         }
     }
 }
