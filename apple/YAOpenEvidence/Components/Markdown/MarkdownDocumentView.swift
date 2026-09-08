@@ -79,26 +79,30 @@ struct MarkdownDocumentView: View {
             .background(.quaternary.opacity(0.4), in: .rect(cornerRadius: 8))
 
         case .table(let header, let rows):
+            // 列宽必须写死：横向 ScrollView 用「未指定宽度」向内容问理想高度，
+            // 若靠 `maxWidth` 夹紧再换行，行高会按单行算出来，换行后的第二行被容器裁掉。
+            // 首列是 `[n]` 引用编号，给窄列宽即可。
+            let width = { (index: Int) in index == 0 ? 56.0 : 200.0 }
             ScrollView(.horizontal) {
                 Grid(alignment: .topLeading, horizontalSpacing: 0, verticalSpacing: 0) {
                     GridRow {
-                        ForEach(Array(header.enumerated()), id: \.offset) { _, cell in
+                        ForEach(Array(header.enumerated()), id: \.offset) { index, cell in
                             Text(InlineRenderer.attributed(cell, base: .caption.weight(.semibold), colorScheme: colorScheme))
                                 .foregroundStyle(.secondary)
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 10)
-                                .frame(maxWidth: 240, maxHeight: .infinity, alignment: .topLeading)
+                                .frame(width: width(index), alignment: .topLeading)
                                 .background(Color.cardFill)
                         }
                     }
                     ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                         Divider()
                         GridRow {
-                            ForEach(Array(row.enumerated()), id: \.offset) { _, cell in
+                            ForEach(Array(row.enumerated()), id: \.offset) { index, cell in
                                 Text(InlineRenderer.attributed(cell, base: .callout, colorScheme: colorScheme))
                                     .padding(.vertical, 8)
                                     .padding(.horizontal, 10)
-                                    .frame(maxWidth: 240, alignment: .topLeading)
+                                    .frame(width: width(index), alignment: .topLeading)
                             }
                         }
                     }
