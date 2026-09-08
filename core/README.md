@@ -56,6 +56,8 @@ cd <项目根>              # 本仓库为 core/
   按 ISSN 匹配、刊名兜底。更新：`./PICOSGpt rank download 2025`；查询：`./PICOSGpt rank lookup "Lancet"`。
 - 要用**中科院分区**：把分区表导出的 CSV 放到 `data/journal_ranks/cas_2025.csv`（需含 ISSN 或刊名列 + 含“分区”的列，
   Top 列可选），会自动加载并覆盖 SCImago 的结果。
+- 分区表按文件签名（文件名 / mtime / 大小）热重载：换表或新表落盘后，长驻进程（API、worker）在下一次 `journal_rank.load()` /
+  `lookup()` 时自动感知，不用重启。`./PICOSGpt rank stats` 打印当前加载了哪几张表与索引规模。
 - 筛选时会自动扩大候选池（每条 query 取 30+25 条）再过滤，日志里能看到各条件淘汰了多少篇。
 - 答案开头与每条参考文献都标注分区，如 `〔Q1 SJR 6.90〕`。
 
@@ -105,6 +107,7 @@ PICOSGpt/
 │   ├── vllm.sh                vLLM 服务（:8000）
 │   └── litellm.sh             LiteLLM 代理（:4000）
 ├── ask.py                   一键流水线主程序（筛选 / 段落定位 / 知识抽取）
+├── ingest.py                单篇入库（上传 PDF 或按 DOI 经机构访问下载 → 分段 → 抽事实 → library + kb）
 ├── journal_rank.py          期刊分区表加载与查询（SCImago / 自定义中科院分区 CSV）
 ├── knowledge_store.py       段落切分、引文核实、原子知识抽取、向量知识库
 ├── semantic_scholar_mcp.py  Codex 用的 MCP 工具服务（检索 / 全文 / 本地 PDF / kb_search）
@@ -120,6 +123,7 @@ PICOSGpt/
 ├── data/journal_ranks/      期刊分区表
 ├── models/                  embedding 模型（bge-m3，不入库，见 §6.1 重建）
 ├── pdfs/                    本地 PDF（手动放入或 paywall 下载，不入库）
+├── var/                     运行状态（API 数据库、机构订阅登录态 sd_state.json；不入库）
 ├── logs/                    服务日志
 └── vendor/                  项目自带的 Python 依赖（pypdf / playwright），不污染 conda 环境
 ```

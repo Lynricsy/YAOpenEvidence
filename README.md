@@ -287,6 +287,7 @@ uv run --directory backend yaoe reset-password admin
 | `YAOE_MAX_ACTIVE_JOBS_PER_USER` | `2` | 每个用户允许的 queued/running 任务上限，多个会话共享，必须大于 0 |
 | `YAOE_EVENTS_TTL_S` | `604800` | Redis 任务事件流与取消标记的保留秒数，默认 7 天 |
 | `YAOE_EVENTS_MAXLEN` | `2000` | 每个任务 Redis Stream 的近似最大事件数 |
+| `YAOE_UPLOAD_MAX_MB` | `50` | `POST /v1/papers/upload` 单个 PDF 的大小上限（MB），必须大于 0 |
 
 Compose 固定容器内的 Redis 为 `redis://redis:6379/0`、数据库为 `sqlite:////data/var/api.sqlite3`；`.env` 中的 `YAOE_PORT` 控制宿主机端口映射。
 
@@ -301,11 +302,11 @@ Compose 固定容器内的 Redis 为 `redis://redis:6379/0`、数据库为 `sqli
 | `EMBED_MODEL` | `<PICOSGPT_DATA>/models/BAAI/bge-m3` | sentence-transformers embedding 模型路径 |
 | `NCBI_API_KEY` | 空 | NCBI/PubMed API key，可选 |
 | `S2_API_KEY` | 空 | Semantic Scholar API key，可选 |
-| `SD_STATE_PATH` | `<PICOSGPT_DATA>/sd_state.json` | 机构订阅下载器的登录状态文件 |
+| `SD_STATE_PATH` | `<PICOSGPT_DATA>/var/sd_state.json` | 机构订阅下载器的登录状态文件；另有同名的 `.session_storage.json` 与 `.context.json` 两份伴随文件 |
 | `PAYWALL_MAX_PER_RUN` | `5` | 每次问答最多尝试的机构订阅下载数 |
 | `S2_TIMEOUT` | `30` | 文献上游 HTTP 请求超时秒数 |
 
-`PICOSGPT_DATA` 决定所有运行期数据的位置。本地未设置时以 `core/` 为根，容器内为 `/data`。其下的 `answers/` 保存问答输出，`library/` 保存逐篇文献材料，`kb/` 保存知识库索引，`data/journal_ranks/` 保存期刊分区表，`models/` 保存 embedding 模型，`pdfs/` 保存本地 PDF，`var/` 保存 API 数据库等运行状态。
+`PICOSGPT_DATA` 决定所有运行期数据的位置。本地未设置时以 `core/` 为根，容器内为 `/data`。其下的 `answers/` 保存问答输出，`library/` 保存逐篇文献材料，`kb/` 保存知识库索引，`data/journal_ranks/` 保存期刊分区表，`models/` 保存 embedding 模型，`pdfs/` 保存本地 PDF（入库任务落在 `pdfs/ingest/`），`var/` 保存 API 数据库、机构登录态等运行状态。
 
 ## CLI 与 API 共存
 
@@ -349,7 +350,7 @@ uv run --directory backend yaoe import-answers
 - **验证重建是否真的上线**：不要只看容器 `Up`。先经浏览器同源地址探活 `curl http://localhost:39109/v1/health/ready`（走 nginx，可一并验证代理层是否通），再用 `docker compose exec worker python -c "import ask; ..."` 确认容器内的代码确实是新版本。`nginx.conf` 已改为经 Docker DNS 动态解析 `api`，因此单独重建 API 不再需要连带重启 `web`。
 - **KB 索引与 embedder 不一致**：使用 admin key 调用 `POST /v1/kb/reindex`，或在 `core/` 下运行 `./PICOSGpt kb reindex`。不要用一套 embedding 维度读取另一套索引。
 - **首次 KB 检索较慢**：bge-m3 首次请求会惰性加载，实测约需 15 秒并占用约 2 GiB 内存。
-- **容器内无法使用机构订阅下载**：镜像不包含 `core/vendor/`，`paywall_fetch` 不可用；v1 容器部署明确不支持该下载路径。本机 CLI 仍可按内核文档配置。
+- **机构订阅下载在容器内不可用**：runtime 镜像已装 Playwright Chromium（`playwright install --with-deps chromium`）。先看 `GET /v1/paywall/status`：`playwright_available=false` 说明镜像里没装成浏览器，`configured=false` 说明还没上传登录态——在有桌面的机器上跑 `core/PICOSGpt paywall login`，再经 `/admin/institution` 上传三份文件。
 - **Semantic Scholar 返回 429**：`source=auto` 的文献搜索会在 Semantic Scholar 上游失败时自动回退 PubMed，并在响应中给出回退原因。
 - **任务看似串行**：单 worker 的 `YAOE_WORKER_MAX_JOBS` 默认为 `1`，这是单 GPU 的预期配置。扩展多个 worker 副本时，所有副本必须挂载同一份数据卷。
 - **GPU 版 PyTorch**：workspace 当前把 `torch` 固定到 CPU wheel 索引。GPU 部署需将根 `pyproject.toml` 的 `pytorch-cpu` 索引改为对应 CUDA 索引，再运行 `uv lock`。

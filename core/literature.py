@@ -42,6 +42,9 @@ SHORT_FIELDS = (
     "paperId,title,year,venue,authors,citationCount,externalIds,tldr,"
     "publicationTypes,openAccessPdf"
 )
+# citations / references / recommendations 端点不接受 tldr（S2 返回 400
+# "Unrecognized or unsupported fields: [tldr]"），只有 /paper/{id} 与 /paper/search 支持
+RELATED_FIELDS = SHORT_FIELDS.replace("tldr,", "")
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
@@ -140,13 +143,13 @@ def s2_paper(paper_id: str) -> dict:
 
 def s2_citations(paper_id: str, limit: int = 10) -> list[dict]:
     data = s2_get(f"/paper/{paper_id}/citations",
-                  {"fields": "isInfluential," + SHORT_FIELDS, "limit": max(1, min(int(limit), 50))})
+                  {"fields": "isInfluential," + RELATED_FIELDS, "limit": max(1, min(int(limit), 50))})
     return [d.get("citingPaper") or {} for d in (data.get("data") or [])]
 
 
 def s2_references(paper_id: str, limit: int = 10) -> list[dict]:
     data = s2_get(f"/paper/{paper_id}/references",
-                  {"fields": SHORT_FIELDS, "limit": max(1, min(int(limit), 50))})
+                  {"fields": RELATED_FIELDS, "limit": max(1, min(int(limit), 50))})
     items = [d.get("citedPaper") or {} for d in (data.get("data") or [])]
     return [p for p in items if p.get("paperId")]
 
@@ -158,7 +161,7 @@ def s2_recommendations(paper_id: str, limit: int = 10) -> list[dict]:
     last = ""
     for _ in range(4):
         try:
-            r = httpx.get(url, params={"fields": SHORT_FIELDS, "limit": max(1, min(int(limit), 50))},
+            r = httpx.get(url, params={"fields": RELATED_FIELDS, "limit": max(1, min(int(limit), 50))},
                           headers=headers(), timeout=TIMEOUT)
         except httpx.HTTPError as e:
             last = f"network error: {e}"

@@ -11,6 +11,7 @@
 #   ./PICOSGpt kb stats | reindex   知识库统计 / 重建索引
 #   ./PICOSGpt rank download [YEAR] 下载 SCImago 期刊分区表到 data/journal_ranks/（headless 浏览器过 Cloudflare）
 #   ./PICOSGpt rank lookup "ISSN或刊名"  查询某期刊分区
+#   ./PICOSGpt rank stats           已加载的分区表与索引规模
 #   ./PICOSGpt codex ["问题"]         Codex 交互式 agent（不带问题进入 TUI；带问题一次性回答）
 #   ./PICOSGpt paywall get DOI        用机构订阅登录态下载付费墙全文到 pdfs/
 #   ./PICOSGpt paywall login [--url URL]

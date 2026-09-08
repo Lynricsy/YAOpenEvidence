@@ -54,7 +54,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 
 登录按归一化后的用户名使用 Redis 固定窗口限流，含成功登录：默认 300 秒最多 10 次，超出返回 `429 login_rate_limited` 及剩余秒数 `Retry-After`；窗口不因重试延长。配置为 `YAOE_LOGIN_MAX_ATTEMPTS`、`YAOE_LOGIN_WINDOW_S`。Redis 不可用时登录返回 `503 unavailable`，不绕过限流；已有会话仍由数据库验证。
 
-业务接口没有通用请求速率限制。每个用户的 `queued` 与 `running` job 合计达到 `YAOE_MAX_ACTIVE_JOBS_PER_USER`（默认 `2`）后，`POST /v1/answers` 返回 `429 too_many_jobs`；同一用户的多个会话共享额度。
+业务接口没有通用请求速率限制。每个用户的 `queued` 与 `running` job 合计达到 `YAOE_MAX_ACTIVE_JOBS_PER_USER`（默认 `2`）后，`POST /v1/answers`、`POST /v1/papers/upload` 与 `POST /v1/papers/ingest` 返回 `429 too_many_jobs`；同一用户的多个会话共享额度。
 
 ## 2. 错误模型
 
@@ -98,6 +98,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 | `last_admin` | 409 | 必须保留活跃管理员 | 禁用最后一个活跃管理员。 |
 | `validation_error` | 422 | 参数或请求体校验失败 | 参数越界、年份规则冲突、期刊查询没有 `issn` 与 `title`。框架级校验失败另带 `errors` 数组。 |
 | `too_many_jobs` | 429 | 当前用户活跃任务达到上限 | 同一用户所有会话合计的 `queued`/`running` 数达到配置值。 |
+| `payload_too_large` | 413 | 上传内容超过大小上限 | `POST /v1/papers/upload` 的 PDF 超过 `YAOE_UPLOAD_MAX_MB`；`PUT /v1/paywall/state` 的单份 JSON 超过 5 MB。 |
 | `login_rate_limited` | 429 | 登录窗口内请求过多 | 同一用户名达到限额；读取 `Retry-After` 后再试。 |
 | `upstream_unavailable` | 502 | Redis、PubMed、Semantic Scholar 或 Europe PMC 等上游不可用 | 入队失败、上游超时、上游限流或返回错误。`detail` 会指出来源。 |
 | `unavailable` | 503 | 服务依赖不可用 | HTTP 层产生 503 时的默认错误码。就绪探针自身会以其健康响应形状直接返回 503。 |
@@ -151,10 +152,16 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 | `GET` | `/v1/papers/{key}/paragraphs/{pid}` | 登录 | 获取单个段落。 |
 | `GET` | `/v1/papers/{key}/facts` | 登录 | 获取原子事实。 |
 | `GET` | `/v1/papers/{key}/fulltext` | 登录 | 获取带段落锚点的 Markdown 全文。 |
+| `POST` | `/v1/papers/upload` | 登录 | 上传 PDF 异步入库，返回 `202` 与 `paper_ingest` job。 |
+| `POST` | `/v1/papers/ingest` | 登录 | 按 DOI 经机构订阅取全文入库，返回 `202`。 |
 | `GET` | `/v1/kb/search` | 登录 | 语义检索知识库。 |
 | `GET` | `/v1/kb/stats` | 登录 | 获取知识库统计。 |
 | `POST` | `/v1/kb/reindex` | `admin` | 异步重建知识库索引。 |
 | `GET` | `/v1/journals/rank` | 登录 | 按 ISSN 或标题查询期刊分区。 |
+| `GET` | `/v1/journals/tables` | 登录 | 读取已加载的期刊分区表与索引规模。 |
+| `GET` | `/v1/paywall/status` | 登录 | 观测机构订阅登录态。 |
+| `PUT` | `/v1/paywall/state` | `admin` | 整体替换机构登录态文件（multipart）。 |
+| `DELETE` | `/v1/paywall/state` | `admin` | 清除机构登录态，返回 `204`。 |
 | `GET` | `/v1/literature/search` | 登录 | 检索 Semantic Scholar/PubMed。 |
 | `GET` | `/v1/literature/resolve` | 登录 | 通过必填 `ident` 查询参数解析单篇上游文献。 |
 | `GET` | `/v1/literature/fulltext` | 登录 | 通过 `ident` 获取 Europe PMC 全文目录或正文。 |
@@ -256,7 +263,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 | 参数 | 类型 | 默认 | 说明 |
 |---|---|---|---|
-| `kind` | `ask \| kb_reindex \| null` | `null` | 精确过滤任务种类。 |
+| `kind` | `ask \| kb_reindex \| paper_ingest \| null` | `null` | 精确过滤任务种类。 |
 | `status` | `queued \| running \| succeeded \| failed \| cancelled \| null` | `null` | 精确过滤状态。 |
 | `limit` | `integer` | `20` | `1..100`。 |
 | `offset` | `integer` | `0` | `>=0`。 |
@@ -303,6 +310,18 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 返回 `text/markdown; charset=utf-8`。正文内含形如 `<a id="p24">` 的段落锚点，供前端定位。可能错误：`not_found`、`internal_error`。
 
+#### `POST /v1/papers/upload`
+
+`multipart/form-data`，任意登录用户可用。字段 `file`（必填，首 5 字节须为 `%PDF-`，大小上限 `YAOE_UPLOAD_MAX_MB`，默认 50 MB）、`title`（必填，`1..300`）、`doi`、`journal`、`year`、`authors`（选填）。
+
+给了 `doi` 时会先向上游解析补全元数据，解析失败不阻塞入库，退回用户填写的字段。返回 `202 Accepted` 与 `kind="paper_ingest"` 的 `Job`。可能错误：`validation_error`（不是 PDF）、`payload_too_large`、`too_many_jobs`、`upstream_unavailable`、`internal_error`。
+
+#### `POST /v1/papers/ingest`
+
+JSON 请求体 `{"doi": "10.…"}`（须匹配 `^10\.\S+$`，长度 `>=4`）。要求机构访问已配置且服务端装了 playwright，否则 `409 conflict`。返回 `202 Accepted` 与 `kind="paper_ingest"` 的 `Job`。可能错误：`validation_error`、`conflict`、`too_many_jobs`、`not_found`、`upstream_unavailable`、`internal_error`。
+
+两个入口共用 `YAOE_MAX_ACTIVE_JOBS_PER_USER` 额度（与问答任务同一闸门）。任务阶段为 `fulltext`（下载 + 解析）→ `kb`（抽事实 + 入库），成功事件与 `job.result` 为 `{"key", "n_paragraphs", "n_facts", "items"}`，`key` 即 `GET /v1/papers/{key}` 的键。失败码：`pdf_unreadable`、`fulltext_unavailable`、`llm_unavailable`、`timeout`、`internal_error`。
+
 ### 4.4 Knowledge Base
 
 #### `GET /v1/kb/search`
@@ -332,7 +351,29 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 查询参数 `issn: string = ""` 与 `title: string = ""` 至少有一个去除首尾空白后非空；两者都给时一并用于查询。返回 `RankResult`，未命中不是错误，而是 `found=false`、`rank=null`。可能错误：`validation_error`、`internal_error`。
 
-### 4.6 Literature
+#### `GET /v1/journals/tables`
+
+无参数，返回 `RankTables`：每张已加载分区表的 `file`、`year`（从文件名推断，推不出为 `null`）、`journals`、`source`（`scimago \| custom`），以及索引规模 `issns` / `titles` 与 `loaded_at`。
+
+`tables` 为空数组时 `quartiles` 筛选不会生效，客户端应据此提示。分区表按文件签名（名/mtime/大小）热重载：换表或新表落盘后，api 与 worker 各自在下一次查询时自动感知，无需重启。
+
+### 4.6 Paywall
+
+机构订阅登录态是 `paywall_fetch` 用的浏览器快照，落在 `PICOSGPT_DATA/var/sd_state.json`（可用 `SD_STATE_PATH` 覆盖），另有 `.session_storage.json` 与 `.context.json` 两份伴随文件。产品面只做**只读观测 + 管理员上传**，不在应用内代理登录；也不提供下载端点——cookie 快照等同凭据。
+
+#### `GET /v1/paywall/status`
+
+无参数，返回 `PaywallStatus`：`configured`（storage_state 是否存在）、`saved_at`（该文件 mtime，UTC）、`final_url`（取自 `.context.json` 的 `final_url`，缺则 `authorized_url`）、`has_session_storage`、`has_context_meta`、`playwright_available`（服务端是否装了 playwright）。可能错误：`internal_error`。
+
+#### `PUT /v1/paywall/state`
+
+`multipart/form-data`，需要 `admin`。字段 `storage_state`（必填，须是含 `cookies` 列表的 Playwright storage_state JSON）、`session_storage`、`context_meta`（选填，须是 JSON 对象）。三份先全部校验通过再原子落盘；未提供的可选文件保持原样。返回 `200` 与最新 `PaywallStatus`。可能错误：`forbidden`、`validation_error`、`payload_too_large`（单份超过 5 MB）。
+
+#### `DELETE /v1/paywall/state`
+
+无请求体，需要 `admin`。删除三份文件（不存在则忽略），返回 `204`。可能错误：`forbidden`。
+
+### 4.7 Literature
 
 #### `GET /v1/literature/search`
 
@@ -384,7 +425,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 
 三者都只调用 Semantic Scholar；均接受必填非空 `ident`，以及 `limit: integer = 10`，范围 `1..50`。成功均返回 `{"items": LiteratureRecord[]}`。可能错误：`validation_error`、`not_found`、`upstream_unavailable`、`internal_error`。
 
-### 4.7 Health
+### 4.8 Health
 
 #### `GET /v1/health`
 
@@ -514,13 +555,13 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `id` | `string` | job ID。 |
-| `kind` | `ask \| kb_reindex` | 任务种类。 |
+| `kind` | `ask \| kb_reindex \| paper_ingest` | 任务种类。 |
 | `status` | `queued \| running \| succeeded \| failed \| cancelled` | job 生命周期状态。 |
 | `user_id` | `string \| null` | 所有者的用户 ID；历史迁移或 CLI 导入的无归属数据为 `null`，仅管理员可见。 |
 | `params` | `object` | 入队参数。 |
 | `progress` | `JobProgress \| null` | 最近一次阶段/进度快照。 |
 | `error` | `JobError \| null` | 失败信息。 |
-| `result` | `object \| null` | 成功结果；ask 通常为 `{"answer_id": string}`，KB 重建为条目与论文计数。 |
+| `result` | `object \| null` | 成功结果；ask 通常为 `{"answer_id": string}`，KB 重建为条目与论文计数，入库为 `{"key", "n_paragraphs", "n_facts", "items"}`。 |
 | `created_at` / `started_at` / `finished_at` | `string` / `string \| null` / `string \| null` | UTC 生命周期时间。 |
 
 #### `JobProgress`
@@ -535,7 +576,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `code` | `string` | `no_papers \| nothing_relevant \| llm_unavailable \| timeout \| internal_error`。 |
+| `code` | `string` | `no_papers \| nothing_relevant \| pdf_unreadable \| fulltext_unavailable \| llm_unavailable \| timeout \| internal_error`。前两个只出现在问答任务，`pdf_unreadable`、`fulltext_unavailable` 只出现在入库任务。 |
 | `message` | `string` | 面向人的失败原因。 |
 
 ### 5.3 论文、知识库与分区模型
@@ -638,6 +679,27 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | `rank` | `RankInfo \| null` | 分区详情。 |
 | `label` | `string` | 已格式化、可直接展示的标签。 |
 
+#### `RankTable` / `RankTables`
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `tables[].file` | `string` | 分区表文件名。 |
+| `tables[].year` | `integer \| null` | 从文件名推断的年份。 |
+| `tables[].journals` | `integer` | 该表加载到的期刊条数。 |
+| `tables[].source` | `scimago \| custom` | `scimagojr*.csv` 为 `scimago`，其余（如中科院分区导出）为 `custom`。 |
+| `issns` / `titles` | `integer` | 合并后的 ISSN 与刊名索引规模。 |
+| `loaded_at` | `string \| null` | 最近一次加载时刻（UTC）；文件签名变化后会刷新。 |
+
+#### `PaywallStatus`
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `configured` | `boolean` | storage_state 文件是否存在。 |
+| `saved_at` | `string \| null` | storage_state 文件 mtime（UTC）。 |
+| `final_url` | `string \| null` | 上次登录成功后落在的站点。 |
+| `has_session_storage` / `has_context_meta` | `boolean` | 两份伴随文件是否存在。 |
+| `playwright_available` | `boolean` | 服务端能否加载 `paywall_fetch`；为 `false` 时按 DOI 入库与付费全文下载都不可用。 |
+
 ### 5.4 Literature 模型
 
 #### `LiteratureRecord`
@@ -723,11 +785,11 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 | `stage` | `{stage, status, detail}`。`stage` 为 `queries \| search \| fulltext \| read \| kb \| synthesize \| reindex`；`status` 为 `started \| finished`；`detail` 为对象，缺省为空对象。`search/finished` 包含 `candidates`、`kept`、`dropped:{year,quartile,unranked,journal}`、`papers:[{n,pmid,title,year,journal,rank_label,pmcid}]`；`read/finished` 包含 `relevant`、`total`。其他阶段也可在 `detail` 中报告该阶段计数或结果摘要。 |
 | `progress` | `{stage, current, total, pmid?, title?}`，其中 `stage` 为 `fulltext \| read \| kb \| reindex`；`current`、`total` 为非负整数；`pmid`、`title` 为可选 `string \| null`。 |
 | `log` | `{level, message}`；当前 `level` 为 `info \| warning`。只适合展示运行日志，不应据其文案驱动状态机。 |
-| `succeeded` | 问答任务为 `{answer_id}`；KB 重建任务为 `{items, papers}`。终态。 |
+| `succeeded` | 问答任务为 `{answer_id}`；KB 重建任务为 `{items, papers}`；入库任务为 `{key, n_paragraphs, n_facts, items}`。终态。 |
 | `failed` | `{code, message}`，其中 `code` 为 JobError 枚举。终态。 |
 | `cancelled` | `{}`。终态。 |
 
-`kb` 阶段仅在问答 `use_kb=true` 时出现；`reindex` 阶段用于 KB 重建。事件数据模型位于 OpenAPI 的 `components.schemas`，由 SSE 成功响应 `content["text/event-stream"]["x-sse-events"]` 按事件名引用。该扩展描述每帧 JSON `data`，HTTP 响应本身仍是 SSE 文本，不是 JSON 数组。Redis 发布边界与 OpenAPI 共用这些模型。
+`kb` 阶段在问答 `use_kb=true` 与入库任务中出现；`reindex` 阶段用于 KB 重建。入库任务只用 `fulltext` 与 `kb` 两个阶段值。事件数据模型位于 OpenAPI 的 `components.schemas`，由 SSE 成功响应 `content["text/event-stream"]["x-sse-events"]` 按事件名引用。该扩展描述每帧 JSON `data`，HTTP 响应本身仍是 SSE 文本，不是 JSON 数组。Redis 发布边界与 OpenAPI 共用这些模型。
 
 ### 6.3 重连、心跳与过期
 

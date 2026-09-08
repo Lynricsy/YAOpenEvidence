@@ -86,3 +86,24 @@ def test_ask_keeps_abstract_when_fulltext_service_fails(upstream_http, tmp_path)
 def test_ask_search_source_can_degrade(upstream_http):
     upstream_http(lambda request: httpx.Response(503))
     assert ask.pubmed_search("evidence", 1, ask.Filters()) == []
+
+
+def test_related_endpoints_omit_tldr_field(upstream_http):
+    """S2 的 citations / references / recommendations 对 tldr 回 400；带上就是恒定 502。"""
+    asked: list[str] = []
+
+    def handle(request):
+        asked.append(request.url.params.get("fields", ""))
+        return httpx.Response(200, json={"data": [], "recommendedPapers": []})
+
+    upstream_http(handle)
+    lit.s2_citations("PMID:1", 5)
+    lit.s2_references("PMID:1", 5)
+    lit.s2_recommendations("PMID:1", 5)
+
+    assert len(asked) == 3
+    assert all("tldr" not in fields for fields in asked)
+    assert all("paperId" in fields and "externalIds" in fields for fields in asked)
+    # 单篇与检索仍要 tldr：那是列表卡片上的一句话摘要
+    assert "tldr" in lit.PAPER_FIELDS
+    assert "tldr" in lit.SHORT_FIELDS
