@@ -15,8 +15,8 @@ final class AnswerScreenModel {
     let answerID: String
 
     var answer: Loadable<Answer> = .idle
-    /// 旧版导入答案没有 `body_md`，回落到渲染稿。
-    var legacyMarkdown: String?
+    /// 旧版导入答案没有 `body_md`，回落到渲染稿（只用于避免重复拉取）。
+    private var legacyMarkdown: String?
     var reader: ReaderTarget?
     var monitor: JobLiveMonitor?
     var cancelRequested = false
@@ -42,15 +42,20 @@ final class AnswerScreenModel {
 
     var current: Answer? { answer.value }
 
-    /// 正文块：优先 `body_md`（带引用标记），否则用渲染稿。
-    var blocks: [MarkdownBlock] {
-        if let body = current?.bodyMd, !body.isEmpty {
-            return MarkdownDocument.parse(body, citationLimit: current?.papers.count ?? 0)
+    /// 正文模块：优先 `body_md`（带引用标记），否则用渲染稿。解析一次后缓存，
+    /// 避免每次 body 求值都重新解析整篇 Markdown。
+    private(set) var sections: [RenderedSection] = []
+    private var renderedMarkdown: String?
+
+    private func render(_ markdown: String, citationLimit: Int?) {
+        guard markdown != renderedMarkdown else { return }
+        renderedMarkdown = markdown
+        sections = AnswerSections.split(markdown).map { section in
+            RenderedSection(
+                kind: section.kind,
+                blocks: MarkdownDocument.parse(section.markdown, citationLimit: citationLimit)
+            )
         }
-        if let legacyMarkdown {
-            return MarkdownDocument.parse(legacyMarkdown, citationLimit: nil)
-        }
-        return []
     }
 
     func configure(session: SessionStore, app: AppModel, errors: ErrorPresenter) {
@@ -91,6 +96,9 @@ final class AnswerScreenModel {
 
     private func apply(_ loaded: Answer) {
         answer = .loaded(loaded)
+        if let body = loaded.bodyMd, !body.isEmpty {
+            render(body, citationLimit: loaded.papers.count)
+        }
         if loaded.status == .ready, loaded.bodyMd == nil || loaded.bodyMd?.isEmpty == true {
             Task { await loadLegacyMarkdown() }
         }
@@ -104,6 +112,7 @@ final class AnswerScreenModel {
     private func loadLegacyMarkdown() async {
         guard legacyMarkdown == nil, let client = session?.client else { return }
         legacyMarkdown = try? await client.answerMarkdown(id: answerID)
+        if let legacy = legacyMarkdown { render(legacy, citationLimit: nil) }
     }
 
     /// 首次进入创建监视器；从其他 Tab 回到本页时续订同一个监视器（保留已收到的阶段与日志位置）。

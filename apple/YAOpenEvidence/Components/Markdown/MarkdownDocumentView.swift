@@ -16,13 +16,7 @@ struct MarkdownDocumentView: View {
                 view(for: block)
             }
         }
-        .environment(\.openURL, OpenURLAction { url in
-            if let ref = InlineRenderer.citationRef(from: url) {
-                onCite?(ref)
-                return .handled
-            }
-            return .systemAction
-        })
+        .handlesCitationLinks(onCite)
     }
 
     @ViewBuilder
@@ -85,24 +79,33 @@ struct MarkdownDocumentView: View {
             .background(.quaternary.opacity(0.4), in: .rect(cornerRadius: 8))
 
         case .table(let header, let rows):
-            ScrollView(.horizontal, showsIndicators: false) {
-                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
+            ScrollView(.horizontal) {
+                Grid(alignment: .topLeading, horizontalSpacing: 0, verticalSpacing: 0) {
                     GridRow {
                         ForEach(Array(header.enumerated()), id: \.offset) { _, cell in
-                            Text(InlineRenderer.attributed(cell, base: .callout.bold(), colorScheme: colorScheme))
+                            Text(InlineRenderer.attributed(cell, base: .caption.weight(.semibold), colorScheme: colorScheme))
+                                .foregroundStyle(.secondary)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 10)
+                                .frame(maxWidth: 240, maxHeight: .infinity, alignment: .topLeading)
+                                .background(Color.cardFill)
                         }
                     }
-                    Divider()
                     ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                        Divider()
                         GridRow {
                             ForEach(Array(row.enumerated()), id: \.offset) { _, cell in
                                 Text(InlineRenderer.attributed(cell, base: .callout, colorScheme: colorScheme))
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 10)
+                                    .frame(maxWidth: 240, alignment: .topLeading)
                             }
                         }
                     }
                 }
-                .padding(.vertical, 4)
             }
+            .clipShape(.rect(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
 
         case .thematicBreak:
             Divider()
@@ -112,6 +115,20 @@ struct MarkdownDocumentView: View {
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+extension View {
+    /// 拦截引用链接（`InlineRenderer` 生成的自定义 scheme），交给上层打开阅读器；
+    /// 其余链接照系统行为处理。PICOS 卡片等复用行内渲染的视图也需要挂上它。
+    func handlesCitationLinks(_ onCite: ((CitationRef) -> Void)?) -> some View {
+        environment(\.openURL, OpenURLAction { url in
+            if let ref = InlineRenderer.citationRef(from: url) {
+                onCite?(ref)
+                return .handled
+            }
+            return .systemAction
+        })
     }
 }
 

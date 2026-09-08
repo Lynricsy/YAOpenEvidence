@@ -65,7 +65,7 @@ struct AnswerScreen: View {
     private var content: some View {
         ScrollView {
             LoadableView(state: model.answer, retry: { Task { await model.load() } }) { answer in
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                     AnswerHeader(answer: answer)
                     body(for: answer)
                 }
@@ -91,12 +91,17 @@ struct AnswerScreen: View {
             )
 
         case .ready:
-            MarkdownDocumentView(blocks: model.blocks, onCite: { model.openReader($0) })
-            SourceListView(
-                papers: answer.papers,
-                onOpen: { n, pid in model.reader = ReaderTarget(n: n, pid: pid) }
-            )
-            reaskButton(answer: answer, title: "重新提问")
+            VStack(alignment: .leading, spacing: 28) {
+                AnswerSectionsView(sections: model.sections, onCite: { model.openReader($0) })
+                SourceListView(
+                    papers: answer.papers,
+                    onOpen: { n, pid in model.reader = ReaderTarget(n: n, pid: pid) }
+                )
+                if !answer.kbHits.isEmpty {
+                    KbSupplementView(hits: answer.kbHits)
+                }
+                reaskButton(answer: answer, title: "重新提问")
+            }
 
         case .failed:
             VStack(alignment: .leading, spacing: 12) {

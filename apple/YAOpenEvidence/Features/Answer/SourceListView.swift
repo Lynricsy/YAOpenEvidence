@@ -14,14 +14,8 @@ struct SourceListView: View {
         if papers.isEmpty {
             EmptyView()
         } else {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("参考文献")
-                        .font(.title3.weight(.semibold))
-                    Text("\(papers.count) 篇")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+            VStack(alignment: .leading, spacing: 14) {
+                SectionHeading(module: .sources, count: "\(papers.count) 篇")
 
                 ForEach(used) { paper in
                     SourceCard(paper: paper, onOpen: onOpen)
