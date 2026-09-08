@@ -14,10 +14,10 @@ struct Pill: View {
             if let systemImage { Image(systemName: systemImage) }
         }
         .labelStyle(.titleAndIcon)
-        .font(.caption2)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(tone.opacity(0.12), in: .capsule)
+        .font(.caption.weight(.medium))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(tone.opacity(0.16), in: .capsule)
         .foregroundStyle(tone)
     }
 }
@@ -45,13 +45,8 @@ struct StatusBadge: View {
             if status == .running {
                 ProgressView().controlSize(.mini)
             }
-            Text(Self.label(for: status))
+            Pill(text: Self.label(for: status), tone: Self.tone(for: status))
         }
-        .font(.caption2)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(Self.tone(for: status).opacity(0.12), in: .capsule)
-        .foregroundStyle(Self.tone(for: status))
     }
 
     static func label(for status: AnswerStatus) -> String {

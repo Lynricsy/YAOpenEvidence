@@ -28,17 +28,21 @@ struct LoadableView<Value, Content: View>: View {
     @ViewBuilder let content: (Value) -> Content
 
     var body: some View {
-        switch state {
-        case .idle, .loading:
-            ProgressView()
-                .controlSize(.large)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case .failed(let message):
-            ErrorPanel(message: message, retry: retry)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case .loaded(let value):
-            content(value)
+        Group {
+            switch state {
+            case .idle, .loading:
+                ProgressView()
+                    .controlSize(.large)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .failed(let message):
+                ErrorPanel(message: message, retry: retry)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .loaded(let value):
+                content(value)
+                    .transition(.opacity)
+            }
         }
+        .animation(.default, value: state.isLoading)
     }
 }
 
