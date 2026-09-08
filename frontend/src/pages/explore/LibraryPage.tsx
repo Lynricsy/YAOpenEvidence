@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { Search } from 'lucide-react'
+import { Search, Upload } from 'lucide-react'
 import { usePapers } from '@/api/queries'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ListRow, ListRows } from '@/components/common/ListRows'
@@ -12,6 +12,8 @@ import { QueryError } from '@/components/common/QueryError'
 import { RankBadge } from '@/components/common/RankBadge'
 import { Input } from '@/components/ui/input'
 import { dateTime } from '@/lib/format'
+import { Button } from '@/components/ui/button'
+import { IngestDialog } from '@/components/library/IngestDialog'
 
 export default function LibraryPage() {
   const [params, setParams] = useSearchParams()
@@ -20,6 +22,7 @@ export default function LibraryPage() {
   const offset =
     Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0
   const [draft, setDraft] = useState(q)
+  const [ingesting, setIngesting] = useState(false)
   const papers = usePapers({ q, limit: 20, offset })
   const [previousQuery, setPreviousQuery] = useState(q)
   if (previousQuery !== q) {
@@ -50,7 +53,14 @@ export default function LibraryPage() {
         <PageHeader
           title="文献库"
           description="问答过程中解析入库的全文与事实，按标题或期刊检索"
+          actions={
+            <Button onClick={() => setIngesting(true)}>
+              <Upload />
+              添加文献
+            </Button>
+          }
         />
+        {ingesting && <IngestDialog onClose={() => setIngesting(false)} />}
         <div className="relative max-w-lg">
           <Search className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
           <Input

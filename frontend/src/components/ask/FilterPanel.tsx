@@ -43,10 +43,62 @@ import {
 } from '@/components/ui/sheet'
 import { YearPicker } from './YearPicker'
 import { JournalPicker } from './JournalPicker'
+import { usePaywallStatus, useRankTables } from '@/api/queries'
+import { dateTime } from '@/lib/format'
 
 export type FilterPanelProps = {
   value: FilterState
   onChange: (value: FilterState) => void
+}
+
+/** 分区筛选的依据：没有表时 Q1–Q4 不会生效，必须说出来。 */
+function RankTablesNote() {
+  const { data } = useRankTables()
+  if (!data) return null
+  if (!data.tables.length)
+    return (
+      <p role="alert" className="text-xs text-warning">
+        未加载分区表，Q1–Q4 筛选不会生效
+      </p>
+    )
+  return (
+    <p className="text-xs text-muted-foreground">
+      分区依据：
+      {data.tables
+        .map(
+          (t) =>
+            (t.source === 'scimago' ? 'SCImago' : t.file) +
+            (t.year ? ' ' + t.year : '') +
+            '（' +
+            t.journals.toLocaleString() +
+            ' 刊）',
+        )
+        .join('，')}
+    </p>
+  )
+}
+
+/** 机构订阅登录态：决定付费全文能不能取到，只读展示。 */
+function PaywallNote() {
+  const { data } = usePaywallStatus()
+  if (!data) return null
+  let site = data.final_url ?? ''
+  try {
+    if (site) site = new URL(site).hostname
+  } catch {
+    /* context.json 里可能是手写的非法 URL，原样显示 */
+  }
+  const text = !data.playwright_available
+    ? '不可用（服务端未安装浏览器）'
+    : !data.configured
+      ? '未配置，付费全文将回退到摘要'
+      : '已配置 · ' + dateTime(data.saved_at) + (site ? ' · ' + site : '')
+  return (
+    <div className="flex items-start justify-between gap-2 text-xs">
+      <span>机构访问</span>
+      <span className="text-right text-muted-foreground">{text}</span>
+    </div>
+  )
 }
 
 export function FilterForm({ value: f, onChange }: FilterPanelProps) {
@@ -93,6 +145,7 @@ export function FilterForm({ value: f, onChange }: FilterPanelProps) {
             onCheckedChange={(v) => update({ keepUnranked: v })}
           />
         </label>
+        <RankTablesNote />
       </section>
       <section className="space-y-3 border-b py-5">
         <h3 className="section-label">年份</h3>
@@ -180,6 +233,7 @@ export function FilterForm({ value: f, onChange }: FilterPanelProps) {
               </SelectContent>
             </Select>
           </div>
+          <PaywallNote />
         </CollapsibleContent>
       </Collapsible>
     </div>

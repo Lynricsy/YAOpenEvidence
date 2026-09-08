@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { BookOpen, ChevronDown, Search } from 'lucide-react'
+import { ChevronDown, Search } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import type { components } from '@/api/schema'
 import {
   useLiteratureFulltext,
   useLiteratureSearch,
@@ -14,9 +13,7 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { ListRow, ListRows } from '@/components/common/ListRows'
 import { Loading } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/PageHeader'
-import { Pill } from '@/components/common/Pill'
 import { QueryError } from '@/components/common/QueryError'
-import { RankBadge } from '@/components/common/RankBadge'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -47,17 +44,12 @@ import {
   yearParams,
   type YearState,
 } from '@/lib/filters'
-import { PaperLinks } from './shared'
 
-type LiteratureRecord = components['schemas']['LiteratureRecord']
-const publicationTypes = [
-  ['Review', '综述'],
-  ['Systematic Review', '系统综述'],
-  ['Meta-Analysis', '荟萃分析'],
-  ['Randomized Controlled Trial', '随机对照试验'],
-  ['Clinical Trial', '临床试验'],
-  ['Observational Study', '观察性研究'],
-]
+import {
+  LiteratureRecordCard,
+  PUBLICATION_TYPES,
+  type LiteratureRecord,
+} from '@/components/literature/LiteratureRecordCard'
 
 function FulltextSheet({
   paper,
@@ -311,7 +303,7 @@ export default function LiteratureSearchPage() {
                   onValueChange={setTypes}
                   className="flex flex-wrap gap-1.5"
                 >
-                  {publicationTypes.map(([v, l]) => (
+                  {PUBLICATION_TYPES.map(([v, l]) => (
                     <ToggleGroupItem className="chip" key={v} value={v}>
                       {l}
                     </ToggleGroupItem>
@@ -373,76 +365,10 @@ export default function LiteratureSearchPage() {
                         key={paper.source + ':' + paper.id + ':' + index}
                         className="space-y-3"
                       >
-                        <h2 className="break-words text-[15px] font-medium leading-6">
-                          {paper.title || paper.id}
-                        </h2>
-                        <p className="metadata break-words">
-                          {paper.authors?.slice(0, 3).join(', ')}
-                          {(paper.authors?.length ?? 0) > 3 && ' et al.'}
-                        </p>
-                        <p className="metadata">
-                          <i>{paper.journal}</i>
-                          {paper.year && ' (' + paper.year + ')'}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <RankBadge quartile={paper.rank?.quartile} />
-                          {paper.rank?.top && <Pill tone="success">Top</Pill>}
-                          {paper.types?.map((type) => (
-                            <Pill key={type}>
-                              {publicationTypes.find(
-                                ([v]) => v === type,
-                              )?.[1] ?? type}
-                            </Pill>
-                          ))}
-                          {paper.cited_by != null && (
-                            <span className="metadata">
-                              被引 {paper.cited_by}
-                            </span>
-                          )}
-                        </div>
-                        {(paper.tldr || paper.abstract) && (
-                          <Collapsible>
-                            <CollapsibleTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="xs"
-                                className="px-0"
-                              >
-                                <ChevronDown />
-                                摘要
-                              </Button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="space-y-3 pt-2">
-                              {paper.tldr && (
-                                <p className="whitespace-pre-wrap break-words text-sm leading-7">
-                                  {paper.tldr}
-                                </p>
-                              )}
-                              {paper.abstract && (
-                                <p className="whitespace-pre-wrap break-words text-sm leading-7 text-muted-foreground">
-                                  {paper.abstract}
-                                </p>
-                              )}
-                            </CollapsibleContent>
-                          </Collapsible>
-                        )}
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <PaperLinks
-                            pmid={paper.pmid}
-                            doi={paper.doi}
-                            pdf={paper.open_access_pdf}
-                          />
-                          {(paper.pmcid || paper.pmid || paper.doi) && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setOpened(paper)}
-                            >
-                              <BookOpen />
-                              查看全文目录
-                            </Button>
-                          )}
-                        </div>
+                        <LiteratureRecordCard
+                          paper={paper}
+                          onOpenFulltext={setOpened}
+                        />
                       </ListRow>
                     ))}
                   </ListRows>

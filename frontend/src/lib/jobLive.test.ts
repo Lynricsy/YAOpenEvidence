@@ -25,6 +25,20 @@ describe('任务事件状态', () => {
       state.terminal,
     )
   })
+  it('入库任务的成功事件带出 library key', () => {
+    const state = applyEvent(EMPTY_LIVE, 'succeeded', {
+      key: 'Smoke_Upload',
+      n_paragraphs: 12,
+      n_facts: 4,
+      items: 16,
+    })
+    // items 与索引重建共用字段名，入库事件同样带上
+    expect(state.terminal).toEqual({
+      kind: 'succeeded',
+      key: 'Smoke_Upload',
+      items: 16,
+    })
+  })
   it('保留最近200条日志且忽略未知事件', () => {
     let state = EMPTY_LIVE
     for (let n = 0; n < 205; n++)

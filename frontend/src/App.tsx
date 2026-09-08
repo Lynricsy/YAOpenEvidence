@@ -8,6 +8,7 @@ const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const HistoryPage = lazy(() => import('@/pages/HistoryPage'))
 const AccountPage = lazy(() => import('@/pages/AccountPage'))
 const UsersPage = lazy(() => import('@/pages/admin/UsersPage'))
+const InstitutionPage = lazy(() => import('@/pages/admin/InstitutionPage'))
 const LibraryPage = lazy(() => import('@/pages/explore/LibraryPage'))
 const PaperPage = lazy(() => import('@/pages/explore/PaperPage'))
 const KbSearchPage = lazy(() => import('@/pages/explore/KbSearchPage'))
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/search" element={<LiteratureSearchPage />} />
             <Route element={<RequireAuth admin />}>
               <Route path="/admin/users" element={<UsersPage />} />
+              <Route path="/admin/institution" element={<InstitutionPage />} />
             </Route>
           </Route>
         </Route>

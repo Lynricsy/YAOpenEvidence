@@ -1,6 +1,7 @@
 import {
   Database,
   History,
+  KeyRound,
   Library,
   MessageSquareText,
   Search,
@@ -34,7 +35,15 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   },
   {
     label: '管理',
-    items: [{ to: '/admin/users', label: '用户', icon: Users, admin: true }],
+    items: [
+      { to: '/admin/users', label: '用户', icon: Users, admin: true },
+      {
+        to: '/admin/institution',
+        label: '机构访问',
+        icon: KeyRound,
+        admin: true,
+      },
+    ],
   },
 ]
 

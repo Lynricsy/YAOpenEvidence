@@ -50,6 +50,7 @@ const messages: Record<string, string> = {
   too_many_jobs: '进行中的任务已达上限，请等待完成或先取消',
   unavailable: '服务暂不可用',
   fulltext_unavailable: '无可用全文',
+  payload_too_large: '文件超过大小限制',
 }
 export function problemMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return '网络连接失败，请稍后重试'
@@ -67,7 +68,9 @@ export function problemMessage(error: unknown): string {
   // 反向代理打不到 api 时返回的是 HTML 错误页，解析不出 code，会落到 internal_error。
   // 这类故障在网关层，不在后端代码里，必须与真正的 500 区分开，否则排查方向被带偏。
   if (error.status === 502 || error.status === 504)
-    return '无法连接到后端服务（网关 ' + error.status + '），请确认 API 服务正在运行'
+    return (
+      '无法连接到后端服务（网关 ' + error.status + '），请确认 API 服务正在运行'
+    )
   if (error.status === 503) return '服务暂不可用，请稍后重试'
   return messages[error.code] ?? '服务器内部错误'
 }
@@ -81,6 +84,9 @@ export function jobErrorMessage(code: string): string {
         llm_unavailable: '模型服务不可用，请稍后重试',
         timeout: '任务超时',
         internal_error: '内部错误',
+        pdf_unreadable: 'PDF 无法解析出文本（扫描件或加密文件）',
+        fulltext_unavailable:
+          '机构访问未取到 PDF，请确认登录态有效且该刊已订阅',
       } as Record<string, string>
     )[code] ?? '任务执行失败'
   )

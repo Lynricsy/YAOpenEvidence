@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { api, dataOf } from '@/api/client'
 const presets = [
   ['Nature', 'nature'],
   ['Lancet', 'lancet'],
@@ -19,6 +20,8 @@ export function JournalPicker({
   onChange: (value: string[]) => void
 }) {
   const [draft, setDraft] = useState('')
+  // 自定义刊名是自由文本，输入时顺手查一次分区，让主人立刻知道拼对了没有
+  const [labels, setLabels] = useState<Record<string, string>>({})
   const custom = value.filter((v) => !presets.some((p) => p[1] === v))
   return (
     <div className="space-y-3">
@@ -48,6 +51,13 @@ export function JournalPicker({
             if (v) {
               onChange([...new Set([...value, v])])
               setDraft('')
+              void dataOf(
+                api.GET('/v1/journals/rank', {
+                  params: { query: { title: v } },
+                }),
+              )
+                .then((r) => setLabels((l) => ({ ...l, [v]: r.label })))
+                .catch(() => {})
             }
           }
         }}
@@ -60,6 +70,9 @@ export function JournalPicker({
               key={v}
             >
               <span className="break-all">{v}</span>
+              {labels[v] && (
+                <span className="text-muted-foreground">· {labels[v]}</span>
+              )}
               <Button
                 type="button"
                 variant="ghost"

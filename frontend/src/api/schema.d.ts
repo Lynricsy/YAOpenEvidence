@@ -314,6 +314,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/papers/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 上传 PDF 入库 */
+        post: operations["upload_paper_v1_papers_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/papers/ingest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 按 DOI 经机构访问入库 */
+        post: operations["ingest_doi_v1_papers_ingest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/papers": {
         parameters: {
             query?: never;
@@ -484,6 +518,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/journals/tables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 读取已加载的分区表
+         * @description 分区筛选的依据。空 tables 说明 Q1–Q4 过滤不会生效，前端据此提示。
+         */
+        get: operations["tables_v1_journals_tables_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/literature/search": {
         parameters: {
             query?: never;
@@ -581,6 +635,41 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/paywall/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 机构访问状态 */
+        get: operations["get_status_v1_paywall_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/paywall/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** 上传机构登录态（管理员） */
+        put: operations["put_state_v1_paywall_state_put"];
+        post?: never;
+        /** 清除机构登录态（管理员） */
+        delete: operations["delete_state_v1_paywall_state_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -908,6 +997,42 @@ export interface components {
             finished_at?: string | null;
             error?: components["schemas"]["JobError"] | null;
         };
+        /** Body_put_state_v1_paywall_state_put */
+        Body_put_state_v1_paywall_state_put: {
+            /** Storage State */
+            storage_state: string;
+            /** Session Storage */
+            session_storage?: string | null;
+            /** Context Meta */
+            context_meta?: string | null;
+        };
+        /** Body_upload_paper_v1_papers_upload_post */
+        Body_upload_paper_v1_papers_upload_post: {
+            /** File */
+            file: string;
+            /** Title */
+            title: string;
+            /**
+             * Doi
+             * @default
+             */
+            doi?: string;
+            /**
+             * Journal
+             * @default
+             */
+            journal?: string;
+            /**
+             * Year
+             * @default
+             */
+            year?: string;
+            /**
+             * Authors
+             * @default
+             */
+            authors?: string;
+        };
         /**
          * Citation
          * @description 答案正文引到的一个原文段落。
@@ -1056,7 +1181,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "ask" | "kb_reindex";
+            kind: "ask" | "kb_reindex" | "paper_ingest";
             /**
              * Status
              * @enum {string}
@@ -1328,6 +1453,14 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /**
+         * PaperIngestRequest
+         * @description 按 DOI 经机构访问取全文入库。
+         */
+        PaperIngestRequest: {
+            /** Doi */
+            doi: string;
+        };
         /** PaperMeta */
         PaperMeta: {
             /** Key */
@@ -1437,6 +1570,30 @@ export interface components {
              */
             new_password: string;
         };
+        /** PaywallStatus */
+        PaywallStatus: {
+            /** Configured */
+            configured: boolean;
+            /** Saved At */
+            saved_at?: string | null;
+            /** Final Url */
+            final_url?: string | null;
+            /**
+             * Has Session Storage
+             * @default false
+             */
+            has_session_storage?: boolean;
+            /**
+             * Has Context Meta
+             * @default false
+             */
+            has_context_meta?: boolean;
+            /**
+             * Playwright Available
+             * @default false
+             */
+            playwright_available?: boolean;
+        };
         /** RankInfo */
         RankInfo: {
             /**
@@ -1494,6 +1651,34 @@ export interface components {
             rank?: components["schemas"]["RankInfo"] | null;
             /** Label */
             label: string;
+        };
+        /**
+         * RankTable
+         * @description 已加载的一张分区表。`year` 从文件名推断，推不出来就是 None。
+         */
+        RankTable: {
+            /** File */
+            file: string;
+            /** Year */
+            year?: number | null;
+            /** Journals */
+            journals: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "scimago" | "custom";
+        };
+        /** RankTables */
+        RankTables: {
+            /** Tables */
+            tables: components["schemas"]["RankTable"][];
+            /** Issns */
+            issns: number;
+            /** Titles */
+            titles: number;
+            /** Loaded At */
+            loaded_at?: string | null;
         };
         /** ReadinessChecks */
         ReadinessChecks: {
@@ -1623,6 +1808,17 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** IngestSucceededData */
+        IngestSucceededData: {
+            /** Key */
+            key: string;
+            /** N Paragraphs */
+            n_paragraphs: number;
+            /** N Facts */
+            n_facts: number;
+            /** Items */
+            items: number;
+        };
         /** LogEventData */
         LogEventData: {
             /**
@@ -1680,7 +1876,7 @@ export interface components {
             };
         };
         /** SucceededEventData */
-        SucceededEventData: components["schemas"]["AnswerSucceededData"] | components["schemas"]["ReindexSucceededData"];
+        SucceededEventData: components["schemas"]["AnswerSucceededData"] | components["schemas"]["ReindexSucceededData"] | components["schemas"]["IngestSucceededData"];
     };
     responses: never;
     parameters: never;
@@ -2430,7 +2626,7 @@ export interface operations {
     list_jobs_v1_jobs_get: {
         parameters: {
             query?: {
-                kind?: ("ask" | "kb_reindex") | null;
+                kind?: ("ask" | "kb_reindex" | "paper_ingest") | null;
                 status?: ("queued" | "running" | "succeeded" | "failed" | "cancelled") | null;
                 limit?: number;
                 offset?: number;
@@ -2571,6 +2767,90 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": string;
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    upload_paper_v1_papers_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_paper_v1_papers_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    ingest_doi_v1_papers_ingest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaperIngestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
                 };
             };
             /** @description Request validation failed */
@@ -2996,6 +3276,44 @@ export interface operations {
             };
         };
     };
+    tables_v1_journals_tables_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RankTables"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     search_v1_literature_search_get: {
         parameters: {
             query: {
@@ -3229,6 +3547,122 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LiteratureRecord"];
                 };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    get_status_v1_paywall_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaywallStatus"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    put_state_v1_paywall_state_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_put_state_v1_paywall_state_put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaywallStatus"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    delete_state_v1_paywall_state_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Request validation failed */
             422: {

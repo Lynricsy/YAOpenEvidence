@@ -30,7 +30,13 @@ export type JobLive = {
     papers: CandidatePaper[]
   } | null
   terminal:
-    | { kind: 'succeeded'; answerId?: string; items?: number; papers?: number }
+    | {
+        kind: 'succeeded'
+        answerId?: string
+        items?: number
+        papers?: number
+        key?: string
+      }
     | { kind: 'failed'; code: string; message: string }
     | { kind: 'cancelled' }
     | null
@@ -131,6 +137,7 @@ export function applyEvent(
         ...(typeof d.answer_id === 'string' ? { answerId: d.answer_id } : {}),
         ...(typeof d.items === 'number' ? { items: d.items } : {}),
         ...(typeof d.papers === 'number' ? { papers: d.papers } : {}),
+        ...(typeof d.key === 'string' ? { key: d.key } : {}),
       },
     }
   if (event === 'failed')

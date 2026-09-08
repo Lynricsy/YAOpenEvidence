@@ -1,6 +1,6 @@
 import { MutationCache, QueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { api, dataOf } from './client'
+import { api, dataOf, toFormData } from './client'
 import { ApiError, problemMessage } from './errors'
 import type { components, paths } from './schema'
 
@@ -278,3 +278,65 @@ export async function resetUserPassword({
   })
 }
 export const reindexKb = () => dataOf(api.POST('/v1/kb/reindex'))
+export function useRankTables() {
+  return useQuery({
+    queryKey: ['rankTables'],
+    queryFn: ({ signal }) => dataOf(api.GET('/v1/journals/tables', { signal })),
+    staleTime: 5 * 60_000,
+  })
+}
+export function usePaywallStatus() {
+  return useQuery({
+    queryKey: ['paywallStatus'],
+    queryFn: ({ signal }) => dataOf(api.GET('/v1/paywall/status', { signal })),
+    staleTime: 60_000,
+  })
+}
+/**
+ * openapi-typescript 把 multipart 的二进制字段生成成 `string`，`File` 无法直接赋值。
+ * 强转集中在这一处，运行期真正的编码交给 `toFormData`；响应类型不受影响。
+ */
+function multipart<T extends object>(body: T) {
+  return { body: body as never, bodySerializer: toFormData }
+}
+export async function uploadPaywallState(body: {
+  storage_state: File
+  session_storage?: File
+  context_meta?: File
+}) {
+  const status = await dataOf(api.PUT('/v1/paywall/state', multipart(body)))
+  await queryClient.invalidateQueries({ queryKey: ['paywallStatus'] })
+  return status
+}
+export async function clearPaywallState() {
+  await api.DELETE('/v1/paywall/state')
+  await queryClient.invalidateQueries({ queryKey: ['paywallStatus'] })
+}
+export const uploadPaper = (body: {
+  file: File
+  title: string
+  doi?: string
+  journal?: string
+  year?: string
+  authors?: string
+}) => dataOf(api.POST('/v1/papers/upload', multipart(body)))
+export const ingestDoi = ({ doi }: { doi: string }) =>
+  dataOf(api.POST('/v1/papers/ingest', { body: { doi } }))
+export type RelatedKind = 'citations' | 'references' | 'recommendations'
+export function useLiteratureRelated(
+  kind: RelatedKind,
+  ident: string | null,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ['literature', kind, ident],
+    enabled: !!ident && enabled,
+    queryFn: ({ signal }) =>
+      dataOf(
+        api.GET(`/v1/literature/${kind}`, {
+          params: { query: { ident: ident!, limit: 20 } },
+          signal,
+        }),
+      ),
+  })
+}
