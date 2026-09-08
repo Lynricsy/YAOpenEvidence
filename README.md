@@ -70,6 +70,8 @@ cd YAOEKit && swift test
 
 客户端首屏要求填写服务器地址（默认 `http://localhost:8765`）与账号密码；令牌存 Keychain，`expires_at`、用户资料与服务器地址存 UserDefaults，任何受保护端点返回 401 即清会话回登录页。问答进度走 `GET /v1/jobs/{id}/events` 的 SSE：1 秒起指数退避重连（上限 10 秒）、重连前用 `/v1/auth/me` 探活、SSE 未连通时每 5 秒兜底轮询答案。界面遵循 Apple HIG（系统字体与语义色、`sidebarAdaptable` 侧栏、regular 宽度用检查器展示原文阅读器），只保留品牌深青 accent、8 色引用色板与 Q1–Q4 分区色。
 
+界面按 iOS 26 规范打磨：提问与追问用悬浮的大圆角玻璃输入框（`glassEffect`，发送键在框内、筛选摘要作胶囊），玻璃只用于悬浮控件层，内容卡片一律是 `secondarySystemBackground` 平面填充；历史、文献库与用户列表是无限滚动而非分页按钮；知识库与查文献用原生 `.searchable`（知识库带「全部 / 事实 / 段落」搜索范围）；滚动时收起底部 Tab 栏，关键操作带触觉反馈。面向用户的界面刻意不展示 SSE 连接状态、运行日志、候选文献原始数据、检索式、相关性打分、嵌入模型与相似度这类开发者信息——检索式移到「…」菜单的 sheet 里，其余只保留在 Web 端与后端日志。
+
 ## Flutter 客户端（Android / Linux / Windows）
 
 `flutter/` 是第三个功能对等客户端，覆盖 Apple 平台之外的手机与桌面：Flutter 3.47.2（Dart 3.13）、Material 3 + 自定义设计令牌、Riverpod 3 状态管理、go_router 18 路由、freezed 4 模型。SDK 版本由 `flutter/.fvmrc` 固定，所有命令走 `fvm`。iOS/macOS 由 `apple/` 覆盖、Web 由 `frontend/` 覆盖，故未生成对应平台目录。
