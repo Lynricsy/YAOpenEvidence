@@ -88,4 +88,43 @@ struct RequestBuildingTests {
             #expect(error.userMessage == "当前状态不允许该操作")
         }
     }
+
+    /// 分区表与机构状态是只读观测端点：路径写错会静默变成「状态未知」，必须钉住。
+    @Test("分区表与机构状态请求路径")
+    func hitsMetaEndpoints() async throws {
+        let tablesServer = try MiniHTTPServer(
+            contentType: "application/json",
+            body: #"{"tables":[],"issns":0,"titles":0}"#
+        )
+        await tablesServer.start()
+        defer { tablesServer.stop() }
+
+        let tablesClient = APIClient(
+            baseURL: URL(string: "http://127.0.0.1:\(tablesServer.port)")!,
+            tokenProvider: { "token" },
+            onUnauthorized: {}
+        )
+        let tables = try await tablesClient.rankTables()
+        #expect(tables.tables.isEmpty)
+        #expect(try #require(tablesServer.requestLine).contains("GET /v1/journals/tables"))
+
+        let paywallServer = try MiniHTTPServer(
+            contentType: "application/json",
+            body: #"{"configured":true,"saved_at":"2026-09-08T10:00:00Z","final_url":"https://www.sciencedirect.com/","has_session_storage":false,"has_context_meta":true,"playwright_available":true}"#
+        )
+        await paywallServer.start()
+        defer { paywallServer.stop() }
+
+        let paywallClient = APIClient(
+            baseURL: URL(string: "http://127.0.0.1:\(paywallServer.port)")!,
+            tokenProvider: { "token" },
+            onUnauthorized: {}
+        )
+        let status = try await paywallClient.paywallStatus()
+        #expect(status.configured)
+        #expect(status.finalUrl == "https://www.sciencedirect.com/")
+        #expect(status.hasContextMeta)
+        #expect(status.savedAt != nil)
+        #expect(try #require(paywallServer.requestLine).contains("GET /v1/paywall/status"))
+    }
 }

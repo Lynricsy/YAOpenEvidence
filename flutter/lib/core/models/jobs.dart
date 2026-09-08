@@ -9,6 +9,8 @@ enum JobKind {
   ask,
   @JsonValue('kb_reindex')
   kbReindex,
+  @JsonValue('paper_ingest')
+  paperIngest,
 }
 
 enum JobStatus {

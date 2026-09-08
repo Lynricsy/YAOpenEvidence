@@ -169,6 +169,16 @@ public extension APIClient {
         ]))
     }
 
+    func rankTables() async throws(APIError) -> RankTables {
+        try await json(Endpoint(path: "/journals/tables"))
+    }
+
+    // MARK: - 机构访问
+
+    func paywallStatus() async throws(APIError) -> PaywallStatus {
+        try await json(Endpoint(path: "/paywall/status"))
+    }
+
     // MARK: - 上游文献
 
     func literatureSearch(_ request: LiteratureQuery) async throws(APIError) -> LiteratureSearchResult {

@@ -8,6 +8,7 @@ import '../../app/theme/tokens.dart';
 import '../../core/api/api_error.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/logic/job_live.dart';
+import '../../core/models/jobs.dart';
 import '../../core/models/kb.dart';
 import '../../core/session/session_controller.dart';
 import '../../shared/format.dart';
@@ -290,6 +291,9 @@ class _ReindexProgress extends ConsumerStatefulWidget {
 }
 
 class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
+  Timer? _poll;
+  bool _done = false;
+
   @override
   void initState() {
     super.initState();
@@ -297,18 +301,41 @@ class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
       final terminal = next.live.terminal;
       if (terminal == null) return;
       // 首次订阅可能回放终态，延后提交以免在父组件构建时修改状态。
-      scheduleMicrotask(() {
-        if (!mounted || ref.read(kbReindexJobProvider)?.id != widget.jobId) return;
-        ref.invalidate(kbStatsProvider);
-        ref.read(kbReindexJobProvider.notifier).set(null);
-        final message = switch (terminal) {
-          Succeeded() => '索引重建完成',
-          Failed(:final code, :final message) => message.isEmpty ? jobErrorMessage(code) : '${jobErrorMessage(code)}：$message',
-          Cancelled() => '索引重建已取消',
-        };
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      });
+      scheduleMicrotask(() => _finish(terminal));
     }, fireImmediately: true);
+    // SSE 可能被代理掐断而不重连成功；REST 兜底保证进度条不会永远转下去。
+    _poll = Timer.periodic(const Duration(seconds: 5), (_) => _refresh());
+  }
+
+  Future<void> _refresh() async {
+    final Job job;
+    try {
+      job = await ref.read(apiClientProvider).job(widget.jobId);
+    } on ApiError {
+      return;                       // 网络抖动或鉴权失效，下一个周期再试
+    }
+    if (!mounted) return;
+    final terminal = jobTerminal(job);
+    if (terminal == null) return;
+    scheduleMicrotask(() => _finish(terminal));
+  }
+
+  void _finish(Terminal terminal) {
+    if (_done) return;
+    _done = true;
+    _poll?.cancel();
+    if (!mounted || ref.read(kbReindexJobProvider)?.id != widget.jobId) return;
+    ref.invalidate(kbStatsProvider);
+    ref.read(kbReindexJobProvider.notifier).set(null);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(reindexTerminalMessage(terminal))));
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
   }
 
   @override

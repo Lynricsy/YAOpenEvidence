@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaopenevidence/core/models/answers.dart';
 import 'package:yaopenevidence/core/models/jobs.dart';
 import 'package:yaopenevidence/core/models/literature.dart';
+import 'package:yaopenevidence/core/models/meta.dart';
 import 'package:yaopenevidence/core/models/page.dart';
 import 'package:yaopenevidence/core/models/problem.dart';
 
@@ -81,5 +82,46 @@ void main() {
     expect(record.fulltextIdent, '123');
     expect(record.s2Id, 'abc');
     expect(record.citedBy, 5);
+  });
+
+  test('paper_ingest 与分区表 / 机构状态的 snake_case 映射', () {
+    expect(
+      Job.fromJson({
+        'id': 'j',
+        'kind': 'paper_ingest',
+        'status': 'queued',
+        'created_at': '2026-09-06T14:20:57Z',
+      }).kind,
+      JobKind.paperIngest,
+    );
+
+    final tables = RankTables.fromJson({
+      'tables': [
+        {'file': 'scimagojr_2024.csv', 'year': 2024, 'journals': 30199,
+          'source': 'scimago'},
+      ],
+      'issns': 50618,
+      'titles': 30056,
+      'loaded_at': '2026-09-08T10:00:00Z',
+    });
+    expect(tables.tables.single.journals, 30199);
+    expect(tables.tables.single.year, 2024);
+    expect(tables.loadedAt!.toUtc().hour, 10);
+
+    // 空表意味着 Q1–Q4 不生效，默认值不能把它伪装成「有表」
+    expect(RankTables.fromJson(const {}).tables, isEmpty);
+
+    final paywall = PaywallStatus.fromJson({
+      'configured': true,
+      'saved_at': '2026-09-08T10:00:00Z',
+      'final_url': 'https://www.sciencedirect.com/',
+      'has_session_storage': false,
+      'has_context_meta': true,
+      'playwright_available': true,
+    });
+    expect(paywall.finalUrl, 'https://www.sciencedirect.com/');
+    expect(paywall.hasSessionStorage, isFalse);
+    expect(paywall.hasContextMeta, isTrue);
+    expect(paywall.playwrightAvailable, isTrue);
   });
 }

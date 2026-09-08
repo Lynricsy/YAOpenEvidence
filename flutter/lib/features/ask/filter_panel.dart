@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../core/logic/ask_filters.dart';
+import '../../core/models/meta.dart';
+import '../../shared/format.dart';
 import '../../shared/widgets/filter_pickers.dart';
 import 'ask_state.dart';
+import 'filter_meta.dart';
 
 /// 提问筛选面板。宽屏常驻左侧 280 px，窄屏进 [FilterSheet]。
 class FilterPanel extends ConsumerWidget {
@@ -18,6 +21,15 @@ class FilterPanel extends ConsumerWidget {
     final filters = ref.watch(askFiltersControllerProvider);
     final controller = ref.read(askFiltersControllerProvider.notifier);
     final currentYear = DateTime.now().year;
+
+    // 分区依据：加载中/失败时都不显示，避免面板上多出一行没用的噪音
+    final tables = ref.watch(rankTablesProvider).value;
+    final rankWarning = tables != null && tables.tables.isEmpty
+        ? '未加载分区表，Q1–Q4 筛选不会生效'
+        : null;
+    final rankCaption = tables == null || tables.tables.isEmpty
+        ? null
+        : '分区依据：${tables.tables.map(_describeTable).join('，')}';
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,6 +58,8 @@ class FilterPanel extends ConsumerWidget {
           keepUnranked: filters.keepUnranked,
           onKeepUnrankedChanged: (value) =>
               controller.set(filters.copyWith(keepUnranked: value)),
+          caption: rankCaption,
+          warning: rankWarning,
         ),
         const SizedBox(height: YaoeTokens.space4),
         YaoeYearPicker(
@@ -77,6 +91,8 @@ class FilterPanel extends ConsumerWidget {
           onChanged: (journals) =>
               controller.set(filters.copyWith(journals: journals)),
         ),
+        const SizedBox(height: YaoeTokens.space4),
+        const _PaywallRow(),
         const SizedBox(height: YaoeTokens.space4),
         Text('阅读篇数', style: theme.textTheme.labelLarge),
         Row(
@@ -172,6 +188,52 @@ class FilterPanel extends ConsumerWidget {
             padding: const EdgeInsets.all(YaoeTokens.space4),
             child: content,
           );
+  }
+}
+
+String _describeTable(RankTable table) {
+  final name = table.source == 'scimago' ? 'SCImago' : table.file;
+  final year = table.year == null ? '' : ' ${table.year}';
+  return '$name$year（${table.journals} 刊）';
+}
+
+/// 机构订阅登录态的只读状态行：付费全文取不到时主人得知道是为什么。
+class _PaywallRow extends ConsumerWidget {
+  const _PaywallRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(paywallStatusProvider).value;
+    if (status == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final String text;
+    if (!status.playwrightAvailable) {
+      text = '不可用（服务端未安装浏览器）';
+    } else if (!status.configured) {
+      text = '未配置，付费全文将回退到摘要';
+    } else {
+      final host = Uri.tryParse(status.finalUrl ?? '')?.host ?? '';
+      final savedAt = status.savedAt == null
+          ? ''
+          : ' · ${formatDateTime(status.savedAt!)}';
+      text = '已配置$savedAt${host.isEmpty ? '' : ' · $host'}';
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('机构访问', style: theme.textTheme.labelLarge),
+        const SizedBox(width: YaoeTokens.space3),
+        Expanded(
+          child: Text(
+            text,
+            textAlign: TextAlign.end,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

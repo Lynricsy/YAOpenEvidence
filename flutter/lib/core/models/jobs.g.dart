@@ -55,7 +55,11 @@ Map<String, dynamic> _$JobToJson(_Job instance) => <String, dynamic>{
   'finished_at': ?instance.finishedAt?.toIso8601String(),
 };
 
-const _$JobKindEnumMap = {JobKind.ask: 'ask', JobKind.kbReindex: 'kb_reindex'};
+const _$JobKindEnumMap = {
+  JobKind.ask: 'ask',
+  JobKind.kbReindex: 'kb_reindex',
+  JobKind.paperIngest: 'paper_ingest',
+};
 
 const _$JobStatusEnumMap = {
   JobStatus.queued: 'queued',

@@ -6,6 +6,7 @@ import '../models/health.dart';
 import '../models/jobs.dart';
 import '../models/kb.dart';
 import '../models/literature.dart';
+import '../models/meta.dart';
 import '../models/page.dart';
 import '../models/papers.dart';
 import 'api_client.dart';
@@ -249,6 +250,18 @@ extension YaoeEndpoints on ApiClient {
       query: {'issn': issn, 'title': title},
     ),
     (raw) => RankResult.fromJson(_obj(raw)),
+  );
+
+  Future<RankTables> rankTables() => json(
+    const ApiRequest(path: '/journals/tables'),
+    (raw) => RankTables.fromJson(_obj(raw)),
+  );
+
+  // MARK: 机构访问
+
+  Future<PaywallStatus> paywallStatus() => json(
+    const ApiRequest(path: '/paywall/status'),
+    (raw) => PaywallStatus.fromJson(_obj(raw)),
   );
 
   // MARK: 上游文献

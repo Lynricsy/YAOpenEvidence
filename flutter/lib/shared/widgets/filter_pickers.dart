@@ -217,6 +217,9 @@ class _JournalPickerState extends State<JournalPicker> {
 }
 
 /// 分区多选（Q1–Q4）+「保留未收录」。
+///
+/// [caption] 说明分区依据（哪几张表、多少刊），[warning] 用于「没有表，筛选不生效」
+/// 这类必须让主人看见的情况；两者互斥，warning 优先。
 class QuartilePicker extends StatelessWidget {
   const QuartilePicker({
     super.key,
@@ -224,12 +227,16 @@ class QuartilePicker extends StatelessWidget {
     required this.onChanged,
     this.keepUnranked,
     this.onKeepUnrankedChanged,
+    this.caption,
+    this.warning,
   });
 
   final List<int> quartiles;
   final ValueChanged<List<int>> onChanged;
   final bool? keepUnranked;
   final ValueChanged<bool>? onKeepUnrankedChanged;
+  final String? caption;
+  final String? warning;
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +246,26 @@ class QuartilePicker extends StatelessWidget {
       children: [
         Text('期刊分区', style: theme.textTheme.labelLarge),
         const SizedBox(height: YaoeTokens.space2),
+        if (warning != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+            child: Text(
+              warning!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.yaoe.warning,
+              ),
+            ),
+          )
+        else if (caption != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+            child: Text(
+              caption!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         SegmentedButton<int>(
           multiSelectionEnabled: true,
           emptySelectionAllowed: true,

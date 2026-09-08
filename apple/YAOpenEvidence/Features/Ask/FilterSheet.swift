@@ -4,9 +4,13 @@ import YAOEKit
 /// 检索筛选表单。关闭即生效（`app.filters` 的 didSet 会持久化）。
 struct FilterSheet: View {
     @Environment(AppModel.self) private var app
+    @Environment(SessionStore.self) private var session
     @Environment(\.dismiss) private var dismiss
 
     @State private var journalDraft = ""
+    @State private var rankTables: RankTables?
+    @State private var paywall: PaywallStatus?
+    @State private var metaLoaded = false
 
     private enum YearChoice: Hashable {
         case any
@@ -60,6 +64,13 @@ struct FilterSheet: View {
                 }
 
                 Section {
+                } header: {
+                    Text("机构访问")
+                } footer: {
+                    Text(paywallFooter)
+                }
+
+                Section {
                     Button("恢复默认") { app.filters = .default }
                 }
             }
@@ -74,6 +85,13 @@ struct FilterSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .task {
+            // 只读观测，取一次就够；失败静默——筛选本身不依赖它
+            guard !metaLoaded, let client = session.client else { return }
+            metaLoaded = true
+            rankTables = try? await client.rankTables()
+            paywall = try? await client.paywallStatus()
+        }
     }
 
     // MARK: - 年份
@@ -146,7 +164,7 @@ struct FilterSheet: View {
     @ViewBuilder
     private func quartileSection(app: AppModel) -> some View {
         @Bindable var app = app
-        Section("期刊分区") {
+        Section {
             FlowLayout {
                 ForEach(1 ... 4, id: \.self) { zone in
                     let selected = app.filters.quartiles.contains(zone)
@@ -162,7 +180,38 @@ struct FilterSheet: View {
             }
             Toggle("含未收录期刊", isOn: $app.filters.keepUnranked)
                 .disabled(app.filters.quartiles.isEmpty)
+        } header: {
+            Text("期刊分区")
+        } footer: {
+            Text(rankFooter)
         }
+    }
+
+    /// 分区筛选的依据；表都没有时 Q1–Q4 不会生效，必须说出来。
+    private var rankFooter: String {
+        guard let tables = rankTables else { return "" }
+        if tables.tables.isEmpty { return "未加载分区表，Q1–Q4 筛选不会生效" }
+        let parts = tables.tables.map { table in
+            let name = table.source == "scimago" ? "SCImago" : table.file
+            let year = table.year.map { " \($0)" } ?? ""
+            return "\(name)\(year)（\(table.journals) 刊）"
+        }
+        return "分区依据：" + parts.joined(separator: "，")
+    }
+
+    /// 机构订阅登录态：付费全文取不到时得让主人知道原因。
+    private var paywallFooter: String {
+        guard let paywall else { return "状态未知" }
+        if !paywall.playwrightAvailable { return "不可用（服务端未安装浏览器）" }
+        if !paywall.configured { return "未配置，付费全文将回退到摘要" }
+        var text = "已配置"
+        if let savedAt = paywall.savedAt {
+            text += " · " + savedAt.formatted(date: .numeric, time: .shortened)
+        }
+        if let host = paywall.finalUrl.flatMap({ URL(string: $0)?.host }) {
+            text += " · " + host
+        }
+        return text
     }
 
     // MARK: - 期刊
