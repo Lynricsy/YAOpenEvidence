@@ -14,22 +14,19 @@ final class LibraryModel {
     }
 
     var page: Loadable<Page<PaperMeta>> = .idle
-    var offset = 0
 
     private var session: SessionStore?
     private var searchTask: Task<Void, Never>?
     private var requestSeq = 0
 
-    var items: [PaperMeta] { page.value?.items ?? [] }
+    /// 首页之后追加的批次。首页留在 `page` 里，重新检索时只需清空这里。
+    private(set) var more: [PaperMeta] = []
+    private(set) var loadingMore = false
+
+    var items: [PaperMeta] { (page.value?.items ?? []) + more }
     var total: Int { page.value?.total ?? 0 }
     var hasQuery: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
-    var canPrevious: Bool { offset > 0 }
-    var canNext: Bool { offset + Self.pageSize < total }
-
-    var rangeLabel: String {
-        guard total > 0 else { return "共 0 条" }
-        return "第 \(offset + 1)–\(min(offset + items.count, total)) 条，共 \(total) 条"
-    }
+    var canLoadMore: Bool { page.value != nil && !loadingMore && items.count < total }
 
     func configure(session: SessionStore) {
         self.session = session
@@ -45,28 +42,36 @@ final class LibraryModel {
         guard let client = session?.client else { return }
         requestSeq += 1
         let seq = requestSeq
-        let snapshot = (q: query.trimmingCharacters(in: .whitespaces), offset: offset)
+        let q = query.trimmingCharacters(in: .whitespaces)
         if page.value == nil { page = .loading }
         do {
-            let result = try await client.papers(q: snapshot.q, limit: Self.pageSize, offset: snapshot.offset)
+            let result = try await client.papers(q: q, limit: Self.pageSize, offset: 0)
             guard seq == requestSeq else { return }
             page = .loaded(result)
+            more = []
         } catch {
             guard seq == requestSeq else { return }
             page = .failed(error.userMessage)
         }
     }
 
-    func previousPage() {
-        guard canPrevious else { return }
-        offset = max(0, offset - Self.pageSize)
-        Task { await load() }
-    }
-
-    func nextPage() {
-        guard canNext else { return }
-        offset += Self.pageSize
-        Task { await load() }
+    func loadMore() async {
+        guard canLoadMore, let client = session?.client, let first = page.value else { return }
+        // 不推进 requestSeq：期间若发生重新检索，序号会变，这次的结果自然被丢弃。
+        let seq = requestSeq
+        let q = query.trimmingCharacters(in: .whitespaces)
+        loadingMore = true
+        defer { loadingMore = false }
+        do {
+            let result = try await client.papers(q: q, limit: Self.pageSize, offset: items.count)
+            guard seq == requestSeq else { return }
+            more += result.items
+            // 空页说明已到末尾：把 total 收敛到本地条数，避免 canLoadMore 永远为真而被反复触发。
+            let syncedTotal = result.items.isEmpty ? items.count : result.total
+            page = .loaded(Page(items: first.items, total: syncedTotal, limit: first.limit, offset: first.offset))
+        } catch {
+            // 追加失败不该破坏已展示的列表，本页也没有错误呈现器，静默留待下次触发。
+        }
     }
 
     private func debounceSearch() {
@@ -75,7 +80,6 @@ final class LibraryModel {
         searchTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled, let self else { return }
-            offset = 0
             await load()
         }
     }
@@ -83,7 +87,6 @@ final class LibraryModel {
 
 struct LibraryView: View {
     @Environment(SessionStore.self) private var session
-    @Environment(AppModel.self) private var app
 
     @State private var model = LibraryModel()
 
@@ -91,30 +94,22 @@ struct LibraryView: View {
         @Bindable var model = model
         List {
             ForEach(model.items) { paper in
-                Button {
-                    app.libraryPath.append(PaperRoute(key: paper.key, pid: nil))
-                } label: {
+                NavigationLink(value: PaperRoute(key: paper.key, pid: nil)) {
                     PaperRow(paper: paper)
                 }
-                .buttonStyle(.plain)
+                .onAppear {
+                    guard paper.id == model.items.last?.id else { return }
+                    Task { await model.loadMore() }
+                }
             }
 
-            if model.total > 0 {
-                HStack {
-                    Button("上一页") { model.previousPage() }
-                        .disabled(!model.canPrevious)
-                    Spacer()
-                    Text(model.rangeLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button("下一页") { model.nextPage() }
-                        .disabled(!model.canNext)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+            if model.loadingMore {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .listRowSeparator(.hidden)
             }
         }
+        .listStyle(.plain)
         .overlay {
             switch model.page {
             case .idle, .loading:
@@ -147,7 +142,7 @@ struct PaperRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(paper.title.isEmpty ? paper.key : paper.title)
+            Text(paper.title.isEmpty ? "（无标题）" : paper.title)
                 .font(.subheadline.weight(.medium))
                 .lineLimit(2)
             if !paper.authors.isEmpty {
@@ -163,31 +158,20 @@ struct PaperRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
 
-            ViewThatFits(in: .horizontal) {
-                badges
-                VStack(alignment: .leading, spacing: 6) { badges }
-            }
-
-            HStack(spacing: 8) {
-                Text("\(paper.nParagraphs) 段 / \(paper.nFacts) 条事实")
-                if let indexedAt = paper.indexedAt {
-                    Text("入库于 \(indexedAt.formatted(.dateTime.year().month().day().hour().minute()))")
+            FlowLayout {
+                RankBadge(quartile: paper.quartile)
+                ForEach(paper.types.prefix(3), id: \.self) { type in
+                    Pill(text: type)
                 }
             }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
+
+            if let indexedAt = paper.indexedAt {
+                Text(indexedAt, format: .relative(presentation: .named))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(.vertical, 4)
         .contentShape(.rect)
-    }
-
-    @ViewBuilder
-    private var badges: some View {
-        HStack(spacing: 6) {
-            RankBadge(quartile: paper.quartile)
-            ForEach(paper.types.prefix(3), id: \.self) { type in
-                Pill(text: type)
-            }
-        }
     }
 }

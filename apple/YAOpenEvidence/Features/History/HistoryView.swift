@@ -13,12 +13,9 @@ struct HistoryView: View {
         @Bindable var model = model
         List {
             ForEach(model.items) { item in
-                Button {
-                    app.historyPath.append(.answer(item.id))
-                } label: {
-                    HistoryRow(item: item, showLegacyBadge: session.isAdmin)
+                NavigationLink(value: AskRoute.answer(item.id)) {
+                    HistoryRow(item: item)
                 }
-                .buttonStyle(.plain)
                 .swipeActions(edge: .trailing) {
                     if item.status.isActive {
                         Button("取消任务") { Task { await model.cancel(item) } }
@@ -34,24 +31,20 @@ struct HistoryView: View {
                         Button("删除", role: .destructive) { pendingDelete = item }
                     }
                 }
+                .onAppear {
+                    if item.id == model.items.last?.id {
+                        Task { await model.loadMore() }
+                    }
+                }
             }
 
-            if model.total > 0 {
-                HStack {
-                    Button("上一页") { model.previousPage() }
-                        .disabled(!model.canPrevious)
-                    Spacer()
-                    Text(model.rangeLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button("下一页") { model.nextPage() }
-                        .disabled(!model.canNext)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+            if model.loadingMore {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .listRowSeparator(.hidden)
             }
         }
+        .listStyle(.plain)
         .overlay {
             switch model.page {
             case .idle, .loading:
@@ -78,24 +71,27 @@ struct HistoryView: View {
         .searchable(text: $model.query, prompt: "搜索历史问题")
         .toolbar {
             ToolbarItem {
-                Picker("状态", selection: Binding(get: { model.status }, set: { model.setStatus($0) })) {
-                    Text("全部").tag(AnswerStatus?.none)
-                    ForEach(AnswerStatus.allCases, id: \.self) { status in
-                        Text(StatusBadge.label(for: status)).tag(AnswerStatus?.some(status))
+                Menu {
+                    Picker("状态", selection: Binding(get: { model.status }, set: { model.setStatus($0) })) {
+                        Text("全部").tag(AnswerStatus?.none)
+                        ForEach(AnswerStatus.allCases, id: \.self) { status in
+                            Text(StatusBadge.label(for: status)).tag(AnswerStatus?.some(status))
+                        }
                     }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
                 }
-                .pickerStyle(.menu)
             }
         }
         .accountToolbar()
-        .refreshable { await model.load() }
+        .refreshable { await model.refresh() }
         .task {
             model.configure(session: session, app: app, errors: errors)
             await model.load()
         }
         .task(id: app.answersVersion) {
             guard app.answersVersion > 0 else { return }
-            await model.load()
+            await model.refresh()
         }
         .onDisappear { model.teardown() }
         .confirmationDialog(
@@ -118,37 +114,33 @@ struct HistoryView: View {
 
 struct HistoryRow: View {
     let item: AnswerSummary
-    let showLegacyBadge: Bool
-
-    /// 管理员可见：历史导入的答案没有筛选标签与文献计数。
-    private var isLegacy: Bool {
-        item.status == .ready && item.filtersLabel == nil && item.nPapers == nil
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            Text(item.question)
+                .font(.body.weight(.medium))
+                .lineLimit(2)
+
             HStack(spacing: 6) {
-                StatusBadge(item.status)
-                if showLegacyBadge, isLegacy {
-                    Pill(text: "历史导入")
+                // 已完成的答案不需要「已完成」徽标，只有异常状态值得占位。
+                if item.status != .ready {
+                    StatusBadge(item.status)
+                }
+                Text(item.createdAt, format: .relative(presentation: .named))
+                if let papers = item.nPapers {
+                    Text("· \(papers) 篇文献")
                 }
             }
-            Text(item.question)
-                .font(.subheadline)
-                .lineLimit(2)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
             if let label = item.filtersLabel, !label.isEmpty {
                 Text(label)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
             }
-            HStack(spacing: 6) {
-                if let papers = item.nPapers {
-                    Text("\(papers) 篇文献 · \(item.nFulltext ?? 0) 篇全文")
-                }
-                Text(item.createdAt, format: .relative(presentation: .named))
-            }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
+
             if let error = item.error {
                 Text(JobErrorMessage.text(for: error.code))
                     .font(.caption2)

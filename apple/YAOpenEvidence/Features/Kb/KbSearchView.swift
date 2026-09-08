@@ -8,7 +8,7 @@ final class KbModel {
     var results: Loadable<KbSearchResult> = .idle
     var query = ""
     var kind: KbKind?
-    var topK = 8
+    let topK = 8
 
     var reindexJob: Job?
     var reindexMonitor: JobLiveMonitor?
@@ -18,8 +18,6 @@ final class KbModel {
     private var errors: ErrorPresenter?
     private var pollTask: Task<Void, Never>?
     private var requestSeq = 0
-
-    static let topKOptions = [5, 8, 15, 30]
 
     func configure(session: SessionStore, errors: ErrorPresenter) {
         self.session = session
@@ -72,7 +70,7 @@ final class KbModel {
 
     func reindex() async {
         guard !reindexPending, reindexJob?.status.isActive != true else { return }
-        guard let client = session?.client, let session else { return }
+        guard let client = session?.client else { return }
         reindexPending = true
         defer { reindexPending = false }
         do {
@@ -146,19 +144,32 @@ struct KbSearchView: View {
     var body: some View {
         @Bindable var model = model
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
                 statsCard
                 if session.isAdmin { reindexCard }
-                searchForm
                 resultList
             }
-            .frame(maxWidth: 760)
+            .frame(maxWidth: Metrics.contentMaxWidth)
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, Metrics.pageInset)
             .padding(.vertical, 20)
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("知识库")
         .accountToolbar()
+        .searchable(text: $model.query, prompt: "搜索知识库")
+        .searchScopes($model.kind) {
+            Text("全部").tag(KbKind?.none)
+            ForEach(KbKind.allCases, id: \.self) { kind in
+                Text(kind.label).tag(KbKind?.some(kind))
+            }
+        }
+        .onSubmit(of: .search) { Task { await model.search() } }
+        // 切换范围只在已有查询词时重检索，避免空查询触发一次无效请求。
+        .onChange(of: model.kind) {
+            guard !model.query.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+            Task { await model.search() }
+        }
         .refreshable { await model.loadStats() }
         .task {
             model.configure(session: session, errors: errors)
@@ -173,21 +184,17 @@ struct KbSearchView: View {
     @ViewBuilder
     private var statsCard: some View {
         LoadableView(state: model.stats, retry: { Task { await model.loadStats() } }) { stats in
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 16) {
-                    StatBlock(title: "条目", value: stats.items)
-                    StatBlock(title: "论文", value: stats.papers)
-                    ForEach(stats.byKind.keys.sorted(), id: \.self) { key in
-                        StatBlock(title: KbLabels.kindLabel(key), value: stats.byKind[key] ?? 0)
+            HStack(spacing: 16) {
+                StatBlock(title: "知识条目", value: stats.items)
+                StatBlock(title: "文献", value: stats.papers)
+                // 后端可能返回尚无中文文案的 kind，跳过它们而不是把原始标识抛给用户。
+                ForEach(stats.byKind.keys.sorted(), id: \.self) { key in
+                    if let label = KbLabels.kindLabel(key) {
+                        StatBlock(title: label, value: stats.byKind[key] ?? 0)
                     }
                 }
-                Text("嵌入模型：\(stats.embedder ?? "未加载") · 维度：\(stats.dim.map(String.init) ?? "未知")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.25), in: .rect(cornerRadius: 14))
+            .card(padding: 16)
         }
     }
 
@@ -196,11 +203,17 @@ struct KbSearchView: View {
     @ViewBuilder
     private var reindexCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("索引维护").font(.headline)
-                Spacer()
-                Button(model.reindexPending ? "提交中…" : "重建索引") { Task { await model.reindex() } }
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("重建索引").font(.headline)
+                    Text("重新计算全部条目的向量索引，期间检索仍可用。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 12)
+                Button(model.reindexPending ? "提交中…" : "重建") { Task { await model.reindex() } }
                     .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
                     .disabled(model.reindexPending || model.reindexJob?.status.isActive == true)
             }
 
@@ -210,58 +223,25 @@ struct KbSearchView: View {
                     if let progress = job.progress, let current = progress.current, let total = progress.total, total > 0 {
                         ProgressView(value: Double(current), total: Double(total))
                             .frame(maxWidth: 200)
-                        Text("\(current)/\(total)")
-                            .font(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
                     }
                 }
                 if job.status == .succeeded, let result = model.reindexResult {
-                    Text("索引已更新 · \(result.items) 条条目 · \(result.papers) 篇论文")
+                    Text("重建完成，共 \(result.items) 条知识、\(result.papers) 篇文献")
                         .font(.caption)
                         .foregroundStyle(.green)
                 }
                 if let error = job.error {
-                    ErrorPanel(message: JobErrorMessage.text(for: error.code), detail: error.message)
+                    Label(JobErrorMessage.text(for: error.code), systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
                 }
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.25), in: .rect(cornerRadius: 14))
+        .card(padding: 16)
+        .sensoryFeedback(.success, trigger: model.reindexJob?.status == .succeeded)
     }
 
     // MARK: - 检索
-
-    private var searchForm: some View {
-        @Bindable var model = model
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                TextField("检索问题", text: $model.query)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { Task { await model.search() } }
-                Button("检索") { Task { await model.search() } }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(model.query.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            HStack {
-                Picker("类型", selection: $model.kind) {
-                    Text("全部").tag(KbKind?.none)
-                    ForEach(KbKind.allCases, id: \.self) { kind in
-                        Text(kind.label).tag(KbKind?.some(kind))
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Picker("返回条数", selection: $model.topK) {
-                    ForEach(KbModel.topKOptions, id: \.self) { value in
-                        Text("\(value)").tag(value)
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-        }
-    }
 
     @ViewBuilder
     private var resultList: some View {
@@ -269,14 +249,9 @@ struct KbSearchView: View {
         case .idle:
             EmptyView()
         case .loading:
-            VStack(spacing: 8) {
-                ProgressView()
-                Text("首次检索需要加载嵌入模型，约 15 秒…")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 24)
+            ProgressView("正在检索知识库…")
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
         case .failed(let message):
             ErrorPanel(message: message, retry: { Task { await model.search() } })
         case .loaded(let result):
@@ -301,8 +276,10 @@ private struct StatBlock: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("\(value)")
-                .font(.title3.monospacedDigit().weight(.semibold))
+            Text(value.formatted())
+                .font(.title2.weight(.semibold))
+                .monospacedDigit()
+                .contentTransition(.numericText())
             Text(title)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -311,8 +288,8 @@ private struct StatBlock: View {
 }
 
 enum KbLabels {
-    /// 知识库条目类型文案（含事实 kind）。
-    static func kindLabel(_ key: String) -> String {
+    /// 知识库条目类型文案（含事实 kind）。未知类型返回 nil——后端原始标识不面向用户。
+    static func kindLabel(_ key: String) -> String? {
         switch key {
         case "fact": "事实"
         case "paragraph": "段落"
@@ -320,7 +297,7 @@ enum KbLabels {
         case "method": "方法"
         case "limitation": "局限"
         case "background": "背景"
-        default: key
+        default: nil
         }
     }
 }
@@ -340,12 +317,9 @@ struct KbHitCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Pill(text: KbLabels.kindLabel(hit.factKind ?? hit.kind.rawValue), tone: .accentColor)
+                Pill(text: KbLabels.kindLabel(hit.factKind ?? hit.kind.rawValue) ?? "条目", tone: .accentColor)
                 if let verified = hit.verified { VerifiedPill(verified: verified) }
                 Spacer()
-                Text("相似度 \(String(format: "%.3f", hit.score))")
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
             }
 
             Text(hit.text)
@@ -360,10 +334,7 @@ struct KbHitCard: View {
                 Text(quote)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 10)
-                    .overlay(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 1.5).fill(.tertiary).frame(width: 3)
-                    }
+                    .quoteBar()
             }
 
             Text(hit.title.isEmpty ? hit.pmid : hit.title)
@@ -386,21 +357,21 @@ struct KbHitCard: View {
                     Link("PubMed", destination: url).font(.caption)
                 }
                 if let route = sourceRoute {
-                    Button("查看原文段落") { onOpenSource(route) }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                    Button { onOpenSource(route) } label: {
+                        Label("查看原文", systemImage: "chevron.right")
+                    }
+                    .font(.caption.weight(.medium))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.accentColor)
                 }
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.2), in: .rect(cornerRadius: 12))
+        .card()
     }
 
     private var locationText: String {
         var parts: [String] = []
         if let sec = hit.sec, !sec.isEmpty { parts.append(sec) }
-        if let pid = hit.pid { parts.append("¶\(pid)") }
         if let page = hit.page { parts.append("第 \(page) 页") }
         return parts.joined(separator: " · ")
     }

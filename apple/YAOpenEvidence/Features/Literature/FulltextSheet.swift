@@ -28,19 +28,11 @@ struct FulltextSheet: View {
                     if !result.sections.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("章节").font(.headline)
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 8)], spacing: 8) {
+                            FlowLayout {
                                 ForEach(result.sections) { item in
-                                    Button {
+                                    ChoiceChip(title: item.title, selected: section == item.title) {
                                         Task { await load(section: item.title) }
-                                    } label: {
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(item.title).font(.caption).lineLimit(2)
-                                            Text("\(item.chars) 字").font(.caption2).foregroundStyle(.secondary)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     }
-                                    .buttonStyle(.bordered)
-                                    .tint(section == item.title ? .accentColor : .secondary)
                                 }
                             }
                         }
@@ -68,7 +60,7 @@ struct FulltextSheet: View {
                     }
 
                     if result.truncated {
-                        Text("已按 \(Self.maxChars) 字符截断")
+                        Text("内容过长，已截取前半部分")
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }

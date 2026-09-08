@@ -12,6 +12,14 @@ struct LoginView: View {
     @State private var message: String?
     @State private var retryAfter = 0
     @State private var didPrefill = false
+    @State private var successCount = 0
+    @State private var errorCount = 0
+    @FocusState private var field: Field?
+
+    /// 登录表单的字段顺序：键盘的 next 按此顺序推进，最后一个字段直接提交。
+    private enum Field {
+        case server, username, password
+    }
 
     private var trimmedServer: String { server.trimmingCharacters(in: .whitespaces) }
 
@@ -49,6 +57,10 @@ struct LoginView: View {
             .padding(.vertical, 40)
         }
         .background(.background)
+        .scrollDismissesKeyboard(.interactively)
+        .scrollBounceBehavior(.basedOnSize)
+        .sensoryFeedback(.success, trigger: successCount)
+        .sensoryFeedback(.error, trigger: errorCount)
         .task {
             guard !didPrefill else { return }
             didPrefill = true
@@ -81,6 +93,9 @@ struct LoginView: View {
                 TextField("http://localhost:8765", text: $server)
                     .textContentType(.URL)
                     .autocorrectionDisabled()
+                    .focused($field, equals: .server)
+                    .submitLabel(.next)
+                    .onSubmit { field = .username }
                     #if os(iOS)
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
@@ -96,6 +111,9 @@ struct LoginView: View {
                 TextField("用户名", text: $username)
                     .textContentType(.username)
                     .autocorrectionDisabled()
+                    .focused($field, equals: .username)
+                    .submitLabel(.next)
+                    .onSubmit { field = .password }
                     #if os(iOS)
                         .textInputAutocapitalization(.never)
                     #endif
@@ -111,6 +129,8 @@ struct LoginView: View {
                         }
                     }
                     .textContentType(.password)
+                    .focused($field, equals: .password)
+                    .submitLabel(.go)
                     .onSubmit { submit() }
 
                     Button {
@@ -138,7 +158,8 @@ struct LoginView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.capsule)
             .controlSize(.large)
             .disabled(!canSubmit)
 
@@ -156,7 +177,7 @@ struct LoginView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             content()
-                .textFieldStyle(.roundedBorder)
+                .roundedField()
         }
     }
 
@@ -173,9 +194,11 @@ struct LoginView: View {
                     password: password
                 )
                 password = ""
+                successCount += 1
             } catch {
                 let apiError = error as? APIError
                 message = apiError.map(loginMessage(for:)) ?? "网络连接失败，请稍后重试"
+                errorCount += 1
                 if apiError?.code == "login_rate_limited" { await countDown(apiError?.retryAfter ?? 60) }
             }
         }

@@ -55,10 +55,10 @@ struct MainTabView: View {
                         }
                 }
             }
-            Tab(value: Destination.literature, role: .search) {
+            // 刻意不用 role: .search：iOS 26 会把 Tab 栏本身变成搜索入口，
+            // 页面导航栏就不再显示 `LiteratureSearchView` 的 `.searchable` 搜索框。
+            Tab("查文献", systemImage: "magnifyingglass", value: Destination.literature) {
                 NavigationStack { LiteratureSearchView() }
-            } label: {
-                Label("查文献", systemImage: "magnifyingglass")
             }
 
             if isRegular, !recent.isEmpty {
@@ -82,6 +82,10 @@ struct MainTabView: View {
             }
         }
         .tabViewStyle(.sidebarAdaptable)
+        // 滚动时收起底部 Tab 栏，把屏幕交还给内容（iOS 26）。
+        #if os(iOS)
+            .tabBarMinimizeBehavior(.onScrollDown)
+        #endif
         // 侧栏（iPad regular 与 Mac）顶部的品牌标识；compact 的底部 Tab 栏没有这块区域，
         // 手机上的品牌标识由提问首页承载。
         .tabViewSidebarHeader {

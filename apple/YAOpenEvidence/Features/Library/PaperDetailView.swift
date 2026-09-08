@@ -50,7 +50,6 @@ struct PaperDetailView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
-                Divider()
 
                 switch tab {
                 case .fulltext:
@@ -84,7 +83,7 @@ struct PaperDetailView: View {
 
     private func header(_ meta: PaperMeta) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(meta.title.isEmpty ? meta.key : meta.title)
+            Text(meta.title.isEmpty ? "（无标题）" : meta.title)
                 .font(.headline)
                 .lineLimit(3)
             if !meta.authors.isEmpty {
@@ -100,10 +99,7 @@ struct PaperDetailView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
 
-            ViewThatFits(in: .horizontal) {
-                badges(meta)
-                VStack(alignment: .leading, spacing: 6) { badges(meta) }
-            }
+            badges(meta)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -112,7 +108,7 @@ struct PaperDetailView: View {
 
     @ViewBuilder
     private func badges(_ meta: PaperMeta) -> some View {
-        HStack(spacing: 6) {
+        FlowLayout {
             RankBadge(quartile: meta.quartile)
             ForEach(meta.types.prefix(3), id: \.self) { type in
                 Pill(text: type)

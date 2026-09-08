@@ -55,11 +55,11 @@ struct ReaderPane: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
                 }
-                Divider()
                 pane(material)
+                    .animation(.default, value: tab)
             }
         }
-        .navigationTitle("第 \(target.n) 篇")
+        .navigationTitle("参考文献 \(target.n)")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -70,6 +70,7 @@ struct ReaderPane: View {
         #endif
             .task(id: target.n) { await load() }
             .task(id: target.pid) { focusPid = target.pid }
+            .sensoryFeedback(.impact(weight: .light), trigger: focusPid)
     }
 
     // MARK: - 加载
@@ -111,7 +112,7 @@ struct ReaderPane: View {
             } catch {
                 guard seq == requestSeq else { return }
                 // 只有回落端点同样 404 才能断定是旧版导入；断网、500 要如实报错。
-                state = .failed(error.status == 404 ? "此答案没有逐篇材料（旧版导入）" : error.userMessage)
+                state = .failed(error.status == 404 ? "此答案没有保存原文材料" : error.userMessage)
             }
         }
     }
@@ -125,7 +126,7 @@ struct ReaderPane: View {
             HStack(alignment: .top, spacing: 10) {
                 CitationSquare(n: target.n, size: 26)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(detail?.title.isEmpty == false ? detail!.title : "第 \(target.n) 篇文献")
+                    Text(detail?.title.isEmpty == false ? detail!.title : "参考文献 \(target.n)")
                         .font(.headline)
                         .lineLimit(3)
                     if let detail {
@@ -146,10 +147,7 @@ struct ReaderPane: View {
             }
 
             if let detail {
-                ViewThatFits(in: .horizontal) {
-                    badges(detail)
-                    VStack(alignment: .leading, spacing: 6) { badges(detail) }
-                }
+                badges(detail)
             }
         }
         .padding(.horizontal, 16)
@@ -158,7 +156,7 @@ struct ReaderPane: View {
 
     @ViewBuilder
     private func badges(_ detail: AnswerPaperDetail) -> some View {
-        HStack(spacing: 6) {
+        FlowLayout {
             RankBadge(quartile: detail.quartile, rankLabel: detail.rankLabel)
             SourceBadge(source: detail.source)
             if !detail.pmid.isEmpty, let url = URL(string: "https://pubmed.ncbi.nlm.nih.gov/\(detail.pmid)/") {
@@ -218,12 +216,7 @@ struct ReaderPane: View {
                         }
                         Text(citation.quote)
                             .font(.callout)
-                            .padding(.leading, 10)
-                            .overlay(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 1.5)
-                                    .fill(.tertiary)
-                                    .frame(width: 3)
-                            }
+                            .quoteBar()
                             .textSelection(.enabled)
                         HStack(spacing: 8) {
                             if let sec = citation.sec, !sec.isEmpty {
@@ -234,15 +227,16 @@ struct ReaderPane: View {
                             }
                             Spacer()
                             if let pid = citation.pid {
-                                Button("¶\(pid)") { focus(pid) }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
+                                Button { focus(pid) } label: {
+                                    Label("定位原文", systemImage: "text.line.first.and.arrowtriangle.forward")
+                                }
+                                .font(.caption.weight(.medium))
+                                .buttonStyle(.plain)
+                                .foregroundStyle(Color.accentColor)
                             }
                         }
                     }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.quaternary.opacity(0.2), in: .rect(cornerRadius: 10))
+                    .card()
                 }
             }
             .padding(16)
@@ -287,9 +281,12 @@ struct FactRow: View {
                 }
                 Spacer()
                 if let pid = fact.pid, let onFocus {
-                    Button("¶\(pid)") { onFocus(pid) }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                    Button { onFocus(pid) } label: {
+                        Label("定位原文", systemImage: "text.line.first.and.arrowtriangle.forward")
+                    }
+                    .font(.caption.weight(.medium))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.accentColor)
                 }
             }
             Text(fact.fact)
@@ -305,14 +302,9 @@ struct FactRow: View {
                 Text(fact.quote)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 10)
-                    .overlay(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 1.5).fill(.tertiary).frame(width: 3)
-                    }
+                    .quoteBar()
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.2), in: .rect(cornerRadius: 10))
+        .card()
     }
 }

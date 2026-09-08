@@ -90,8 +90,7 @@ struct LiteratureSearchView: View {
         @Bindable var model = model
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                searchField
-                controls
+                filterBar
                 if !model.filters.yearProbe.isYearRangeValid() {
                     Text("请填写有效起始年，结束年不得早于起始年。")
                         .font(.caption)
@@ -99,17 +98,19 @@ struct LiteratureSearchView: View {
                 }
                 results
             }
-            .frame(maxWidth: 820)
+            .frame(maxWidth: Metrics.contentMaxWidth)
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, Metrics.pageInset)
             .padding(.vertical, 16)
         }
+        .scrollDismissesKeyboard(.interactively)
         .navigationTitle("查文献")
         .accountToolbar()
-        .refreshable { await model.search() }
+        .searchable(text: $model.query, prompt: "搜索文献")
+        .onSubmit(of: .search) { Task { await model.search() } }
         .task { model.configure(session: session) }
         .sheet(isPresented: $showFilters) {
-            LiteratureFilterSheet(filters: $model.filters, source: model.source)
+            LiteratureFilterSheet(filters: $model.filters, source: $model.source, limit: $model.limit)
         }
         .sheet(item: $fulltextRecord) { record in
             NavigationStack {
@@ -118,46 +119,38 @@ struct LiteratureSearchView: View {
         }
     }
 
-    private var controls: some View {
-        @Bindable var model = model
-        return ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) { controlItems }
-            VStack(alignment: .leading, spacing: 10) { controlItems }
-        }
-    }
-
-    /// 搜索框直接放在页面里：search 角色的 Tab 在 iOS 上不会常驻显示 `.searchable` 输入框。
-    private var searchField: some View {
-        @Bindable var model = model
-        return TextField("检索 PubMed / Semantic Scholar", text: $model.query)
-            .textFieldStyle(.roundedBorder)
-            .autocorrectionDisabled()
-            .onSubmit { Task { await model.search() } }
-    }
-
-    @ViewBuilder
-    private var controlItems: some View {
-        @Bindable var model = model
-        Picker("来源", selection: $model.source) {
-            ForEach(LiteratureSource.allCases, id: \.self) { source in
-                Text(source.label).tag(source)
+    /// 检索条件收进一个胶囊入口：常用检索只需要搜索框，参数留给筛选表单。
+    private var filterBar: some View {
+        HStack {
+            Button {
+                showFilters = true
+            } label: {
+                Label(filterSummary, systemImage: "line.3.horizontal.decrease")
             }
-        }
-        .pickerStyle(.menu)
-
-        Picker("条数", selection: $model.limit) {
-            ForEach(LiteratureModel.limitOptions, id: \.self) { value in
-                Text("\(value) 条").tag(value)
-            }
-        }
-        .pickerStyle(.menu)
-
-        Button("高级筛选", systemImage: "line.3.horizontal.decrease.circle") { showFilters = true }
             .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+            Spacer()
+        }
+    }
 
-        Button("检索") { Task { await model.search() } }
-            .buttonStyle(.borderedProminent)
-            .disabled(model.query.trimmingCharacters(in: .whitespaces).isEmpty || !model.filters.yearProbe.isYearRangeValid())
+    /// 当前筛选的一句话摘要，只用面向用户的措辞。
+    private var filterSummary: String {
+        var parts = ["\(model.source.label) · \(model.limit) 条"]
+        switch model.filters.yearMode {
+        case .recent:
+            parts.append("近\(model.filters.years)年")
+        case .range:
+            if let from = model.filters.yearFrom {
+                parts.append("\(from)–\(model.filters.yearTo.map(String.init) ?? "今")")
+            }
+        case .any:
+            break
+        }
+        if !model.filters.quartiles.isEmpty {
+            parts.append(model.filters.quartiles.sorted().map { "Q\($0)" }.joined(separator: "/"))
+        }
+        return parts.joined(separator: " · ")
     }
 
     @ViewBuilder
@@ -172,12 +165,12 @@ struct LiteratureSearchView: View {
             ErrorPanel(message: message, retry: { Task { await model.search() } })
         case .loaded(let result):
             VStack(alignment: .leading, spacing: 12) {
-                if let reason = result.fallbackReason, !reason.isEmpty {
-                    Label("Semantic Scholar 不可用，已改用 PubMed：\(reason)", systemImage: "exclamationmark.triangle")
+                if result.fallbackReason?.isEmpty == false {
+                    Label("Semantic Scholar 暂不可用，已改用 PubMed", systemImage: "exclamationmark.triangle")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
-                Text("来源 \(result.source.label) · 上游命中 \(result.total)")
+                Text("找到 \(result.total) 条")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -206,7 +199,7 @@ struct LiteratureCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(record.title.isEmpty ? record.id : record.title)
+            Text(record.title.isEmpty ? "（无标题）" : record.title)
                 .font(.subheadline.weight(.medium))
 
             if !authorLine.isEmpty {
@@ -257,16 +250,17 @@ struct LiteratureCard: View {
                 }
                 Spacer()
                 if record.fulltextIdent != nil {
-                    Button("查看全文目录", action: onFulltext)
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                    Button(action: onFulltext) {
+                        Label("全文", systemImage: "doc.text")
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
                 }
             }
             .font(.caption)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.2), in: .rect(cornerRadius: 12))
+        .card()
     }
 
     @ViewBuilder
@@ -289,7 +283,8 @@ struct LiteratureCard: View {
 /// 高级筛选：年份、分区、文献类型、期刊、开放获取。
 struct LiteratureFilterSheet: View {
     @Binding var filters: LiteratureFilters
-    let source: LiteratureSource
+    @Binding var source: LiteratureSource
+    @Binding var limit: Int
 
     @Environment(\.dismiss) private var dismiss
     @State private var journalDraft = ""
@@ -297,6 +292,24 @@ struct LiteratureFilterSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("来源") {
+                    Picker("来源", selection: $source) {
+                        ForEach(LiteratureSource.allCases, id: \.self) { item in
+                            Text(item.label).tag(item)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section("条数") {
+                    Picker("条数", selection: $limit) {
+                        ForEach(LiteratureModel.limitOptions, id: \.self) { value in
+                            Text("\(value) 条").tag(value)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 Section("年份") {
                     Picker("范围", selection: $filters.yearMode) {
                         Text("不限").tag(AskFilters.YearMode.any)
@@ -311,10 +324,8 @@ struct LiteratureFilterSheet: View {
                     case .range:
                         HStack {
                             TextField("从", text: yearText(\.yearFrom))
-                                .textFieldStyle(.roundedBorder)
                             Text("–")
                             TextField("至今", text: yearText(\.yearTo))
-                                .textFieldStyle(.roundedBorder)
                         }
                         if !filters.yearProbe.isYearRangeValid() {
                             Text("请填写有效起始年，结束年不得早于起始年。")
@@ -327,39 +338,29 @@ struct LiteratureFilterSheet: View {
                 }
 
                 Section("期刊分区") {
-                    HStack(spacing: 8) {
+                    FlowLayout {
                         ForEach(1 ... 4, id: \.self) { zone in
-                            let selected = filters.quartiles.contains(zone)
-                            Button("Q\(zone)") {
-                                if selected {
+                            ChoiceChip(title: "Q\(zone)", selected: filters.quartiles.contains(zone)) {
+                                if filters.quartiles.contains(zone) {
                                     filters.quartiles.removeAll { $0 == zone }
                                 } else {
                                     filters.quartiles = (filters.quartiles + [zone]).sorted()
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .buttonStyle(.bordered)
-                            .buttonBorderShape(.capsule)
-                            .tint(selected ? .accentColor : .secondary)
                         }
                     }
                 }
 
                 Section("文献类型") {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
+                    FlowLayout {
                         ForEach(LiteratureFilters.publicationTypeOptions, id: \.value) { option in
-                            let selected = filters.publicationTypes.contains(option.value)
-                            Button(option.label) {
-                                if selected {
+                            ChoiceChip(title: option.label, selected: filters.publicationTypes.contains(option.value)) {
+                                if filters.publicationTypes.contains(option.value) {
                                     filters.publicationTypes.removeAll { $0 == option.value }
                                 } else {
                                     filters.publicationTypes.append(option.value)
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .buttonStyle(.bordered)
-                            .buttonBorderShape(.capsule)
-                            .tint(selected ? .accentColor : .secondary)
                         }
                     }
                 }
@@ -367,7 +368,6 @@ struct LiteratureFilterSheet: View {
                 Section("期刊") {
                     HStack {
                         TextField("期刊关键词", text: $journalDraft)
-                            .textFieldStyle(.roundedBorder)
                             .onSubmit(addJournal)
                         Button("添加", action: addJournal)
                             .disabled(journalDraft.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -382,8 +382,10 @@ struct LiteratureFilterSheet: View {
                 }
 
                 Section {
-                    Toggle("仅开放获取（仅 S2）", isOn: $filters.openAccessOnly)
+                    Toggle("仅开放获取", isOn: $filters.openAccessOnly)
                         .disabled(source != .s2)
+                } footer: {
+                    Text("仅 Semantic Scholar 支持")
                 }
 
                 Section {

@@ -28,8 +28,12 @@ enum InlineRenderer {
             if run.style.contains(.highlight) { piece.backgroundColor = .yellow.opacity(0.35) }
 
             if let citation = run.citation {
-                piece.font = base.monospaced()
-                piece.foregroundColor = CitationPalette.color(citation.n, colorScheme)
+                // 正文只显示文献编号：`¶12` 段落号是内部定位信息，点击后阅读器仍按 pid 跳转。
+                piece = AttributedString("[\(citation.n)]")
+                let color = CitationPalette.color(citation.n, colorScheme)
+                piece.font = base.weight(.semibold).monospacedDigit()
+                piece.foregroundColor = color
+                piece.backgroundColor = color.opacity(0.12)
                 piece.link = citationURL(citation)
             } else if let link = run.link {
                 piece.link = link

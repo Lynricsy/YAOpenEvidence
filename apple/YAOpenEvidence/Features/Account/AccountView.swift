@@ -30,7 +30,8 @@ struct AccountView: View {
             }
 
             Section("服务器") {
-                LabeledContent("地址", value: session.serverURL?.absoluteString ?? "—")
+                // 只显示主机与端口：scheme 与路径对用户没有意义。
+                LabeledContent("地址", value: serverLabel)
                 Button("切换服务器") { logout() }
             }
 
@@ -63,6 +64,8 @@ struct AccountView: View {
                     }
                 }
                 .disabled(loggingOut)
+            } footer: {
+                Text("仅供科研与教学参考，不构成医疗建议")
             }
         }
         .formStyle(.grouped)
@@ -74,6 +77,10 @@ struct AccountView: View {
                 }
             }
         #endif
+    }
+
+    private var serverLabel: String {
+        session.serverURL.map { ($0.host() ?? "") + ($0.port.map { ":\($0)" } ?? "") } ?? "—"
     }
 
     private func logout() {

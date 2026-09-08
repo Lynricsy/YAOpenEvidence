@@ -40,19 +40,23 @@ struct FilterSheet: View {
                         in: 0 ... 20,
                         step: 1
                     ) {
-                        Text("附加知识库命中")
+                        Text("附加知识库条目")
                     }
                     .disabled(!app.filters.useKb)
-                    LabeledContent("附加知识库命中", value: "\(app.filters.kbHits) 条")
+                    LabeledContent("附加知识库条目", value: "\(app.filters.kbHits) 条")
                         .foregroundStyle(app.filters.useKb ? .primary : .secondary)
                 }
 
-                Section("单篇字符预算") {
+                Section {
                     Picker("单篇字符预算", selection: $app.filters.maxChars) {
                         ForEach(AskFilters.maxCharsOptions, id: \.self) { value in
-                            Text("\(value)").tag(value)
+                            Text("约 \(value.formatted()) 字").tag(value)
                         }
                     }
+                } header: {
+                    Text("单篇字符预算")
+                } footer: {
+                    Text("每篇文献送入阅读的最大长度，越大越完整但越慢。")
                 }
 
                 Section {
@@ -60,6 +64,7 @@ struct FilterSheet: View {
                 }
             }
             .formStyle(.grouped)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("检索筛选")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -68,6 +73,7 @@ struct FilterSheet: View {
             }
         }
         .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
     }
 
     // MARK: - 年份
@@ -88,13 +94,11 @@ struct FilterSheet: View {
             if app.filters.yearMode == .range {
                 HStack {
                     TextField("从", text: yearText(\.yearFrom, app: app))
-                        .textFieldStyle(.roundedBorder)
                         #if os(iOS)
                             .keyboardType(.numberPad)
                         #endif
                     Text("–")
                     TextField("至今", text: yearText(\.yearTo, app: app))
-                        .textFieldStyle(.roundedBorder)
                         #if os(iOS)
                             .keyboardType(.numberPad)
                         #endif
@@ -143,23 +147,17 @@ struct FilterSheet: View {
     private func quartileSection(app: AppModel) -> some View {
         @Bindable var app = app
         Section("期刊分区") {
-            HStack(spacing: 8) {
+            FlowLayout {
                 ForEach(1 ... 4, id: \.self) { zone in
                     let selected = app.filters.quartiles.contains(zone)
-                    Button {
+                    ChoiceChip(title: "Q\(zone)", selected: selected) {
                         if selected {
                             app.filters.quartiles.removeAll { $0 == zone }
                         } else {
                             app.filters.quartiles = (app.filters.quartiles + [zone]).sorted()
                         }
                         if app.filters.quartiles.isEmpty { app.filters.keepUnranked = false }
-                    } label: {
-                        Text("Q\(zone)")
-                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .tint(selected ? .accentColor : .secondary)
                 }
             }
             Toggle("含未收录期刊", isOn: $app.filters.keepUnranked)
@@ -172,23 +170,16 @@ struct FilterSheet: View {
     @ViewBuilder
     private func journalSection(app: AppModel) -> some View {
         Section("期刊") {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 8) {
+            FlowLayout {
                 ForEach(AskFilters.journalPresets, id: \.value) { preset in
-                    let selected = app.filters.journals.contains(preset.value)
-                    Button {
+                    ChoiceChip(title: preset.label, selected: app.filters.journals.contains(preset.value)) {
                         toggleJournal(preset.value, app: app)
-                    } label: {
-                        Text(preset.label).frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .tint(selected ? .accentColor : .secondary)
                 }
             }
 
             HStack {
                 TextField("自定义期刊关键词", text: $journalDraft)
-                    .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
                     .onSubmit { addJournal(app: app) }
                 Button("添加") { addJournal(app: app) }
@@ -196,17 +187,12 @@ struct FilterSheet: View {
             }
 
             if !app.filters.journals.isEmpty {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
+                // 已选期刊一律是选中态，点一下即移除。
+                FlowLayout {
                     ForEach(app.filters.journals, id: \.self) { journal in
-                        Button {
+                        ChoiceChip(title: journal, selected: true) {
                             toggleJournal(journal, app: app)
-                        } label: {
-                            Label(journal, systemImage: "xmark.circle.fill")
-                                .font(.caption)
-                                .lineLimit(1)
                         }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
                     }
                 }
             }

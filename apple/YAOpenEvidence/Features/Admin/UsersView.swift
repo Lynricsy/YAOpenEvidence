@@ -7,7 +7,9 @@ final class UsersModel {
     static let pageSize = 20
 
     var page: Loadable<Page<UserRead>> = .idle
-    var offset = 0
+    /// 首段之后追加的分段结果；`load()` 会清空。
+    private(set) var more: [UserRead] = []
+    private(set) var loadingMore = false
     /// 正在切换启用状态的用户 id。
     var updating: Set<String> = []
 
@@ -15,15 +17,9 @@ final class UsersModel {
     private var errors: ErrorPresenter?
     private var requestSeq = 0
 
-    var items: [UserRead] { page.value?.items ?? [] }
+    var items: [UserRead] { (page.value?.items ?? []) + more }
     var total: Int { page.value?.total ?? 0 }
-    var canPrevious: Bool { offset > 0 }
-    var canNext: Bool { offset + Self.pageSize < total }
-
-    var rangeLabel: String {
-        guard total > 0 else { return "共 0 条" }
-        return "第 \(offset + 1)–\(min(offset + items.count, total)) 条，共 \(total) 条"
-    }
+    var canLoadMore: Bool { page.value != nil && !loadingMore && items.count < total }
 
     func configure(session: SessionStore, errors: ErrorPresenter) {
         self.session = session
@@ -34,28 +30,37 @@ final class UsersModel {
         guard let client = session?.client else { return }
         requestSeq += 1
         let seq = requestSeq
-        let snapshot = offset
         if page.value == nil { page = .loading }
         do {
-            let result = try await client.users(limit: Self.pageSize, offset: snapshot)
+            let result = try await client.users(limit: Self.pageSize, offset: 0)
             guard seq == requestSeq else { return }
             page = .loaded(result)
+            more = []
         } catch {
             guard seq == requestSeq else { return }
             page = .failed(error.userMessage)
         }
     }
 
-    func previousPage() {
-        guard canPrevious else { return }
-        offset = max(0, offset - Self.pageSize)
-        Task { await load() }
-    }
-
-    func nextPage() {
-        guard canNext else { return }
-        offset += Self.pageSize
-        Task { await load() }
+    /// 滚到底部时追加下一段。沿用 `requestSeq`：重新加载期间返回的追加结果会被丢弃，
+    /// 避免旧分段接到新列表后面。
+    func loadMore() async {
+        guard canLoadMore, let client = session?.client, let first = page.value else { return }
+        loadingMore = true
+        defer { loadingMore = false }
+        let seq = requestSeq
+        do {
+            let result = try await client.users(limit: Self.pageSize, offset: items.count)
+            guard seq == requestSeq else { return }
+            more += result.items
+            // total 可能已被上游改动，用最新值重建首段，否则 canLoadMore 会停在旧判据上。
+            page = .loaded(
+                Page(items: first.items, total: result.total, limit: first.limit, offset: first.offset)
+            )
+        } catch {
+            guard seq == requestSeq else { return }
+            errors?.present(error)
+        }
     }
 
     func setActive(_ user: UserRead, isActive: Bool) async {
@@ -67,7 +72,7 @@ final class UsersModel {
             replace(updated)
         } catch {
             errors?.present(error)
-            // 失败时回滚：重新拉取当前页，避免开关停在错误状态。
+            // 失败时回滚：重新拉取列表，避免开关停在错误状态。
             await load()
         }
     }
@@ -96,10 +101,15 @@ final class UsersModel {
     }
 
     private func replace(_ user: UserRead) {
-        guard var current = page.value else { return }
-        guard let index = current.items.firstIndex(where: { $0.id == user.id }) else { return }
-        current.items[index] = user
-        page = .loaded(current)
+        if var current = page.value, let index = current.items.firstIndex(where: { $0.id == user.id }) {
+            current.items[index] = user
+            page = .loaded(current)
+            return
+        }
+        // 追加段里的行同样要就地更新，否则开关会弹回旧状态。
+        if let index = more.firstIndex(where: { $0.id == user.id }) {
+            more[index] = user
+        }
     }
 }
 
@@ -118,27 +128,28 @@ struct UsersView: View {
                     user: user,
                     isSelf: user.id == session.user?.id,
                     updating: model.updating.contains(user.id),
-                    onToggle: { isActive in Task { await model.setActive(user, isActive: isActive) } },
-                    onReset: { resetTarget = user }
+                    onToggle: { isActive in Task { await model.setActive(user, isActive: isActive) } }
                 )
+                .onAppear {
+                    if user.id == model.items.last?.id { Task { await model.loadMore() } }
+                }
+                .swipeActions(edge: .trailing) {
+                    Button("重置密码", systemImage: "key") { resetTarget = user }
+                        .tint(.orange)
+                }
+                // macOS 没有滑动手势，右键菜单是那里唯一的入口。
+                .contextMenu {
+                    Button("重置密码", systemImage: "key") { resetTarget = user }
+                }
             }
 
-            if model.total > 0 {
-                HStack {
-                    Button("上一页") { model.previousPage() }
-                        .disabled(!model.canPrevious)
-                    Spacer()
-                    Text(model.rangeLabel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Button("下一页") { model.nextPage() }
-                        .disabled(!model.canNext)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+            if model.loadingMore {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .listRowSeparator(.hidden)
             }
         }
+        .listStyle(.plain)
         .overlay {
             switch model.page {
             case .idle, .loading:
@@ -180,7 +191,6 @@ struct UserRow: View {
     let isSelf: Bool
     let updating: Bool
     let onToggle: (Bool) -> Void
-    let onReset: () -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -214,9 +224,6 @@ struct UserRow: View {
                 Text(updating ? "更新中…" : (user.isActive ? "已启用" : "已禁用"))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Button("重置密码", action: onReset)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
             }
         }
         .padding(.vertical, 4)

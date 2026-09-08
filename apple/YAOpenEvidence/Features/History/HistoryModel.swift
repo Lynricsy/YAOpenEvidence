@@ -5,6 +5,8 @@ import YAOEKit
 @Observable
 final class HistoryModel {
     static let pageSize = 20
+    /// 刷新时一次最多重取的条数：滚动很深时不为了保住滚动位置去拉一个巨大的页。
+    private static let refreshCap = 100
 
     var status: AnswerStatus?
     var query = "" {
@@ -15,7 +17,9 @@ final class HistoryModel {
     }
 
     var page: Loadable<Page<AnswerSummary>> = .idle
-    var offset = 0
+    /// 无限滚动追加的后续页。首页始终留在 `page` 里，便于 `LoadableView` 表达三态。
+    private(set) var more: [AnswerSummary] = []
+    private(set) var loadingMore = false
 
     private var session: SessionStore?
     private var app: AppModel?
@@ -33,20 +37,10 @@ final class HistoryModel {
         pollTask = nil
     }
 
-    var items: [AnswerSummary] { page.value?.items ?? [] }
+    var items: [AnswerSummary] { (page.value?.items ?? []) + more }
     var total: Int { page.value?.total ?? 0 }
     var hasFilter: Bool { status != nil || !query.trimmingCharacters(in: .whitespaces).isEmpty }
-
-    /// 「第 a–b 条，共 N 条」。
-    var rangeLabel: String {
-        guard total > 0 else { return "共 0 条" }
-        let start = offset + 1
-        let end = min(offset + items.count, total)
-        return "第 \(start)–\(end) 条，共 \(total) 条"
-    }
-
-    var canPrevious: Bool { offset > 0 }
-    var canNext: Bool { offset + Self.pageSize < total }
+    var canLoadMore: Bool { page.value != nil && !loadingMore && items.count < total }
 
     func configure(session: SessionStore, app: AppModel, errors: ErrorPresenter) {
         self.session = session
@@ -54,21 +48,23 @@ final class HistoryModel {
         self.errors = errors
     }
 
+    /// 首次加载与换筛选条件：回到列表顶部。
     func load() async {
         guard let client = session?.client else { return }
         requestSeq += 1
         let seq = requestSeq
-        let snapshot = (status: status, query: query.trimmingCharacters(in: .whitespaces), offset: offset)
+        let snapshot = (status: status, query: query.trimmingCharacters(in: .whitespaces))
         if page.value == nil { page = .loading }
         do {
             let result = try await client.answers(
                 status: snapshot.status,
                 q: snapshot.query,
                 limit: Self.pageSize,
-                offset: snapshot.offset
+                offset: 0
             )
             guard seq == requestSeq else { return }
             page = .loaded(result)
+            more = []
             schedulePollIfNeeded()
         } catch {
             guard seq == requestSeq else { return }
@@ -76,21 +72,58 @@ final class HistoryModel {
         }
     }
 
+    /// 下拉刷新与轮询：重取当前已展开的全部条数，避免列表塌缩回第一页。
+    func refresh() async {
+        guard let client = session?.client else { return }
+        requestSeq += 1
+        let seq = requestSeq
+        let snapshot = (status: status, query: query.trimmingCharacters(in: .whitespaces))
+        let limit = min(max(Self.pageSize, items.count), Self.refreshCap)
+        do {
+            let result = try await client.answers(
+                status: snapshot.status,
+                q: snapshot.query,
+                limit: limit,
+                offset: 0
+            )
+            guard seq == requestSeq else { return }
+            page = .loaded(result)
+            more = []
+            schedulePollIfNeeded()
+        } catch {
+            guard seq == requestSeq else { return }
+            // 刷新失败不该抹掉已显示的列表：保留旧内容，下一轮再试。
+            if page.value == nil { page = .failed(error.userMessage) }
+        }
+    }
+
+    /// 滚动到底时追加下一页。
+    func loadMore() async {
+        guard canLoadMore, let client = session?.client, let first = page.value else { return }
+        loadingMore = true
+        defer { loadingMore = false }
+        let seq = requestSeq
+        let snapshot = (status: status, query: query.trimmingCharacters(in: .whitespaces))
+        do {
+            let result = try await client.answers(
+                status: snapshot.status,
+                q: snapshot.query,
+                limit: Self.pageSize,
+                offset: items.count
+            )
+            guard seq == requestSeq else { return }
+            more += result.items
+            // 空页说明已到末尾：把 total 收敛到本地条数，避免上游总数与实际条数不一致时反复请求。
+            let syncedTotal = result.items.isEmpty ? items.count : result.total
+            page = .loaded(Page(items: first.items, total: syncedTotal, limit: first.limit, offset: first.offset))
+        } catch {
+            guard seq == requestSeq else { return }
+            errors?.present(error)
+        }
+    }
+
     func setStatus(_ value: AnswerStatus?) {
         status = value
-        offset = 0
-        Task { await load() }
-    }
-
-    func previousPage() {
-        guard canPrevious else { return }
-        offset = max(0, offset - Self.pageSize)
-        Task { await load() }
-    }
-
-    func nextPage() {
-        guard canNext else { return }
-        offset += Self.pageSize
         Task { await load() }
     }
 
@@ -108,8 +141,6 @@ final class HistoryModel {
         guard let client = session?.client else { return }
         do {
             try await client.deleteAnswer(id: item.id)
-            // 删掉本页最后一项时回退一页，避免停在空页。
-            if items.count == 1, offset > 0 { offset = max(0, offset - Self.pageSize) }
             app?.noteAnswersChanged()
         } catch {
             errors?.present(error)
@@ -121,7 +152,6 @@ final class HistoryModel {
         searchTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled, let self else { return }
-            offset = 0
             await load()
         }
     }
@@ -134,7 +164,7 @@ final class HistoryModel {
         pollTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(5))
             guard !Task.isCancelled, let self else { return }
-            await load()
+            await refresh()
         }
     }
 }
