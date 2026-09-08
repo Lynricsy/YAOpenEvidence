@@ -210,7 +210,9 @@ Redis 自身使用名为 `redis-data` 的持久卷。
 docker compose -f compose.yaml -f compose.fake-llm.yaml up -d --build
 ```
 
-它可以执行完整问答流水线而不需要 GPU，但文献检索与全文获取仍需访问 PubMed 和 Europe PMC；假 LLM 只替代模型服务，不替代外部文献源。假 LLM 同时提供 `/v1/chat/completions`（`ask` 用）与 `/v1/responses`（`codex` 用）两条线协议，因此两个引擎都能在这套配置下跑通；它不会真的调用 MCP 工具，`codex` 的工具链路仍需真实模型验证。
+它可以执行完整问答流水线而不需要 GPU，但文献检索与全文获取仍需访问 PubMed 和 Europe PMC；假 LLM 只替代模型服务，不替代外部文献源。假 LLM 同时提供 `/v1/chat/completions`（`ask` 用）与 `/v1/responses`（`codex` 用）两条线协议，因此两个引擎都能在这套配置下跑通。
+
+`codex` 的工具闭环也能在这套配置下验证：提问里带 `TOOLTEST_PDF=<pdfs/ 下的文件名>` 时，假模型第一轮会真的调 MCP 的 `read_pdf`，第二轮把工具返回的原文抄进答案。据此可断言 `job.result.tool_calls` 非空且答案含 PDF 原文——工具执行断了这条断言就会失败。同一条闭环也由 `backend/tests/test_codex_engine.py` 覆盖（真起 codex 运行时与 MCP 子进程，不打桩）。
 
 ## 本地开发
 

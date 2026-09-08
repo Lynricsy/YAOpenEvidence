@@ -13,6 +13,8 @@ import os
 import re
 from collections.abc import Iterator
 
+from fastapi import Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 PARA_RE = re.compile(r"\[¶(\d+)\]\s*(.+?)(?=\n\[¶\d+\]|\n##|\Z)", re.S)
@@ -112,20 +114,48 @@ FAKE_CODEX_ANSWER = """**结论 / Bottom line**: fake-codex 的确定性回答�
 *This is a literature summary for research/educational use, not medical advice.*"""
 
 
+# 让假模型真的调一次 MCP 工具：提问里带 `TOOLTEST_PDF=<路径>` 时，第一轮回一个
+# 指向 read_pdf 的 function_call，第二轮把工具返回的原文抄进答案。没有这个指令时
+# 就是一次性作答，普通冒烟不受影响。
+# 指令是从 JSON 序列化后的 input 里抓的，字符集必须排除引号与反斜杠，否则会把转义带进路径
+TOOL_DIRECTIVE = re.compile(r"TOOLTEST_PDF=([\w./-]+)")
+MCP_NAMESPACE = "mcp__semantic_scholar"
+
+
 def _sse(event: str, payload: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
-def responses_stream(text: str) -> Iterator[str]:
+def _tool_outputs(request_input: object) -> list[str]:
+    return [str(i.get("output") or "") for i in (request_input or [])  # type: ignore[union-attr]
+            if isinstance(i, dict) and i.get("type") == "function_call_output"]
+
+
+def next_output_item(body: dict) -> dict:
+    """按请求里已有的工具结果决定这一轮输出：先调工具，再作答。"""
+    request_input = body.get("input") or []
+    directive = TOOL_DIRECTIVE.search(json.dumps(request_input, ensure_ascii=False))
+    outputs = _tool_outputs(request_input)
+    if directive and not outputs:
+        # namespace 型工具必须把 namespace 与 name 分开给，合成 "ns.tool" 会被
+        # codex 判成 unsupported call
+        return {"type": "function_call", "id": "fc_1", "call_id": "call_1",
+                "namespace": MCP_NAMESPACE, "name": "read_pdf",
+                "arguments": json.dumps({"path": directive[1]})}
+    text = FAKE_CODEX_ANSWER if not outputs else (
+        "**结论 / Bottom line**: 工具返回如下原文。\n\n```\n" + outputs[-1] + "\n```")
+    return {"type": "message", "role": "assistant", "id": "msg_1", "status": "completed",
+            "content": [{"type": "output_text", "text": text}]}
+
+
+def responses_stream(item: dict) -> Iterator[str]:
     """Responses API 的最小事件流：codex 只要 created / output_item.done / completed。
 
     `usage` 的字段一个都不能少（含 total_tokens），否则 codex 判定流未完成并重试。
     """
-    item = {"type": "message", "role": "assistant", "id": "msg_1", "status": "completed",
-            "content": [{"type": "output_text", "text": text}]}
     usage = {"input_tokens": 1, "input_tokens_details": {"cached_tokens": 0},
-             "output_tokens": len(text) // 4, "output_tokens_details": {"reasoning_tokens": 0},
-             "total_tokens": len(text) // 4 + 1}
+             "output_tokens": 1, "output_tokens_details": {"reasoning_tokens": 0},
+             "total_tokens": 2}
     yield _sse("response.created", {"type": "response.created", "response": {"id": "resp_fake"}})
     yield _sse("response.output_item.done", {"type": "response.output_item.done", "item": item})
     yield _sse("response.completed", {"type": "response.completed",
@@ -135,11 +165,11 @@ def responses_stream(text: str) -> Iterator[str]:
 def create_app():
     """OpenAI 兼容的最小服务：ask.py 用 /v1/chat/completions，codex 用 /v1/responses。
 
-    请求模型必须定义在模块级：本文件开了 `from __future__ import annotations`，
-    函数内的局部类无法被 FastAPI 解析注解，参数会被当成 query 参数（422）。
+    请求模型与 `Request` 之类的注解类型必须在模块级导入：本文件开了
+    `from __future__ import annotations`，函数内导入的名字 FastAPI 解析不到，
+    参数会被当成 query 参数（422）。
     """
     from fastapi import FastAPI
-    from fastapi.responses import StreamingResponse
 
     app = FastAPI(title="fake-llm")
 
@@ -160,9 +190,10 @@ def create_app():
                           "total_tokens": (len(user) + len(text)) // 4}}
 
     @app.post("/v1/responses")
-    def responses() -> StreamingResponse:
+    async def responses(request: Request) -> StreamingResponse:
         # codex 只用 responses 线协议（0.147 起 wire_api="chat" 已被移除）
-        return StreamingResponse(responses_stream(FAKE_CODEX_ANSWER), media_type="text/event-stream")
+        item = next_output_item(await request.json())
+        return StreamingResponse(responses_stream(item), media_type="text/event-stream")
 
     return app
 

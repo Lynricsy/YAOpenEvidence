@@ -136,7 +136,7 @@ def _drain(stream: Iterator[Any], *, emit: Callable[[dict], None],
             interrupt()          # 让 codex 自己收尾，别硬杀进程：会话文件要留完整
         payload = event.payload
         if event.method == "item/completed":
-            item = payload.item.model_dump()
+            item = payload.item.model_dump(mode="json")   # 枚举转成字符串，日志里才是 completed
             if item.get("type") == "agentMessage":
                 text = item.get("text") or text
             summary = _item_summary(item)
