@@ -8,6 +8,7 @@ import '../../shared/external_links.dart';
 import '../../shared/format.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/quote_highlight.dart';
+import '../../shared/widgets/section_heading.dart';
 
 /// 答案下方的来源列表。
 class SourceList extends StatelessWidget {
@@ -24,15 +25,17 @@ class SourceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     if (papers.isEmpty) return const SizedBox.shrink();
     final counts = countMarkers(bodyMd);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('来源文献 ${papers.length} 篇', style: theme.textTheme.titleSmall),
-        const SizedBox(height: YaoeTokens.space3),
+        SectionHeading(
+          module: AnswerModule.sources,
+          count: '${papers.length} 篇',
+        ),
+        const SizedBox(height: YaoeTokens.space4),
         for (final paper in papers)
           Padding(
             padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
@@ -158,8 +161,8 @@ class KbSupplementList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('知识库补充 ${hits.length} 条', style: theme.textTheme.titleSmall),
-        const SizedBox(height: YaoeTokens.space2),
+        SectionHeading(module: AnswerModule.kb, count: '${hits.length} 条'),
+        const SizedBox(height: YaoeTokens.space4),
         for (final hit in hits)
           Padding(
             padding: const EdgeInsets.only(bottom: YaoeTokens.space2),

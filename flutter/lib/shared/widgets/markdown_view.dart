@@ -186,7 +186,7 @@ class _BlockView extends StatelessWidget {
                       for (final cell in header)
                         _TableCell(
                           runs: cell,
-                          view: view,
+                          citationSpanBuilder: view.citationSpanBuilder,
                           style: theme.textTheme.labelLarge,
                         ),
                     ],
@@ -197,7 +197,7 @@ class _BlockView extends StatelessWidget {
                       for (final cell in row)
                         _TableCell(
                           runs: cell,
-                          view: view,
+                          citationSpanBuilder: view.citationSpanBuilder,
                           style: theme.textTheme.bodySmall,
                         ),
                     ],
@@ -232,16 +232,46 @@ class _BlockView extends StatelessWidget {
     TextStyle? base,
   ) => TextSpan(
     children: [
-      for (final run in runs) _runSpan(context, run, base, view),
+      for (final run in runs)
+        _runSpan(context, run, base, view.citationSpanBuilder),
     ],
   );
 }
 
-class _TableCell extends StatelessWidget {
-  const _TableCell({required this.runs, required this.view, this.style});
+/// 行内 Markdown 文本：表格单元格与 PICOS 卡片复用同一套 run → span 转换。
+class MarkdownInlineText extends StatelessWidget {
+  const MarkdownInlineText({
+    super.key,
+    required this.runs,
+    this.style,
+    this.citationSpanBuilder,
+  });
 
   final List<InlineRun> runs;
-  final MarkdownDocumentView view;
+  final TextStyle? style;
+  final CitationSpanBuilder? citationSpanBuilder;
+
+  @override
+  Widget build(BuildContext context) => Text.rich(
+    TextSpan(
+      children: [
+        for (final run in runs)
+          _runSpan(context, run, style, citationSpanBuilder),
+      ],
+    ),
+    style: style,
+  );
+}
+
+class _TableCell extends StatelessWidget {
+  const _TableCell({
+    required this.runs,
+    required this.citationSpanBuilder,
+    this.style,
+  });
+
+  final List<InlineRun> runs;
+  final CitationSpanBuilder? citationSpanBuilder;
   final TextStyle? style;
 
   @override
@@ -250,13 +280,10 @@ class _TableCell extends StatelessWidget {
       horizontal: YaoeTokens.space3,
       vertical: YaoeTokens.space2,
     ),
-    child: Text.rich(
-      TextSpan(
-        children: [
-          for (final run in runs) _runSpan(context, run, style, view),
-        ],
-      ),
+    child: MarkdownInlineText(
+      runs: runs,
       style: style,
+      citationSpanBuilder: citationSpanBuilder,
     ),
   );
 }
@@ -265,13 +292,14 @@ InlineSpan _runSpan(
   BuildContext context,
   InlineRun run,
   TextStyle? base,
-  MarkdownDocumentView view,
+  CitationSpanBuilder? citationSpanBuilder,
 ) {
   final theme = Theme.of(context);
   final citation = run.citation;
   if (citation != null) {
-    final builder = view.citationSpanBuilder;
-    if (builder != null) return builder(context, citation, run.text);
+    if (citationSpanBuilder != null) {
+      return citationSpanBuilder(context, citation, run.text);
+    }
     final color = citationColor(
       citation.n,
       dark: theme.brightness == Brightness.dark,

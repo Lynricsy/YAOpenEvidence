@@ -413,14 +413,14 @@ class _BodyWithSources extends StatelessWidget {
         papers: answer.papers,
         onCitationTap: onOpenReader,
       ),
-      const SizedBox(height: YaoeTokens.space5),
+      const SizedBox(height: YaoeTokens.space6),
       SourceList(
         papers: answer.papers,
         bodyMd: bodyMd,
         onOpen: onOpenReader,
       ),
       if (answer.kbHits.isNotEmpty) ...[
-        const SizedBox(height: YaoeTokens.space5),
+        const SizedBox(height: YaoeTokens.space6),
         KbSupplementList(hits: answer.kbHits),
       ],
     ],
