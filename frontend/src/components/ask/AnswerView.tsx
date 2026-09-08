@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { AnswerBody } from './AnswerBody'
+import { KbSupplement } from './KbSupplement'
 import { ProgressPipeline } from './ProgressPipeline'
 import { SourceCard } from './SourceCard'
 import { SourceList } from './SourceList'
@@ -56,7 +57,7 @@ export function AnswerView({
     citedCounts[n] = (citedCounts[n] ?? 0) + 1
   }
   return (
-    <article className="mx-auto w-full max-w-[760px] px-5 py-8 md:px-8 md:py-10">
+    <article className="@container/answer mx-auto w-full max-w-[760px] px-5 py-8 md:px-8 md:py-10">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <StatusBadge status={answer.status} />
         <time dateTime={answer.created_at} title={dateTime(answer.created_at)}>
@@ -157,7 +158,7 @@ export function AnswerView({
           )}
         </>
       ) : answer.status === 'ready' ? (
-        <>
+        <div className="space-y-10">
           <AnswerBody answer={answer} onOpen={onOpenPaper} />
           <SourceList
             papers={answer.papers ?? []}
@@ -165,13 +166,14 @@ export function AnswerView({
             citedCounts={citedCounts}
             onOpen={onOpenPaper}
           />
-          <div className="mt-8 border-t pt-6">
+          {!!answer.kb_hits?.length && <KbSupplement hits={answer.kb_hits} />}
+          <div className="border-t pt-6">
             <Button variant="outline" size="sm" onClick={onReask}>
               <RotateCcw />
               沿用此次筛选重新提问
             </Button>
           </div>
-        </>
+        </div>
       ) : answer.status === 'failed' ? (
         <div role="alert" className="error-panel flex gap-3">
           <AlertCircle className="mt-1 size-4 shrink-0 text-danger" />

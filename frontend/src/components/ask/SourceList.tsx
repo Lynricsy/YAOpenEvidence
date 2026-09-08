@@ -8,6 +8,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { SourceCard } from './SourceCard'
+import { SectionHeading } from './SectionHeading'
 
 export type SourceListProps = {
   papers: components['schemas']['AnswerPaper'][]
@@ -26,25 +27,25 @@ export function SourceList({
   const selected = ordered.filter((paper) => paper.relevance !== 0)
   const unused = ordered.filter((paper) => paper.relevance === 0)
   return (
-    <section aria-label="来源" className="mt-10 min-w-0">
-      <h2 className="font-serif text-xl font-semibold">
-        来源{' '}
-        <span className="text-sm font-normal text-muted-foreground">
-          {papers.length} 篇 · {nFulltext} 篇全文
-        </span>
-      </h2>
+    <section aria-label="来源" className="min-w-0">
+      <SectionHeading
+        module="sources"
+        count={`${papers.length} 篇 · ${nFulltext} 篇全文`}
+      />
       {!papers.length && <EmptyState title="没有结构化来源记录" />}
-      <ListRows>
-        {selected.map((paper, index) => (
-          <SourceCard
-            key={paper.n}
-            index={index}
-            paper={paper}
-            citedCount={citedCounts[paper.n] ?? 0}
-            onOpen={onOpen}
-          />
-        ))}
-      </ListRows>
+      <div className="mt-2">
+        <ListRows>
+          {selected.map((paper, index) => (
+            <SourceCard
+              key={paper.n}
+              index={index}
+              paper={paper}
+              citedCount={citedCounts[paper.n] ?? 0}
+              onOpen={onOpen}
+            />
+          ))}
+        </ListRows>
+      </div>
       {unused.length > 0 && (
         <Collapsible>
           <CollapsibleTrigger className="mt-2 flex w-full items-center justify-between border-t py-3 text-sm text-muted-foreground transition-colors hover:text-foreground [&>svg]:transition-transform [&[data-state=open]>svg]:rotate-180">

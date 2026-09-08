@@ -282,6 +282,76 @@
     max-width: 100%;
     height: auto;
   }
+  /* 答案分节：结论卡正文放大一档；证据/局限列表标记用 tone 色 */
+  .answer-conclusion .prose-answer {
+    font-size: 16px;
+    line-height: 1.9;
+  }
+  .answer-section[data-kind='evidence'] .prose-answer > ul > li::marker {
+    color: var(--primary);
+  }
+  .answer-section[data-kind='caveats'] .prose-answer > ul > li::marker {
+    color: var(--warning);
+  }
+  .answer-section .prose-answer li {
+    margin-block: 0.45em;
+  }
+  .answer-section .prose-answer li > ul {
+    margin-block: 0.35em;
+  }
+  /* PICOS 证据表：宽屏描边表格，窄屏（容器 ≤ 640px）每行一张卡 */
+  .picos-table {
+    @apply overflow-x-auto rounded-lg border;
+  }
+  .picos-table table {
+    display: table;
+    width: 100%;
+    margin: 0;
+    font-size: 13.5px;
+  }
+  .picos-table th {
+    @apply bg-muted text-[12px] font-medium uppercase tracking-wide text-muted-foreground;
+  }
+  .picos-table td,
+  .picos-table th {
+    @apply px-3 py-2.5 align-top;
+  }
+  .picos-table tbody tr:nth-child(even) {
+    background: color-mix(in oklch, var(--muted) 55%, transparent);
+  }
+  @container answer (max-width: 640px) {
+    .picos-table {
+      @apply overflow-visible rounded-none border-0;
+    }
+    .picos-table table,
+    .picos-table tbody,
+    .picos-table tr,
+    .picos-table td {
+      display: block;
+    }
+    .picos-table thead {
+      display: none;
+    }
+    .picos-table tr {
+      @apply mb-3 rounded-lg border bg-card p-3;
+    }
+    .picos-table tbody tr:nth-child(even) {
+      background: var(--card);
+    }
+    .picos-table td {
+      @apply grid grid-cols-[5.5em_1fr] gap-x-3 border-0 px-0 py-1.5;
+    }
+    .picos-table td::before {
+      content: attr(data-label);
+      @apply text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+    }
+    .picos-table td:first-child {
+      @apply mb-1 block border-b pb-2;
+    }
+    .picos-table td:first-child::before {
+      content: none;
+    }
+  }
   .paragraph-highlight {
     border-radius: 6px;
     animation: paragraph-flash 2.4s ease-out forwards;
