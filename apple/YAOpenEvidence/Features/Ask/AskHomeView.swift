@@ -18,33 +18,21 @@ struct AskHomeView: View {
     var body: some View {
         @Bindable var app = app
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // 首页品牌标识：图形与登录页同源（随系统外观切换），文字继续用强调色。
-                HStack(spacing: 6) {
-                    BrandLogo(size: 18)
-                    Text("循证医学文献问答")
-                }
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(Color.accentColor)
-
-                VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 28) {
+                // 品牌区：标志与主标题同源于登录页，随系统外观切换。
+                VStack(alignment: .leading, spacing: 12) {
+                    BrandLogo(size: 40)
                     Text("请提出您的临床或科研问题")
-                        .font(.system(.largeTitle, design: .serif, weight: .semibold))
+                        .font(.system(.title, design: .serif, weight: .semibold))
                     Text("从 PubMed / Europe PMC 检索并逐篇核实，生成可回溯到原文段落的循证综述。")
-                        .font(.callout)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-
-                QuestionComposer(
-                    text: $app.askDraft,
-                    pending: pending,
-                    focused: $inputFocused,
-                    onSubmit: submit
-                )
+                .padding(.top, 24)
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("试试这些问题")
-                        .font(.subheadline.weight(.medium))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(.secondary)
                     ForEach(Self.samples, id: \.self) { sample in
                         Button {
@@ -53,38 +41,37 @@ struct AskHomeView: View {
                         } label: {
                             HStack {
                                 Text(sample)
+                                    .font(.subheadline)
                                     .multilineTextAlignment(.leading)
                                 Spacer()
-                                Image(systemName: "arrow.up.left")
+                                Image(systemName: "arrow.up.right")
+                                    .font(.caption.weight(.semibold))
                                     .foregroundStyle(.tertiary)
                             }
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(.quaternary.opacity(0.35), in: .rect(cornerRadius: 12))
+                            .card()
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressableCard)
                     }
                 }
-
-                Text("仅供科研与教学参考，不构成医疗建议")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity, alignment: .center)
             }
-            .frame(maxWidth: 680)
+            .frame(maxWidth: Metrics.contentMaxWidth)
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 28)
+            .padding(.horizontal, Metrics.pageInset)
+            .padding(.bottom, 28)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .floatingComposer {
+            QuestionComposer(
+                text: $app.askDraft,
+                pending: pending,
+                focused: $inputFocused,
+                onSubmit: submit
+            )
         }
         .navigationTitle("提问")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
-            .toolbar {
-                ToolbarItem {
-                    Button("新建问答", systemImage: "plus") { app.requestNewQuestion() }
-                }
-            }
             .accountToolbar()
             // 只有主动「新建问答」才抢焦点：一进 App 就弹键盘会挡住底部 Tab 栏。
             .task(id: app.newQuestionToken) {
