@@ -530,6 +530,20 @@ class KnowledgeStore:
 
 
 # ====================================================================== library (persistent per-paper files)
+# `.`/`..`/空串都是合法的路径分量，拼进 LIB_DIR 会把四份文献文件写到库根甚至库外，
+# 必须在派生 key 时就拒绝，而不是指望调用方各自过滤。
+RESERVED_LIB_KEYS = frozenset({"", ".", ".."})
+
+
+def library_key(meta: dict) -> str:
+    """`library/` 下的子目录名：pmid > doi > title，非法字符折叠成下划线。"""
+    raw = str(meta.get("pmid") or meta.get("doi") or meta.get("title") or "")[:80]
+    key = re.sub(r"[^A-Za-z0-9._-]+", "_", raw)
+    if key in RESERVED_LIB_KEYS:
+        raise ValueError(f"cannot derive a library key from {raw!r}: need a pmid, doi or title")
+    return key
+
+
 def save_to_library(meta: dict, paras: list[dict], facts: list[dict], fulltext_md: str) -> str:
     # 保存四份文献文件时阻止重建读取未完成的文献。
     with _writer_lock(KB_DIR):
@@ -537,7 +551,7 @@ def save_to_library(meta: dict, paras: list[dict], facts: list[dict], fulltext_m
 
 
 def _save_to_library(meta: dict, paras: list[dict], facts: list[dict], fulltext_md: str) -> str:
-    key = re.sub(r"[^A-Za-z0-9._-]+", "_", str(meta.get("pmid") or meta.get("doi") or meta.get("title"))[:80])
+    key = library_key(meta)
     d = os.path.join(LIB_DIR, key)
     os.makedirs(d, exist_ok=True)
     with open(os.path.join(d, "fulltext.md"), "w", encoding="utf-8") as f:

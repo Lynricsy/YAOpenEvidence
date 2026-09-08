@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 
+import pytest
+
 from picos_paths import PDF_DIR
 
 from app.services import paywall as paywall_service
@@ -148,6 +150,34 @@ def test_upload_rejects_non_pdf(client):
                            data={"title": "Not a PDF"}, headers=auth(USER_TOKEN))
     assert response.status_code == 422
     assert response.json()["code"] == "validation_error"
+
+
+def test_upload_rejects_title_that_cannot_name_a_library_entry(client, arq):
+    """`..` 会让 library 条目落到库外；必须在入队前 422，而不是让 worker 报 internal_error。"""
+    before = len(arq.calls)
+    ingest_dir = os.path.join(PDF_DIR, "ingest")
+    kept = set(os.listdir(ingest_dir)) if os.path.isdir(ingest_dir) else set()
+    for title in ("..", ".", "   "):
+        response = client.post("/v1/papers/upload",
+                               files={"file": ("a.pdf", PDF_BYTES, "application/pdf")},
+                               data={"title": title}, headers=auth(USER_TOKEN))
+        assert response.status_code == 422, title
+        assert response.json()["code"] == "validation_error"
+    assert len(arq.calls) == before
+    # 被拒的上传不该留下没有 job 行的孤儿 PDF
+    now = set(os.listdir(ingest_dir)) if os.path.isdir(ingest_dir) else set()
+    assert now == kept
+
+
+def test_library_key_guard_refuses_path_components():
+    """HTTP 客户端会按 RFC 3986 折叠 `.`/`..` 段，所以直接钉住守卫本身。"""
+    from app.errors import ApiError
+    from app.services import papers as papers_service
+
+    for key in ("..", ".", "", "a/b", "x" * 81):
+        with pytest.raises(ApiError) as raised:
+            papers_service.get_meta(key)
+        assert raised.value.status == 404, key
 
 
 def test_upload_rejects_oversized_pdf(client, monkeypatch):

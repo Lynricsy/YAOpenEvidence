@@ -60,15 +60,30 @@ def _parse(raw: bytes, field: str, *, require_cookies: bool = False) -> dict:
 
 def save_state(storage_state: bytes, session_storage: bytes | None = None,
                context_meta: bytes | None = None) -> None:
-    """整体替换登录态。未提供的可选文件保持原样（旧的 session_storage 仍然有效）。"""
-    parsed = [(_paths().storage_state, _parse(storage_state, "storage_state", require_cookies=True))]
-    if session_storage is not None:
-        parsed.append((_paths().session_storage, _parse(session_storage, "session_storage")))
-    if context_meta is not None:
-        parsed.append((_paths().context_meta, _parse(context_meta, "context_meta")))
+    """整体替换登录态。
+
+    三份文件由 `spider_auth.state_paths` 从同一基路径派生、由 `paywall_fetch login`
+    一次性产出，是**一个工件**而不是三个独立开关：保留上一次的 session_storage /
+    context.json 会把旧机构的 sessionStorage 与 UA 覆盖混进新 cookies，`final_url`
+    也会继续报着旧站点。所以没随本次上传给出的伴随文件一律删除。
+    """
+    paths = _paths()
+    parsed = [(paths.storage_state, _parse(storage_state, "storage_state", require_cookies=True))]
+    stale = []
+    for raw, path, field in ((session_storage, paths.session_storage, "session_storage"),
+                             (context_meta, paths.context_meta, "context_meta")):
+        if raw is None:
+            stale.append(path)
+        else:
+            parsed.append((path, _parse(raw, field)))
     os.makedirs(os.path.dirname(PAYWALL_STATE) or ".", exist_ok=True)
-    for path, obj in parsed:      # 先全部校验通过再落盘，避免只写进去一半
+    for path, obj in parsed:      # 先全部校验通过再落盘，坏的可选文件不该毁掉现有登录态
         _json_dump_atomic(path, obj)
+    for path in stale:
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
 
 
 def clear_state() -> None:

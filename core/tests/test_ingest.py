@@ -125,3 +125,38 @@ def test_failed_institutional_download_raises_fulltext_unavailable(lib, monkeypa
 def test_cancellation_is_cooperative(lib):
     with pytest.raises(ingest.PipelineCancelled):
         ingest.run_ingest(_src(), should_cancel=lambda: True)
+
+
+PAPER_FILES = ("fulltext.md", "paragraphs.json", "facts.json", "meta.json")
+
+
+def _stray_paper_files(lib: Path) -> list[Path]:
+    """落在库外或库根的文献文件。`kb.lock` 是既有的跨进程锁，不算产物。"""
+    root = lib.parent
+    return sorted(p for p in root.rglob("*")
+                  if p.name in PAPER_FILES and p.parent in (root, lib))
+
+
+@pytest.mark.parametrize("title", ["..", ".", ""])
+def test_path_component_titles_are_refused(lib, title):
+    """`.`/`..`/空串都是合法路径分量，拼进 LIB_DIR 会写到库根甚至库外。"""
+    with pytest.raises(ValueError):
+        ingest.run_ingest(_src(meta={"title": title}))
+    assert _stray_paper_files(Path(lib)) == []
+
+
+def test_whitespace_title_still_lands_in_a_subdir(lib):
+    """core 只保证路径安全：空白折叠成 `_` 是子目录，去空白后的 422 由后端负责。"""
+    res = ingest.run_ingest(_src(meta={"title": "   "}))
+    assert res.key == "_"
+    assert (Path(lib) / "_" / "meta.json").is_file()
+    assert _stray_paper_files(Path(lib)) == []
+
+
+def test_pmid_and_doi_take_precedence_over_title(lib):
+    res = ingest.run_ingest(_src(meta={"title": "Trial X", "doi": "10.1016/x.2026"}))
+    assert res.key == "10.1016_x.2026"
+    assert (Path(lib) / res.key / "meta.json").is_file()
+
+    res = ingest.run_ingest(_src(meta={"title": "Trial X", "doi": "10.1016/x.2026", "pmid": "39133485"}))
+    assert res.key == "39133485"

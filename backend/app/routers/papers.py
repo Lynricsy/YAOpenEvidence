@@ -42,9 +42,6 @@ async def upload_paper(file: UploadFile = File(...),
                        db: Session = Depends(get_db), arq=Depends(get_arq),  # noqa: ANN001
                        principal: Principal = Depends(_read)) -> Job:
     jobs_service.ensure_capacity(db, principal)
-    job_id = jobs_service.new_id()
-    pdf_path = service.ingest_pdf_path(job_id)
-    await service.save_upload(file, pdf_path, settings.upload_max_mb)
     resolved = None
     if doi.strip():
         # 有 DOI 就顺手补全元数据；上游不可达不该挡住入库，退回用户填的字段
@@ -53,8 +50,13 @@ async def upload_paper(file: UploadFile = File(...),
             resolved = service.meta_from_record(record, doi.strip())
         except ApiError:
             resolved = None
+    # 元数据先组装：merge_user_meta 会因无法派生 library key 抛 422，
+    # 放在落盘之前才不会留下没有 job 行的孤儿 PDF。
     meta = service.merge_user_meta(resolved, title=title, doi=doi, journal=journal,
                                    year=year, authors=authors)
+    job_id = jobs_service.new_id()
+    pdf_path = service.ingest_pdf_path(job_id)
+    await service.save_upload(file, pdf_path, settings.upload_max_mb)
     job = await jobs_service.enqueue(
         arq, db, kind="paper_ingest",
         params={"source": "upload", "pdf_path": pdf_path, "doi": meta["doi"], "meta": meta},

@@ -284,7 +284,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 ### 4.3 Papers
 
-`{key}` 必须匹配 `^[A-Za-z0-9._-]{1,80}$`；不匹配按 `404 not_found` 处理。
+文献库 key 按 `pmid > doi > title` 派生，非法字符折叠成下划线并截到 80 字符。`{key}` 必须匹配 `^[A-Za-z0-9._-]{1,80}$` 且不能是 `.` 或 `..`；不匹配按 `404 not_found` 处理。`.`、`..`、空串会指向库根或库外，写入入口一律 `422`。
 
 #### `GET /v1/papers`
 
@@ -314,7 +314,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 `multipart/form-data`，任意登录用户可用。字段 `file`（必填，首 5 字节须为 `%PDF-`，大小上限 `YAOE_UPLOAD_MAX_MB`，默认 50 MB）、`title`（必填，`1..300`）、`doi`、`journal`、`year`、`authors`（选填）。
 
-给了 `doi` 时会先向上游解析补全元数据，解析失败不阻塞入库，退回用户填写的字段。返回 `202 Accepted` 与 `kind="paper_ingest"` 的 `Job`。可能错误：`validation_error`（不是 PDF）、`payload_too_large`、`too_many_jobs`、`upstream_unavailable`、`internal_error`。
+给了 `doi` 时会先向上游解析补全元数据，解析失败不阻塞入库，退回用户填写的字段。返回 `202 Accepted` 与 `kind="paper_ingest"` 的 `Job`。可能错误：`validation_error`（不是 PDF；或标题去空白后为空、为 `.`、`..` —— 这类标题无法作为文献库条目名）、`payload_too_large`、`too_many_jobs`、`upstream_unavailable`、`internal_error`。
 
 #### `POST /v1/papers/ingest`
 
@@ -367,7 +367,9 @@ JSON 请求体 `{"doi": "10.…"}`（须匹配 `^10\.\S+$`，长度 `>=4`）。�
 
 #### `PUT /v1/paywall/state`
 
-`multipart/form-data`，需要 `admin`。字段 `storage_state`（必填，须是含 `cookies` 列表的 Playwright storage_state JSON）、`session_storage`、`context_meta`（选填，须是 JSON 对象）。三份先全部校验通过再原子落盘；未提供的可选文件保持原样。返回 `200` 与最新 `PaywallStatus`。可能错误：`forbidden`、`validation_error`、`payload_too_large`（单份超过 5 MB）。
+`multipart/form-data`，需要 `admin`。字段 `storage_state`（必填，须是含 `cookies` 列表的 Playwright storage_state JSON）、`session_storage`、`context_meta`（选填，须是 JSON 对象）。返回 `200` 与最新 `PaywallStatus`。可能错误：`forbidden`、`validation_error`、`payload_too_large`（单份超过 5 MB）。
+
+**整体替换**：三份文件由 `paywall_fetch login` 一次性产出，是一个工件而不是三个独立设置，因此没随本次上传给出的伴随文件会被删除——留着旧的会把上一次机构的 sessionStorage 与 UA 覆盖混进新 cookies，`final_url` 也会继续报着旧站点。写入顺序是「三份全部校验通过 → 原子落盘 → 删除缺省伴随文件」，所以一份非法的可选文件既不会改写也不会删掉现有登录态。
 
 #### `DELETE /v1/paywall/state`
 

@@ -107,8 +107,10 @@ export default function InstitutionPage() {
               在有桌面的机器上运行 <code>core/PICOSGpt paywall login</code>
               ，把生成的 <code>sd_state.json</code>、
               <code>sd_state.json.session_storage.json</code>、
-              <code>sd_state.json.context.json</code> 上传到这里。只有
-              storage_state 是必填的，未提供的可选文件保持不变。
+              <code>sd_state.json.context.json</code>{' '}
+              上传到这里。三份是一个整体： 只有 storage_state 必填，但
+              <strong>没一起上传的伴随文件会被删除</strong>
+              ，避免旧机构的会话与新 cookies 混用。
             </p>
           </div>
           <form

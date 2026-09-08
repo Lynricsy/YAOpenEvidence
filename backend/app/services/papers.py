@@ -6,12 +6,15 @@ import os
 import re
 
 from fastapi import UploadFile
+from knowledge_store import library_key
 from picos_paths import LIB_DIR, PDF_DIR
 
 from ..errors import ApiError
 from ..schemas.literature import LiteratureRecord
 
-KEY_RE = re.compile(r"^[A-Za-z0-9._-]{1,80}$")
+# 与 knowledge_store.library_key 同一不变量：key 必须是真实子目录名。
+# `(?!\.{1,2}$)` 排掉 `.` 与 `..`——两者都能通过字符类，却会指向库根与库外。
+KEY_RE = re.compile(r"^(?!\.{1,2}$)[A-Za-z0-9._-]{1,80}$")
 PDF_MAGIC = b"%PDF-"
 CHUNK = 1024 * 1024
 # 入库元数据的固定键序，与 core/ingest.py 的 IngestSource.meta 契约一致
@@ -151,4 +154,10 @@ def merge_user_meta(resolved: dict | None, *, title: str, doi: str = "", journal
             meta[key] = value.strip()
     if not meta.get("title"):
         meta["title"] = title.strip()
+    try:
+        # 现在就算出 library key：`.`、`..`、纯空白标题要在入队前变成 422，
+        # 而不是让 worker 拿着它去拼路径、最后只回一个 internal_error。
+        library_key(meta)
+    except ValueError as exc:
+        raise ApiError(422, "validation_error", "标题无法作为文献库条目名，请填写实际标题") from exc
     return meta
