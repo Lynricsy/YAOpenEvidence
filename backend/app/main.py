@@ -17,7 +17,7 @@ import journal_rank as jr
 from . import __version__
 from .config import settings
 from .errors import PROBLEM_MEDIA_TYPE, register_handlers
-from .routers import answers, auth, health, jobs, journals, kb, literature, papers, users
+from .routers import answers, auth, health, jobs, journals, kb, literature, papers, paywall, users
 from .schemas.common import Problem
 from .schemas.events import event_schemas
 
@@ -78,7 +78,7 @@ def create_app() -> FastAPI:
         "default": {"description": "Problem Details (RFC 9457)", "content": problem_content},
         422: {"description": "Request validation failed", "content": problem_content},
     }
-    for module in (health, auth, users, answers, jobs, papers, kb, journals, literature):
+    for module in (health, auth, users, answers, jobs, papers, kb, journals, literature, paywall):
         app.include_router(module.router, prefix="/v1", responses=problem_response)
 
     original_openapi = app.openapi

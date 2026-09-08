@@ -12,12 +12,17 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import logging
+import os
 
+from arq import cron
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 import ask
+import ingest
+import journal_rank as jr
 import knowledge_store as ks
+from picos_paths import RANK_DIR
 
 from .config import settings
 from .db import SessionLocal
@@ -194,6 +199,81 @@ async def run_kb_reindex_job(ctx: dict, job_id: str) -> None:
     _publish(ctx, job_id, {"type": "succeeded", "items": items, "papers": papers})
 
 
+async def run_paper_ingest_job(ctx: dict, job_id: str) -> None:
+    with SessionLocal() as db:
+        job = _job(db, job_id)
+        if job is None:
+            logger.warning("job %s not found in db; dropping", job_id)
+            return
+        params = dict(job.params or {})
+        cancelled = events.is_cancel_requested(ctx["redis_sync"], job_id)
+        if not cancelled:
+            job.started_at = utcnow()
+            _set_status(db, job, None, "running")
+    if cancelled:
+        _terminate(ctx, job_id, "cancelled")
+        return
+
+    def emit(event: dict) -> None:
+        _publish(ctx, job_id, event)
+        if event.get("type") in ("stage", "progress"):
+            with SessionLocal() as pdb:                     # 独立短事务，不占长连接
+                row = pdb.get(Job, job_id)
+                if row is not None:
+                    row.progress = {"stage": event.get("stage"), "current": event.get("current"),
+                                    "total": event.get("total")}
+                    pdb.commit()
+
+    def should_cancel() -> bool:
+        return events.is_cancel_requested(ctx["redis_sync"], job_id)
+
+    src = ingest.IngestSource(kind=params.get("source", "upload"), pdf_path=params.get("pdf_path", ""),
+                              doi=params.get("doi", ""), meta=params.get("meta") or {})
+    try:
+        res = await asyncio.to_thread(ingest.run_ingest, src, emit=emit, should_cancel=should_cancel)
+    except ask.PipelineCancelled:
+        _terminate(ctx, job_id, "cancelled")
+        return
+    except ask.PipelineError as e:
+        _terminate(ctx, job_id, "failed", {"code": e.code, "message": str(e)})
+        return
+    except (asyncio.TimeoutError, asyncio.CancelledError):
+        await events.request_cancel(ctx["redis_async"], job_id, settings.events_ttl_s)
+        _terminate(ctx, job_id, "failed",
+                   {"code": "timeout", "message": f"job exceeded {settings.job_timeout_s}s"})
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.exception("paper ingest job %s failed", job_id)
+        _terminate(ctx, job_id, "failed", {"code": "internal_error", "message": f"{type(e).__name__}: {e}"})
+        return
+
+    result = {"key": res.key, "n_paragraphs": res.n_paragraphs, "n_facts": res.n_facts, "items": res.items}
+    with SessionLocal() as db:
+        job = _job(db, job_id)
+        if job is not None:
+            _set_status(db, job, None, "succeeded", result=result, finished=True)
+    _publish(ctx, job_id, {"type": "succeeded", **result})
+
+
+async def refresh_journal_ranks(ctx: dict) -> None:
+    """每月拉一次上一年度 SCImago 表；已存在就跳过。
+
+    落盘后不需要通知任何进程：api 与 worker 的 journal_rank 靠文件签名在下一次
+    load()/lookup() 时自行重载。
+    """
+    year = dt.date.today().year - 1
+    dest = os.path.join(RANK_DIR, f"scimagojr_{year}.csv")
+    if os.path.exists(dest):
+        logger.info("ranking table %s already present; skip", dest)
+        return
+    try:
+        path = await asyncio.to_thread(jr.download_scimago, year)
+    except Exception:  # noqa: BLE001  playwright 缺失、Cloudflare 未通过都只记日志，不影响 worker
+        logger.exception("scimago %s download failed", year)
+        return
+    logger.info("ranking table saved: %s -> %s", path, jr.load(force=True))
+
+
 async def on_startup(ctx: dict) -> None:
     import redis
     import redis.asyncio as aioredis
@@ -219,7 +299,9 @@ def _redis_settings():
 
 
 class WorkerSettings:
-    functions = [run_ask_job, run_kb_reindex_job]
+    functions = [run_ask_job, run_kb_reindex_job, run_paper_ingest_job]
+    # 每月 1 日 03:00（容器时区 UTC）；arq 默认 unique=True，多 worker 只会跑一份
+    cron_jobs = [cron(refresh_journal_ranks, day=1, hour=3, minute=0, timeout=900)]
     redis_settings = _redis_settings()
     max_jobs = settings.worker_max_jobs
     job_timeout = settings.job_timeout_s
@@ -234,4 +316,5 @@ def run() -> None:
     run_worker(WorkerSettings)  # type: ignore[arg-type]
 
 
-__all__ = ["WorkerSettings", "run", "run_ask_job", "run_kb_reindex_job"]
+__all__ = ["WorkerSettings", "refresh_journal_ranks", "run", "run_ask_job", "run_kb_reindex_job",
+           "run_paper_ingest_job"]

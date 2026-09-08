@@ -11,11 +11,12 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 
 from app.config import settings
 import ask
+import ingest
 import knowledge_store as ks
 from app.db import SessionLocal
 from app.models import Answer, Job
 from app.services import events
-from app.worker import run_ask_job, run_kb_reindex_job
+from app.worker import run_ask_job, run_kb_reindex_job, run_paper_ingest_job
 
 from .conftest import make_job
 from .test_events import finish_sse, live_sse, streaming_app
@@ -152,6 +153,67 @@ async def test_reindex_job_cancelled_midway_is_terminal(worker_ctx, sync_redis, 
         assert job.status == "cancelled"
         assert job.finished_at is not None
     assert _stream(sync_redis, job_id)[-1][0] == "cancelled"
+
+
+def _ingest_job() -> str:
+    job_id, _ = make_job(kind="paper_ingest", answer=False, params={
+        "source": "upload", "pdf_path": "/tmp/x.pdf", "doi": "",
+        "meta": {"title": "T", "types": []}})
+    return job_id
+
+
+async def test_ingest_job_succeeds_with_key(worker_ctx, sync_redis, monkeypatch):
+    job_id = _ingest_job()
+    monkeypatch.setattr(ingest, "run_ingest",
+                        lambda src, **kw: ingest.IngestResult("T", 3, 2, 5))
+
+    await run_paper_ingest_job(worker_ctx, job_id)
+
+    expected = {"key": "T", "n_paragraphs": 3, "n_facts": 2, "items": 5}
+    with SessionLocal() as db:
+        job = db.get(Job, job_id)
+        assert job.status == "succeeded"
+        assert job.result == expected
+    assert _stream(sync_redis, job_id)[-1] == ("succeeded", expected)
+
+
+async def test_ingest_job_maps_pipeline_error(worker_ctx, sync_redis, monkeypatch):
+    job_id = _ingest_job()
+
+    def boom(src, **kw):
+        raise ingest.PdfUnreadable("scan")
+
+    monkeypatch.setattr(ingest, "run_ingest", boom)
+
+    await run_paper_ingest_job(worker_ctx, job_id)
+
+    with SessionLocal() as db:
+        job = db.get(Job, job_id)
+        assert job.status == "failed"
+        assert job.error["code"] == "pdf_unreadable"
+    kind, data = _stream(sync_redis, job_id)[-1]
+    assert kind == "failed"
+    assert data["code"] == "pdf_unreadable"
+
+
+async def test_ingest_job_passes_params_through_to_pipeline(worker_ctx, monkeypatch):
+    job_id, _ = make_job(kind="paper_ingest", answer=False, params={
+        "source": "doi", "pdf_path": "/tmp/j.pdf", "doi": "10.1/x",
+        "meta": {"title": "From DOI", "journal": "Lancet", "types": ["Journal Article"]}})
+    seen: list[ingest.IngestSource] = []
+
+    def capture(src, **kw):
+        seen.append(src)
+        return ingest.IngestResult("From_DOI", 1, 0, 0)
+
+    monkeypatch.setattr(ingest, "run_ingest", capture)
+
+    await run_paper_ingest_job(worker_ctx, job_id)
+
+    assert seen[0].kind == "doi"
+    assert seen[0].pdf_path == "/tmp/j.pdf"
+    assert seen[0].doi == "10.1/x"
+    assert seen[0].meta["journal"] == "Lancet"
 
 
 async def test_reindex_job_timeout_does_not_stay_running(worker_ctx, sync_redis, monkeypatch):

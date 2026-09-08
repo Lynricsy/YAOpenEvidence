@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "YAOpenEvidence REST/SSE 后端（FastAPI + arq worker）"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-  "picosgpt-core[embed]",
+  "picosgpt-core[embed,paywall]",
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
   "pydantic>=2.7",
@@ -15,6 +15,7 @@ dependencies = [
   "redis>=5",
   "sse-starlette>=2.1",
   "argon2-cffi>=25.1",
+  "python-multipart>=0.0.20",
 ]
 
 [project.scripts]

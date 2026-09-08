@@ -56,7 +56,14 @@ class ReindexSucceededData(EventData):
     papers: int = Field(ge=0)
 
 
-class SucceededEventData(RootModel[AnswerSucceededData | ReindexSucceededData]):
+class IngestSucceededData(EventData):
+    key: str
+    n_paragraphs: int = Field(ge=0)
+    n_facts: int = Field(ge=0)
+    items: int = Field(ge=0)
+
+
+class SucceededEventData(RootModel[AnswerSucceededData | ReindexSucceededData | IngestSucceededData]):
     pass
 
 

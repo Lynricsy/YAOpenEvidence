@@ -24,6 +24,7 @@ py-modules = [
   "paywall_fetch",
   "spider_auth",
   "verify_citations",
+  "ingest",
 ]
 
 [tool.uv.sources]

@@ -14,7 +14,6 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..auth import Principal, require
-from ..config import settings
 from ..deps import get_arq, get_db
 from ..errors import ApiError
 from ..models import Answer as AnswerRow
@@ -52,10 +51,7 @@ async def create_answer(payload: AnswerCreate, response: Response,
                         principal: Principal = Depends(require())) -> Answer:
     # 这里必须是 async（enqueue 是协程）；DB 操作都是单行 sqlite 读写，毫秒级，
     # 放在事件循环里可以接受，长查询一律留在 def 路由里
-    active = jobs_service.active_job_count(db, principal.user_id)
-    if active >= settings.max_active_jobs_per_user:
-        raise ApiError(429, "too_many_jobs",
-                       f"{active} active job(s) for this user; limit is {settings.max_active_jobs_per_user}")
+    jobs_service.ensure_capacity(db, principal)
     options = payload.model_dump()
     answer_id = jobs_service.new_id()
     row = AnswerRow(id=answer_id, job_id=None, user_id=principal.user_id, status="queued",

@@ -1,7 +1,15 @@
-"""文献库、知识库与期刊分区端点的消费者行为。"""
+"""文献库、知识库、期刊分区与入库端点的消费者行为。"""
 from __future__ import annotations
 
+import os
+
+from picos_paths import PDF_DIR
+
+from app.services import paywall as paywall_service
+
 from .conftest import ADMIN_TOKEN, USER_TOKEN, auth
+
+PDF_BYTES = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n%%EOF\n"
 
 
 def test_papers_list_and_paragraph(client):
@@ -85,6 +93,86 @@ def test_journal_rank(client):
 
 def test_journal_rank_requires_query(client):
     response = client.get("/v1/journals/rank", headers=auth(USER_TOKEN))
+    assert response.status_code == 422
+    assert response.json()["code"] == "validation_error"
+
+
+def test_journal_tables_report_loaded_ranks(client):
+    response = client.get("/v1/journals/tables", headers=auth(USER_TOKEN))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["tables"][0]["file"] == "scimagojr_2024.csv"
+    assert body["tables"][0]["source"] == "scimago"
+    assert body["tables"][0]["year"] == 2024
+    assert body["issns"] > 0
+    assert body["loaded_at"].endswith("Z")
+
+
+def test_upload_paper_enqueues_ingest(client, arq):
+    response = client.post("/v1/papers/upload",
+                           files={"file": ("a.pdf", PDF_BYTES, "application/pdf")},
+                           data={"title": "Uploaded"}, headers=auth(USER_TOKEN))
+    assert response.status_code == 202
+    body = response.json()
+    assert body["kind"] == "paper_ingest"
+    assert body["status"] == "queued"
+    job_id = body["id"]
+    assert arq.calls[-1] == ("run_paper_ingest_job", (job_id,), {"_job_id": job_id})
+    assert body["params"]["source"] == "upload"
+    assert body["params"]["meta"]["title"] == "Uploaded"
+    assert os.path.isfile(os.path.join(PDF_DIR, "ingest", f"{job_id}.pdf"))
+
+
+def test_upload_keeps_user_metadata_when_doi_cannot_be_resolved(client, monkeypatch):
+    from app.errors import ApiError
+    from app.services import literature as literature_service
+
+    def unreachable(ident: str):
+        raise ApiError(502, "upstream_unavailable", "nope")
+
+    monkeypatch.setattr(literature_service, "resolve", unreachable)
+    response = client.post("/v1/papers/upload",
+                           files={"file": ("a.pdf", PDF_BYTES, "application/pdf")},
+                           data={"title": "Fallback", "doi": "10.1/x", "journal": "Lancet",
+                                 "year": "2024", "authors": "Fox W"},
+                           headers=auth(USER_TOKEN))
+    assert response.status_code == 202
+    meta = response.json()["params"]["meta"]
+    assert (meta["title"], meta["doi"], meta["journal"]) == ("Fallback", "10.1/x", "Lancet")
+    assert meta["authors"] == "Fox W"
+
+
+def test_upload_rejects_non_pdf(client):
+    response = client.post("/v1/papers/upload",
+                           files={"file": ("a.pdf", b"hello", "application/pdf")},
+                           data={"title": "Not a PDF"}, headers=auth(USER_TOKEN))
+    assert response.status_code == 422
+    assert response.json()["code"] == "validation_error"
+
+
+def test_upload_rejects_oversized_pdf(client, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "upload_max_mb", 1)
+    big = PDF_BYTES + b"0" * (2 * 1024 * 1024)
+    response = client.post("/v1/papers/upload",
+                           files={"file": ("big.pdf", big, "application/pdf")},
+                           data={"title": "Too big"}, headers=auth(USER_TOKEN))
+    assert response.status_code == 413
+    assert response.json()["code"] == "payload_too_large"
+
+
+def test_ingest_doi_requires_paywall_state(client):
+    paywall_service.clear_state()
+    response = client.post("/v1/papers/ingest", json={"doi": "10.1000/x"},
+                           headers=auth(USER_TOKEN))
+    assert response.status_code == 409
+    assert response.json()["code"] == "conflict"
+
+
+def test_ingest_doi_rejects_malformed_doi(client):
+    response = client.post("/v1/papers/ingest", json={"doi": "not-a-doi"},
+                           headers=auth(USER_TOKEN))
     assert response.status_code == 422
     assert response.json()["code"] == "validation_error"
 

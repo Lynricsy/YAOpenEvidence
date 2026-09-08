@@ -56,6 +56,14 @@ def active_job_count(db: Session, user_id: str | None) -> int:
     return int(db.scalar(stmt) or 0)
 
 
+def ensure_capacity(db: Session, principal) -> None:  # noqa: ANN001
+    """并发任务闸门：所有创建任务的入口共用这一处限流。"""
+    active = active_job_count(db, principal.user_id)
+    if active >= settings.max_active_jobs_per_user:
+        raise ApiError(429, "too_many_jobs",
+                       f"{active} active job(s) for this user; limit is {settings.max_active_jobs_per_user}")
+
+
 def may_touch(job: Job, principal) -> bool:  # noqa: ANN001
     return principal.is_admin or job.user_id == principal.user_id
 

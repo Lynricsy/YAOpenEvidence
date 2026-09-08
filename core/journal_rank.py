@@ -27,14 +27,16 @@ import glob
 import os
 import re
 import sys
+import time
 from typing import Optional
 
 from picos_paths import RANK_DIR as DATA_DIR
 
 _BY_ISSN: dict[str, dict] = {}
 _BY_TITLE: dict[str, dict] = {}
-_LOADED = False
-_FILES: list[str] = []
+_TABLES: list[dict] = []        # 每张表一条 {"file","year","journals","source"}
+_SIG: tuple | None = None       # 目录内表文件的 (名, mtime_ns, 大小) 快照；变化即重载
+_LOADED_AT: float | None = None
 
 ZONE_WORDS = {"一": 1, "二": 2, "三": 3, "四": 4, "1": 1, "2": 2, "3": 3, "4": 4}
 
@@ -66,16 +68,20 @@ def parse_zone(v: str) -> Optional[int]:
     return None
 
 
-def _add(rec: dict) -> None:
+Rec = dict
+Index = dict[str, dict]
+
+
+def _add(rec: Rec, by_issn: Index, by_title: Index) -> None:
     for i in rec.get("issns", []):
         if i:
-            _BY_ISSN[i] = rec
+            by_issn[i] = rec
     t = norm_title(rec.get("title", ""))
     if t:
-        _BY_TITLE[t] = rec
+        by_title[t] = rec
 
 
-def _load_scimago(path: str) -> int:
+def _load_scimago(path: str, by_issn: Index, by_title: Index) -> int:
     n = 0
     with open(path, encoding="utf-8", errors="replace", newline="") as f:
         rd = csv.DictReader(f, delimiter=";")
@@ -92,12 +98,12 @@ def _load_scimago(path: str) -> int:
             cats = row.get("Categories") or ""
             _add({"title": row.get("Title", ""), "issns": [i for i in issns if i], "zone": q, "quartile": f"Q{q}",
                   "sjr": sjr, "h_index": row.get("H index"), "categories": cats, "top": False,
-                  "source": "SCImago " + os.path.basename(path)})
+                  "source": "SCImago " + os.path.basename(path)}, by_issn, by_title)
             n += 1
     return n
 
 
-def _load_custom(path: str) -> int:
+def _load_custom(path: str, by_issn: Index, by_title: Index) -> int:
     """Generic CSV (中科院分区表 export etc.). Delimiter sniffed; header matched by keywords."""
     n = 0
     with open(path, encoding="utf-8-sig", errors="replace", newline="") as f:
@@ -132,38 +138,77 @@ def _load_custom(path: str) -> int:
             title = next((row.get(c, "") for c in title_cols if row.get(c)), "")
             top = any(str(row.get(c, "")).strip().lower() in ("是", "yes", "y", "1", "true", "top") for c in top_cols)
             _add({"title": title, "issns": [i for i in issns if i], "zone": zone, "quartile": f"Q{zone}", "sjr": None,
-                  "categories": "", "top": top, "source": os.path.basename(path)})
+                  "categories": "", "top": top, "source": os.path.basename(path)}, by_issn, by_title)
             n += 1
     return n
 
 
-def load(force: bool = False) -> list[str]:
-    """Load all ranking tables (idempotent). Returns list of loaded file descriptions."""
-    global _LOADED, _FILES
-    if _LOADED and not force:
-        return _FILES
-    _BY_ISSN.clear(); _BY_TITLE.clear(); _FILES = []
-    files = sorted(glob.glob(os.path.join(DATA_DIR, "scimagojr*.csv"))) + \
+def _table_files() -> list[str]:
+    """SCImago 表在前、其它自定义表在后；同组按文件名排序，后加载者覆盖同刊记录。"""
+    return sorted(glob.glob(os.path.join(DATA_DIR, "scimagojr*.csv"))) + \
         sorted(p for p in glob.glob(os.path.join(DATA_DIR, "*.csv")) if "scimagojr" not in os.path.basename(p))
-    for p in files:
-        n = _load_scimago(p) if "scimagojr" in os.path.basename(p) else _load_custom(p)
+
+
+def _signature() -> tuple:
+    """目录内表文件的 (名, mtime_ns, 大小) 快照：任一项变化就说明换表/新表，需要重载。"""
+    sig = []
+    for p in _table_files():
+        try:
+            st = os.stat(p)
+        except FileNotFoundError:      # glob 与 stat 之间被删掉
+            continue
+        sig.append((os.path.basename(p), st.st_mtime_ns, st.st_size))
+    return tuple(sig)
+
+
+def _year_of(basename: str) -> Optional[int]:
+    m = re.search(r"(?<!\d)(19|20)\d{2}(?!\d)", basename)
+    return int(m.group(0)) if m else None
+
+
+def _describe(t: Rec) -> str:
+    return f"{t['file']} ({t['journals']} journals)"
+
+
+def load(force: bool = False) -> list[str]:
+    """Load all ranking tables. 文件签名未变则复用已加载结果；变了就自动重载（无需重启进程）。"""
+    global _BY_ISSN, _BY_TITLE, _TABLES, _SIG, _LOADED_AT
+    sig = _signature()
+    if sig == _SIG and not force:
+        return [_describe(t) for t in _TABLES]
+    by_issn: Index = {}
+    by_title: Index = {}
+    tables: list[Rec] = []
+    for p in _table_files():
+        base = os.path.basename(p)
+        scimago = "scimagojr" in base
+        n = _load_scimago(p, by_issn, by_title) if scimago else _load_custom(p, by_issn, by_title)
         if n:
-            _FILES.append(f"{os.path.basename(p)} ({n} journals)")
-    _LOADED = True
-    return _FILES
+            tables.append({"file": base, "year": _year_of(base), "journals": n,
+                           "source": "scimago" if scimago else "custom"})
+    # 构建完成后一次性换引用：并发读者要么看到旧表要么看到新表，不会看到半空表
+    _BY_ISSN, _BY_TITLE, _TABLES, _SIG, _LOADED_AT = by_issn, by_title, tables, sig, time.time()
+    return [_describe(t) for t in tables]
 
 
 def lookup(issn: str = "", title: str = "") -> Optional[dict]:
     """Return ranking record for a journal, or None if unknown. `issn` may hold several ids separated by ; , or space."""
     load()
+    by_issn, by_title = _BY_ISSN, _BY_TITLE   # 先取引用，避免查询中途被 load() 换掉
     for raw in re.split(r"[;,\s]+", issn or ""):
         i = norm_issn(raw)
-        if i and i in _BY_ISSN:
-            return _BY_ISSN[i]
+        if i and i in by_issn:
+            return by_issn[i]
     t = norm_title(title)
-    if t and t in _BY_TITLE:
-        return _BY_TITLE[t]
+    if t and t in by_title:
+        return by_title[t]
     return None
+
+
+def stats() -> dict:
+    """已加载分区表的概况：每张表的文件/年份/刊数/来源，以及索引规模与加载时刻。"""
+    load()
+    return {"tables": list(_TABLES), "issns": len(_BY_ISSN), "titles": len(_BY_TITLE), "loaded_at": _LOADED_AT}
 
 
 def parse_quartile_arg(s: str) -> set[int]:
@@ -248,7 +293,8 @@ if __name__ == "__main__":
         info = lookup(issn=key, title=key)
         print(info or "not found")
     elif args[0] == "stats":
-        print("tables:", load())
-        print(f"{len(_BY_ISSN)} ISSNs, {len(_BY_TITLE)} titles")
+        s = stats()
+        print("tables:", [t["file"] for t in s["tables"]])
+        print(f"{s['issns']} ISSNs, {s['titles']} titles")
     else:
         print(__doc__)

@@ -13,7 +13,9 @@ COPY conftest.py ./
 
 FROM base AS runtime
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --all-packages --no-dev
-ENV PATH=/app/.venv/bin:$PATH PICOSGPT_DATA=/data
+ENV PATH=/app/.venv/bin:$PATH PICOSGPT_DATA=/data PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# 机构订阅取全文与 SCImago 分区表下载都要真浏览器；缺它这两条路径只能报 fulltext_unavailable
+RUN playwright install --with-deps chromium
 WORKDIR /app/backend
 CMD ["yaoe", "serve", "--host", "0.0.0.0", "--port", "8765"]
 

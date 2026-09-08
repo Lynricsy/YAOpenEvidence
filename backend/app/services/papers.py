@@ -1,15 +1,21 @@
-"""文献库文件的只读访问。"""
+"""文献库文件的只读访问，以及入库任务的落盘 / 元数据准备。"""
 from __future__ import annotations
 
 import json
 import os
 import re
 
-from picos_paths import LIB_DIR
+from fastapi import UploadFile
+from picos_paths import LIB_DIR, PDF_DIR
 
 from ..errors import ApiError
+from ..schemas.literature import LiteratureRecord
 
 KEY_RE = re.compile(r"^[A-Za-z0-9._-]{1,80}$")
+PDF_MAGIC = b"%PDF-"
+CHUNK = 1024 * 1024
+# 入库元数据的固定键序，与 core/ingest.py 的 IngestSource.meta 契约一致
+META_KEYS = ("pmid", "doi", "pmcid", "title", "year", "journal", "issn", "authors", "types", "quartile")
 
 
 def _paper_dir(key: str) -> str:
@@ -89,3 +95,60 @@ def fulltext_path(key: str) -> str:
     if not os.path.isdir(paper_dir) or not os.path.isfile(path):
         raise ApiError(404, "not_found", f"full text for paper '{key}' not found")
     return path
+
+
+def ingest_pdf_path(job_id: str) -> str:
+    """入库任务的 PDF 落盘位置；入库成功后文件保留，便于复查解析结果。"""
+    return os.path.join(PDF_DIR, "ingest", f"{job_id}.pdf")
+
+
+async def save_upload(file: UploadFile, dest: str, max_mb: int) -> None:
+    """流式落盘并校验：非 PDF 直接 422，超限 413。任何失败都不留半个文件。"""
+    limit = max_mb * 1024 * 1024
+    os.makedirs(os.path.dirname(dest) or ".", exist_ok=True)
+    written = 0
+    try:
+        with open(dest, "wb") as out:
+            while chunk := await file.read(CHUNK):
+                if written == 0 and not chunk.startswith(PDF_MAGIC):
+                    raise ApiError(422, "validation_error", "文件不是 PDF")
+                written += len(chunk)
+                if written > limit:
+                    raise ApiError(413, "payload_too_large", f"PDF 超过 {max_mb} MB")
+                out.write(chunk)
+        if written == 0:
+            raise ApiError(422, "validation_error", "文件不是 PDF")
+    except BaseException:
+        try:
+            os.remove(dest)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+def meta_from_record(record: LiteratureRecord, doi: str = "") -> dict:
+    """上游解析结果 -> 入库元数据（全部 str，与 library/meta.json 的形状一致）。"""
+    return {
+        "pmid": record.pmid or "",
+        "doi": record.doi or doi,
+        "pmcid": record.pmcid or "",
+        "title": record.title,
+        "year": record.year or "",
+        "journal": record.journal or "",
+        "issn": record.issn or "",
+        "authors": ", ".join(record.authors),
+        "types": list(record.types),
+        "quartile": record.rank.quartile if record.rank else "",
+    }
+
+
+def merge_user_meta(resolved: dict | None, *, title: str, doi: str = "", journal: str = "",
+                    year: str = "", authors: str = "") -> dict:
+    """上游解析结果为底，用户填的字段只补空缺（上游权威，但不能因为解析失败就丢掉用户输入）。"""
+    meta = dict(resolved) if resolved else {k: [] if k == "types" else "" for k in META_KEYS}
+    for key, value in (("doi", doi), ("journal", journal), ("year", year), ("authors", authors)):
+        if not meta.get(key) and value.strip():
+            meta[key] = value.strip()
+    if not meta.get("title"):
+        meta["title"] = title.strip()
+    return meta

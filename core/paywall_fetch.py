@@ -36,7 +36,8 @@ from spider_auth import (  # noqa: E402  (vendored from SPIDER_PROJECT/medical_s
     state_paths,
 )
 
-DEFAULT_STATE = os.environ.get("SD_STATE_PATH", os.path.join(ROOT, "sd_state.json"))
+from picos_paths import PAYWALL_STATE as DEFAULT_STATE  # noqa: E402
+
 MIN_DELAY = float(os.environ.get("PAYWALL_MIN_DELAY", "4"))
 MAX_DELAY = float(os.environ.get("PAYWALL_MAX_DELAY", "9"))
 NAV_TIMEOUT = 60_000

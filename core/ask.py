@@ -37,7 +37,7 @@ try:
     import paywall_fetch  # noqa: E402  institutional-access downloader (SPIDER_PROJECT login state)
 except Exception:  # noqa: BLE001  (playwright missing etc.)
     paywall_fetch = None
-PAYWALL_STATE = os.environ.get("SD_STATE_PATH") or os.path.join(picos_paths.DATA_ROOT, "sd_state.json")
+PAYWALL_STATE = picos_paths.PAYWALL_STATE
 PAYWALL_MAX = int(os.environ.get("PAYWALL_MAX_PER_RUN", "5"))
 
 LLM_BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:4000/v1")

@@ -1,7 +1,7 @@
-"""文献库（library/）与知识库（kb/）的读模型。"""
+"""文献库（library/）与知识库（kb/）的读模型，以及入库请求。"""
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .common import UtcDateTime
 
@@ -55,3 +55,9 @@ class VerifiedQuote(BaseModel):
     verified: bool = False
     note_section: str | None = None
     key_finding: bool = False
+
+
+class PaperIngestRequest(BaseModel):
+    """按 DOI 经机构访问取全文入库。"""
+
+    doi: str = Field(min_length=4, pattern=r"^10\.\S+$")
