@@ -19,11 +19,17 @@ class AnswerBody extends StatelessWidget {
     required this.bodyMd,
     required this.papers,
     required this.onCitationTap,
+    required this.structured,
   });
 
   final String bodyMd;
   final List<AnswerPaper> papers;
   final void Function(CitationRef ref) onCitationTap;
+
+  /// 正文是否来自结构化 `body_md`。旧稿（`answer_md` 渲染稿）是整篇文档：
+  /// 带问题标题、参考文献目录与免责声明，其中「参考文献」不是已知模块标签，
+  /// 分节会把整份目录并进「局限」，页面出现两份参考文献。旧稿一律单块渲染。
+  final bool structured;
 
   int? get _citationLimit => papers.isEmpty ? null : papers.length;
 
@@ -47,7 +53,9 @@ class AnswerBody extends StatelessWidget {
       ),
     );
 
-    final sections = splitAnswerSections(bodyMd);
+    final sections = structured
+        ? splitAnswerSections(bodyMd)
+        : const <AnswerSection>[];
     if (!hasKnownSections(sections)) {
       return MarkdownDocumentView(
         blocks: parseMarkdown(bodyMd, citationLimit: _citationLimit),

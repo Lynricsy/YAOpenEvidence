@@ -47,9 +47,21 @@ final class AnswerScreenModel {
     private(set) var sections: [RenderedSection] = []
     private var renderedMarkdown: String?
 
-    private func render(_ markdown: String, citationLimit: Int?) {
+    /// `structured` 为 false 时不分节。旧稿（`answer_md` 渲染稿）是整篇文档：
+    /// 带问题标题、参考文献目录与免责声明，其中「参考文献」不是已知模块标签，
+    /// 分节会把整份目录并进「局限」，页面出现两份参考文献。旧稿一律单块渲染。
+    private func render(_ markdown: String, citationLimit: Int?, structured: Bool) {
         guard markdown != renderedMarkdown else { return }
         renderedMarkdown = markdown
+        guard structured else {
+            sections = [
+                RenderedSection(
+                    kind: .other,
+                    blocks: MarkdownDocument.parse(markdown, citationLimit: citationLimit)
+                )
+            ]
+            return
+        }
         sections = AnswerSections.split(markdown).map { section in
             RenderedSection(
                 kind: section.kind,
@@ -97,7 +109,7 @@ final class AnswerScreenModel {
     private func apply(_ loaded: Answer) {
         answer = .loaded(loaded)
         if let body = loaded.bodyMd, !body.isEmpty {
-            render(body, citationLimit: loaded.papers.count)
+            render(body, citationLimit: loaded.papers.count, structured: true)
         }
         if loaded.status == .ready, loaded.bodyMd == nil || loaded.bodyMd?.isEmpty == true {
             Task { await loadLegacyMarkdown() }
@@ -112,7 +124,7 @@ final class AnswerScreenModel {
     private func loadLegacyMarkdown() async {
         guard legacyMarkdown == nil, let client = session?.client else { return }
         legacyMarkdown = try? await client.answerMarkdown(id: answerID)
-        if let legacy = legacyMarkdown { render(legacy, citationLimit: nil) }
+        if let legacy = legacyMarkdown { render(legacy, citationLimit: nil, structured: false) }
     }
 
     /// 首次进入创建监视器；从其他 Tab 回到本页时续订同一个监视器（保留已收到的阶段与日志位置）。

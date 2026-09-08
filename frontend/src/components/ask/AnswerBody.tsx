@@ -95,12 +95,18 @@ export function AnswerBody({
   )
   const papers = answer.papers ?? [],
     citations = answer.citations ?? []
-  const markdown =
-    answer.body_md != null
-      ? markersToLinks(answer.body_md, Math.max(0, ...papers.map((p) => p.n)))
-      : (legacy.data ?? '')
+  const structured = answer.body_md != null
+  const markdown = structured
+    ? markersToLinks(
+        answer.body_md ?? '',
+        Math.max(0, ...papers.map((p) => p.n)),
+      )
+    : (legacy.data ?? '')
+  // 只有结构化正文才分节。旧稿（`answer_md` 渲染稿）是整篇文档：带问题标题、
+  // 参考文献目录与免责声明，其中「参考文献」不是已知模块标签，分节会把整份
+  // 目录并进「局限」，页面出现两份参考文献。旧稿一律单块渲染。
   // 引用标记的链接化必须在切分之前完成：切分后各节分别转换会丢失全文 mdast 上下文。
-  const sections = splitAnswerSections(markdown)
+  const sections = structured ? splitAnswerSections(markdown) : []
   const cite: Components = {
     a: ({ href, children }) => {
       const parsed = parseCiteHref(href ?? '')

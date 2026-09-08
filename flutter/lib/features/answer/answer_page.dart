@@ -381,6 +381,7 @@ class _ReadyBody extends ConsumerWidget {
         builder: (markdown) => _BodyWithSources(
           answer: answer,
           bodyMd: markdown,
+          structured: false,
           onOpenReader: onOpenReader,
         ),
       );
@@ -388,6 +389,7 @@ class _ReadyBody extends ConsumerWidget {
     return _BodyWithSources(
       answer: answer,
       bodyMd: bodyMd,
+      structured: true,
       onOpenReader: onOpenReader,
     );
   }
@@ -397,11 +399,13 @@ class _BodyWithSources extends StatelessWidget {
   const _BodyWithSources({
     required this.answer,
     required this.bodyMd,
+    required this.structured,
     required this.onOpenReader,
   });
 
   final Answer answer;
   final String bodyMd;
+  final bool structured;
   final void Function(CitationRef ref) onOpenReader;
 
   @override
@@ -412,6 +416,7 @@ class _BodyWithSources extends StatelessWidget {
         bodyMd: bodyMd,
         papers: answer.papers,
         onCitationTap: onOpenReader,
+        structured: structured,
       ),
       const SizedBox(height: YaoeTokens.space6),
       SourceList(
