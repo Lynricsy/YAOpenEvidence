@@ -156,8 +156,7 @@ struct KbSearchView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("知识库")
-        .accountToolbar()
-        .searchable(text: $model.query, prompt: "搜索知识库")
+        .pageSearchable(text: $model.query, prompt: "搜索知识库")
         .searchScopes($model.kind) {
             Text("全部").tag(KbKind?.none)
             ForEach(KbKind.allCases, id: \.self) { kind in
@@ -165,6 +164,7 @@ struct KbSearchView: View {
             }
         }
         .onSubmit(of: .search) { Task { await model.search() } }
+        .accountToolbar()
         // 切换范围只在已有查询词时重检索，避免空查询触发一次无效请求。
         .onChange(of: model.kind) {
             guard !model.query.trimmingCharacters(in: .whitespaces).isEmpty else { return }

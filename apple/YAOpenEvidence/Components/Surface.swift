@@ -59,6 +59,16 @@ extension View {
                     .frame(width: 3)
             }
     }
+
+    /// 页面级搜索框。iOS 26 上根视图是 `ScrollView` 时必须显式指定
+    /// `.navigationBarDrawer`，否则搜索框不会出现在导航栏里（`List` 根视图无此问题）。
+    func pageSearchable(text: Binding<String>, prompt: String) -> some View {
+        #if os(iOS)
+            searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+        #else
+            searchable(text: text, prompt: prompt)
+        #endif
+    }
 }
 
 /// 可按压卡片按钮样式：按下时轻微缩放与降透明度，给出触觉之外的视觉反馈。

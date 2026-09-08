@@ -105,9 +105,9 @@ struct LiteratureSearchView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("查文献")
-        .accountToolbar()
-        .searchable(text: $model.query, prompt: "搜索文献")
+        .pageSearchable(text: $model.query, prompt: "搜索文献")
         .onSubmit(of: .search) { Task { await model.search() } }
+        .accountToolbar()
         .task { model.configure(session: session) }
         .sheet(isPresented: $showFilters) {
             LiteratureFilterSheet(filters: $model.filters, source: $model.source, limit: $model.limit)
