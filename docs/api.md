@@ -461,6 +461,12 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 - 若论文已进入共享文献库，也可用其 `pmid`/key 请求 `/v1/papers/{key}/paragraphs/{pid}`，或把 `/v1/papers/{key}/fulltext` 中的 `#p{pid}` 锚点用于页面内定位；
 - 不希望自行解析标记时，获取 `/v1/answers/{answer_id}/markdown` 的完整带链接稿，再以 Bearer 加载其单篇 Markdown 引用目标并保留 `pN` 锚点。
 
+`body_md` 的正文结构由综述提示词固定为四个模块标签：`**结论 / Bottom line**`、
+`**证据 / Evidence**`、`**PICOS 证据表 / PICOS table**`、`**局限 / Caveats**`（PICOS 表可能缺失）。
+标签可能独占一行、以 `—` 或 `:` 接同行正文，个别情况写成 `## 标签`。前端若要分模块渲染，
+按标签「前缀」识别（问题标题里出现「证据」这类字样很常见，包含匹配会误判），
+并对识别不到任何标签的正文回退到整段渲染。模块的标题文字与图标应由前端固定，不要复用正文里的标签字面量。
+
 #### `AnswerPaper`
 
 | 字段 | 类型 | 说明 |
