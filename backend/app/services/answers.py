@@ -57,6 +57,31 @@ def to_ask_options(opts: AnswerCreate | dict) -> AskOptions:
     )
 
 
+def to_codex_prompt(opts: AnswerCreate | dict) -> str:
+    """HTTP 入参 -> codex 的一条用户消息。
+
+    过滤条件对 codex 是「要求」而非硬闸门：AGENTS.md 已经规定把年份/分区/期刊传给
+    对应的 MCP 工具，这里只负责把结构化字段翻成模型能照做的约束。ask 专属的
+    max_chars / use_paywall / keep_unranked 不在此列——codex 不走那条流水线。
+    """
+    o = opts if isinstance(opts, AnswerCreate) else AnswerCreate.model_validate(opts)
+    rules = [f"检索至少 {o.papers} 篇相关文献后再作答。"]
+    if o.years:
+        rules.append(f"只用最近 {o.years} 年发表的文献（对应工具参数 last_years={o.years}）。")
+    elif o.year_from:
+        rules.append(f"只用 {o.year_from}-{o.year_to or o.year_from} 年发表的文献"
+                     f"（对应工具参数 year=\"{o.year_from}-{o.year_to or o.year_from}\"）。")
+    if o.quartiles:
+        zones = ",".join(f"Q{z}" for z in o.quartiles)
+        rules.append(f"只用 {zones} 分区期刊（对应工具参数 quartile=\"{zones}\"）。")
+    if o.journals:
+        names = ",".join(o.journals)
+        rules.append(f"限定期刊 {names}（对应 pubmed_search 的 journal=\"{names}\"）。")
+    rules.append("先用 kb_search 查已入库的原子知识，可直接引用。" if o.use_kb
+                 else "不要使用 kb_search，只用本次实时检索到的文献。")
+    return o.question + "\n\n检索要求：\n" + "\n".join(f"- {r}" for r in rules)
+
+
 def to_answer_paper(p: dict) -> dict:
     """流水线内部 paper dict -> 对外 AnswerPaper（丢掉全文、段落等大块中间产物）。"""
     cites = p.get("cites") or []

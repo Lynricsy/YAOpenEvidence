@@ -119,6 +119,21 @@ flowchart LR
 
 问答流水线通常运行数分钟，因此 API 只负责接收请求、持久化任务并入队，独立 worker 执行耗时工作；`YAOE_WORKER_MAX_JOBS` 默认为 `1`，适合单 GPU 串行执行。任务事件使用 Redis Stream 而非 Pub/Sub，因为 SSE 客户端断线后需要携带 `Last-Event-ID` 续传历史事件。取消采用协作式机制：API 写入取消标记，worker 在阶段边界和逐篇处理边界检查；已经开始的单次 LLM 调用不会被强行中断。
 
+### 两个问答引擎
+
+`POST /v1/answers` 的 `engine` 决定 worker 走哪条路：
+
+| | `ask`（默认） | `codex` |
+|---|---|---|
+| 执行方式 | 固定流水线：检索 → 取全文 → 逐篇阅读 → 综合 | Codex agent 自己决定调哪些工具 |
+| 工具面 | 流水线内部直接调 `core/literature.py` 等 | core 的 `semantic_scholar` MCP（与 `./PICOSGpt codex` 同一套） |
+| 产出 | `body_md` 分节 + 逐篇原文快照 + 段落级引用 | 整篇 `answer_md`，无原文快照 |
+| 生效筛选 | 全部字段，服务端硬过滤 | 年份/分区/期刊等翻成检索要求交给模型 |
+
+codex 运行时随 `openai-codex` 依赖一起进镜像（`openai-codex-cli-bin` 带 codex 二进制，不需要 node，也不读 `~/.codex/config.toml`）：provider 与 MCP 全部走每次会话的内联配置，复用 `LLM_BASE` / `LLM_MODEL` / `LOCAL_QWEN_KEY`，因此必须是支持 **Responses API**（`/v1/responses`）的端点——codex 0.147 起不再支持 chat 线协议，LiteLLM 代理满足这一点。会话文件落在 `CODEX_HOME`（镜像内为 `/data/var/codex`，随 `./var` 卷持久化）。
+
+服务端运行以 `sandbox=read-only` + `approval_mode=deny_all` 启动，工作目录是 `CODEX_HOME/work` 空目录而非代码树。注意这两项只挡住写入与升权批准：**read-only 不限制读取范围**，`cwd` 也只是工作目录，真正的租户隔离靠容器与运行用户，多租户对外开放前必须在容器/进程层面隔离。
+
 ## 快速开始：Docker Compose
 
 需要 Docker、Docker Compose，以及可供容器访问的宿主机 LiteLLM/vLLM。
@@ -195,7 +210,7 @@ Redis 自身使用名为 `redis-data` 的持久卷。
 docker compose -f compose.yaml -f compose.fake-llm.yaml up -d --build
 ```
 
-它可以执行完整问答流水线而不需要 GPU，但文献检索与全文获取仍需访问 PubMed 和 Europe PMC；假 LLM 只替代模型服务，不替代外部文献源。
+它可以执行完整问答流水线而不需要 GPU，但文献检索与全文获取仍需访问 PubMed 和 Europe PMC；假 LLM 只替代模型服务，不替代外部文献源。假 LLM 同时提供 `/v1/chat/completions`（`ask` 用）与 `/v1/responses`（`codex` 用）两条线协议，因此两个引擎都能在这套配置下跑通；它不会真的调用 MCP 工具，`codex` 的工具链路仍需真实模型验证。
 
 ## 本地开发
 
@@ -305,6 +320,9 @@ Compose 固定容器内的 Redis 为 `redis://redis:6379/0`、数据库为 `sqli
 | `SD_STATE_PATH` | `<PICOSGPT_DATA>/var/sd_state.json` | 机构订阅下载器的登录状态文件；另有同名的 `.session_storage.json` 与 `.context.json` 两份伴随文件 |
 | `PAYWALL_MAX_PER_RUN` | `5` | 每次问答最多尝试的机构订阅下载数 |
 | `S2_TIMEOUT` | `30` | 文献上游 HTTP 请求超时秒数 |
+| `CODEX_HOME` | `<PICOSGPT_DATA>/var/codex` | codex 会话与运行状态目录；镜像内已设为 `/data/var/codex` |
+| `CODEX_MCP_STARTUP_TIMEOUT_S` | `60` | codex 引擎等待 MCP 工具服务启动的秒数 |
+| `CODEX_MCP_TOOL_TIMEOUT_S` | `180` | codex 引擎单次 MCP 工具调用的超时秒数 |
 
 `PICOSGPT_DATA` 决定所有运行期数据的位置。本地未设置时以 `core/` 为根，容器内为 `/data`。其下的 `answers/` 保存问答输出，`library/` 保存逐篇文献材料，`kb/` 保存知识库索引，`data/journal_ranks/` 保存期刊分区表，`models/` 保存 embedding 模型，`pdfs/` 保存本地 PDF（入库任务落在 `pdfs/ingest/`），`var/` 保存 API 数据库、机构登录态等运行状态。
 

@@ -1074,6 +1074,7 @@
                 {
                   "enum": [
                     "ask",
+                    "codex",
                     "kb_reindex",
                     "paper_ingest"
                   ],
@@ -2880,6 +2881,15 @@
             "type": "string",
             "title": "Question"
           },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "ask",
+              "codex"
+            ],
+            "title": "Engine",
+            "default": "ask"
+          },
           "filters_label": {
             "anyOf": [
               {
@@ -3027,6 +3037,15 @@
             "minLength": 1,
             "title": "Question"
           },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "ask",
+              "codex"
+            ],
+            "title": "Engine",
+            "default": "ask"
+          },
           "papers": {
             "type": "integer",
             "maximum": 30.0,
@@ -3124,7 +3143,7 @@
           "question"
         ],
         "title": "AnswerCreate",
-        "description": "创建问答任务。年份既可用「最近 N 年」也可用明确区间，但不能同时给。"
+        "description": "创建问答任务。年份既可用「最近 N 年」也可用明确区间，但不能同时给。\n\n`engine=\"ask\"` 走确定性流水线（检索 → 全文 → 逐篇读 → 综合），全部字段生效；\n`engine=\"codex\"` 交给 Codex agent 自己决定调哪些 MCP 工具，过滤条件会翻成检索\n要求写进提问，`max_chars` / `use_paywall` / `keep_unranked` / `kb_hits` 不生效。"
       },
       "AnswerPaper": {
         "properties": {
@@ -3391,6 +3410,15 @@
           "question": {
             "type": "string",
             "title": "Question"
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "ask",
+              "codex"
+            ],
+            "title": "Engine",
+            "default": "ask"
           },
           "filters_label": {
             "anyOf": [
@@ -3846,6 +3874,7 @@
             "type": "string",
             "enum": [
               "ask",
+              "codex",
               "kb_reindex",
               "paper_ingest"
             ],
@@ -5502,7 +5531,8 @@
               "read",
               "kb",
               "synthesize",
-              "reindex"
+              "reindex",
+              "agent"
             ],
             "title": "Stage",
             "type": "string"

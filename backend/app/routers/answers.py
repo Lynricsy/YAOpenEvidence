@@ -54,11 +54,14 @@ async def create_answer(payload: AnswerCreate, response: Response,
     jobs_service.ensure_capacity(db, principal)
     options = payload.model_dump()
     answer_id = jobs_service.new_id()
+    # 两个引擎共用 answers 资源，只有 worker 入口不同：ask 走确定性流水线，codex 交给 agent
+    kind, fn_name = (("codex", "run_codex_job") if payload.engine == "codex"
+                     else ("ask", "run_ask_job"))
     row = AnswerRow(id=answer_id, job_id=None, user_id=principal.user_id, status="queued",
                     question=payload.question, queries=[], options=options, papers=[],
                     citations=[], kb_hits=[])
-    await jobs_service.enqueue(arq, db, kind="ask", params={"answer_id": answer_id, **options},
-                                     user_id=principal.user_id, fn_name="run_ask_job", answer=row)
+    await jobs_service.enqueue(arq, db, kind=kind, params={"answer_id": answer_id, **options},
+                               user_id=principal.user_id, fn_name=fn_name, answer=row)
     db.refresh(row)
     response.headers["Location"] = f"/v1/answers/{answer_id}"
     return Answer.model_validate(row)

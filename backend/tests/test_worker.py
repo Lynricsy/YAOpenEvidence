@@ -16,7 +16,8 @@ import knowledge_store as ks
 from app.db import SessionLocal
 from app.models import Answer, Job
 from app.services import events
-from app.worker import run_ask_job, run_kb_reindex_job, run_paper_ingest_job
+from app.services import codex as codex_engine
+from app.worker import run_ask_job, run_codex_job, run_kb_reindex_job, run_paper_ingest_job
 
 from .conftest import make_job
 from .test_events import finish_sse, live_sse, streaming_app
@@ -68,6 +69,51 @@ async def test_successful_job_persists_answer_and_emits_succeeded(worker_ctx, sy
     kind, data = _stream(sync_redis, job_id)[-1]
     assert kind == "succeeded"
     assert data == {"answer_id": answer_id}
+
+
+async def test_codex_job_persists_answer_and_thread_id(worker_ctx, sync_redis, monkeypatch):
+    """codex 引擎没有结构化 papers，答案与会话 id 是它唯一的产出，必须落库。"""
+    job_id, answer_id = make_job(kind="codex")
+    prompts: list[str] = []
+
+    def fake_run(prompt, **kw):
+        prompts.append(prompt)
+        kw["emit"]({"type": "log", "level": "info", "message": "mcp: semantic_scholar/search_papers (completed)"})
+        return codex_engine.CodexResult(thread_id="thread-1", answer_md="# 结论\n\n证据 [1]",
+                                        tool_calls=["semantic_scholar/search_papers"])
+
+    monkeypatch.setattr(codex_engine, "run_codex", fake_run)
+
+    await run_codex_job(worker_ctx, job_id)
+
+    assert prompts[0].startswith("测试问题")
+    with SessionLocal() as db:
+        job, answer = db.get(Job, job_id), db.get(Answer, answer_id)
+        assert job.status == "succeeded"
+        assert job.result == {"answer_id": answer_id, "thread_id": "thread-1",
+                              "tool_calls": ["semantic_scholar/search_papers"]}
+        assert answer.status == "ready"
+        assert answer.answer_md == "# 结论\n\n证据 [1]"
+        assert answer.body_md is None      # 没有分节结构，前端整篇渲染
+
+    kinds = [kind for kind, _ in _stream(sync_redis, job_id)]
+    assert kinds[-1] == "succeeded" and "log" in kinds
+
+
+async def test_codex_failure_keeps_its_error_code(worker_ctx, sync_redis, monkeypatch):
+    job_id, answer_id = make_job(kind="codex")
+
+    def boom(prompt, **kw):
+        raise codex_engine.CodexFailed("mcp startup timeout")
+
+    monkeypatch.setattr(codex_engine, "run_codex", boom)
+
+    await run_codex_job(worker_ctx, job_id)
+
+    with SessionLocal() as db:
+        assert db.get(Answer, answer_id).error["code"] == "codex_failed"
+    kind, data = _stream(sync_redis, job_id)[-1]
+    assert kind == "failed" and data["code"] == "codex_failed"
 
 
 async def test_pipeline_error_marks_job_failed_with_code(worker_ctx, sync_redis, monkeypatch):

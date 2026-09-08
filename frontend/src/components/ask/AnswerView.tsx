@@ -134,6 +134,7 @@ export function AnswerView({
             connection={connection}
             jobId={answer.job_id ?? null}
             useKb={answer.options?.use_kb !== false}
+            engine={answer.engine === 'codex' ? 'codex' : 'ask'}
           />
           {!!live.search?.papers.length && (
             <section className="mt-8">

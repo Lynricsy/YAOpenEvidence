@@ -27,8 +27,9 @@ from picos_paths import RANK_DIR
 from .config import settings
 from .db import SessionLocal
 from .models import JOB_TO_ANSWER_STATUS, Answer, Job, utcnow
+from .services import codex as codex_engine
 from .services import events
-from .services.answers import to_answer_paper, to_ask_options
+from .services.answers import to_answer_paper, to_ask_options, to_codex_prompt
 
 logger = logging.getLogger("yaoe.worker")
 
@@ -75,36 +76,51 @@ def _terminate(ctx: dict, job_id: str, status: str, error: dict | None = None) -
     _publish(ctx, job_id, {"type": status, **(error or {})})
 
 
-async def run_ask_job(ctx: dict, job_id: str) -> None:
-    # 先在一个短事务里判定「能不能跑」，出了 with 再落终态：_terminate 另开
-    # session，两个写事务同时开着会在 SQLite 上互相等锁
+def _claim_answer(ctx: dict, job_id: str) -> tuple[str, dict] | None:
+    """认领一个挂着 answers 行的任务：置 running 并交出 (answer_id, options)。
+
+    跑不了（行缺失或已被取消）时自己落终态并返回 None。判定放在一个短事务里，
+    终态另开 session：两个写事务同时开着会在 SQLite 上互相等锁。
+    """
     with SessionLocal() as db:
         job = _job(db, job_id)
         if job is None:
             logger.warning("job %s not found in db; dropping", job_id)
-            return
+            return None
         answer = _answer_of(db, job)
         cancelled = events.is_cancel_requested(ctx["redis_sync"], job_id)
         if answer is not None and not cancelled:
             job.started_at = answer.started_at = utcnow()
             _set_status(db, job, answer, "running")
-            answer_id, options = answer.id, dict(answer.options or {})
+            return answer.id, dict(answer.options or {})
     if answer is None:
         _terminate(ctx, job_id, "failed", {"code": "internal_error", "message": "answer row missing"})
-        return
-    if cancelled:
+    else:
         _terminate(ctx, job_id, "cancelled")
-        return
+    return None
 
+
+def _emitter(ctx: dict, job_id: str):  # noqa: ANN201
+    """事件发布 + 进度落库；进度写在独立短事务里，不占长连接。"""
     def emit(event: dict) -> None:
         _publish(ctx, job_id, event)
         if event.get("type") in ("stage", "progress"):
-            with SessionLocal() as pdb:                     # 独立短事务，不占长连接
+            with SessionLocal() as pdb:
                 row = pdb.get(Job, job_id)
                 if row is not None:
                     row.progress = {"stage": event.get("stage"), "current": event.get("current"),
                                     "total": event.get("total")}
                     pdb.commit()
+
+    return emit
+
+
+async def run_ask_job(ctx: dict, job_id: str) -> None:
+    claimed = _claim_answer(ctx, job_id)
+    if claimed is None:
+        return
+    answer_id, options = claimed
+    emit = _emitter(ctx, job_id)
 
     def should_cancel() -> bool:
         return events.is_cancel_requested(ctx["redis_sync"], job_id)
@@ -151,6 +167,52 @@ async def run_ask_job(ctx: dict, job_id: str) -> None:
             answer.kb_hits = res.kb_hits
         if job is not None:
             _set_status(db, job, answer, "succeeded", result={"answer_id": answer_id}, finished=True)
+    _publish(ctx, job_id, {"type": "succeeded", "answer_id": answer_id})
+
+
+async def run_codex_job(ctx: dict, job_id: str) -> None:
+    """codex 引擎：一次 agent 对话，产出整篇答案。
+
+    与 ask 的区别只在中间过程——没有结构化 papers/citations，所以 `body_md` 留空，
+    前端按整篇渲染；会话 id 落在 job.result 里，运维可用 `codex exec resume <id>` 复盘。
+    """
+    claimed = _claim_answer(ctx, job_id)
+    if claimed is None:
+        return
+    answer_id, options = claimed
+    emit = _emitter(ctx, job_id)
+
+    def should_cancel() -> bool:
+        return events.is_cancel_requested(ctx["redis_sync"], job_id)
+
+    try:
+        res = await asyncio.to_thread(codex_engine.run_codex, to_codex_prompt(options),
+                                      emit=emit, should_cancel=should_cancel)
+    except codex_engine.CodexCancelled:
+        _terminate(ctx, job_id, "cancelled")
+        return
+    except codex_engine.CodexFailed as e:
+        _terminate(ctx, job_id, "failed", {"code": e.code, "message": str(e)})
+        return
+    except (asyncio.TimeoutError, asyncio.CancelledError):
+        await events.request_cancel(ctx["redis_async"], job_id, settings.events_ttl_s)
+        _terminate(ctx, job_id, "failed",
+                   {"code": "timeout", "message": f"job exceeded {settings.job_timeout_s}s"})
+        raise
+    except Exception as e:  # noqa: BLE001
+        logger.exception("codex job %s failed", job_id)
+        _terminate(ctx, job_id, "failed", {"code": "internal_error", "message": f"{type(e).__name__}: {e}"})
+        return
+
+    result = {"answer_id": answer_id, "thread_id": res.thread_id, "tool_calls": res.tool_calls}
+    with SessionLocal() as db:
+        job = _job(db, job_id)
+        answer = _answer_of(db, job) if job is not None else None
+        if answer is not None:
+            answer.answer_md = res.answer_md
+            answer.filters_label = f"codex · {len(res.tool_calls)} 次工具调用"
+        if job is not None:
+            _set_status(db, job, answer, "succeeded", result=result, finished=True)
     _publish(ctx, job_id, {"type": "succeeded", "answer_id": answer_id})
 
 
@@ -299,7 +361,7 @@ def _redis_settings():
 
 
 class WorkerSettings:
-    functions = [run_ask_job, run_kb_reindex_job, run_paper_ingest_job]
+    functions = [run_ask_job, run_codex_job, run_kb_reindex_job, run_paper_ingest_job]
     # 每月 1 日 03:00（容器时区 UTC）；arq 默认 unique=True，多 worker 只会跑一份
     cron_jobs = [cron(refresh_journal_ranks, day=1, hour=3, minute=0, timeout=900)]
     redis_settings = _redis_settings()
@@ -316,5 +378,5 @@ def run() -> None:
     run_worker(WorkerSettings)  # type: ignore[arg-type]
 
 
-__all__ = ["WorkerSettings", "refresh_journal_ranks", "run", "run_ask_job", "run_kb_reindex_job",
-           "run_paper_ingest_job"]
+__all__ = ["WorkerSettings", "refresh_journal_ranks", "run", "run_ask_job", "run_codex_job",
+           "run_kb_reindex_job", "run_paper_ingest_job"]

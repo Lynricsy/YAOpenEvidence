@@ -39,4 +39,20 @@ describe('筛选请求契约', () => {
       validYears({ ...DEFAULT_FILTERS, yearMode: 'range', yearFrom: 2020 }),
     ).toBe(true)
   })
+  it('codex 引擎不发送流水线专属字段', () => {
+    const f = {
+      ...DEFAULT_FILTERS,
+      engine: 'codex' as const,
+      quartiles: [1],
+      keepUnranked: true,
+      kbHits: 5,
+    }
+    const body = toAnswerCreate('q', f)
+    expect(body.engine).toBe('codex')
+    expect(body.quartiles).toEqual([1])
+    expect(body).not.toHaveProperty('keep_unranked')
+    expect(body).not.toHaveProperty('kb_hits')
+    expect(body).not.toHaveProperty('max_chars')
+    expect(fromAnswerOptions(body).engine).toBe('codex')
+  })
 })

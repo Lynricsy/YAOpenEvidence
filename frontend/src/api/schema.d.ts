@@ -692,6 +692,12 @@ export interface components {
             status: "queued" | "running" | "ready" | "failed" | "cancelled";
             /** Question */
             question: string;
+            /**
+             * Engine
+             * @default ask
+             * @enum {string}
+             */
+            engine?: "ask" | "codex";
             /** Filters Label */
             filters_label?: string | null;
             /** N Papers */
@@ -740,10 +746,20 @@ export interface components {
         /**
          * AnswerCreate
          * @description 创建问答任务。年份既可用「最近 N 年」也可用明确区间，但不能同时给。
+         *
+         *     `engine="ask"` 走确定性流水线（检索 → 全文 → 逐篇读 → 综合），全部字段生效；
+         *     `engine="codex"` 交给 Codex agent 自己决定调哪些 MCP 工具，过滤条件会翻成检索
+         *     要求写进提问，`max_chars` / `use_paywall` / `keep_unranked` / `kb_hits` 不生效。
          */
         AnswerCreate: {
             /** Question */
             question: string;
+            /**
+             * Engine
+             * @default ask
+             * @enum {string}
+             */
+            engine?: "ask" | "codex";
             /**
              * Papers
              * @default 8
@@ -985,6 +1001,12 @@ export interface components {
             status: "queued" | "running" | "ready" | "failed" | "cancelled";
             /** Question */
             question: string;
+            /**
+             * Engine
+             * @default ask
+             * @enum {string}
+             */
+            engine?: "ask" | "codex";
             /** Filters Label */
             filters_label?: string | null;
             /** N Papers */
@@ -1181,7 +1203,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "ask" | "kb_reindex" | "paper_ingest";
+            kind: "ask" | "codex" | "kb_reindex" | "paper_ingest";
             /**
              * Status
              * @enum {string}
@@ -1864,7 +1886,7 @@ export interface components {
              * Stage
              * @enum {string}
              */
-            stage: "queries" | "search" | "fulltext" | "read" | "kb" | "synthesize" | "reindex";
+            stage: "queries" | "search" | "fulltext" | "read" | "kb" | "synthesize" | "reindex" | "agent";
             /**
              * Status
              * @enum {string}
@@ -2626,7 +2648,7 @@ export interface operations {
     list_jobs_v1_jobs_get: {
         parameters: {
             query?: {
-                kind?: ("ask" | "kb_reindex" | "paper_ingest") | null;
+                kind?: ("ask" | "codex" | "kb_reindex" | "paper_ingest") | null;
                 status?: ("queued" | "running" | "succeeded" | "failed" | "cancelled") | null;
                 limit?: number;
                 offset?: number;

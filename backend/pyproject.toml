@@ -16,6 +16,8 @@ dependencies = [
   "sse-starlette>=2.1",
   "argon2-cffi>=25.1",
   "python-multipart>=0.0.20",
+  # codex 引擎：SDK 依赖 openai-codex-cli-bin，二进制随 wheel 进镜像，容器内无需 node
+  "openai-codex>=0.147",
 ]
 
 [project.scripts]

@@ -10,13 +10,20 @@ from .kb import KbHit
 from .papers import Fact, Paragraph, VerifiedQuote
 
 AnswerStatus = Literal["queued", "running", "ready", "failed", "cancelled"]
+AnswerEngine = Literal["ask", "codex"]
 TERMINAL_ANSWER_STATUSES = frozenset({"ready", "failed", "cancelled"})
 
 
 class AnswerCreate(BaseModel):
-    """创建问答任务。年份既可用「最近 N 年」也可用明确区间，但不能同时给。"""
+    """创建问答任务。年份既可用「最近 N 年」也可用明确区间，但不能同时给。
+
+    `engine="ask"` 走确定性流水线（检索 → 全文 → 逐篇读 → 综合），全部字段生效；
+    `engine="codex"` 交给 Codex agent 自己决定调哪些 MCP 工具，过滤条件会翻成检索
+    要求写进提问，`max_chars` / `use_paywall` / `keep_unranked` / `kb_hits` 不生效。
+    """
 
     question: str = Field(min_length=1, max_length=2000)
+    engine: AnswerEngine = "ask"
     papers: int = Field(default=8, ge=1, le=30)
     years: int | None = Field(default=None, ge=1, le=50)
     year_from: int | None = Field(default=None, ge=1900, le=2100)
@@ -112,6 +119,7 @@ class AnswerSummary(BaseModel):
     job_id: str | None = None
     status: AnswerStatus
     question: str
+    engine: AnswerEngine = "ask"
     filters_label: str | None = None
     n_papers: int | None = None
     n_fulltext: int | None = None

@@ -1,5 +1,12 @@
 export type StageKey =
-  'queries' | 'search' | 'fulltext' | 'read' | 'kb' | 'synthesize' | 'reindex'
+  | 'queries'
+  | 'search'
+  | 'fulltext'
+  | 'read'
+  | 'kb'
+  | 'synthesize'
+  | 'reindex'
+  | 'agent'
 export type CandidatePaper = {
   n: number
   pmid: string

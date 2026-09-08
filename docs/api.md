@@ -200,6 +200,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 | 字段 | 类型 | 必填 | 默认 | 规则 |
 |---|---|---:|---|---|
 | `question` | `string` | 是 | — | 去除首尾空白后长度 `1..2000`。 |
+| `engine` | `ask \| codex` | 否 | `ask` | `ask` 走确定性流水线；`codex` 交给容器内的 Codex agent（见下）。 |
 | `papers` | `integer` | 否 | `8` | `1..30`。 |
 | `years` | `integer \| null` | 否 | `null` | 最近年数，`1..50`；不能与 `year_from` 同时给。 |
 | `year_from` | `integer \| null` | 否 | `null` | `1900..2100`。 |
@@ -215,6 +216,14 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 成功返回 `202 Accepted`、响应头 `Location: /v1/answers/{answer_id}`（其中占位符取响应体的 `id`），响应体为 `Answer`，通常处于 `queued`；若 worker 已推进任务，也可能返回更新后的状态。可能错误：`forbidden`、`validation_error`、`too_many_jobs`、`upstream_unavailable`、`internal_error`。
 
 answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入队失败返回 `502 upstream_unavailable`，两者均保存为 `failed`，带失败信息与结束时间；失败答案可通过列表定位，并正常调用 `DELETE` 删除。
+
+`engine="codex"` 时任务 `kind` 为 `codex`，由 worker 拉起容器内的 codex 运行时，工具面是 core 的 `semantic_scholar` MCP（检索 / 全文 / 本地 PDF / kb_search）。差异：
+
+- 生效字段只有 `question`、`papers`、`years` / `year_from` / `year_to`、`quartiles`、`journals`、`use_kb`——它们被翻成检索要求写进提问，由模型转交工具，不是服务端硬过滤；
+- `keep_unranked`、`use_paywall`、`kb_hits`、`max_chars` 对 codex 无效；
+- 结果没有结构化 `papers` / `citations`，`body_md` 为 `null`，整篇答案只在 `answer_md` 与 `/markdown` 里，`/papers/{n}` 一律 `404`；
+- 事件流只有 `agent` 一个 `stage`，工具调用以 `log` 事件（`mcp: <server>/<tool> (<status>)`）呈现；
+- 成功后 `job.result` 额外带 `thread_id` 与 `tool_calls`，`thread_id` 可用于服务端复盘会话。
 
 #### `GET /v1/answers`
 
@@ -263,7 +272,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 | 参数 | 类型 | 默认 | 说明 |
 |---|---|---|---|
-| `kind` | `ask \| kb_reindex \| paper_ingest \| null` | `null` | 精确过滤任务种类。 |
+| `kind` | `ask \| codex \| kb_reindex \| paper_ingest \| null` | `null` | 精确过滤任务种类。 |
 | `status` | `queued \| running \| succeeded \| failed \| cancelled \| null` | `null` | 精确过滤状态。 |
 | `limit` | `integer` | `20` | `1..100`。 |
 | `offset` | `integer` | `0` | `>=0`。 |
@@ -476,6 +485,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | `job_id` | `string \| null` | 关联的异步 job ID。 |
 | `status` | `queued \| running \| ready \| failed \| cancelled` | answer 生命周期状态。 |
 | `question` | `string` | 原始问题。 |
+| `engine` | `ask \| codex` | 产出该答案的引擎；历史导入数据为 `ask`。 |
 | `filters_label` | `string \| null` | 已归一化的筛选条件展示文本。 |
 | `n_papers` | `integer \| null` | 纳入答案的文献数。 |
 | `n_fulltext` | `integer \| null` | 纳入文献中读取全文的数量。 |
@@ -557,7 +567,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `id` | `string` | job ID。 |
-| `kind` | `ask \| kb_reindex \| paper_ingest` | 任务种类。 |
+| `kind` | `ask \| codex \| kb_reindex \| paper_ingest` | 任务种类。 |
 | `status` | `queued \| running \| succeeded \| failed \| cancelled` | job 生命周期状态。 |
 | `user_id` | `string \| null` | 所有者的用户 ID；历史迁移或 CLI 导入的无归属数据为 `null`，仅管理员可见。 |
 | `params` | `object` | 入队参数。 |
@@ -578,7 +588,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `code` | `string` | `no_papers \| nothing_relevant \| pdf_unreadable \| fulltext_unavailable \| llm_unavailable \| timeout \| internal_error`。前两个只出现在问答任务，`pdf_unreadable`、`fulltext_unavailable` 只出现在入库任务。 |
+| `code` | `string` | `no_papers \| nothing_relevant \| codex_failed \| pdf_unreadable \| fulltext_unavailable \| llm_unavailable \| timeout \| internal_error`。前两个只出现在 `ask` 问答任务，`codex_failed` 只出现在 `codex` 问答任务，`pdf_unreadable`、`fulltext_unavailable` 只出现在入库任务。 |
 | `message` | `string` | 面向人的失败原因。 |
 
 ### 5.3 论文、知识库与分区模型
@@ -784,7 +794,7 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 
 | event | `data` 字段 |
 |---|---|
-| `stage` | `{stage, status, detail}`。`stage` 为 `queries \| search \| fulltext \| read \| kb \| synthesize \| reindex`；`status` 为 `started \| finished`；`detail` 为对象，缺省为空对象。`search/finished` 包含 `candidates`、`kept`、`dropped:{year,quartile,unranked,journal}`、`papers:[{n,pmid,title,year,journal,rank_label,pmcid}]`；`read/finished` 包含 `relevant`、`total`。其他阶段也可在 `detail` 中报告该阶段计数或结果摘要。 |
+| `stage` | `{stage, status, detail}`。`stage` 为 `queries \| search \| fulltext \| read \| kb \| synthesize \| reindex \| agent`；`status` 为 `started \| finished`；`detail` 为对象，缺省为空对象。`search/finished` 包含 `candidates`、`kept`、`dropped:{year,quartile,unranked,journal}`、`papers:[{n,pmid,title,year,journal,rank_label,pmcid}]`；`read/finished` 包含 `relevant`、`total`；`agent` 是 codex 引擎唯一的阶段，`finished` 时带 `tool_calls`、`chars`。其他阶段也可在 `detail` 中报告该阶段计数或结果摘要。 |
 | `progress` | `{stage, current, total, pmid?, title?}`，其中 `stage` 为 `fulltext \| read \| kb \| reindex`；`current`、`total` 为非负整数；`pmid`、`title` 为可选 `string \| null`。 |
 | `log` | `{level, message}`；当前 `level` 为 `info \| warning`。只适合展示运行日志，不应据其文案驱动状态机。 |
 | `succeeded` | 问答任务为 `{answer_id}`；KB 重建任务为 `{items, papers}`；入库任务为 `{key, n_paragraphs, n_facts, items}`。终态。 |

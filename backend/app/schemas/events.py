@@ -8,7 +8,8 @@ from pydantic.json_schema import JsonSchemaValue, models_json_schema
 
 from .common import JobError
 
-JobStage = Literal["queries", "search", "fulltext", "read", "kb", "synthesize", "reindex"]
+# agent 是 codex 引擎唯一的阶段：一轮对话内部没有可枚举的固定步骤
+JobStage = Literal["queries", "search", "fulltext", "read", "kb", "synthesize", "reindex", "agent"]
 
 
 def _stream_id(value: str) -> str:

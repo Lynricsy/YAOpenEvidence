@@ -102,6 +102,11 @@ class Answer(Base):
         Index("ix_answers_user_created", "user_id", "created_at"),
     )
 
+    @property
+    def engine(self) -> str:
+        """引擎不单独建列：它就是创建入参的一部分，历史行（options 为空）一律是 ask。"""
+        return (self.options or {}).get("engine", "ask")
+
 
 # job.status -> answer.status
 JOB_TO_ANSWER_STATUS = {

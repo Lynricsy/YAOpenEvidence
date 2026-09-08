@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Iterator
 
 from pydantic import BaseModel
 
@@ -98,13 +99,47 @@ def model_name() -> str:
     return os.environ.get("LLM_MODEL", "qwen3-14b")
 
 
+FAKE_CODEX_ANSWER = """**结论 / Bottom line**: fake-codex 的确定性回答，用于验证 codex 引擎链路。
+
+**证据 / Evidence**
+- 这是假模型产出的占位证据 [1]。
+
+**局限 / Caveats**: 本回答来自 fake-llm，不含真实文献。
+
+**参考文献 / References**
+[1] Fake A (2026). A deterministic placeholder. Fake Journal. PMID:00000000
+
+*This is a literature summary for research/educational use, not medical advice.*"""
+
+
+def _sse(event: str, payload: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+def responses_stream(text: str) -> Iterator[str]:
+    """Responses API 的最小事件流：codex 只要 created / output_item.done / completed。
+
+    `usage` 的字段一个都不能少（含 total_tokens），否则 codex 判定流未完成并重试。
+    """
+    item = {"type": "message", "role": "assistant", "id": "msg_1", "status": "completed",
+            "content": [{"type": "output_text", "text": text}]}
+    usage = {"input_tokens": 1, "input_tokens_details": {"cached_tokens": 0},
+             "output_tokens": len(text) // 4, "output_tokens_details": {"reasoning_tokens": 0},
+             "total_tokens": len(text) // 4 + 1}
+    yield _sse("response.created", {"type": "response.created", "response": {"id": "resp_fake"}})
+    yield _sse("response.output_item.done", {"type": "response.output_item.done", "item": item})
+    yield _sse("response.completed", {"type": "response.completed",
+                                      "response": {"id": "resp_fake", "usage": usage, "output": [item]}})
+
+
 def create_app():
-    """OpenAI 兼容的最小服务，只实现 ask.py 用到的两个端点。
+    """OpenAI 兼容的最小服务：ask.py 用 /v1/chat/completions，codex 用 /v1/responses。
 
     请求模型必须定义在模块级：本文件开了 `from __future__ import annotations`，
     函数内的局部类无法被 FastAPI 解析注解，参数会被当成 query 参数（422）。
     """
     from fastapi import FastAPI
+    from fastapi.responses import StreamingResponse
 
     app = FastAPI(title="fake-llm")
 
@@ -123,6 +158,11 @@ def create_app():
                              "message": {"role": "assistant", "content": text}}],
                 "usage": {"prompt_tokens": len(user) // 4, "completion_tokens": len(text) // 4,
                           "total_tokens": (len(user) + len(text)) // 4}}
+
+    @app.post("/v1/responses")
+    def responses() -> StreamingResponse:
+        # codex 只用 responses 线协议（0.147 起 wire_api="chat" 已被移除）
+        return StreamingResponse(responses_stream(FAKE_CODEX_ANSWER), media_type="text/event-stream")
 
     return app
 

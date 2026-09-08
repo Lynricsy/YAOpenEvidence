@@ -1,5 +1,7 @@
 import type { components } from '@/api/schema'
+export type Engine = 'ask' | 'codex'
 export type FilterState = {
+  engine: Engine
   quartiles: number[]
   keepUnranked: boolean
   yearMode: 'any' | 'recent' | 'range'
@@ -17,6 +19,7 @@ export type YearState = Pick<
   'yearMode' | 'years' | 'yearFrom' | 'yearTo'
 >
 export const DEFAULT_FILTERS: FilterState = {
+  engine: 'ask',
   quartiles: [],
   keepUnranked: false,
   yearMode: 'recent',
@@ -57,16 +60,20 @@ export function toAnswerCreate(
   question: string,
   f: FilterState,
 ): components['schemas']['AnswerCreate'] {
+  // codex 引擎不走确定性流水线：只发它真会用到的字段，避免让人以为字符预算等仍生效
+  const codex = f.engine === 'codex'
   return {
     question: question.trim(),
+    engine: f.engine,
     papers: f.papers,
     ...yearParams(f),
     quartiles: f.quartiles,
-    ...(f.quartiles.length ? { keep_unranked: f.keepUnranked } : {}),
+    ...(f.quartiles.length && !codex ? { keep_unranked: f.keepUnranked } : {}),
     journals: f.journals,
     use_kb: f.useKb,
-    kb_hits: f.useKb ? f.kbHits : 0,
-    max_chars: f.maxChars,
+    ...(codex
+      ? {}
+      : { kb_hits: f.useKb ? f.kbHits : 0, max_chars: f.maxChars }),
   }
 }
 const number = (v: unknown, fallback: number, min: number, max: number) =>
@@ -76,6 +83,7 @@ const number = (v: unknown, fallback: number, min: number, max: number) =>
 function normalize(o: Partial<FilterState>): FilterState {
   return {
     ...DEFAULT_FILTERS,
+    engine: o.engine === 'codex' ? 'codex' : 'ask',
     quartiles: Array.isArray(o.quartiles)
       ? [
           ...new Set(
@@ -110,6 +118,7 @@ function normalize(o: Partial<FilterState>): FilterState {
 }
 export function fromAnswerOptions(o: Record<string, unknown>): FilterState {
   return normalize({
+    engine: o.engine === 'codex' ? 'codex' : 'ask',
     quartiles: o.quartiles as number[],
     keepUnranked: o.keep_unranked as boolean,
     yearMode:
@@ -126,6 +135,7 @@ export function fromAnswerOptions(o: Record<string, unknown>): FilterState {
 }
 export function describeFilters(f: FilterState): string {
   return [
+    ...(f.engine === 'codex' ? ['codex 引擎'] : []),
     f.yearMode === 'recent'
       ? '近' + f.years + '年'
       : f.yearMode === 'range'

@@ -23,6 +23,8 @@ const steps: [StageKey, string][] = [
   ['kb', '写入知识库'],
   ['synthesize', '综合成稿'],
 ]
+// codex 一轮对话内部没有固定步骤，只有一个 agent 阶段，工具调用走日志
+const codexSteps: [StageKey, string][] = [['agent', 'Codex 检索与作答']]
 
 const connections: Record<Connection, [string, string]> = {
   idle: ['同步任务状态', 'bg-muted-foreground'],
@@ -75,11 +77,13 @@ export function ProgressPipeline({
   connection,
   jobId,
   useKb,
+  engine,
 }: {
   live: JobLive
   connection: Connection
   jobId: string | null
   useKb: boolean
+  engine: 'ask' | 'codex'
 }) {
   const cancel = useMutation({
     mutationFn: cancelJob,
@@ -90,7 +94,10 @@ export function ProgressPipeline({
     const el = logRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [live.logs.length])
-  const visible = steps.filter(([stage]) => stage !== 'kb' || useKb)
+  const visible =
+    engine === 'codex'
+      ? codexSteps
+      : steps.filter(([stage]) => stage !== 'kb' || useKb)
   const [connectionLabel, dotClass] = connections[connection]
   const finished = visible.filter(
     ([stage]) => live.stages[stage]?.status === 'finished',

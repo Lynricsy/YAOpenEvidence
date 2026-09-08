@@ -43,6 +43,21 @@ def test_create_returns_202_with_location_and_enqueues(client, arq):
         assert answer.status == "queued" and answer.user_id == "writer"
 
 
+def test_codex_engine_routes_to_its_own_job(client, arq):
+    """engine 决定 worker 入口：走错入口会让 codex 提问被当成 ask 流水线跑。"""
+    body = _create(client, engine="codex").json()
+    assert body["engine"] == "codex"
+    assert [call[0] for call in arq.calls] == ["run_codex_job"]
+    with SessionLocal() as db:
+        assert db.get(Job, body["job_id"]).kind == "codex"
+
+
+def test_default_engine_is_ask(client, arq):
+    body = _create(client).json()
+    assert body["engine"] == "ask"
+    assert [call[0] for call in arq.calls] == ["run_ask_job"]
+
+
 @pytest.mark.parametrize("payload, field", [
     ({"years": 3, "year_from": 2020}, "years"),
     ({"year_to": 2024}, "year_to"),
