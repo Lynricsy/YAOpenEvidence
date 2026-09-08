@@ -120,6 +120,14 @@ FAKE_CODEX_ANSWER = """**结论 / Bottom line**: fake-codex 的确定性回答�
 # 指令是从 JSON 序列化后的 input 里抓的，字符集必须排除引号与反斜杠，否则会把转义带进路径
 TOOL_DIRECTIVE = re.compile(r"TOOLTEST_PDF=([\w./-]+)")
 MCP_NAMESPACE = "mcp__semantic_scholar"
+# 最近一次 /v1/responses 请求下发的工具名（含 namespace 名）。进程内测试据此断言
+# 「哪些工具真的暴露给了模型」——这是唯一能看见 codex 工具面的地方。
+LAST_TOOL_NAMES: list[str] = []
+
+
+def record_tools(body: dict) -> None:
+    LAST_TOOL_NAMES[:] = [str(t.get("name") or t.get("type") or "")
+                          for t in (body.get("tools") or []) if isinstance(t, dict)]
 
 
 def _sse(event: str, payload: dict) -> str:
@@ -192,7 +200,9 @@ def create_app():
     @app.post("/v1/responses")
     async def responses(request: Request) -> StreamingResponse:
         # codex 只用 responses 线协议（0.147 起 wire_api="chat" 已被移除）
-        item = next_output_item(await request.json())
+        body = await request.json()
+        record_tools(body)
+        item = next_output_item(body)
         return StreamingResponse(responses_stream(item), media_type="text/event-stream")
 
     return app

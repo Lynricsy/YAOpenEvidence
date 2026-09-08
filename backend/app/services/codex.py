@@ -84,8 +84,10 @@ def engine_config() -> dict[str, Any]:
                 "tool_timeout_sec": MCP_TOOL_TIMEOUT_S,
             },
         },
-        # 内置联网检索由模型服务端实现，本地 provider 没有；证据必须来自 MCP 工具
-        "tools": {"web_search": False},
+        # 内置联网检索由模型服务端实现，本地 provider 没有；证据必须来自 MCP 工具。
+        # 开关是顶层 `web_search`：`tools.web_search` 的布尔值会被反序列化后丢弃，
+        # strict-config 也不会报错，工具照样下发。
+        "web_search": "disabled",
     }
 
 
@@ -120,8 +122,6 @@ def _item_summary(item: dict[str, Any]) -> tuple[str, str] | None:
     if kind == "commandExecution":
         cmd = item.get("command") or ""
         return "exec", f"exec: {cmd[:120]}"
-    if kind == "webSearch":
-        return "web_search", f"web_search: {item.get('query') or ''}"
     return None
 
 

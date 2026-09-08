@@ -18,6 +18,7 @@ import ask
 from app.services import codex as codex_engine
 from picos_paths import PDF_DIR
 
+from . import fake_llm
 from .fake_llm import create_app
 
 MARKER = "CODEXTOOLLOOPMARKER42"
@@ -105,3 +106,17 @@ def test_codex_answers_without_tools_when_prompt_has_no_directive(fake_llm_url, 
 
     assert result.tool_calls == []
     assert "结论" in result.answer_md
+
+
+def test_exposed_tool_surface_has_mcp_but_no_web_search(fake_llm_url, codex_home, monkeypatch):
+    """内置联网检索本地 provider 实现不了，必须真的不下发；靠提示词约束是不够的。
+
+    开关是顶层 `web_search="disabled"`：写成 `tools.web_search=false` 时 codex 会
+    接受配置却把布尔值丢掉，工具照样出现在请求里。
+    """
+    monkeypatch.setattr(ask, "LLM_BASE", fake_llm_url)
+
+    codex_engine.run_codex("SGLT2 抑制剂对 HFpEF 有什么获益？")
+
+    assert "mcp__semantic_scholar" in fake_llm.LAST_TOOL_NAMES
+    assert "web_search" not in fake_llm.LAST_TOOL_NAMES
