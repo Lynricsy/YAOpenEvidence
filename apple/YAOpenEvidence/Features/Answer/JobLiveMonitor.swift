@@ -11,15 +11,6 @@ final class JobLiveMonitor {
         case open
         case reconnecting
         case closed
-
-        var label: String {
-            switch self {
-            case .idle, .closed: "同步任务状态"
-            case .open: "实时更新中"
-            case .connecting: "正在连接…"
-            case .reconnecting: "连接中断，正在重连…"
-            }
-        }
     }
 
     private(set) var live = JobLive.empty

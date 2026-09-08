@@ -16,6 +16,7 @@ struct AnswerScreen: View {
     @State private var followUp = ""
     @State private var submitting = false
     @State private var showDeleteConfirm = false
+    @State private var showQueries = false
 
     init(answerID: String) {
         self.answerID = answerID
@@ -42,8 +43,11 @@ struct AnswerScreen: View {
                 await model.load()
             }
             .onDisappear { model.teardown() }
-            .safeAreaInset(edge: .bottom) { composer }
+            .floatingComposer { composer }
             .modifier(ReaderPresentation(model: model, isRegular: isRegular))
+            .sheet(isPresented: $showQueries) {
+                QueriesSheet(queries: model.current?.queries ?? [])
+            }
             .confirmationDialog(
                 "删除这份答案？",
                 isPresented: $showDeleteConfirm,
@@ -65,12 +69,13 @@ struct AnswerScreen: View {
                     AnswerHeader(answer: answer)
                     body(for: answer)
                 }
-                .frame(maxWidth: 760)
+                .frame(maxWidth: Metrics.contentMaxWidth)
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, Metrics.pageInset)
                 .padding(.vertical, 24)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
     }
 
     @ViewBuilder
@@ -89,28 +94,21 @@ struct AnswerScreen: View {
             MarkdownDocumentView(blocks: model.blocks, onCite: { model.openReader($0) })
             SourceListView(
                 papers: answer.papers,
-                nFulltext: answer.nFulltext ?? 0,
-                citationCounts: model.citationCounts,
                 onOpen: { n, pid in model.reader = ReaderTarget(n: n, pid: pid) }
             )
             reaskButton(answer: answer, title: "重新提问")
 
         case .failed:
-            VStack(alignment: .leading, spacing: 10) {
-                Label(JobErrorMessage.text(for: answer.error?.code ?? "internal_error"), systemImage: "exclamationmark.triangle")
-                    .font(.headline)
-                    .foregroundStyle(.red)
-                if let message = answer.error?.message, !message.isEmpty {
-                    Text(message)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                }
+            VStack(alignment: .leading, spacing: 12) {
+                Label(
+                    JobErrorMessage.text(for: answer.error?.code ?? "internal_error"),
+                    systemImage: "exclamationmark.triangle.fill"
+                )
+                .font(.headline)
+                .foregroundStyle(.red)
                 reaskButton(answer: answer, title: "放宽筛选后重新提问")
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.red.opacity(0.08), in: .rect(cornerRadius: 12))
+            .card()
 
         case .cancelled:
             VStack(spacing: 12) {
@@ -125,18 +123,16 @@ struct AnswerScreen: View {
             app.reask(question: answer.question, options: answer.options)
         }
         .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
     }
 
     private var composer: some View {
         QuestionComposer(
             text: $followUp,
-            placeholder: "追问或提出新问题…",
+            placeholder: "继续提问…",
             pending: submitting,
             onSubmit: submitFollowUp
         )
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(.bar)
     }
 
     @ToolbarContentBuilder
@@ -147,6 +143,8 @@ struct AnswerScreen: View {
                     Button("沿用此次筛选重新提问") {
                         app.reask(question: answer.question, options: answer.options)
                     }
+                    Button("查看检索式") { showQueries = true }
+                        .disabled(answer.queries.isEmpty)
                     Button("删除", role: .destructive) { showDeleteConfirm = true }
                         .disabled(answer.status.isActive || model.deleting)
                 }
@@ -222,18 +220,17 @@ struct AnswerHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                StatusBadge(answer.status)
+            HStack(spacing: 6) {
                 Text(answer.createdAt, format: .relative(presentation: .named))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                     .help(answer.createdAt.formatted(.dateTime.year().month().day().hour().minute()))
-                if let papers = answer.nPapers {
-                    Text("\(papers) 篇文献 · \(answer.nFulltext ?? 0) 篇全文")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                // 进行中由进度卡表达、失败由错误卡表达，头部不再重复状态徽标。
+                if answer.status == .ready, let papers = answer.nPapers {
+                    Text("·")
+                    Text("\(papers) 篇文献")
                 }
             }
+            .font(.caption)
+            .foregroundStyle(.secondary)
 
             Text(answer.question)
                 .font(.system(.title, design: .serif, weight: .semibold))
@@ -242,21 +239,30 @@ struct AnswerHeader: View {
             if let label = answer.filtersLabel, !label.isEmpty {
                 Pill(text: label, systemImage: "line.3.horizontal.decrease.circle")
             }
+        }
+    }
+}
 
-            if !answer.queries.isEmpty {
-                DisclosureGroup("检索式（\(answer.queries.count)）") {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(answer.queries, id: \.self) { query in
-                            Text(query)
-                                .font(.system(.caption, design: .monospaced))
-                                .textSelection(.enabled)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                    .padding(.top, 6)
+/// 检索式：研究者复现检索时才打开，不占答案页正文。
+private struct QueriesSheet: View {
+    let queries: [String]
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List(queries, id: \.self) { query in
+                Text(query)
+                    .font(.system(.footnote, design: .monospaced))
+                    .textSelection(.enabled)
+            }
+            .navigationTitle("检索式")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { dismiss() }
                 }
-                .font(.subheadline)
             }
         }
+        .presentationDetents([.medium, .large])
     }
 }

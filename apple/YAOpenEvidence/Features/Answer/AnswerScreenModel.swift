@@ -53,10 +53,6 @@ final class AnswerScreenModel {
         return []
     }
 
-    var citationCounts: [Int: Int] {
-        Citations.countMarkers(in: current?.bodyMd ?? "")
-    }
-
     func configure(session: SessionStore, app: AppModel, errors: ErrorPresenter) {
         self.session = session
         self.app = app
@@ -112,7 +108,7 @@ final class AnswerScreenModel {
 
     /// 首次进入创建监视器；从其他 Tab 回到本页时续订同一个监视器（保留已收到的阶段与日志位置）。
     private func startMonitorIfNeeded(client: APIClient) {
-        guard let session, let answer = current, answer.status.isActive, let jobID = answer.jobId else { return }
+        guard let answer = current, answer.status.isActive, let jobID = answer.jobId else { return }
         if monitor == nil {
             monitor = JobLiveMonitor(jobID: jobID, client: client) { [weak self] live, event in
                 self?.handle(live: live, event: event)
