@@ -76,7 +76,16 @@ final class SessionStore {
             cacheUser(user)
             phase = .signedIn
         } catch {
-            clear()
+            // 只有后端明确否认这枚令牌才算会话失效。网络抖动、超时、5xx 都不能销毁
+            // 一枚本地尚未过期的令牌——否则一次断网重启就要用户重新输密码。
+            // 令牌真的坏了也不会卡住：下一个受保护请求的 401 会走 `expire` 回登录页。
+            switch error.status {
+            case 401, 403:
+                clear()
+            default:
+                user = cachedUser()
+                phase = .signedIn
+            }
         }
     }
 
@@ -128,6 +137,12 @@ final class SessionStore {
     private func cacheUser(_ user: UserRead?) {
         guard let user, let data = try? JSONCoding.encoder.encode(user) else { return }
         defaults.set(data, forKey: Keys.user)
+    }
+
+    /// 上一次成功拿到的账号信息：`/auth/me` 暂时打不通时用它撑住界面。
+    private func cachedUser() -> UserRead? {
+        guard let data = defaults.data(forKey: Keys.user) else { return nil }
+        return try? JSONCoding.decoder.decode(UserRead.self, from: data)
     }
 
     private func clear() {

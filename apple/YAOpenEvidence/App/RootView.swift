@@ -23,6 +23,10 @@ struct RootView: View {
                 MainTabView()
             }
         }
+        // 窗口最小尺寸跟着内容走：再小登录按钮和侧栏就没地方放了。
+        #if os(macOS)
+            .frame(minWidth: 860, minHeight: 640)
+        #endif
         .animation(.default, value: session.phase)
         .task {
             // 会话结束时清掉上一个账号的草稿与导航栈。
