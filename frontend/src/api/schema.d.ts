@@ -177,6 +177,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/answers/{answer_id}/followup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 在智能体会话上追问
+         * @description 在同一个 codex thread 上再跑一轮；选项沿用被续接的那一轮，只换问题。
+         */
+        post: operations["followup_answer_v1_answers__answer_id__followup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/answers/{answer_id}/thread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 同一会话的全部回合 */
+        get: operations["get_answer_thread_v1_answers__answer_id__thread_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/answers/{answer_id}": {
         parameters: {
             query?: never;
@@ -709,8 +746,17 @@ export interface components {
             /** Finished At */
             finished_at?: string | null;
             error?: components["schemas"]["JobError"] | null;
+            /**
+             * N Turns
+             * @default 1
+             */
+            n_turns?: number;
+            /** Root Question */
+            root_question?: string | null;
             /** Question En */
             question_en?: string | null;
+            /** Parent Id */
+            parent_id?: string | null;
             /**
              * Queries
              * @default []
@@ -742,6 +788,11 @@ export interface components {
              * @default []
              */
             kb_hits?: components["schemas"]["KbHit"][];
+            /**
+             * Trace
+             * @default []
+             */
+            trace?: components["schemas"]["ToolCall"][];
         };
         /**
          * AnswerCreate
@@ -1018,6 +1069,13 @@ export interface components {
             /** Finished At */
             finished_at?: string | null;
             error?: components["schemas"]["JobError"] | null;
+            /**
+             * N Turns
+             * @default 1
+             */
+            n_turns?: number;
+            /** Root Question */
+            root_question?: string | null;
         };
         /** Body_put_state_v1_paywall_state_put */
         Body_put_state_v1_paywall_state_put: {
@@ -1152,6 +1210,14 @@ export interface components {
         FactList: {
             /** Items */
             items: components["schemas"]["Fact"][];
+        };
+        /**
+         * FollowupCreate
+         * @description 在已有 codex 会话上追问；其余选项一律沿用被追问的那一轮。
+         */
+        FollowupCreate: {
+            /** Question */
+            question: string;
         };
         /** FulltextResult */
         FulltextResult: {
@@ -1718,6 +1784,40 @@ export interface components {
              */
             status: "ok" | "degraded";
             checks: components["schemas"]["ReadinessChecks"];
+        };
+        /**
+         * ToolCall
+         * @description agent 的一次工具调用；同一 `call_id` 先后发 started 与终态两条。
+         *
+         *     既是 SSE `tool` 事件的数据，也是 `Answer.trace` 的元素——实时轨迹与落库轨迹
+         *     必须是同一形状，客户端才能用同一套渲染。
+         */
+        ToolCall: {
+            /** Call Id */
+            call_id: string;
+            /** Server */
+            server: string;
+            /** Tool */
+            tool: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "started" | "completed" | "failed";
+            /** Args */
+            args?: {
+                [key: string]: string | number | boolean | null;
+            };
+            /**
+             * Duration Ms
+             * @default null
+             */
+            duration_ms?: number | null;
+            /**
+             * Error
+             * @default null
+             */
+            error?: string | null;
         };
         /** UserRead */
         UserRead: {
@@ -2423,6 +2523,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Answer"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    followup_answer_v1_answers__answer_id__followup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                answer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FollowupCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Answer"];
+                };
+            };
+            /** @description Request validation failed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Problem Details (RFC 9457) */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    get_answer_thread_v1_answers__answer_id__thread_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                answer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnswerSummary"][];
                 };
             };
             /** @description Request validation failed */
