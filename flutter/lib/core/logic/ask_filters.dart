@@ -18,6 +18,7 @@ abstract class AskFilters with _$AskFilters {
   const AskFilters._();
 
   const factory AskFilters({
+    @Default(AnswerEngine.ask) AnswerEngine engine,
     @Default(<int>[]) List<int> quartiles,
     @Default(false) bool keepUnranked,
     @Default(YearMode.recent) YearMode yearMode,
@@ -40,6 +41,9 @@ abstract class AskFilters with _$AskFilters {
     final years = asInt(options['years']);
     final yearFrom = asInt(options['year_from']);
     return AskFilters(
+      engine: options['engine'] == 'codex'
+          ? AnswerEngine.codex
+          : AnswerEngine.ask,
       quartiles: [
         ...?(options['quartiles'] as List?)?.map(asInt).whereType<int>(),
       ],
@@ -78,6 +82,7 @@ abstract class AskFilters with _$AskFilters {
     final year = currentYear ?? _currentYear();
     final seen = <String>{};
     return AskFilters(
+      engine: engine,
       quartiles: quartiles.where((q) => q >= 1 && q <= 4).toSet().toList()
         ..sort(),
       keepUnranked: keepUnranked,
@@ -114,19 +119,26 @@ abstract class AskFilters with _$AskFilters {
 
   /// 生成创建任务的请求体：years 与 year_from/year_to 互斥，
   /// keep_unranked 仅在选了分区时发送，且永不发送 use_paywall。
-  AnswerCreate toAnswerCreate(String question) => AnswerCreate(
-    question: question.trim(),
-    papers: papers,
-    years: yearMode == YearMode.recent ? years : null,
-    yearFrom: yearMode == YearMode.range ? yearFrom : null,
-    yearTo: yearMode == YearMode.range ? yearTo : null,
-    quartiles: quartiles,
-    journals: journals,
-    keepUnranked: quartiles.isEmpty ? null : keepUnranked,
-    useKb: useKb,
-    kbHits: useKb ? kbHits : 0,
-    maxChars: maxChars,
-  );
+  ///
+  /// 智能体引擎只发它真会用到的字段（镜像 `frontend/src/lib/filters.ts`）：
+  /// 字符预算、知识库命中数与「含未收录期刊」在那条路径上不生效。
+  AnswerCreate toAnswerCreate(String question) {
+    final codex = engine == AnswerEngine.codex;
+    return AnswerCreate(
+      question: question.trim(),
+      engine: engine,
+      papers: papers,
+      years: yearMode == YearMode.recent ? years : null,
+      yearFrom: yearMode == YearMode.range ? yearFrom : null,
+      yearTo: yearMode == YearMode.range ? yearTo : null,
+      quartiles: quartiles,
+      journals: journals,
+      keepUnranked: (quartiles.isEmpty || codex) ? null : keepUnranked,
+      useKb: useKb,
+      kbHits: codex ? null : (useKb ? kbHits : 0),
+      maxChars: codex ? null : maxChars,
+    );
+  }
 
   /// 一行式摘要，例如「近3年 · Q1/Q2 + 未收录 · 期刊含 nature|lancet · 8 篇」。
   String get summary {

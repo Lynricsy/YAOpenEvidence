@@ -5,6 +5,7 @@ import 'package:yaopenevidence/core/models/literature.dart';
 import 'package:yaopenevidence/core/models/meta.dart';
 import 'package:yaopenevidence/core/models/page.dart';
 import 'package:yaopenevidence/core/models/problem.dart';
+import 'package:yaopenevidence/core/models/tool_call.dart';
 
 void main() {
   test('snake_case + 默认值 + 未知来源回落', () {
@@ -36,8 +37,65 @@ void main() {
     ).toJson();
     expect(json.containsKey('year_from'), isFalse);
     expect(json.containsKey('keep_unranked'), isFalse);
+    expect(json.containsKey('max_chars'), isFalse);
+    expect(json.containsKey('kb_hits'), isFalse);
     expect(json['use_kb'], isTrue);
-    expect(json['max_chars'], 28000);
+    expect(json['engine'], 'ask');
+  });
+
+  test('codex 引擎与检索轨迹的 snake_case 映射', () {
+    final answer = Answer.fromJson({
+      'id': 'a2',
+      'status': 'ready',
+      'question': '追问',
+      'engine': 'codex',
+      'created_at': '2026-09-06T14:20:57Z',
+      'parent_id': 'a1',
+      'n_turns': 2,
+      'root_question': '根问题',
+      'trace': [
+        {
+          'call_id': 'c1',
+          'server': 'semantic_scholar',
+          'tool': 'read_pdf',
+          'status': 'completed',
+          'args': {'path': 'x.pdf'},
+          'duration_ms': 820,
+        },
+      ],
+    });
+    expect(answer.engine, AnswerEngine.codex);
+    expect(answer.parentId, 'a1');
+    expect(answer.nTurns, 2);
+    expect(answer.rootQuestion, '根问题');
+    final call = answer.trace.single;
+    expect(call.callId, 'c1');
+    expect(call.server, 'semantic_scholar');
+    expect(call.tool, 'read_pdf');
+    expect(call.status, ToolCallStatus.completed);
+    expect(call.args['path'], 'x.pdf');
+    expect(call.durationMs, 820);
+    expect(call.error, isNull);
+  });
+
+  test('未知引擎回落标准，JobKind codex 可解', () {
+    final summary = AnswerSummary.fromJson({
+      'id': 'a3',
+      'status': 'queued',
+      'question': 'q',
+      'engine': 'brand_new',
+      'created_at': '2026-09-06T14:20:57Z',
+    });
+    expect(summary.engine, AnswerEngine.ask);
+    expect(summary.nTurns, 1);
+
+    final job = Job.fromJson({
+      'id': 'j',
+      'kind': 'codex',
+      'status': 'running',
+      'created_at': '2026-09-06T14:20:57Z',
+    });
+    expect(job.kind, JobKind.codex);
   });
 
   test('JobKind kb_reindex 与 Page 泛型', () {

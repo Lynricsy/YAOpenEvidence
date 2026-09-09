@@ -18,6 +18,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loadable.dart';
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/pagination.dart';
+import '../ask/engine_picker.dart';
 import 'history_controller.dart';
 
 class HistoryPage extends ConsumerWidget {
@@ -186,6 +187,15 @@ class _HistoryCardState extends ConsumerState<_HistoryCard> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if ((summary.rootQuestion ?? '').isNotEmpty)
+                Text(
+                  '始于：${summary.rootQuestion}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               const SizedBox(height: YaoeTokens.space2),
               Wrap(
                 spacing: YaoeTokens.space3,
@@ -193,6 +203,14 @@ class _HistoryCardState extends ConsumerState<_HistoryCard> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   StatusBadge(status: summary.status),
+                  // Wrap 的 spacing 对零尺寸子项也生效，标准引擎下别留个空档。
+                  if (summary.engine.isCodex)
+                    EngineBadge(engine: summary.engine),
+                  if (summary.nTurns > 1)
+                    Pill(
+                      text: '${summary.nTurns} 轮',
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   if (summary.filtersLabel?.isNotEmpty ?? false)
                     Text(summary.filtersLabel!, style: theme.textTheme.bodySmall),
                   Text(

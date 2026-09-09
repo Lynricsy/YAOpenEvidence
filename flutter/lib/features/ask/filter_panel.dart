@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../core/logic/ask_filters.dart';
+import '../../core/models/answers.dart';
 import '../../core/models/meta.dart';
 import '../../shared/format.dart';
 import '../../shared/widgets/filter_pickers.dart';
@@ -30,6 +31,9 @@ class FilterPanel extends ConsumerWidget {
     final rankCaption = tables == null || tables.tables.isEmpty
         ? null
         : '分区依据：${tables.tables.map(_describeTable).join('，')}';
+    // 智能体引擎不走确定性流水线：与之无关的旋钮直接不渲染，
+    // 留着只会让人以为它们还生效。
+    final codex = filters.engine == AnswerEngine.codex;
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,13 +55,25 @@ class FilterPanel extends ConsumerWidget {
           ],
         ),
         const Divider(height: YaoeTokens.space4),
+        if (codex)
+          Padding(
+            padding: const EdgeInsets.only(bottom: YaoeTokens.space4),
+            child: Text(
+              '智能体模式下，字符预算、知识库命中数与机构访问不生效；'
+              '筛选条件会作为检索要求交给模型。',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         QuartilePicker(
           quartiles: filters.quartiles,
           onChanged: (quartiles) =>
               controller.set(filters.copyWith(quartiles: quartiles)),
-          keepUnranked: filters.keepUnranked,
-          onKeepUnrankedChanged: (value) =>
-              controller.set(filters.copyWith(keepUnranked: value)),
+          keepUnranked: codex ? null : filters.keepUnranked,
+          onKeepUnrankedChanged: codex
+              ? null
+              : (value) => controller.set(filters.copyWith(keepUnranked: value)),
           caption: rankCaption,
           warning: rankWarning,
         ),
@@ -91,8 +107,10 @@ class FilterPanel extends ConsumerWidget {
           onChanged: (journals) =>
               controller.set(filters.copyWith(journals: journals)),
         ),
-        const SizedBox(height: YaoeTokens.space4),
-        const _PaywallRow(),
+        if (!codex) ...[
+          const SizedBox(height: YaoeTokens.space4),
+          const _PaywallRow(),
+        ],
         const SizedBox(height: YaoeTokens.space4),
         Text('阅读篇数', style: theme.textTheme.labelLarge),
         Row(
@@ -132,50 +150,52 @@ class FilterPanel extends ConsumerWidget {
             filters.copyWith(useKb: value, kbHits: value ? filters.kbHits : 0),
           ),
         ),
-        Text('附加知识库命中', style: theme.textTheme.labelLarge),
-        Row(
-          children: [
-            Expanded(
-              child: Slider(
-                min: 0,
-                max: 20,
-                divisions: 20,
-                value: filters.useKb
-                    ? filters.kbHits.clamp(0, 20).toDouble()
-                    : 0,
-                label: '${filters.useKb ? filters.kbHits : 0} 条',
-                onChanged: filters.useKb
-                    ? (value) => controller.set(
-                        filters.copyWith(kbHits: value.round()),
-                      )
-                    : null,
+        if (!codex) ...[
+          Text('附加知识库命中', style: theme.textTheme.labelLarge),
+          Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  min: 0,
+                  max: 20,
+                  divisions: 20,
+                  value: filters.useKb
+                      ? filters.kbHits.clamp(0, 20).toDouble()
+                      : 0,
+                  label: '${filters.useKb ? filters.kbHits : 0} 条',
+                  onChanged: filters.useKb
+                      ? (value) => controller.set(
+                          filters.copyWith(kbHits: value.round()),
+                        )
+                      : null,
+                ),
               ),
-            ),
-            SizedBox(
-              width: 48,
-              child: Text(
-                '${filters.useKb ? filters.kbHits : 0} 条',
-                style: theme.textTheme.labelMedium,
+              SizedBox(
+                width: 48,
+                child: Text(
+                  '${filters.useKb ? filters.kbHits : 0} 条',
+                  style: theme.textTheme.labelMedium,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: YaoeTokens.space3),
-        Text('单篇字符预算', style: theme.textTheme.labelLarge),
-        const SizedBox(height: YaoeTokens.space2),
-        DropdownButtonFormField<int>(
-          initialValue: AskFilters.maxCharsOptions.contains(filters.maxChars)
-              ? filters.maxChars
-              : 28000,
-          isExpanded: true,
-          items: [
-            for (final option in AskFilters.maxCharsOptions)
-              DropdownMenuItem(value: option, child: Text('$option 字符')),
-          ],
-          onChanged: (value) => controller.set(
-            filters.copyWith(maxChars: value ?? filters.maxChars),
+            ],
           ),
-        ),
+          const SizedBox(height: YaoeTokens.space3),
+          Text('单篇字符预算', style: theme.textTheme.labelLarge),
+          const SizedBox(height: YaoeTokens.space2),
+          DropdownButtonFormField<int>(
+            initialValue: AskFilters.maxCharsOptions.contains(filters.maxChars)
+                ? filters.maxChars
+                : 28000,
+            isExpanded: true,
+            items: [
+              for (final option in AskFilters.maxCharsOptions)
+                DropdownMenuItem(value: option, child: Text('$option 字符')),
+            ],
+            onChanged: (value) => controller.set(
+              filters.copyWith(maxChars: value ?? filters.maxChars),
+            ),
+          ),
+        ],
       ],
     );
 

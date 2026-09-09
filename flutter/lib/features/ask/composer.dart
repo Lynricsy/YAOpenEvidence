@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/theme/tokens.dart';
+import '../../core/models/answers.dart';
+import 'engine_picker.dart';
+
+/// 提问（新建一轮）还是追问（续接智能体会话）。
+enum ComposerMode { ask, followUp }
 
 /// 提问输入框。物理键盘 Enter 提交、Shift+Enter 换行；移动端换行键正常换行。
 class Composer extends StatefulWidget {
@@ -11,20 +16,28 @@ class Composer extends StatefulWidget {
     required this.onSubmit,
     this.submitting = false,
     this.autofocus = false,
-    this.hintText = '请输入临床或科研问题…',
+    this.hintText,
     this.dock = false,
     this.trailing = const [],
+    required this.engine,
+    required this.onEngineChanged,
+    this.mode = ComposerMode.ask,
   });
 
   final TextEditingController controller;
   final void Function(String question) onSubmit;
   final bool submitting;
   final bool autofocus;
-  final String hintText;
+
+  /// 未给时按 [mode] 取默认占位。
+  final String? hintText;
 
   /// Dock 形态：答案页底部浮层（更紧凑、带阴影分隔）。
   final bool dock;
   final List<Widget> trailing;
+  final AnswerEngine engine;
+  final ValueChanged<AnswerEngine> onEngineChanged;
+  final ComposerMode mode;
 
   @override
   State<Composer> createState() => _ComposerState();
@@ -49,6 +62,13 @@ class _ComposerState extends State<Composer> {
 
   bool get _canSubmit =>
       !widget.submitting && widget.controller.text.trim().isNotEmpty;
+
+  String get _hint =>
+      widget.hintText ??
+      switch (widget.mode) {
+        ComposerMode.ask => '请输入临床或科研问题…',
+        ComposerMode.followUp => '追问这个话题…',
+      };
 
   void _submit() {
     if (!_canSubmit) return;
@@ -92,7 +112,7 @@ class _ComposerState extends State<Composer> {
                     textInputAction: TextInputAction.newline,
                     style: theme.textTheme.bodyLarge,
                     decoration: InputDecoration(
-                      hintText: widget.hintText,
+                      hintText: _hint,
                       counterText: '',
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -126,11 +146,25 @@ class _ComposerState extends State<Composer> {
           ),
           Padding(
             padding: const EdgeInsets.only(top: YaoeTokens.space1),
-            child: Text(
-              'Enter 提交 · Shift+Enter 换行 · $length/$maxLength',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            child: Row(
+              children: [
+                EnginePicker(
+                  value: widget.engine,
+                  onChanged: widget.onEngineChanged,
+                  locked: widget.mode == ComposerMode.followUp,
+                ),
+                const SizedBox(width: YaoeTokens.space2),
+                Expanded(
+                  child: Text(
+                    'Enter 提交 · Shift+Enter 换行 · $length/$maxLength',
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

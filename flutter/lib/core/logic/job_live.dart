@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../api/sse.dart';
+import '../models/tool_call.dart';
 
 part 'job_live.freezed.dart';
 
@@ -13,6 +14,7 @@ enum StageKey {
   read,
   kb,
   synthesize,
+  agent,
   reindex;
 
   /// 进度面板的阶段标题。
@@ -23,6 +25,7 @@ enum StageKey {
     StageKey.read => '逐篇阅读',
     StageKey.kb => '写入知识库',
     StageKey.synthesize => '综合成稿',
+    StageKey.agent => '智能体检索与作答',
     StageKey.reindex => '重建索引',
   };
 
@@ -157,6 +160,7 @@ abstract class JobLive with _$JobLive {
     ProgressState? progress,
     @Default(<LogLine>[]) List<LogLine> logs,
     SearchSummary? search,
+    @Default(<ToolCall>[]) List<ToolCall> tools,
     Terminal? terminal,
   }) = _JobLive;
 
@@ -228,6 +232,28 @@ abstract class JobLive with _$JobLive {
         );
         return copyWith(logs: next);
 
+      case 'tool':
+        final callId = _string(data['call_id']);
+        // 没有 call_id 就无法 upsert，宁可丢掉也不要在轨迹里堆重复行。
+        if (callId == null) return this;
+        final call = ToolCall(
+          callId: callId,
+          server: _string(data['server']) ?? '',
+          tool: _string(data['tool']) ?? '',
+          status: _toolStatus(_string(data['status'])),
+          args: _objectValue(data['args']),
+          durationMs: _int(data['duration_ms']),
+          error: _string(data['error']),
+        );
+        final next = [...tools];
+        final at = next.indexWhere((c) => c.callId == callId);
+        if (at < 0) {
+          next.add(call);
+        } else {
+          next[at] = call;
+        }
+        return copyWith(tools: next);
+
       case 'succeeded':
         return copyWith(
           terminal: Succeeded(
@@ -271,6 +297,13 @@ String? _string(Object? raw) => raw is String ? raw : null;
 int? _int(Object? raw) => raw is num ? raw.toInt() : null;
 
 int _count(Object? raw) => _int(raw) ?? 0;
+
+/// 未知状态按「已结束」处理：转圈的行永远转下去比标错状态更糟。
+ToolCallStatus _toolStatus(String? raw) => switch (raw) {
+  'started' => ToolCallStatus.started,
+  'failed' => ToolCallStatus.failed,
+  _ => ToolCallStatus.completed,
+};
 
 CandidatePaper _candidate(Object? raw) {
   final value = _objectValue(raw);

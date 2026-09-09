@@ -2,20 +2,25 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../core/logic/job_live.dart';
+import '../../core/models/answers.dart';
 import '../../shared/widgets/badges.dart';
 import 'job_live_monitor.dart';
+import 'trace_list.dart';
 
-/// 7 阶段流水线进度条 + 当前阶段进度 + 检索摘要 + 运行日志。
+/// 任务进度。标准引擎是阶段流水线 + 当前阶段进度 + 检索摘要；
+/// 智能体引擎没有固定阶段，改用一行状态 + 检索轨迹。两者都带运行日志。
 class ProgressPipeline extends StatelessWidget {
   const ProgressPipeline({
     super.key,
     required this.state,
     this.stages = StageKey.askPipeline,
+    this.engine = AnswerEngine.ask,
     required this.onCandidateTap,
   });
 
   final JobLiveState state;
   final List<StageKey> stages;
+  final AnswerEngine engine;
 
   /// 点击候选文献卡（进行中时材料可能还没生成）。
   final void Function(String pmid) onCandidateTap;
@@ -26,50 +31,114 @@ class ProgressPipeline extends StatelessWidget {
     final live = state.live;
     final progress = live.progress;
 
+    final codex = engine == AnswerEngine.codex;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _StageRow(stages: stages, live: live),
-        if (progress != null) ...[
-          const SizedBox(height: YaoeTokens.space3),
-          Text(
-            '${progress.stage.label}'
-            '${progress.total > 0 ? ' ${progress.current}/${progress.total}' : ''}',
-            style: theme.textTheme.labelMedium,
-          ),
-          const SizedBox(height: YaoeTokens.space1),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
-            child: LinearProgressIndicator(
-              minHeight: 6,
-              value: progress.total > 0
-                  ? (progress.current / progress.total).clamp(0.0, 1.0)
-                  : null,
-            ),
-          ),
-          if ((progress.title ?? '').isNotEmpty) ...[
-            const SizedBox(height: YaoeTokens.space1),
+        Text(
+          codex ? '智能体检索' : '证据流水线',
+          style: theme.textTheme.labelLarge,
+        ),
+        const SizedBox(height: YaoeTokens.space3),
+        if (codex)
+          _AgentStatus(live: live)
+        else ...[
+          _StageRow(stages: stages, live: live),
+          if (progress != null) ...[
+            const SizedBox(height: YaoeTokens.space3),
             Text(
-              progress.title!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              '${progress.stage.label}'
+              '${progress.total > 0 ? ' ${progress.current}/${progress.total}' : ''}',
+              style: theme.textTheme.labelMedium,
+            ),
+            const SizedBox(height: YaoeTokens.space1),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
+              child: LinearProgressIndicator(
+                minHeight: 6,
+                value: progress.total > 0
+                    ? (progress.current / progress.total).clamp(0.0, 1.0)
+                    : null,
               ),
             ),
+            if ((progress.title ?? '').isNotEmpty) ...[
+              const SizedBox(height: YaoeTokens.space1),
+              Text(
+                progress.title!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ],
-        ],
-        if (live.search != null) ...[
-          const SizedBox(height: YaoeTokens.space4),
-          _SearchSummaryView(
-            summary: live.search!,
-            detail: live.stages[StageKey.search]?.detail ?? const {},
-            onCandidateTap: onCandidateTap,
-          ),
+          if (live.search != null) ...[
+            const SizedBox(height: YaoeTokens.space4),
+            _SearchSummaryView(
+              summary: live.search!,
+              detail: live.stages[StageKey.search]?.detail ?? const {},
+              onCandidateTap: onCandidateTap,
+            ),
+          ],
         ],
         if (live.logs.isNotEmpty) ...[
           const SizedBox(height: YaoeTokens.space3),
           _LogPanel(logs: live.logs),
+        ],
+      ],
+    );
+  }
+}
+
+/// 智能体引擎的状态行 + 检索轨迹（替代阶段步骤条）。
+class _AgentStatus extends StatelessWidget {
+  const _AgentStatus({required this.live});
+
+  final JobLive live;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final agent = live.stages[StageKey.agent];
+    final finished = agent?.status == StageStatus.finished;
+    final tools = live.tools.length;
+    final caption = switch (agent?.status) {
+      null => '等待智能体启动…',
+      StageStatus.running => '智能体正在检索与作答',
+      StageStatus.finished => '正在整理答案…',
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SizedBox.square(
+              dimension: 14,
+              child: agent == null
+                  ? null
+                  : finished
+                  ? Icon(Icons.check, size: 14, color: context.yaoe.success)
+                  : const CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: YaoeTokens.space2),
+            Expanded(
+              child: Text(
+                tools > 0 ? '$caption · 已调用 $tools 次工具' : caption,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: agent == null
+                      ? theme.colorScheme.onSurfaceVariant
+                      : null,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (live.tools.isNotEmpty) ...[
+          const SizedBox(height: YaoeTokens.space3),
+          TraceList(calls: live.tools, live: true),
         ],
       ],
     );

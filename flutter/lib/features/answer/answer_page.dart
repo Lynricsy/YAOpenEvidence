@@ -17,6 +17,7 @@ import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/loadable.dart';
 import '../ask/ask_state.dart';
 import '../ask/composer.dart';
+import '../ask/engine_picker.dart';
 import '../ask/filter_sheet.dart';
 import '../reader/reader_pane.dart';
 import '../reader/split_view.dart';
@@ -25,6 +26,8 @@ import 'answer_controller.dart';
 import 'job_live_monitor.dart';
 import 'progress_pipeline.dart';
 import 'source_list.dart';
+import 'thread_nav.dart';
+import 'trace_list.dart';
 
 class AnswerPage extends ConsumerStatefulWidget {
   const AnswerPage({super.key, required this.answerId});
@@ -98,14 +101,31 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
     ref.read(readerTargetProvider(widget.answerId).notifier).close();
   }
 
-  Future<void> _submitFollowUp(String question) async {
-    setState(() => _submitting = true);
-    try {
+  /// 新建一轮问答（标准引擎，或智能体引擎尚未 ready 时）。
+  Future<void> _submitNew(String question) async {
+    await _submit(() async {
       final filters = ref.read(askFiltersControllerProvider);
-      final answer = await ref
+      return ref
           .read(apiClientProvider)
           .createAnswer(filters.toAnswerCreate(question));
+    });
+  }
+
+  /// 追问：续接同一智能体会话，其余选项沿用被追问的那一轮。
+  Future<void> _submitFollowUp(String question) async {
+    await _submit(
+      () => ref
+          .read(apiClientProvider)
+          .followUp(widget.answerId, FollowupCreate(question: question)),
+    );
+  }
+
+  Future<void> _submit(Future<Answer> Function() request) async {
+    setState(() => _submitting = true);
+    try {
+      final answer = await request();
       ref.read(answersVersionProvider.notifier).bump();
+      ref.invalidate(answerThreadProvider(widget.answerId));
       _composer.clear();
       if (!mounted) return;
       context.go('/a/${answer.id}');
@@ -194,7 +214,12 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
         onCancel: _cancel,
         onDelete: _delete,
         onReuse: () => _reuseFilters(answer),
-        onSubmit: _submitFollowUp,
+        // 智能体的已完成回合才能续接，其余情况一律新建一轮。
+        onSubmit:
+            (answer.engine == AnswerEngine.codex &&
+                answer.status == AnswerStatus.ready)
+            ? _submitFollowUp
+            : _submitNew,
       ),
     );
 
@@ -274,6 +299,12 @@ class _AnswerContent extends ConsumerWidget {
     final cancelRequested = ref
         .watch(answerControllerProvider(answer.id).notifier)
         .cancelRequested;
+    final codex = answer.engine == AnswerEngine.codex;
+    // 只有智能体会话才有多轮，标准引擎不必为此多发一个请求。
+    final thread = codex
+        ? (ref.watch(answerThreadProvider(answer.id)).value ??
+              const <AnswerSummary>[])
+        : const <AnswerSummary>[];
 
     return Column(
       children: [
@@ -286,6 +317,10 @@ class _AnswerContent extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (thread.length > 1) ...[
+                      ThreadNav(turns: thread, currentId: answer.id),
+                      const SizedBox(height: YaoeTokens.space3),
+                    ],
                     Text(answer.question, style: theme.textTheme.headlineSmall),
                     const SizedBox(height: YaoeTokens.space3),
                     _MetaRow(answer: answer, connection: liveState?.connection),
@@ -316,7 +351,8 @@ class _AnswerContent extends ConsumerWidget {
                         OutlinedButton.icon(
                           onPressed: onReuse,
                           icon: const Icon(Icons.refresh, size: 16),
-                          label: const Text('沿用筛选重新提问'),
+                          // 智能体没有「筛选」这层语义，只是重新问一次。
+                          label: Text(codex ? '重新提问' : '沿用筛选重新提问'),
                         ),
                       ],
                     ),
@@ -326,6 +362,7 @@ class _AnswerContent extends ConsumerWidget {
                           ? const LoadingView()
                           : ProgressPipeline(
                               state: liveState,
+                              engine: answer.engine,
                               onCandidateTap: (pmid) => ScaffoldMessenger.of(
                                 context,
                               ).showSnackBar(
@@ -357,6 +394,10 @@ class _AnswerContent extends ConsumerWidget {
           controller: composer,
           submitting: submitting,
           onSubmit: onSubmit,
+          // 智能体的已完成回合可以续接，输入框锁定引擎并换占位文案。
+          mode: (codex && answer.status == AnswerStatus.ready)
+              ? ComposerMode.followUp
+              : ComposerMode.ask,
         ),
       ],
     );
@@ -372,6 +413,14 @@ class _ReadyBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bodyMd = answer.bodyMd;
+    // 智能体没有逐篇原文快照：正文不做结构化拆分，也没有来源列表可给。
+    if (answer.engine == AnswerEngine.codex) {
+      return _AgentBody(
+        answer: answer,
+        bodyMd: bodyMd ?? '',
+        onOpenReader: onOpenReader,
+      );
+    }
     // 旧版答案没有结构化正文，取渲染稿 Markdown。
     if (bodyMd == null || bodyMd.trim().isEmpty) {
       final legacy = ref.watch(legacyAnswerMarkdownProvider(answer.id));
@@ -391,6 +440,56 @@ class _ReadyBody extends ConsumerWidget {
       bodyMd: bodyMd,
       structured: true,
       onOpenReader: onOpenReader,
+    );
+  }
+}
+
+/// 智能体答案：整篇正文 + 可折叠的检索轨迹。
+class _AgentBody extends StatelessWidget {
+  const _AgentBody({
+    required this.answer,
+    required this.bodyMd,
+    required this.onOpenReader,
+  });
+
+  final Answer answer;
+  final String bodyMd;
+  final void Function(CitationRef ref) onOpenReader;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AnswerBody(
+          bodyMd: bodyMd,
+          papers: answer.papers,
+          onCitationTap: onOpenReader,
+          structured: false,
+        ),
+        if (answer.trace.isNotEmpty) ...[
+          const SizedBox(height: YaoeTokens.space5),
+          Theme(
+            data: theme.copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(
+                bottom: YaoeTokens.space2,
+              ),
+              title: Text(
+                '检索轨迹（${answer.trace.length}）',
+                style: theme.textTheme.labelLarge,
+              ),
+              children: [TraceList(calls: answer.trace)],
+            ),
+          ),
+        ],
+        if (answer.kbHits.isNotEmpty) ...[
+          const SizedBox(height: YaoeTokens.space6),
+          KbSupplementList(hits: answer.kbHits),
+        ],
+      ],
     );
   }
 }
@@ -454,6 +553,8 @@ class _MetaRow extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         StatusBadge(status: answer.status),
+        // Wrap 的 spacing 对零尺寸子项也生效，标准引擎下别留个空档。
+        if (answer.engine.isCodex) EngineBadge(engine: answer.engine),
         if ((answer.filtersLabel ?? '').isNotEmpty)
           Text(
             answer.filtersLabel!,
@@ -599,21 +700,25 @@ class _NoticeCard extends StatelessWidget {
   }
 }
 
-/// 底部常驻提问 Dock：提交即新建问答并跳转。
-class _ComposerDock extends StatelessWidget {
+/// 底部常驻提问 Dock：新建一轮问答，或在智能体会话上追问。
+class _ComposerDock extends ConsumerWidget {
   const _ComposerDock({
     required this.controller,
     required this.submitting,
     required this.onSubmit,
+    required this.mode,
   });
 
   final TextEditingController controller;
   final bool submitting;
   final void Function(String question) onSubmit;
+  final ComposerMode mode;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final followUp = mode == ComposerMode.followUp;
+    final filters = ref.watch(askFiltersControllerProvider);
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -635,14 +740,22 @@ class _ComposerDock extends StatelessWidget {
             onSubmit: onSubmit,
             submitting: submitting,
             dock: true,
-            hintText: '继续提问…',
-            trailing: [
-              IconButton(
-                tooltip: '筛选',
-                onPressed: () => showFilterSheet(context),
-                icon: const Icon(Icons.tune, size: 18),
-              ),
-            ],
+            mode: mode,
+            // 追问沿用会话引擎，占位文案由 mode 决定。
+            hintText: followUp ? null : '继续提问…',
+            engine: followUp ? AnswerEngine.codex : filters.engine,
+            onEngineChanged: (engine) => ref
+                .read(askFiltersControllerProvider.notifier)
+                .set(filters.copyWith(engine: engine)),
+            trailing: followUp
+                ? const []
+                : [
+                    IconButton(
+                      tooltip: '筛选',
+                      onPressed: () => showFilterSheet(context),
+                      icon: const Icon(Icons.tune, size: 18),
+                    ),
+                  ],
           ),
         ),
       ),

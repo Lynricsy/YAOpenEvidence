@@ -57,6 +57,7 @@ Map<String, dynamic> _$JobToJson(_Job instance) => <String, dynamic>{
 
 const _$JobKindEnumMap = {
   JobKind.ask: 'ask',
+  JobKind.codex: 'codex',
   JobKind.kbReindex: 'kb_reindex',
   JobKind.paperIngest: 'paper_ingest',
 };

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaopenevidence/core/api/sse.dart';
 import 'package:yaopenevidence/core/logic/job_live.dart';
+import 'package:yaopenevidence/core/models/tool_call.dart';
 
 SseEvent event(String name, String json) => SseEvent(event: name, data: json);
 
@@ -105,5 +106,47 @@ void main() {
       '全文 2 · 文献 5',
     );
     expect(stageSummary(StageKey.synthesize, const {'note': '忽略非数字'}), '');
+  });
+
+  test('agent 阶段进入 running，工具调用按 call_id 就地替换', () {
+    var live = JobLive.empty.applying(
+      event('stage', '{"stage":"agent","status":"started","detail":{}}'),
+    );
+    expect(live.stages[StageKey.agent]?.status, StageStatus.running);
+    // agent 不属于标准流水线，否则会在阶段步骤条里多出一格。
+    expect(StageKey.askPipeline, isNot(contains(StageKey.agent)));
+
+    live = live.applying(
+      event(
+        'tool',
+        '{"call_id":"c1","server":"semantic_scholar","tool":"read_pdf",'
+        '"status":"started","args":{"path":"x.pdf"}}',
+      ),
+    );
+    expect(live.tools.single.status, ToolCallStatus.started);
+    expect(live.tools.single.durationMs, isNull);
+
+    live = live.applying(
+      event(
+        'tool',
+        '{"call_id":"c1","server":"semantic_scholar","tool":"read_pdf",'
+        '"status":"completed","args":{"path":"x.pdf"},"duration_ms":820}',
+      ),
+    );
+    expect(live.tools, hasLength(1));
+    expect(live.tools.single.status, ToolCallStatus.completed);
+    expect(live.tools.single.durationMs, 820);
+
+    live = live.applying(
+      event('tool', '{"call_id":"c2","server":"shell","tool":"exec"}'),
+    );
+    expect(live.tools.map((c) => c.callId), ['c1', 'c2']);
+  });
+
+  test('缺 call_id 的工具帧被丢弃', () {
+    final live = JobLive.empty.applying(
+      event('tool', '{"server":"shell","tool":"exec","status":"started"}'),
+    );
+    expect(live.tools, isEmpty);
   });
 }

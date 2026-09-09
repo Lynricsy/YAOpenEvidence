@@ -901,7 +901,7 @@ as bool,
 /// @nodoc
 mixin _$AnswerSummary {
 
- String get id; String? get jobId; AnswerStatus get status; String get question; String? get filtersLabel; int? get nPapers; int? get nFulltext; DateTime get createdAt; DateTime? get finishedAt; JobError? get error;
+ String get id; String? get jobId; AnswerStatus get status; String get question;@_engineKey AnswerEngine get engine; String? get filtersLabel; int? get nPapers; int? get nFulltext; DateTime get createdAt; DateTime? get finishedAt; JobError? get error; int get nTurns; String? get rootQuestion;
 /// Create a copy of AnswerSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -915,20 +915,20 @@ $AnswerSummaryCopyWith<AnswerSummary> get copyWith => _$AnswerSummaryCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as AnswerSummary;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnswerSummary&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.jobId, _this.jobId) || other.jobId == _this.jobId)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.question, _this.question) || other.question == _this.question)&&(identical(other.filtersLabel, _this.filtersLabel) || other.filtersLabel == _this.filtersLabel)&&(identical(other.nPapers, _this.nPapers) || other.nPapers == _this.nPapers)&&(identical(other.nFulltext, _this.nFulltext) || other.nFulltext == _this.nFulltext)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.error, _this.error) || other.error == _this.error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnswerSummary&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.jobId, _this.jobId) || other.jobId == _this.jobId)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.question, _this.question) || other.question == _this.question)&&(identical(other.engine, _this.engine) || other.engine == _this.engine)&&(identical(other.filtersLabel, _this.filtersLabel) || other.filtersLabel == _this.filtersLabel)&&(identical(other.nPapers, _this.nPapers) || other.nPapers == _this.nPapers)&&(identical(other.nFulltext, _this.nFulltext) || other.nFulltext == _this.nFulltext)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.nTurns, _this.nTurns) || other.nTurns == _this.nTurns)&&(identical(other.rootQuestion, _this.rootQuestion) || other.rootQuestion == _this.rootQuestion));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as AnswerSummary;
-  return Object.hash(runtimeType,_this.id,_this.jobId,_this.status,_this.question,_this.filtersLabel,_this.nPapers,_this.nFulltext,_this.createdAt,_this.finishedAt,_this.error);
+  return Object.hash(runtimeType,_this.id,_this.jobId,_this.status,_this.question,_this.engine,_this.filtersLabel,_this.nPapers,_this.nFulltext,_this.createdAt,_this.finishedAt,_this.error,_this.nTurns,_this.rootQuestion);
 }
 
 @override
 String toString() {
   final _this = this as AnswerSummary;
-  return 'AnswerSummary(id: ${_this.id}, jobId: ${_this.jobId}, status: ${_this.status}, question: ${_this.question}, filtersLabel: ${_this.filtersLabel}, nPapers: ${_this.nPapers}, nFulltext: ${_this.nFulltext}, createdAt: ${_this.createdAt}, finishedAt: ${_this.finishedAt}, error: ${_this.error})';
+  return 'AnswerSummary(id: ${_this.id}, jobId: ${_this.jobId}, status: ${_this.status}, question: ${_this.question}, engine: ${_this.engine}, filtersLabel: ${_this.filtersLabel}, nPapers: ${_this.nPapers}, nFulltext: ${_this.nFulltext}, createdAt: ${_this.createdAt}, finishedAt: ${_this.finishedAt}, error: ${_this.error}, nTurns: ${_this.nTurns}, rootQuestion: ${_this.rootQuestion})';
 }
 
 
@@ -939,7 +939,7 @@ abstract mixin class $AnswerSummaryCopyWith<$Res>  {
   factory $AnswerSummaryCopyWith(AnswerSummary value, $Res Function(AnswerSummary) _then) = _$AnswerSummaryCopyWithImpl;
 @useResult
 $Res call({
- String id, String? jobId, AnswerStatus status, String question, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error
+ String id, String? jobId, AnswerStatus status, String question,@_engineKey AnswerEngine engine, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error, int nTurns, String? rootQuestion
 });
 
 
@@ -956,19 +956,22 @@ class _$AnswerSummaryCopyWithImpl<$Res>
 
 /// Create a copy of AnswerSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? engine = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,Object? nTurns = null,Object? rootQuestion = freezed,}) {
   return _then(AnswerSummary(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,jobId: freezed == jobId ? _self.jobId : jobId // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AnswerStatus,question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
-as String,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
+as String,engine: null == engine ? _self.engine : engine // ignore: cast_nullable_to_non_nullable
+as AnswerEngine,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
 as String?,nPapers: freezed == nPapers ? _self.nPapers : nPapers // ignore: cast_nullable_to_non_nullable
 as int?,nFulltext: freezed == nFulltext ? _self.nFulltext : nFulltext // ignore: cast_nullable_to_non_nullable
 as int?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as JobError?,
+as JobError?,nTurns: null == nTurns ? _self.nTurns : nTurns // ignore: cast_nullable_to_non_nullable
+as int,rootQuestion: freezed == rootQuestion ? _self.rootQuestion : rootQuestion // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of AnswerSummary
@@ -1065,10 +1068,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question, @_engineKey  AnswerEngine engine,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  int nTurns,  String? rootQuestion)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AnswerSummary() when $default != null:
-return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error);case _:
+return $default(_that.id,_that.jobId,_that.status,_that.question,_that.engine,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.nTurns,_that.rootQuestion);case _:
   return orElse();
 
 }
@@ -1086,10 +1089,10 @@ return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLa
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question, @_engineKey  AnswerEngine engine,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  int nTurns,  String? rootQuestion)  $default,) {final _that = this;
 switch (_that) {
 case _AnswerSummary():
-return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error);case _:
+return $default(_that.id,_that.jobId,_that.status,_that.question,_that.engine,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.nTurns,_that.rootQuestion);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1106,10 +1109,10 @@ return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLa
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? jobId,  AnswerStatus status,  String question,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? jobId,  AnswerStatus status,  String question, @_engineKey  AnswerEngine engine,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  int nTurns,  String? rootQuestion)?  $default,) {final _that = this;
 switch (_that) {
 case _AnswerSummary() when $default != null:
-return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error);case _:
+return $default(_that.id,_that.jobId,_that.status,_that.question,_that.engine,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.nTurns,_that.rootQuestion);case _:
   return null;
 
 }
@@ -1121,19 +1124,22 @@ return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLa
 @JsonSerializable()
 
 class _AnswerSummary implements AnswerSummary {
-  const _AnswerSummary({required this.id, this.jobId, required this.status, this.question = '', this.filtersLabel, this.nPapers, this.nFulltext, required this.createdAt, this.finishedAt, this.error});
+  const _AnswerSummary({required this.id, this.jobId, required this.status, this.question = '', @_engineKey this.engine = AnswerEngine.ask, this.filtersLabel, this.nPapers, this.nFulltext, required this.createdAt, this.finishedAt, this.error, this.nTurns = 1, this.rootQuestion});
   factory _AnswerSummary.fromJson(Map<String, dynamic> json) => _$AnswerSummaryFromJson(json);
 
 @override final  String id;
 @override final  String? jobId;
 @override final  AnswerStatus status;
 @override@JsonKey() final  String question;
+@override@_engineKey final  AnswerEngine engine;
 @override final  String? filtersLabel;
 @override final  int? nPapers;
 @override final  int? nFulltext;
 @override final  DateTime createdAt;
 @override final  DateTime? finishedAt;
 @override final  JobError? error;
+@override@JsonKey() final  int nTurns;
+@override final  String? rootQuestion;
 
 /// Create a copy of AnswerSummary
 /// with the given fields replaced by the non-null parameter values.
@@ -1148,18 +1154,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnswerSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status)&&(identical(other.question, question) || other.question == question)&&(identical(other.filtersLabel, filtersLabel) || other.filtersLabel == filtersLabel)&&(identical(other.nPapers, nPapers) || other.nPapers == nPapers)&&(identical(other.nFulltext, nFulltext) || other.nFulltext == nFulltext)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.error, error) || other.error == error));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnswerSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status)&&(identical(other.question, question) || other.question == question)&&(identical(other.engine, engine) || other.engine == engine)&&(identical(other.filtersLabel, filtersLabel) || other.filtersLabel == filtersLabel)&&(identical(other.nPapers, nPapers) || other.nPapers == nPapers)&&(identical(other.nFulltext, nFulltext) || other.nFulltext == nFulltext)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.error, error) || other.error == error)&&(identical(other.nTurns, nTurns) || other.nTurns == nTurns)&&(identical(other.rootQuestion, rootQuestion) || other.rootQuestion == rootQuestion));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,jobId,status,question,filtersLabel,nPapers,nFulltext,createdAt,finishedAt,error);
+    return Object.hash(runtimeType,id,jobId,status,question,engine,filtersLabel,nPapers,nFulltext,createdAt,finishedAt,error,nTurns,rootQuestion);
 }
 
 @override
 String toString() {
-    return 'AnswerSummary(id: $id, jobId: $jobId, status: $status, question: $question, filtersLabel: $filtersLabel, nPapers: $nPapers, nFulltext: $nFulltext, createdAt: $createdAt, finishedAt: $finishedAt, error: $error)';
+    return 'AnswerSummary(id: $id, jobId: $jobId, status: $status, question: $question, engine: $engine, filtersLabel: $filtersLabel, nPapers: $nPapers, nFulltext: $nFulltext, createdAt: $createdAt, finishedAt: $finishedAt, error: $error, nTurns: $nTurns, rootQuestion: $rootQuestion)';
 }
 
 
@@ -1170,7 +1176,7 @@ abstract mixin class _$AnswerSummaryCopyWith<$Res> implements $AnswerSummaryCopy
   factory _$AnswerSummaryCopyWith(_AnswerSummary value, $Res Function(_AnswerSummary) _then) = __$AnswerSummaryCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? jobId, AnswerStatus status, String question, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error
+ String id, String? jobId, AnswerStatus status, String question,@_engineKey AnswerEngine engine, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error, int nTurns, String? rootQuestion
 });
 
 
@@ -1187,19 +1193,22 @@ class __$AnswerSummaryCopyWithImpl<$Res>
 
 /// Create a copy of AnswerSummary
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? engine = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,Object? nTurns = null,Object? rootQuestion = freezed,}) {
   return _then(_AnswerSummary(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,jobId: freezed == jobId ? _self.jobId : jobId // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AnswerStatus,question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
-as String,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
+as String,engine: null == engine ? _self.engine : engine // ignore: cast_nullable_to_non_nullable
+as AnswerEngine,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
 as String?,nPapers: freezed == nPapers ? _self.nPapers : nPapers // ignore: cast_nullable_to_non_nullable
 as int?,nFulltext: freezed == nFulltext ? _self.nFulltext : nFulltext // ignore: cast_nullable_to_non_nullable
 as int?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as JobError?,
+as JobError?,nTurns: null == nTurns ? _self.nTurns : nTurns // ignore: cast_nullable_to_non_nullable
+as int,rootQuestion: freezed == rootQuestion ? _self.rootQuestion : rootQuestion // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -1222,7 +1231,7 @@ $JobErrorCopyWith<$Res>? get error {
 /// @nodoc
 mixin _$Answer {
 
- String get id; String? get jobId; AnswerStatus get status; String get question; String? get filtersLabel; int? get nPapers; int? get nFulltext; DateTime get createdAt; DateTime? get finishedAt; JobError? get error; String? get questionEn; List<String> get queries; Map<String, dynamic> get options; DateTime? get startedAt; List<AnswerPaper> get papers; String? get bodyMd; List<Citation> get citations; List<KbHit> get kbHits;
+ String get id; String? get jobId; AnswerStatus get status; String get question;@_engineKey AnswerEngine get engine; String? get filtersLabel; int? get nPapers; int? get nFulltext; DateTime get createdAt; DateTime? get finishedAt; JobError? get error; int get nTurns; String? get rootQuestion; String? get parentId; String? get questionEn; List<String> get queries; Map<String, dynamic> get options; DateTime? get startedAt; List<AnswerPaper> get papers; String? get bodyMd; List<Citation> get citations; List<KbHit> get kbHits; List<ToolCall> get trace;
 /// Create a copy of Answer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1236,20 +1245,20 @@ $AnswerCopyWith<Answer> get copyWith => _$AnswerCopyWithImpl<Answer>(this as Ans
 @override
 bool operator ==(Object other) {
   final _this = this as Answer;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Answer&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.jobId, _this.jobId) || other.jobId == _this.jobId)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.question, _this.question) || other.question == _this.question)&&(identical(other.filtersLabel, _this.filtersLabel) || other.filtersLabel == _this.filtersLabel)&&(identical(other.nPapers, _this.nPapers) || other.nPapers == _this.nPapers)&&(identical(other.nFulltext, _this.nFulltext) || other.nFulltext == _this.nFulltext)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.questionEn, _this.questionEn) || other.questionEn == _this.questionEn)&&const DeepCollectionEquality().equals(other.queries, _this.queries)&&const DeepCollectionEquality().equals(other.options, _this.options)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&const DeepCollectionEquality().equals(other.papers, _this.papers)&&(identical(other.bodyMd, _this.bodyMd) || other.bodyMd == _this.bodyMd)&&const DeepCollectionEquality().equals(other.citations, _this.citations)&&const DeepCollectionEquality().equals(other.kbHits, _this.kbHits));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Answer&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.jobId, _this.jobId) || other.jobId == _this.jobId)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.question, _this.question) || other.question == _this.question)&&(identical(other.engine, _this.engine) || other.engine == _this.engine)&&(identical(other.filtersLabel, _this.filtersLabel) || other.filtersLabel == _this.filtersLabel)&&(identical(other.nPapers, _this.nPapers) || other.nPapers == _this.nPapers)&&(identical(other.nFulltext, _this.nFulltext) || other.nFulltext == _this.nFulltext)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.finishedAt, _this.finishedAt) || other.finishedAt == _this.finishedAt)&&(identical(other.error, _this.error) || other.error == _this.error)&&(identical(other.nTurns, _this.nTurns) || other.nTurns == _this.nTurns)&&(identical(other.rootQuestion, _this.rootQuestion) || other.rootQuestion == _this.rootQuestion)&&(identical(other.parentId, _this.parentId) || other.parentId == _this.parentId)&&(identical(other.questionEn, _this.questionEn) || other.questionEn == _this.questionEn)&&const DeepCollectionEquality().equals(other.queries, _this.queries)&&const DeepCollectionEquality().equals(other.options, _this.options)&&(identical(other.startedAt, _this.startedAt) || other.startedAt == _this.startedAt)&&const DeepCollectionEquality().equals(other.papers, _this.papers)&&(identical(other.bodyMd, _this.bodyMd) || other.bodyMd == _this.bodyMd)&&const DeepCollectionEquality().equals(other.citations, _this.citations)&&const DeepCollectionEquality().equals(other.kbHits, _this.kbHits)&&const DeepCollectionEquality().equals(other.trace, _this.trace));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as Answer;
-  return Object.hash(runtimeType,_this.id,_this.jobId,_this.status,_this.question,_this.filtersLabel,_this.nPapers,_this.nFulltext,_this.createdAt,_this.finishedAt,_this.error,_this.questionEn,const DeepCollectionEquality().hash(_this.queries),const DeepCollectionEquality().hash(_this.options),_this.startedAt,const DeepCollectionEquality().hash(_this.papers),_this.bodyMd,const DeepCollectionEquality().hash(_this.citations),const DeepCollectionEquality().hash(_this.kbHits));
+  return Object.hashAll([runtimeType,_this.id,_this.jobId,_this.status,_this.question,_this.engine,_this.filtersLabel,_this.nPapers,_this.nFulltext,_this.createdAt,_this.finishedAt,_this.error,_this.nTurns,_this.rootQuestion,_this.parentId,_this.questionEn,const DeepCollectionEquality().hash(_this.queries),const DeepCollectionEquality().hash(_this.options),_this.startedAt,const DeepCollectionEquality().hash(_this.papers),_this.bodyMd,const DeepCollectionEquality().hash(_this.citations),const DeepCollectionEquality().hash(_this.kbHits),const DeepCollectionEquality().hash(_this.trace)]);
 }
 
 @override
 String toString() {
   final _this = this as Answer;
-  return 'Answer(id: ${_this.id}, jobId: ${_this.jobId}, status: ${_this.status}, question: ${_this.question}, filtersLabel: ${_this.filtersLabel}, nPapers: ${_this.nPapers}, nFulltext: ${_this.nFulltext}, createdAt: ${_this.createdAt}, finishedAt: ${_this.finishedAt}, error: ${_this.error}, questionEn: ${_this.questionEn}, queries: ${_this.queries}, options: ${_this.options}, startedAt: ${_this.startedAt}, papers: ${_this.papers}, bodyMd: ${_this.bodyMd}, citations: ${_this.citations}, kbHits: ${_this.kbHits})';
+  return 'Answer(id: ${_this.id}, jobId: ${_this.jobId}, status: ${_this.status}, question: ${_this.question}, engine: ${_this.engine}, filtersLabel: ${_this.filtersLabel}, nPapers: ${_this.nPapers}, nFulltext: ${_this.nFulltext}, createdAt: ${_this.createdAt}, finishedAt: ${_this.finishedAt}, error: ${_this.error}, nTurns: ${_this.nTurns}, rootQuestion: ${_this.rootQuestion}, parentId: ${_this.parentId}, questionEn: ${_this.questionEn}, queries: ${_this.queries}, options: ${_this.options}, startedAt: ${_this.startedAt}, papers: ${_this.papers}, bodyMd: ${_this.bodyMd}, citations: ${_this.citations}, kbHits: ${_this.kbHits}, trace: ${_this.trace})';
 }
 
 
@@ -1260,7 +1269,7 @@ abstract mixin class $AnswerCopyWith<$Res>  {
   factory $AnswerCopyWith(Answer value, $Res Function(Answer) _then) = _$AnswerCopyWithImpl;
 @useResult
 $Res call({
- String id, String? jobId, AnswerStatus status, String question, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error, String? questionEn, List<String> queries, Map<String, dynamic> options, DateTime? startedAt, List<AnswerPaper> papers, String? bodyMd, List<Citation> citations, List<KbHit> kbHits
+ String id, String? jobId, AnswerStatus status, String question,@_engineKey AnswerEngine engine, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error, int nTurns, String? rootQuestion, String? parentId, String? questionEn, List<String> queries, Map<String, dynamic> options, DateTime? startedAt, List<AnswerPaper> papers, String? bodyMd, List<Citation> citations, List<KbHit> kbHits, List<ToolCall> trace
 });
 
 
@@ -1277,19 +1286,23 @@ class _$AnswerCopyWithImpl<$Res>
 
 /// Create a copy of Answer
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,Object? questionEn = freezed,Object? queries = null,Object? options = null,Object? startedAt = freezed,Object? papers = null,Object? bodyMd = freezed,Object? citations = null,Object? kbHits = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? engine = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,Object? nTurns = null,Object? rootQuestion = freezed,Object? parentId = freezed,Object? questionEn = freezed,Object? queries = null,Object? options = null,Object? startedAt = freezed,Object? papers = null,Object? bodyMd = freezed,Object? citations = null,Object? kbHits = null,Object? trace = null,}) {
   return _then(Answer(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,jobId: freezed == jobId ? _self.jobId : jobId // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AnswerStatus,question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
-as String,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
+as String,engine: null == engine ? _self.engine : engine // ignore: cast_nullable_to_non_nullable
+as AnswerEngine,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
 as String?,nPapers: freezed == nPapers ? _self.nPapers : nPapers // ignore: cast_nullable_to_non_nullable
 as int?,nFulltext: freezed == nFulltext ? _self.nFulltext : nFulltext // ignore: cast_nullable_to_non_nullable
 as int?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as JobError?,questionEn: freezed == questionEn ? _self.questionEn : questionEn // ignore: cast_nullable_to_non_nullable
+as JobError?,nTurns: null == nTurns ? _self.nTurns : nTurns // ignore: cast_nullable_to_non_nullable
+as int,rootQuestion: freezed == rootQuestion ? _self.rootQuestion : rootQuestion // ignore: cast_nullable_to_non_nullable
+as String?,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,questionEn: freezed == questionEn ? _self.questionEn : questionEn // ignore: cast_nullable_to_non_nullable
 as String?,queries: null == queries ? _self.queries : queries // ignore: cast_nullable_to_non_nullable
 as List<String>,options: null == options ? _self.options : options // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -1297,7 +1310,8 @@ as DateTime?,papers: null == papers ? _self.papers : papers // ignore: cast_null
 as List<AnswerPaper>,bodyMd: freezed == bodyMd ? _self.bodyMd : bodyMd // ignore: cast_nullable_to_non_nullable
 as String?,citations: null == citations ? _self.citations : citations // ignore: cast_nullable_to_non_nullable
 as List<Citation>,kbHits: null == kbHits ? _self.kbHits : kbHits // ignore: cast_nullable_to_non_nullable
-as List<KbHit>,
+as List<KbHit>,trace: null == trace ? _self.trace : trace // ignore: cast_nullable_to_non_nullable
+as List<ToolCall>,
   ));
 }
 /// Create a copy of Answer
@@ -1394,10 +1408,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  String? questionEn,  List<String> queries,  Map<String, dynamic> options,  DateTime? startedAt,  List<AnswerPaper> papers,  String? bodyMd,  List<Citation> citations,  List<KbHit> kbHits)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question, @_engineKey  AnswerEngine engine,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  int nTurns,  String? rootQuestion,  String? parentId,  String? questionEn,  List<String> queries,  Map<String, dynamic> options,  DateTime? startedAt,  List<AnswerPaper> papers,  String? bodyMd,  List<Citation> citations,  List<KbHit> kbHits,  List<ToolCall> trace)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Answer() when $default != null:
-return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.questionEn,_that.queries,_that.options,_that.startedAt,_that.papers,_that.bodyMd,_that.citations,_that.kbHits);case _:
+return $default(_that.id,_that.jobId,_that.status,_that.question,_that.engine,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.nTurns,_that.rootQuestion,_that.parentId,_that.questionEn,_that.queries,_that.options,_that.startedAt,_that.papers,_that.bodyMd,_that.citations,_that.kbHits,_that.trace);case _:
   return orElse();
 
 }
@@ -1415,10 +1429,10 @@ return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLa
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  String? questionEn,  List<String> queries,  Map<String, dynamic> options,  DateTime? startedAt,  List<AnswerPaper> papers,  String? bodyMd,  List<Citation> citations,  List<KbHit> kbHits)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? jobId,  AnswerStatus status,  String question, @_engineKey  AnswerEngine engine,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  int nTurns,  String? rootQuestion,  String? parentId,  String? questionEn,  List<String> queries,  Map<String, dynamic> options,  DateTime? startedAt,  List<AnswerPaper> papers,  String? bodyMd,  List<Citation> citations,  List<KbHit> kbHits,  List<ToolCall> trace)  $default,) {final _that = this;
 switch (_that) {
 case _Answer():
-return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.questionEn,_that.queries,_that.options,_that.startedAt,_that.papers,_that.bodyMd,_that.citations,_that.kbHits);case _:
+return $default(_that.id,_that.jobId,_that.status,_that.question,_that.engine,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.nTurns,_that.rootQuestion,_that.parentId,_that.questionEn,_that.queries,_that.options,_that.startedAt,_that.papers,_that.bodyMd,_that.citations,_that.kbHits,_that.trace);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1435,10 +1449,10 @@ return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLa
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? jobId,  AnswerStatus status,  String question,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  String? questionEn,  List<String> queries,  Map<String, dynamic> options,  DateTime? startedAt,  List<AnswerPaper> papers,  String? bodyMd,  List<Citation> citations,  List<KbHit> kbHits)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? jobId,  AnswerStatus status,  String question, @_engineKey  AnswerEngine engine,  String? filtersLabel,  int? nPapers,  int? nFulltext,  DateTime createdAt,  DateTime? finishedAt,  JobError? error,  int nTurns,  String? rootQuestion,  String? parentId,  String? questionEn,  List<String> queries,  Map<String, dynamic> options,  DateTime? startedAt,  List<AnswerPaper> papers,  String? bodyMd,  List<Citation> citations,  List<KbHit> kbHits,  List<ToolCall> trace)?  $default,) {final _that = this;
 switch (_that) {
 case _Answer() when $default != null:
-return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.questionEn,_that.queries,_that.options,_that.startedAt,_that.papers,_that.bodyMd,_that.citations,_that.kbHits);case _:
+return $default(_that.id,_that.jobId,_that.status,_that.question,_that.engine,_that.filtersLabel,_that.nPapers,_that.nFulltext,_that.createdAt,_that.finishedAt,_that.error,_that.nTurns,_that.rootQuestion,_that.parentId,_that.questionEn,_that.queries,_that.options,_that.startedAt,_that.papers,_that.bodyMd,_that.citations,_that.kbHits,_that.trace);case _:
   return null;
 
 }
@@ -1450,19 +1464,23 @@ return $default(_that.id,_that.jobId,_that.status,_that.question,_that.filtersLa
 @JsonSerializable()
 
 class _Answer implements Answer {
-  const _Answer({required this.id, this.jobId, required this.status, this.question = '', this.filtersLabel, this.nPapers, this.nFulltext, required this.createdAt, this.finishedAt, this.error, this.questionEn,  List<String> queries = const <String>[],  Map<String, dynamic> options = const <String, dynamic>{}, this.startedAt,  List<AnswerPaper> papers = const <AnswerPaper>[], this.bodyMd,  List<Citation> citations = const <Citation>[],  List<KbHit> kbHits = const <KbHit>[]}): _queries = queries,_options = options,_papers = papers,_citations = citations,_kbHits = kbHits;
+  const _Answer({required this.id, this.jobId, required this.status, this.question = '', @_engineKey this.engine = AnswerEngine.ask, this.filtersLabel, this.nPapers, this.nFulltext, required this.createdAt, this.finishedAt, this.error, this.nTurns = 1, this.rootQuestion, this.parentId, this.questionEn,  List<String> queries = const <String>[],  Map<String, dynamic> options = const <String, dynamic>{}, this.startedAt,  List<AnswerPaper> papers = const <AnswerPaper>[], this.bodyMd,  List<Citation> citations = const <Citation>[],  List<KbHit> kbHits = const <KbHit>[],  List<ToolCall> trace = const <ToolCall>[]}): _queries = queries,_options = options,_papers = papers,_citations = citations,_kbHits = kbHits,_trace = trace;
   factory _Answer.fromJson(Map<String, dynamic> json) => _$AnswerFromJson(json);
 
 @override final  String id;
 @override final  String? jobId;
 @override final  AnswerStatus status;
 @override@JsonKey() final  String question;
+@override@_engineKey final  AnswerEngine engine;
 @override final  String? filtersLabel;
 @override final  int? nPapers;
 @override final  int? nFulltext;
 @override final  DateTime createdAt;
 @override final  DateTime? finishedAt;
 @override final  JobError? error;
+@override@JsonKey() final  int nTurns;
+@override final  String? rootQuestion;
+@override final  String? parentId;
 @override final  String? questionEn;
  final  List<String> _queries;
 @override@JsonKey() List<String> get queries {
@@ -1501,6 +1519,13 @@ class _Answer implements Answer {
   return EqualUnmodifiableListView(_kbHits);
 }
 
+ final  List<ToolCall> _trace;
+@override@JsonKey() List<ToolCall> get trace {
+  if (_trace is EqualUnmodifiableListView) return _trace;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_trace);
+}
+
 
 /// Create a copy of Answer
 /// with the given fields replaced by the non-null parameter values.
@@ -1515,18 +1540,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Answer&&(identical(other.id, id) || other.id == id)&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status)&&(identical(other.question, question) || other.question == question)&&(identical(other.filtersLabel, filtersLabel) || other.filtersLabel == filtersLabel)&&(identical(other.nPapers, nPapers) || other.nPapers == nPapers)&&(identical(other.nFulltext, nFulltext) || other.nFulltext == nFulltext)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.error, error) || other.error == error)&&(identical(other.questionEn, questionEn) || other.questionEn == questionEn)&&const DeepCollectionEquality().equals(other.queries, _queries)&&const DeepCollectionEquality().equals(other.options, _options)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&const DeepCollectionEquality().equals(other.papers, _papers)&&(identical(other.bodyMd, bodyMd) || other.bodyMd == bodyMd)&&const DeepCollectionEquality().equals(other.citations, _citations)&&const DeepCollectionEquality().equals(other.kbHits, _kbHits));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Answer&&(identical(other.id, id) || other.id == id)&&(identical(other.jobId, jobId) || other.jobId == jobId)&&(identical(other.status, status) || other.status == status)&&(identical(other.question, question) || other.question == question)&&(identical(other.engine, engine) || other.engine == engine)&&(identical(other.filtersLabel, filtersLabel) || other.filtersLabel == filtersLabel)&&(identical(other.nPapers, nPapers) || other.nPapers == nPapers)&&(identical(other.nFulltext, nFulltext) || other.nFulltext == nFulltext)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.finishedAt, finishedAt) || other.finishedAt == finishedAt)&&(identical(other.error, error) || other.error == error)&&(identical(other.nTurns, nTurns) || other.nTurns == nTurns)&&(identical(other.rootQuestion, rootQuestion) || other.rootQuestion == rootQuestion)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.questionEn, questionEn) || other.questionEn == questionEn)&&const DeepCollectionEquality().equals(other.queries, _queries)&&const DeepCollectionEquality().equals(other.options, _options)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&const DeepCollectionEquality().equals(other.papers, _papers)&&(identical(other.bodyMd, bodyMd) || other.bodyMd == bodyMd)&&const DeepCollectionEquality().equals(other.citations, _citations)&&const DeepCollectionEquality().equals(other.kbHits, _kbHits)&&const DeepCollectionEquality().equals(other.trace, _trace));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,jobId,status,question,filtersLabel,nPapers,nFulltext,createdAt,finishedAt,error,questionEn,const DeepCollectionEquality().hash(_queries),const DeepCollectionEquality().hash(_options),startedAt,const DeepCollectionEquality().hash(_papers),bodyMd,const DeepCollectionEquality().hash(_citations),const DeepCollectionEquality().hash(_kbHits));
+    return Object.hashAll([runtimeType,id,jobId,status,question,engine,filtersLabel,nPapers,nFulltext,createdAt,finishedAt,error,nTurns,rootQuestion,parentId,questionEn,const DeepCollectionEquality().hash(_queries),const DeepCollectionEquality().hash(_options),startedAt,const DeepCollectionEquality().hash(_papers),bodyMd,const DeepCollectionEquality().hash(_citations),const DeepCollectionEquality().hash(_kbHits),const DeepCollectionEquality().hash(_trace)]);
 }
 
 @override
 String toString() {
-    return 'Answer(id: $id, jobId: $jobId, status: $status, question: $question, filtersLabel: $filtersLabel, nPapers: $nPapers, nFulltext: $nFulltext, createdAt: $createdAt, finishedAt: $finishedAt, error: $error, questionEn: $questionEn, queries: $queries, options: $options, startedAt: $startedAt, papers: $papers, bodyMd: $bodyMd, citations: $citations, kbHits: $kbHits)';
+    return 'Answer(id: $id, jobId: $jobId, status: $status, question: $question, engine: $engine, filtersLabel: $filtersLabel, nPapers: $nPapers, nFulltext: $nFulltext, createdAt: $createdAt, finishedAt: $finishedAt, error: $error, nTurns: $nTurns, rootQuestion: $rootQuestion, parentId: $parentId, questionEn: $questionEn, queries: $queries, options: $options, startedAt: $startedAt, papers: $papers, bodyMd: $bodyMd, citations: $citations, kbHits: $kbHits, trace: $trace)';
 }
 
 
@@ -1537,7 +1562,7 @@ abstract mixin class _$AnswerCopyWith<$Res> implements $AnswerCopyWith<$Res> {
   factory _$AnswerCopyWith(_Answer value, $Res Function(_Answer) _then) = __$AnswerCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? jobId, AnswerStatus status, String question, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error, String? questionEn, List<String> queries, Map<String, dynamic> options, DateTime? startedAt, List<AnswerPaper> papers, String? bodyMd, List<Citation> citations, List<KbHit> kbHits
+ String id, String? jobId, AnswerStatus status, String question,@_engineKey AnswerEngine engine, String? filtersLabel, int? nPapers, int? nFulltext, DateTime createdAt, DateTime? finishedAt, JobError? error, int nTurns, String? rootQuestion, String? parentId, String? questionEn, List<String> queries, Map<String, dynamic> options, DateTime? startedAt, List<AnswerPaper> papers, String? bodyMd, List<Citation> citations, List<KbHit> kbHits, List<ToolCall> trace
 });
 
 
@@ -1554,19 +1579,23 @@ class __$AnswerCopyWithImpl<$Res>
 
 /// Create a copy of Answer
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,Object? questionEn = freezed,Object? queries = null,Object? options = null,Object? startedAt = freezed,Object? papers = null,Object? bodyMd = freezed,Object? citations = null,Object? kbHits = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? jobId = freezed,Object? status = null,Object? question = null,Object? engine = null,Object? filtersLabel = freezed,Object? nPapers = freezed,Object? nFulltext = freezed,Object? createdAt = null,Object? finishedAt = freezed,Object? error = freezed,Object? nTurns = null,Object? rootQuestion = freezed,Object? parentId = freezed,Object? questionEn = freezed,Object? queries = null,Object? options = null,Object? startedAt = freezed,Object? papers = null,Object? bodyMd = freezed,Object? citations = null,Object? kbHits = null,Object? trace = null,}) {
   return _then(_Answer(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,jobId: freezed == jobId ? _self.jobId : jobId // ignore: cast_nullable_to_non_nullable
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AnswerStatus,question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
-as String,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
+as String,engine: null == engine ? _self.engine : engine // ignore: cast_nullable_to_non_nullable
+as AnswerEngine,filtersLabel: freezed == filtersLabel ? _self.filtersLabel : filtersLabel // ignore: cast_nullable_to_non_nullable
 as String?,nPapers: freezed == nPapers ? _self.nPapers : nPapers // ignore: cast_nullable_to_non_nullable
 as int?,nFulltext: freezed == nFulltext ? _self.nFulltext : nFulltext // ignore: cast_nullable_to_non_nullable
 as int?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,finishedAt: freezed == finishedAt ? _self.finishedAt : finishedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
-as JobError?,questionEn: freezed == questionEn ? _self.questionEn : questionEn // ignore: cast_nullable_to_non_nullable
+as JobError?,nTurns: null == nTurns ? _self.nTurns : nTurns // ignore: cast_nullable_to_non_nullable
+as int,rootQuestion: freezed == rootQuestion ? _self.rootQuestion : rootQuestion // ignore: cast_nullable_to_non_nullable
+as String?,parentId: freezed == parentId ? _self.parentId : parentId // ignore: cast_nullable_to_non_nullable
+as String?,questionEn: freezed == questionEn ? _self.questionEn : questionEn // ignore: cast_nullable_to_non_nullable
 as String?,queries: null == queries ? _self._queries : queries // ignore: cast_nullable_to_non_nullable
 as List<String>,options: null == options ? _self._options : options // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -1574,7 +1603,8 @@ as DateTime?,papers: null == papers ? _self._papers : papers // ignore: cast_nul
 as List<AnswerPaper>,bodyMd: freezed == bodyMd ? _self.bodyMd : bodyMd // ignore: cast_nullable_to_non_nullable
 as String?,citations: null == citations ? _self._citations : citations // ignore: cast_nullable_to_non_nullable
 as List<Citation>,kbHits: null == kbHits ? _self._kbHits : kbHits // ignore: cast_nullable_to_non_nullable
-as List<KbHit>,
+as List<KbHit>,trace: null == trace ? _self._trace : trace // ignore: cast_nullable_to_non_nullable
+as List<ToolCall>,
   ));
 }
 
@@ -1945,7 +1975,7 @@ as String,
 /// @nodoc
 mixin _$AnswerCreate {
 
- String get question; int get papers; int? get years; int? get yearFrom; int? get yearTo; List<int> get quartiles; List<String> get journals; bool? get keepUnranked; bool get useKb; int get kbHits; int get maxChars;
+ String get question; AnswerEngine get engine; int get papers; int? get years; int? get yearFrom; int? get yearTo; List<int> get quartiles; List<String> get journals; bool? get keepUnranked; bool get useKb; int? get kbHits; int? get maxChars;
 /// Create a copy of AnswerCreate
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1959,20 +1989,20 @@ $AnswerCreateCopyWith<AnswerCreate> get copyWith => _$AnswerCreateCopyWithImpl<A
 @override
 bool operator ==(Object other) {
   final _this = this as AnswerCreate;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnswerCreate&&(identical(other.question, _this.question) || other.question == _this.question)&&(identical(other.papers, _this.papers) || other.papers == _this.papers)&&(identical(other.years, _this.years) || other.years == _this.years)&&(identical(other.yearFrom, _this.yearFrom) || other.yearFrom == _this.yearFrom)&&(identical(other.yearTo, _this.yearTo) || other.yearTo == _this.yearTo)&&const DeepCollectionEquality().equals(other.quartiles, _this.quartiles)&&const DeepCollectionEquality().equals(other.journals, _this.journals)&&(identical(other.keepUnranked, _this.keepUnranked) || other.keepUnranked == _this.keepUnranked)&&(identical(other.useKb, _this.useKb) || other.useKb == _this.useKb)&&(identical(other.kbHits, _this.kbHits) || other.kbHits == _this.kbHits)&&(identical(other.maxChars, _this.maxChars) || other.maxChars == _this.maxChars));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AnswerCreate&&(identical(other.question, _this.question) || other.question == _this.question)&&(identical(other.engine, _this.engine) || other.engine == _this.engine)&&(identical(other.papers, _this.papers) || other.papers == _this.papers)&&(identical(other.years, _this.years) || other.years == _this.years)&&(identical(other.yearFrom, _this.yearFrom) || other.yearFrom == _this.yearFrom)&&(identical(other.yearTo, _this.yearTo) || other.yearTo == _this.yearTo)&&const DeepCollectionEquality().equals(other.quartiles, _this.quartiles)&&const DeepCollectionEquality().equals(other.journals, _this.journals)&&(identical(other.keepUnranked, _this.keepUnranked) || other.keepUnranked == _this.keepUnranked)&&(identical(other.useKb, _this.useKb) || other.useKb == _this.useKb)&&(identical(other.kbHits, _this.kbHits) || other.kbHits == _this.kbHits)&&(identical(other.maxChars, _this.maxChars) || other.maxChars == _this.maxChars));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as AnswerCreate;
-  return Object.hash(runtimeType,_this.question,_this.papers,_this.years,_this.yearFrom,_this.yearTo,const DeepCollectionEquality().hash(_this.quartiles),const DeepCollectionEquality().hash(_this.journals),_this.keepUnranked,_this.useKb,_this.kbHits,_this.maxChars);
+  return Object.hash(runtimeType,_this.question,_this.engine,_this.papers,_this.years,_this.yearFrom,_this.yearTo,const DeepCollectionEquality().hash(_this.quartiles),const DeepCollectionEquality().hash(_this.journals),_this.keepUnranked,_this.useKb,_this.kbHits,_this.maxChars);
 }
 
 @override
 String toString() {
   final _this = this as AnswerCreate;
-  return 'AnswerCreate(question: ${_this.question}, papers: ${_this.papers}, years: ${_this.years}, yearFrom: ${_this.yearFrom}, yearTo: ${_this.yearTo}, quartiles: ${_this.quartiles}, journals: ${_this.journals}, keepUnranked: ${_this.keepUnranked}, useKb: ${_this.useKb}, kbHits: ${_this.kbHits}, maxChars: ${_this.maxChars})';
+  return 'AnswerCreate(question: ${_this.question}, engine: ${_this.engine}, papers: ${_this.papers}, years: ${_this.years}, yearFrom: ${_this.yearFrom}, yearTo: ${_this.yearTo}, quartiles: ${_this.quartiles}, journals: ${_this.journals}, keepUnranked: ${_this.keepUnranked}, useKb: ${_this.useKb}, kbHits: ${_this.kbHits}, maxChars: ${_this.maxChars})';
 }
 
 
@@ -1983,7 +2013,7 @@ abstract mixin class $AnswerCreateCopyWith<$Res>  {
   factory $AnswerCreateCopyWith(AnswerCreate value, $Res Function(AnswerCreate) _then) = _$AnswerCreateCopyWithImpl;
 @useResult
 $Res call({
- String question, int papers, int? years, int? yearFrom, int? yearTo, List<int> quartiles, List<String> journals, bool? keepUnranked, bool useKb, int kbHits, int maxChars
+ String question, AnswerEngine engine, int papers, int? years, int? yearFrom, int? yearTo, List<int> quartiles, List<String> journals, bool? keepUnranked, bool useKb, int? kbHits, int? maxChars
 });
 
 
@@ -2000,10 +2030,11 @@ class _$AnswerCreateCopyWithImpl<$Res>
 
 /// Create a copy of AnswerCreate
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? papers = null,Object? years = freezed,Object? yearFrom = freezed,Object? yearTo = freezed,Object? quartiles = null,Object? journals = null,Object? keepUnranked = freezed,Object? useKb = null,Object? kbHits = null,Object? maxChars = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? engine = null,Object? papers = null,Object? years = freezed,Object? yearFrom = freezed,Object? yearTo = freezed,Object? quartiles = null,Object? journals = null,Object? keepUnranked = freezed,Object? useKb = null,Object? kbHits = freezed,Object? maxChars = freezed,}) {
   return _then(AnswerCreate(
 question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
-as String,papers: null == papers ? _self.papers : papers // ignore: cast_nullable_to_non_nullable
+as String,engine: null == engine ? _self.engine : engine // ignore: cast_nullable_to_non_nullable
+as AnswerEngine,papers: null == papers ? _self.papers : papers // ignore: cast_nullable_to_non_nullable
 as int,years: freezed == years ? _self.years : years // ignore: cast_nullable_to_non_nullable
 as int?,yearFrom: freezed == yearFrom ? _self.yearFrom : yearFrom // ignore: cast_nullable_to_non_nullable
 as int?,yearTo: freezed == yearTo ? _self.yearTo : yearTo // ignore: cast_nullable_to_non_nullable
@@ -2011,9 +2042,9 @@ as int?,quartiles: null == quartiles ? _self.quartiles : quartiles // ignore: ca
 as List<int>,journals: null == journals ? _self.journals : journals // ignore: cast_nullable_to_non_nullable
 as List<String>,keepUnranked: freezed == keepUnranked ? _self.keepUnranked : keepUnranked // ignore: cast_nullable_to_non_nullable
 as bool?,useKb: null == useKb ? _self.useKb : useKb // ignore: cast_nullable_to_non_nullable
-as bool,kbHits: null == kbHits ? _self.kbHits : kbHits // ignore: cast_nullable_to_non_nullable
-as int,maxChars: null == maxChars ? _self.maxChars : maxChars // ignore: cast_nullable_to_non_nullable
-as int,
+as bool,kbHits: freezed == kbHits ? _self.kbHits : kbHits // ignore: cast_nullable_to_non_nullable
+as int?,maxChars: freezed == maxChars ? _self.maxChars : maxChars // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -2098,10 +2129,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String question,  int papers,  int? years,  int? yearFrom,  int? yearTo,  List<int> quartiles,  List<String> journals,  bool? keepUnranked,  bool useKb,  int kbHits,  int maxChars)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String question,  AnswerEngine engine,  int papers,  int? years,  int? yearFrom,  int? yearTo,  List<int> quartiles,  List<String> journals,  bool? keepUnranked,  bool useKb,  int? kbHits,  int? maxChars)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AnswerCreate() when $default != null:
-return $default(_that.question,_that.papers,_that.years,_that.yearFrom,_that.yearTo,_that.quartiles,_that.journals,_that.keepUnranked,_that.useKb,_that.kbHits,_that.maxChars);case _:
+return $default(_that.question,_that.engine,_that.papers,_that.years,_that.yearFrom,_that.yearTo,_that.quartiles,_that.journals,_that.keepUnranked,_that.useKb,_that.kbHits,_that.maxChars);case _:
   return orElse();
 
 }
@@ -2119,10 +2150,10 @@ return $default(_that.question,_that.papers,_that.years,_that.yearFrom,_that.yea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String question,  int papers,  int? years,  int? yearFrom,  int? yearTo,  List<int> quartiles,  List<String> journals,  bool? keepUnranked,  bool useKb,  int kbHits,  int maxChars)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String question,  AnswerEngine engine,  int papers,  int? years,  int? yearFrom,  int? yearTo,  List<int> quartiles,  List<String> journals,  bool? keepUnranked,  bool useKb,  int? kbHits,  int? maxChars)  $default,) {final _that = this;
 switch (_that) {
 case _AnswerCreate():
-return $default(_that.question,_that.papers,_that.years,_that.yearFrom,_that.yearTo,_that.quartiles,_that.journals,_that.keepUnranked,_that.useKb,_that.kbHits,_that.maxChars);case _:
+return $default(_that.question,_that.engine,_that.papers,_that.years,_that.yearFrom,_that.yearTo,_that.quartiles,_that.journals,_that.keepUnranked,_that.useKb,_that.kbHits,_that.maxChars);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2139,10 +2170,10 @@ return $default(_that.question,_that.papers,_that.years,_that.yearFrom,_that.yea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String question,  int papers,  int? years,  int? yearFrom,  int? yearTo,  List<int> quartiles,  List<String> journals,  bool? keepUnranked,  bool useKb,  int kbHits,  int maxChars)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String question,  AnswerEngine engine,  int papers,  int? years,  int? yearFrom,  int? yearTo,  List<int> quartiles,  List<String> journals,  bool? keepUnranked,  bool useKb,  int? kbHits,  int? maxChars)?  $default,) {final _that = this;
 switch (_that) {
 case _AnswerCreate() when $default != null:
-return $default(_that.question,_that.papers,_that.years,_that.yearFrom,_that.yearTo,_that.quartiles,_that.journals,_that.keepUnranked,_that.useKb,_that.kbHits,_that.maxChars);case _:
+return $default(_that.question,_that.engine,_that.papers,_that.years,_that.yearFrom,_that.yearTo,_that.quartiles,_that.journals,_that.keepUnranked,_that.useKb,_that.kbHits,_that.maxChars);case _:
   return null;
 
 }
@@ -2154,10 +2185,11 @@ return $default(_that.question,_that.papers,_that.years,_that.yearFrom,_that.yea
 @JsonSerializable()
 
 class _AnswerCreate implements AnswerCreate {
-  const _AnswerCreate({required this.question, required this.papers, this.years, this.yearFrom, this.yearTo,  List<int> quartiles = const <int>[],  List<String> journals = const <String>[], this.keepUnranked, this.useKb = true, this.kbHits = 0, this.maxChars = 28000}): _quartiles = quartiles,_journals = journals;
+  const _AnswerCreate({required this.question, this.engine = AnswerEngine.ask, required this.papers, this.years, this.yearFrom, this.yearTo,  List<int> quartiles = const <int>[],  List<String> journals = const <String>[], this.keepUnranked, this.useKb = true, this.kbHits, this.maxChars}): _quartiles = quartiles,_journals = journals;
   factory _AnswerCreate.fromJson(Map<String, dynamic> json) => _$AnswerCreateFromJson(json);
 
 @override final  String question;
+@override@JsonKey() final  AnswerEngine engine;
 @override final  int papers;
 @override final  int? years;
 @override final  int? yearFrom;
@@ -2178,8 +2210,8 @@ class _AnswerCreate implements AnswerCreate {
 
 @override final  bool? keepUnranked;
 @override@JsonKey() final  bool useKb;
-@override@JsonKey() final  int kbHits;
-@override@JsonKey() final  int maxChars;
+@override final  int? kbHits;
+@override final  int? maxChars;
 
 /// Create a copy of AnswerCreate
 /// with the given fields replaced by the non-null parameter values.
@@ -2194,18 +2226,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnswerCreate&&(identical(other.question, question) || other.question == question)&&(identical(other.papers, papers) || other.papers == papers)&&(identical(other.years, years) || other.years == years)&&(identical(other.yearFrom, yearFrom) || other.yearFrom == yearFrom)&&(identical(other.yearTo, yearTo) || other.yearTo == yearTo)&&const DeepCollectionEquality().equals(other.quartiles, _quartiles)&&const DeepCollectionEquality().equals(other.journals, _journals)&&(identical(other.keepUnranked, keepUnranked) || other.keepUnranked == keepUnranked)&&(identical(other.useKb, useKb) || other.useKb == useKb)&&(identical(other.kbHits, kbHits) || other.kbHits == kbHits)&&(identical(other.maxChars, maxChars) || other.maxChars == maxChars));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AnswerCreate&&(identical(other.question, question) || other.question == question)&&(identical(other.engine, engine) || other.engine == engine)&&(identical(other.papers, papers) || other.papers == papers)&&(identical(other.years, years) || other.years == years)&&(identical(other.yearFrom, yearFrom) || other.yearFrom == yearFrom)&&(identical(other.yearTo, yearTo) || other.yearTo == yearTo)&&const DeepCollectionEquality().equals(other.quartiles, _quartiles)&&const DeepCollectionEquality().equals(other.journals, _journals)&&(identical(other.keepUnranked, keepUnranked) || other.keepUnranked == keepUnranked)&&(identical(other.useKb, useKb) || other.useKb == useKb)&&(identical(other.kbHits, kbHits) || other.kbHits == kbHits)&&(identical(other.maxChars, maxChars) || other.maxChars == maxChars));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,question,papers,years,yearFrom,yearTo,const DeepCollectionEquality().hash(_quartiles),const DeepCollectionEquality().hash(_journals),keepUnranked,useKb,kbHits,maxChars);
+    return Object.hash(runtimeType,question,engine,papers,years,yearFrom,yearTo,const DeepCollectionEquality().hash(_quartiles),const DeepCollectionEquality().hash(_journals),keepUnranked,useKb,kbHits,maxChars);
 }
 
 @override
 String toString() {
-    return 'AnswerCreate(question: $question, papers: $papers, years: $years, yearFrom: $yearFrom, yearTo: $yearTo, quartiles: $quartiles, journals: $journals, keepUnranked: $keepUnranked, useKb: $useKb, kbHits: $kbHits, maxChars: $maxChars)';
+    return 'AnswerCreate(question: $question, engine: $engine, papers: $papers, years: $years, yearFrom: $yearFrom, yearTo: $yearTo, quartiles: $quartiles, journals: $journals, keepUnranked: $keepUnranked, useKb: $useKb, kbHits: $kbHits, maxChars: $maxChars)';
 }
 
 
@@ -2216,7 +2248,7 @@ abstract mixin class _$AnswerCreateCopyWith<$Res> implements $AnswerCreateCopyWi
   factory _$AnswerCreateCopyWith(_AnswerCreate value, $Res Function(_AnswerCreate) _then) = __$AnswerCreateCopyWithImpl;
 @override @useResult
 $Res call({
- String question, int papers, int? years, int? yearFrom, int? yearTo, List<int> quartiles, List<String> journals, bool? keepUnranked, bool useKb, int kbHits, int maxChars
+ String question, AnswerEngine engine, int papers, int? years, int? yearFrom, int? yearTo, List<int> quartiles, List<String> journals, bool? keepUnranked, bool useKb, int? kbHits, int? maxChars
 });
 
 
@@ -2233,10 +2265,11 @@ class __$AnswerCreateCopyWithImpl<$Res>
 
 /// Create a copy of AnswerCreate
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? question = null,Object? papers = null,Object? years = freezed,Object? yearFrom = freezed,Object? yearTo = freezed,Object? quartiles = null,Object? journals = null,Object? keepUnranked = freezed,Object? useKb = null,Object? kbHits = null,Object? maxChars = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? question = null,Object? engine = null,Object? papers = null,Object? years = freezed,Object? yearFrom = freezed,Object? yearTo = freezed,Object? quartiles = null,Object? journals = null,Object? keepUnranked = freezed,Object? useKb = null,Object? kbHits = freezed,Object? maxChars = freezed,}) {
   return _then(_AnswerCreate(
 question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
-as String,papers: null == papers ? _self.papers : papers // ignore: cast_nullable_to_non_nullable
+as String,engine: null == engine ? _self.engine : engine // ignore: cast_nullable_to_non_nullable
+as AnswerEngine,papers: null == papers ? _self.papers : papers // ignore: cast_nullable_to_non_nullable
 as int,years: freezed == years ? _self.years : years // ignore: cast_nullable_to_non_nullable
 as int?,yearFrom: freezed == yearFrom ? _self.yearFrom : yearFrom // ignore: cast_nullable_to_non_nullable
 as int?,yearTo: freezed == yearTo ? _self.yearTo : yearTo // ignore: cast_nullable_to_non_nullable
@@ -2244,9 +2277,279 @@ as int?,quartiles: null == quartiles ? _self._quartiles : quartiles // ignore: c
 as List<int>,journals: null == journals ? _self._journals : journals // ignore: cast_nullable_to_non_nullable
 as List<String>,keepUnranked: freezed == keepUnranked ? _self.keepUnranked : keepUnranked // ignore: cast_nullable_to_non_nullable
 as bool?,useKb: null == useKb ? _self.useKb : useKb // ignore: cast_nullable_to_non_nullable
-as bool,kbHits: null == kbHits ? _self.kbHits : kbHits // ignore: cast_nullable_to_non_nullable
-as int,maxChars: null == maxChars ? _self.maxChars : maxChars // ignore: cast_nullable_to_non_nullable
-as int,
+as bool,kbHits: freezed == kbHits ? _self.kbHits : kbHits // ignore: cast_nullable_to_non_nullable
+as int?,maxChars: freezed == maxChars ? _self.maxChars : maxChars // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$FollowupCreate {
+
+ String get question;
+/// Create a copy of FollowupCreate
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$FollowupCreateCopyWith<FollowupCreate> get copyWith => _$FollowupCreateCopyWithImpl<FollowupCreate>(this as FollowupCreate, _$identity);
+
+  /// Serializes this FollowupCreate to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as FollowupCreate;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FollowupCreate&&(identical(other.question, _this.question) || other.question == _this.question));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as FollowupCreate;
+  return Object.hash(runtimeType,_this.question);
+}
+
+@override
+String toString() {
+  final _this = this as FollowupCreate;
+  return 'FollowupCreate(question: ${_this.question})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $FollowupCreateCopyWith<$Res>  {
+  factory $FollowupCreateCopyWith(FollowupCreate value, $Res Function(FollowupCreate) _then) = _$FollowupCreateCopyWithImpl;
+@useResult
+$Res call({
+ String question
+});
+
+
+
+
+}
+/// @nodoc
+class _$FollowupCreateCopyWithImpl<$Res>
+    implements $FollowupCreateCopyWith<$Res> {
+  _$FollowupCreateCopyWithImpl(this._self, this._then);
+
+  final FollowupCreate _self;
+  final $Res Function(FollowupCreate) _then;
+
+/// Create a copy of FollowupCreate
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? question = null,}) {
+  return _then(FollowupCreate(
+question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [FollowupCreate].
+extension FollowupCreatePatterns on FollowupCreate {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _FollowupCreate value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _FollowupCreate() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _FollowupCreate value)  $default,){
+final _that = this;
+switch (_that) {
+case _FollowupCreate():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _FollowupCreate value)?  $default,){
+final _that = this;
+switch (_that) {
+case _FollowupCreate() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String question)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _FollowupCreate() when $default != null:
+return $default(_that.question);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String question)  $default,) {final _that = this;
+switch (_that) {
+case _FollowupCreate():
+return $default(_that.question);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String question)?  $default,) {final _that = this;
+switch (_that) {
+case _FollowupCreate() when $default != null:
+return $default(_that.question);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _FollowupCreate implements FollowupCreate {
+  const _FollowupCreate({required this.question});
+  factory _FollowupCreate.fromJson(Map<String, dynamic> json) => _$FollowupCreateFromJson(json);
+
+@override final  String question;
+
+/// Create a copy of FollowupCreate
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$FollowupCreateCopyWith<_FollowupCreate> get copyWith => __$FollowupCreateCopyWithImpl<_FollowupCreate>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$FollowupCreateToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _FollowupCreate&&(identical(other.question, question) || other.question == question));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,question);
+}
+
+@override
+String toString() {
+    return 'FollowupCreate(question: $question)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$FollowupCreateCopyWith<$Res> implements $FollowupCreateCopyWith<$Res> {
+  factory _$FollowupCreateCopyWith(_FollowupCreate value, $Res Function(_FollowupCreate) _then) = __$FollowupCreateCopyWithImpl;
+@override @useResult
+$Res call({
+ String question
+});
+
+
+
+
+}
+/// @nodoc
+class __$FollowupCreateCopyWithImpl<$Res>
+    implements _$FollowupCreateCopyWith<$Res> {
+  __$FollowupCreateCopyWithImpl(this._self, this._then);
+
+  final _FollowupCreate _self;
+  final $Res Function(_FollowupCreate) _then;
+
+/// Create a copy of FollowupCreate
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? question = null,}) {
+  return _then(_FollowupCreate(
+question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

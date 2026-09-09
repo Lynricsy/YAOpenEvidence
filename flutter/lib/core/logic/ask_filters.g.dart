@@ -7,6 +7,9 @@ part of 'ask_filters.dart';
 // **************************************************************************
 
 _AskFilters _$AskFiltersFromJson(Map<String, dynamic> json) => _AskFilters(
+  engine:
+      $enumDecodeNullable(_$AnswerEngineEnumMap, json['engine']) ??
+      AnswerEngine.ask,
   quartiles:
       (json['quartiles'] as List<dynamic>?)
           ?.map((e) => (e as num).toInt())
@@ -30,6 +33,7 @@ _AskFilters _$AskFiltersFromJson(Map<String, dynamic> json) => _AskFilters(
 
 Map<String, dynamic> _$AskFiltersToJson(_AskFilters instance) =>
     <String, dynamic>{
+      'engine': _$AnswerEngineEnumMap[instance.engine]!,
       'quartiles': instance.quartiles,
       'keep_unranked': instance.keepUnranked,
       'year_mode': _$YearModeEnumMap[instance.yearMode]!,
@@ -42,6 +46,11 @@ Map<String, dynamic> _$AskFiltersToJson(_AskFilters instance) =>
       'kb_hits': instance.kbHits,
       'max_chars': instance.maxChars,
     };
+
+const _$AnswerEngineEnumMap = {
+  AnswerEngine.ask: 'ask',
+  AnswerEngine.codex: 'codex',
+};
 
 const _$YearModeEnumMap = {
   YearMode.any: 'any',

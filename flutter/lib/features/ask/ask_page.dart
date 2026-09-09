@@ -83,6 +83,7 @@ class _AskPageState extends ConsumerState<AskPage> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final wide = width >= YaoeTokens.expandedMinWidth;
+    final filters = ref.watch(askFiltersControllerProvider);
     // 草稿可能被答案页的「沿用筛选重新提问」改写。
     ref.listen(askDraftProvider, (previous, next) {
       if (next != _controller.text) _controller.text = next;
@@ -104,6 +105,10 @@ class _AskPageState extends ConsumerState<AskPage> {
               Composer(
                 controller: _controller,
                 onSubmit: _submit,
+                engine: filters.engine,
+                onEngineChanged: (engine) => ref
+                    .read(askFiltersControllerProvider.notifier)
+                    .set(filters.copyWith(engine: engine)),
                 submitting: _submitting,
                 autofocus: true,
                 trailing: wide

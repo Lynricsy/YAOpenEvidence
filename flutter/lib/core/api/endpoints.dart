@@ -144,6 +144,24 @@ extension YaoeEndpoints on ApiClient {
     (raw) => Answer.fromJson(_obj(raw)),
   );
 
+  /// 在智能体会话上追问：新建一轮答案，续接同一 codex thread。
+  Future<Answer> followUp(String id, FollowupCreate payload) => json(
+    ApiRequest(
+      method: 'POST',
+      path: '/answers/${encodePathComponent(id)}/followup',
+      body: payload.toJson(),
+    ),
+    (raw) => Answer.fromJson(_obj(raw)),
+  );
+
+  /// 同一会话的全部回合，按创建时间升序。
+  Future<List<AnswerSummary>> answerThread(String id) => json(
+    ApiRequest(path: '/answers/${encodePathComponent(id)}/thread'),
+    (raw) => (raw! as List)
+        .map((e) => AnswerSummary.fromJson(_obj(e)))
+        .toList(growable: false),
+  );
+
   Future<void> deleteAnswer(String id) => noContent(
     ApiRequest(method: 'DELETE', path: '/answers/${encodePathComponent(id)}'),
   );

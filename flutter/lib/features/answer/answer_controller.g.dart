@@ -53,7 +53,7 @@ final class AnswerControllerProvider
   }
 }
 
-String _$answerControllerHash() => r'4430f2adf90e5a7f467ec74050d4a80873525065';
+String _$answerControllerHash() => r'95821e10e0490f909017ebfef5f7d084489c3edf';
 
 /// 单个答案的状态机：SSE 终态或轮询驱动重取。
 
@@ -184,4 +184,90 @@ final class LegacyAnswerMarkdownFamily extends $Family
 
   @override
   String toString() => r'legacyAnswerMarkdownProvider';
+}
+
+/// 同一智能体会话的全部回合（答案页「对话脉络」）。
+
+@ProviderFor(answerThread)
+final answerThreadProvider = AnswerThreadFamily._();
+
+/// 同一智能体会话的全部回合（答案页「对话脉络」）。
+
+final class AnswerThreadProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<AnswerSummary>>,
+          List<AnswerSummary>,
+          FutureOr<List<AnswerSummary>>
+        >
+    with
+        $FutureModifier<List<AnswerSummary>>,
+        $FutureProvider<List<AnswerSummary>> {
+  /// 同一智能体会话的全部回合（答案页「对话脉络」）。
+  AnswerThreadProvider._({
+    required AnswerThreadFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'answerThreadProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$answerThreadHash();
+
+  @override
+  String toString() {
+    return r'answerThreadProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<AnswerSummary>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<AnswerSummary>> create(Ref ref) {
+    final argument = this.argument as String;
+    return answerThread(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AnswerThreadProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$answerThreadHash() => r'4a8a808d08aaf8e76350b7a7c94635f332bb5214';
+
+/// 同一智能体会话的全部回合（答案页「对话脉络」）。
+
+final class AnswerThreadFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<AnswerSummary>>, String> {
+  AnswerThreadFamily._()
+    : super(
+        retry: null,
+        name: r'answerThreadProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 同一智能体会话的全部回合（答案页「对话脉络」）。
+
+  AnswerThreadProvider call(String answerId) =>
+      AnswerThreadProvider._(argument: answerId, from: this);
+
+  @override
+  String toString() => r'answerThreadProvider';
 }

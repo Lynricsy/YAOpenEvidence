@@ -98,6 +98,13 @@ _AnswerSummary _$AnswerSummaryFromJson(Map<String, dynamic> json) =>
       jobId: json['job_id'] as String?,
       status: $enumDecode(_$AnswerStatusEnumMap, json['status']),
       question: json['question'] as String? ?? '',
+      engine:
+          $enumDecodeNullable(
+            _$AnswerEngineEnumMap,
+            json['engine'],
+            unknownValue: AnswerEngine.ask,
+          ) ??
+          AnswerEngine.ask,
       filtersLabel: json['filters_label'] as String?,
       nPapers: (json['n_papers'] as num?)?.toInt(),
       nFulltext: (json['n_fulltext'] as num?)?.toInt(),
@@ -108,6 +115,8 @@ _AnswerSummary _$AnswerSummaryFromJson(Map<String, dynamic> json) =>
       error: json['error'] == null
           ? null
           : JobError.fromJson(json['error'] as Map<String, dynamic>),
+      nTurns: (json['n_turns'] as num?)?.toInt() ?? 1,
+      rootQuestion: json['root_question'] as String?,
     );
 
 Map<String, dynamic> _$AnswerSummaryToJson(_AnswerSummary instance) =>
@@ -116,12 +125,15 @@ Map<String, dynamic> _$AnswerSummaryToJson(_AnswerSummary instance) =>
       'job_id': ?instance.jobId,
       'status': _$AnswerStatusEnumMap[instance.status]!,
       'question': instance.question,
+      'engine': _$AnswerEngineEnumMap[instance.engine]!,
       'filters_label': ?instance.filtersLabel,
       'n_papers': ?instance.nPapers,
       'n_fulltext': ?instance.nFulltext,
       'created_at': instance.createdAt.toIso8601String(),
       'finished_at': ?instance.finishedAt?.toIso8601String(),
       'error': ?instance.error?.toJson(),
+      'n_turns': instance.nTurns,
+      'root_question': ?instance.rootQuestion,
     };
 
 const _$AnswerStatusEnumMap = {
@@ -132,11 +144,23 @@ const _$AnswerStatusEnumMap = {
   AnswerStatus.cancelled: 'cancelled',
 };
 
+const _$AnswerEngineEnumMap = {
+  AnswerEngine.ask: 'ask',
+  AnswerEngine.codex: 'codex',
+};
+
 _Answer _$AnswerFromJson(Map<String, dynamic> json) => _Answer(
   id: json['id'] as String,
   jobId: json['job_id'] as String?,
   status: $enumDecode(_$AnswerStatusEnumMap, json['status']),
   question: json['question'] as String? ?? '',
+  engine:
+      $enumDecodeNullable(
+        _$AnswerEngineEnumMap,
+        json['engine'],
+        unknownValue: AnswerEngine.ask,
+      ) ??
+      AnswerEngine.ask,
   filtersLabel: json['filters_label'] as String?,
   nPapers: (json['n_papers'] as num?)?.toInt(),
   nFulltext: (json['n_fulltext'] as num?)?.toInt(),
@@ -147,6 +171,9 @@ _Answer _$AnswerFromJson(Map<String, dynamic> json) => _Answer(
   error: json['error'] == null
       ? null
       : JobError.fromJson(json['error'] as Map<String, dynamic>),
+  nTurns: (json['n_turns'] as num?)?.toInt() ?? 1,
+  rootQuestion: json['root_question'] as String?,
+  parentId: json['parent_id'] as String?,
   questionEn: json['question_en'] as String?,
   queries:
       (json['queries'] as List<dynamic>?)?.map((e) => e as String).toList() ??
@@ -172,6 +199,11 @@ _Answer _$AnswerFromJson(Map<String, dynamic> json) => _Answer(
           ?.map((e) => KbHit.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <KbHit>[],
+  trace:
+      (json['trace'] as List<dynamic>?)
+          ?.map((e) => ToolCall.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const <ToolCall>[],
 );
 
 Map<String, dynamic> _$AnswerToJson(_Answer instance) => <String, dynamic>{
@@ -179,12 +211,16 @@ Map<String, dynamic> _$AnswerToJson(_Answer instance) => <String, dynamic>{
   'job_id': ?instance.jobId,
   'status': _$AnswerStatusEnumMap[instance.status]!,
   'question': instance.question,
+  'engine': _$AnswerEngineEnumMap[instance.engine]!,
   'filters_label': ?instance.filtersLabel,
   'n_papers': ?instance.nPapers,
   'n_fulltext': ?instance.nFulltext,
   'created_at': instance.createdAt.toIso8601String(),
   'finished_at': ?instance.finishedAt?.toIso8601String(),
   'error': ?instance.error?.toJson(),
+  'n_turns': instance.nTurns,
+  'root_question': ?instance.rootQuestion,
+  'parent_id': ?instance.parentId,
   'question_en': ?instance.questionEn,
   'queries': instance.queries,
   'options': instance.options,
@@ -193,6 +229,7 @@ Map<String, dynamic> _$AnswerToJson(_Answer instance) => <String, dynamic>{
   'body_md': ?instance.bodyMd,
   'citations': instance.citations.map((e) => e.toJson()).toList(),
   'kb_hits': instance.kbHits.map((e) => e.toJson()).toList(),
+  'trace': instance.trace.map((e) => e.toJson()).toList(),
 };
 
 _AnswerPaperDetail _$AnswerPaperDetailFromJson(Map<String, dynamic> json) =>
@@ -266,6 +303,9 @@ Map<String, dynamic> _$AnswerPaperDetailToJson(_AnswerPaperDetail instance) =>
 _AnswerCreate _$AnswerCreateFromJson(Map<String, dynamic> json) =>
     _AnswerCreate(
       question: json['question'] as String,
+      engine:
+          $enumDecodeNullable(_$AnswerEngineEnumMap, json['engine']) ??
+          AnswerEngine.ask,
       papers: (json['papers'] as num).toInt(),
       years: (json['years'] as num?)?.toInt(),
       yearFrom: (json['year_from'] as num?)?.toInt(),
@@ -282,13 +322,14 @@ _AnswerCreate _$AnswerCreateFromJson(Map<String, dynamic> json) =>
           const <String>[],
       keepUnranked: json['keep_unranked'] as bool?,
       useKb: json['use_kb'] as bool? ?? true,
-      kbHits: (json['kb_hits'] as num?)?.toInt() ?? 0,
-      maxChars: (json['max_chars'] as num?)?.toInt() ?? 28000,
+      kbHits: (json['kb_hits'] as num?)?.toInt(),
+      maxChars: (json['max_chars'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$AnswerCreateToJson(_AnswerCreate instance) =>
     <String, dynamic>{
       'question': instance.question,
+      'engine': _$AnswerEngineEnumMap[instance.engine]!,
       'papers': instance.papers,
       'years': ?instance.years,
       'year_from': ?instance.yearFrom,
@@ -297,6 +338,12 @@ Map<String, dynamic> _$AnswerCreateToJson(_AnswerCreate instance) =>
       'journals': instance.journals,
       'keep_unranked': ?instance.keepUnranked,
       'use_kb': instance.useKb,
-      'kb_hits': instance.kbHits,
-      'max_chars': instance.maxChars,
+      'kb_hits': ?instance.kbHits,
+      'max_chars': ?instance.maxChars,
     };
+
+_FollowupCreate _$FollowupCreateFromJson(Map<String, dynamic> json) =>
+    _FollowupCreate(question: json['question'] as String);
+
+Map<String, dynamic> _$FollowupCreateToJson(_FollowupCreate instance) =>
+    <String, dynamic>{'question': instance.question};

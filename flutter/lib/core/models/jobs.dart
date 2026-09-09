@@ -7,6 +7,7 @@ part 'jobs.g.dart';
 
 enum JobKind {
   ask,
+  codex,
   @JsonValue('kb_reindex')
   kbReindex,
   @JsonValue('paper_ingest')

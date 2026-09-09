@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'kb.dart';
 import 'papers.dart';
+import 'tool_call.dart';
 
 part 'answers.freezed.dart';
 part 'answers.g.dart';
@@ -17,6 +18,16 @@ enum AnswerStatus {
   bool get isActive =>
       this == AnswerStatus.queued || this == AnswerStatus.running;
 }
+
+enum AnswerEngine {
+  ask,
+  codex;
+
+  bool get isCodex => this == AnswerEngine.codex;
+}
+
+/// 后端新增引擎时老客户端按「标准」渲染，而不是整份答案解不出来。
+const _engineKey = JsonKey(unknownEnumValue: AnswerEngine.ask);
 
 enum PaperSource {
   pmc,
@@ -97,12 +108,15 @@ abstract class AnswerSummary with _$AnswerSummary {
     String? jobId,
     required AnswerStatus status,
     @Default('') String question,
+    @_engineKey @Default(AnswerEngine.ask) AnswerEngine engine,
     String? filtersLabel,
     int? nPapers,
     int? nFulltext,
     required DateTime createdAt,
     DateTime? finishedAt,
     JobError? error,
+    @Default(1) int nTurns,
+    String? rootQuestion,
   }) = _AnswerSummary;
 
   factory AnswerSummary.fromJson(Map<String, Object?> json) =>
@@ -116,12 +130,16 @@ abstract class Answer with _$Answer {
     String? jobId,
     required AnswerStatus status,
     @Default('') String question,
+    @_engineKey @Default(AnswerEngine.ask) AnswerEngine engine,
     String? filtersLabel,
     int? nPapers,
     int? nFulltext,
     required DateTime createdAt,
     DateTime? finishedAt,
     JobError? error,
+    @Default(1) int nTurns,
+    String? rootQuestion,
+    String? parentId,
     String? questionEn,
     @Default(<String>[]) List<String> queries,
     @Default(<String, dynamic>{}) Map<String, dynamic> options,
@@ -130,6 +148,7 @@ abstract class Answer with _$Answer {
     String? bodyMd,
     @Default(<Citation>[]) List<Citation> citations,
     @Default(<KbHit>[]) List<KbHit> kbHits,
+    @Default(<ToolCall>[]) List<ToolCall> trace,
   }) = _Answer;
 
   factory Answer.fromJson(Map<String, Object?> json) => _$AnswerFromJson(json);
@@ -171,6 +190,7 @@ abstract class AnswerPaperDetail with _$AnswerPaperDetail {
 abstract class AnswerCreate with _$AnswerCreate {
   const factory AnswerCreate({
     required String question,
+    @Default(AnswerEngine.ask) AnswerEngine engine,
     required int papers,
     int? years,
     int? yearFrom,
@@ -179,10 +199,21 @@ abstract class AnswerCreate with _$AnswerCreate {
     @Default(<String>[]) List<String> journals,
     bool? keepUnranked,
     @Default(true) bool useKb,
-    @Default(0) int kbHits,
-    @Default(28000) int maxChars,
+    // codex 引擎不走确定性流水线：这两项传 null 即不编码，
+    // 免得让人以为「字符预算 / 知识库命中」还在生效。
+    int? kbHits,
+    int? maxChars,
   }) = _AnswerCreate;
 
   factory AnswerCreate.fromJson(Map<String, Object?> json) =>
       _$AnswerCreateFromJson(json);
+}
+
+/// 在已有智能体会话上追问；其余选项一律沿用被追问的那一轮。
+@freezed
+abstract class FollowupCreate with _$FollowupCreate {
+  const factory FollowupCreate({required String question}) = _FollowupCreate;
+
+  factory FollowupCreate.fromJson(Map<String, Object?> json) =>
+      _$FollowupCreateFromJson(json);
 }

@@ -58,6 +58,8 @@ class AnswerController extends _$AnswerController {
       final answer = await ref.read(apiClientProvider).answer(answerId);
       state = AsyncData(answer);
       if (!answer.status.isActive) {
+        // 追问会新增回合，且本轮状态刚变：脉络得跟着重取。
+        ref.invalidate(answerThreadProvider(answerId));
         cancelRequested = false;
         _poll?.cancel();
         _poll = null;
@@ -96,3 +98,8 @@ class AnswerController extends _$AnswerController {
 @riverpod
 Future<String> legacyAnswerMarkdown(Ref ref, String answerId) =>
     ref.watch(apiClientProvider).answerMarkdown(answerId);
+
+/// 同一智能体会话的全部回合（答案页「对话脉络」）。
+@riverpod
+Future<List<AnswerSummary>> answerThread(Ref ref, String answerId) =>
+    ref.watch(apiClientProvider).answerThread(answerId);

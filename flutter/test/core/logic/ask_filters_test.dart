@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yaopenevidence/core/logic/ask_filters.dart';
+import 'package:yaopenevidence/core/models/answers.dart';
 
 void main() {
   const defaults = AskFilters();
@@ -13,6 +14,35 @@ void main() {
     expect(payload['kb_hits'], 0);
     expect(payload['max_chars'], 28000);
     expect(payload.containsKey('use_paywall'), isFalse);
+  });
+
+  test('codex 引擎不发流水线专属字段，但发 engine', () {
+    final payload = defaults
+        .copyWith(
+          engine: AnswerEngine.codex,
+          quartiles: [1],
+          keepUnranked: true,
+          kbHits: 5,
+        )
+        .toAnswerCreate('问题')
+        .toJson();
+    expect(payload['engine'], 'codex');
+    expect(payload.containsKey('keep_unranked'), isFalse);
+    expect(payload.containsKey('kb_hits'), isFalse);
+    expect(payload.containsKey('max_chars'), isFalse);
+    // 检索要求本身仍然交给模型。
+    expect(payload['quartiles'], [1]);
+    expect(payload['years'], 3);
+  });
+
+  test('options 往返带上引擎', () {
+    final restored = AskFilters.fromOptions(const {'engine': 'codex'});
+    expect(restored.engine, AnswerEngine.codex);
+    expect(restored.normalized().engine, AnswerEngine.codex);
+    expect(
+      AskFilters.fromOptions(const <String, dynamic>{}).engine,
+      AnswerEngine.ask,
+    );
   });
 
   test('自定义区间 + 分区时发 year_from/year_to 与 keep_unranked，不发 years', () {

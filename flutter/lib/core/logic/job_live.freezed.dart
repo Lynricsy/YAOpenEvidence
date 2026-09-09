@@ -1395,7 +1395,7 @@ as List<CandidatePaper>,
 /// @nodoc
 mixin _$JobLive {
 
- Map<StageKey, StageState> get stages; ProgressState? get progress; List<LogLine> get logs; SearchSummary? get search; Terminal? get terminal;
+ Map<StageKey, StageState> get stages; ProgressState? get progress; List<LogLine> get logs; SearchSummary? get search; List<ToolCall> get tools; Terminal? get terminal;
 /// Create a copy of JobLive
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1407,20 +1407,20 @@ $JobLiveCopyWith<JobLive> get copyWith => _$JobLiveCopyWithImpl<JobLive>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as JobLive;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is JobLive&&const DeepCollectionEquality().equals(other.stages, _this.stages)&&(identical(other.progress, _this.progress) || other.progress == _this.progress)&&const DeepCollectionEquality().equals(other.logs, _this.logs)&&(identical(other.search, _this.search) || other.search == _this.search)&&(identical(other.terminal, _this.terminal) || other.terminal == _this.terminal));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is JobLive&&const DeepCollectionEquality().equals(other.stages, _this.stages)&&(identical(other.progress, _this.progress) || other.progress == _this.progress)&&const DeepCollectionEquality().equals(other.logs, _this.logs)&&(identical(other.search, _this.search) || other.search == _this.search)&&const DeepCollectionEquality().equals(other.tools, _this.tools)&&(identical(other.terminal, _this.terminal) || other.terminal == _this.terminal));
 }
 
 
 @override
 int get hashCode {
   final _this = this as JobLive;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.stages),_this.progress,const DeepCollectionEquality().hash(_this.logs),_this.search,_this.terminal);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.stages),_this.progress,const DeepCollectionEquality().hash(_this.logs),_this.search,const DeepCollectionEquality().hash(_this.tools),_this.terminal);
 }
 
 @override
 String toString() {
   final _this = this as JobLive;
-  return 'JobLive(stages: ${_this.stages}, progress: ${_this.progress}, logs: ${_this.logs}, search: ${_this.search}, terminal: ${_this.terminal})';
+  return 'JobLive(stages: ${_this.stages}, progress: ${_this.progress}, logs: ${_this.logs}, search: ${_this.search}, tools: ${_this.tools}, terminal: ${_this.terminal})';
 }
 
 
@@ -1431,7 +1431,7 @@ abstract mixin class $JobLiveCopyWith<$Res>  {
   factory $JobLiveCopyWith(JobLive value, $Res Function(JobLive) _then) = _$JobLiveCopyWithImpl;
 @useResult
 $Res call({
- Map<StageKey, StageState> stages, ProgressState? progress, List<LogLine> logs, SearchSummary? search, Terminal? terminal
+ Map<StageKey, StageState> stages, ProgressState? progress, List<LogLine> logs, SearchSummary? search, List<ToolCall> tools, Terminal? terminal
 });
 
 
@@ -1448,13 +1448,14 @@ class _$JobLiveCopyWithImpl<$Res>
 
 /// Create a copy of JobLive
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? stages = null,Object? progress = freezed,Object? logs = null,Object? search = freezed,Object? terminal = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? stages = null,Object? progress = freezed,Object? logs = null,Object? search = freezed,Object? tools = null,Object? terminal = freezed,}) {
   return _then(JobLive(
 stages: null == stages ? _self.stages : stages // ignore: cast_nullable_to_non_nullable
 as Map<StageKey, StageState>,progress: freezed == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
 as ProgressState?,logs: null == logs ? _self.logs : logs // ignore: cast_nullable_to_non_nullable
 as List<LogLine>,search: freezed == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
-as SearchSummary?,terminal: freezed == terminal ? _self.terminal : terminal // ignore: cast_nullable_to_non_nullable
+as SearchSummary?,tools: null == tools ? _self.tools : tools // ignore: cast_nullable_to_non_nullable
+as List<ToolCall>,terminal: freezed == terminal ? _self.terminal : terminal // ignore: cast_nullable_to_non_nullable
 as Terminal?,
   ));
 }
@@ -1564,10 +1565,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<StageKey, StageState> stages,  ProgressState? progress,  List<LogLine> logs,  SearchSummary? search,  Terminal? terminal)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Map<StageKey, StageState> stages,  ProgressState? progress,  List<LogLine> logs,  SearchSummary? search,  List<ToolCall> tools,  Terminal? terminal)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _JobLive() when $default != null:
-return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.terminal);case _:
+return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.tools,_that.terminal);case _:
   return orElse();
 
 }
@@ -1585,10 +1586,10 @@ return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.termin
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<StageKey, StageState> stages,  ProgressState? progress,  List<LogLine> logs,  SearchSummary? search,  Terminal? terminal)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Map<StageKey, StageState> stages,  ProgressState? progress,  List<LogLine> logs,  SearchSummary? search,  List<ToolCall> tools,  Terminal? terminal)  $default,) {final _that = this;
 switch (_that) {
 case _JobLive():
-return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.terminal);case _:
+return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.tools,_that.terminal);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1605,10 +1606,10 @@ return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.termin
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<StageKey, StageState> stages,  ProgressState? progress,  List<LogLine> logs,  SearchSummary? search,  Terminal? terminal)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Map<StageKey, StageState> stages,  ProgressState? progress,  List<LogLine> logs,  SearchSummary? search,  List<ToolCall> tools,  Terminal? terminal)?  $default,) {final _that = this;
 switch (_that) {
 case _JobLive() when $default != null:
-return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.terminal);case _:
+return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.tools,_that.terminal);case _:
   return null;
 
 }
@@ -1620,7 +1621,7 @@ return $default(_that.stages,_that.progress,_that.logs,_that.search,_that.termin
 
 
 class _JobLive extends JobLive {
-  const _JobLive({ Map<StageKey, StageState> stages = const <StageKey, StageState>{}, this.progress,  List<LogLine> logs = const <LogLine>[], this.search, this.terminal}): _stages = stages,_logs = logs,super._();
+  const _JobLive({ Map<StageKey, StageState> stages = const <StageKey, StageState>{}, this.progress,  List<LogLine> logs = const <LogLine>[], this.search,  List<ToolCall> tools = const <ToolCall>[], this.terminal}): _stages = stages,_logs = logs,_tools = tools,super._();
   
 
  final  Map<StageKey, StageState> _stages;
@@ -1639,6 +1640,13 @@ class _JobLive extends JobLive {
 }
 
 @override final  SearchSummary? search;
+ final  List<ToolCall> _tools;
+@override@JsonKey() List<ToolCall> get tools {
+  if (_tools is EqualUnmodifiableListView) return _tools;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_tools);
+}
+
 @override final  Terminal? terminal;
 
 /// Create a copy of JobLive
@@ -1651,18 +1659,18 @@ _$JobLiveCopyWith<_JobLive> get copyWith => __$JobLiveCopyWithImpl<_JobLive>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _JobLive&&const DeepCollectionEquality().equals(other.stages, _stages)&&(identical(other.progress, progress) || other.progress == progress)&&const DeepCollectionEquality().equals(other.logs, _logs)&&(identical(other.search, search) || other.search == search)&&(identical(other.terminal, terminal) || other.terminal == terminal));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _JobLive&&const DeepCollectionEquality().equals(other.stages, _stages)&&(identical(other.progress, progress) || other.progress == progress)&&const DeepCollectionEquality().equals(other.logs, _logs)&&(identical(other.search, search) || other.search == search)&&const DeepCollectionEquality().equals(other.tools, _tools)&&(identical(other.terminal, terminal) || other.terminal == terminal));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_stages),progress,const DeepCollectionEquality().hash(_logs),search,terminal);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_stages),progress,const DeepCollectionEquality().hash(_logs),search,const DeepCollectionEquality().hash(_tools),terminal);
 }
 
 @override
 String toString() {
-    return 'JobLive(stages: $stages, progress: $progress, logs: $logs, search: $search, terminal: $terminal)';
+    return 'JobLive(stages: $stages, progress: $progress, logs: $logs, search: $search, tools: $tools, terminal: $terminal)';
 }
 
 
@@ -1673,7 +1681,7 @@ abstract mixin class _$JobLiveCopyWith<$Res> implements $JobLiveCopyWith<$Res> {
   factory _$JobLiveCopyWith(_JobLive value, $Res Function(_JobLive) _then) = __$JobLiveCopyWithImpl;
 @override @useResult
 $Res call({
- Map<StageKey, StageState> stages, ProgressState? progress, List<LogLine> logs, SearchSummary? search, Terminal? terminal
+ Map<StageKey, StageState> stages, ProgressState? progress, List<LogLine> logs, SearchSummary? search, List<ToolCall> tools, Terminal? terminal
 });
 
 
@@ -1690,13 +1698,14 @@ class __$JobLiveCopyWithImpl<$Res>
 
 /// Create a copy of JobLive
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? stages = null,Object? progress = freezed,Object? logs = null,Object? search = freezed,Object? terminal = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? stages = null,Object? progress = freezed,Object? logs = null,Object? search = freezed,Object? tools = null,Object? terminal = freezed,}) {
   return _then(_JobLive(
 stages: null == stages ? _self._stages : stages // ignore: cast_nullable_to_non_nullable
 as Map<StageKey, StageState>,progress: freezed == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
 as ProgressState?,logs: null == logs ? _self._logs : logs // ignore: cast_nullable_to_non_nullable
 as List<LogLine>,search: freezed == search ? _self.search : search // ignore: cast_nullable_to_non_nullable
-as SearchSummary?,terminal: freezed == terminal ? _self.terminal : terminal // ignore: cast_nullable_to_non_nullable
+as SearchSummary?,tools: null == tools ? _self._tools : tools // ignore: cast_nullable_to_non_nullable
+as List<ToolCall>,terminal: freezed == terminal ? _self.terminal : terminal // ignore: cast_nullable_to_non_nullable
 as Terminal?,
   ));
 }
