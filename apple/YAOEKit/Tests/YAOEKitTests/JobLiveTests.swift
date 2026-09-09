@@ -29,6 +29,42 @@ struct JobLiveTests {
         #expect(live.terminal == .succeeded(answerId: "a1", items: nil, papers: nil))
     }
 
+    @Test("同一 call_id 的 started 与终态合成一行")
+    func toolUpsert() {
+        var live = JobLive.empty
+        live = live.applying(event("tool", """
+        {"call_id":"c1","server":"semantic_scholar","tool":"read_pdf","status":"started",
+        "args":{"path":"x.pdf"},"duration_ms":null,"error":null}
+        """))
+        #expect(live.tools.count == 1)
+        #expect(live.tools.first?.status == .started)
+
+        live = live.applying(event("tool", """
+        {"call_id":"c1","server":"semantic_scholar","tool":"read_pdf","status":"completed",
+        "args":{"path":"x.pdf"},"duration_ms":820,"error":null}
+        """))
+        #expect(live.tools.count == 1)
+        #expect(live.tools.first?.status == .completed)
+        #expect(live.tools.first?.durationMs == 820)
+
+        live = live.applying(event("tool", """
+        {"call_id":"c2","server":"pubmed","tool":"pubmed_search","status":"started","args":{"query":"q"}}
+        """))
+        #expect(live.tools.map(\.callId) == ["c1", "c2"])
+        // 缺 call_id 的帧无法定位到某一行，只能丢弃。
+        #expect(live.applying(event("tool", #"{"server":"s","tool":"t","status":"started"}"#)) == live)
+    }
+
+    @Test("agent 阶段进 running，且不混进 ask 流水线")
+    func agentStage() {
+        let live = JobLive.empty.applying(event("stage", """
+        {"stage":"agent","status":"started","detail":{"resumed":false}}
+        """))
+        #expect(live.stages[.agent]?.status == .running)
+        #expect(StageKey.agent.label == "智能体检索与作答")
+        #expect(!StageKey.askPipeline.contains(.agent))
+    }
+
     @Test("终态可被后续事件覆盖，不做短路")
     func terminalNotSticky() {
         var live = JobLive.empty.applying(event("failed", #"{"code":"no_papers","message":"没有文献"}"#))

@@ -87,6 +87,20 @@ public extension APIClient {
         try await json(Endpoint(method: "POST", path: "/answers", body: Self.encode(payload)))
     }
 
+    /// 在智能体会话上追问：续接同一 thread，返回新一轮答案。
+    func followUp(id: String, question: String) async throws(APIError) -> Answer {
+        try await json(Endpoint(
+            method: "POST",
+            path: "/answers/\(Endpoint.escape(id))/followup",
+            body: Self.encode(FollowupCreate(question: question))
+        ))
+    }
+
+    /// 同一会话的全部回合，按创建时间升序。
+    func answerThread(id: String) async throws(APIError) -> [AnswerSummary] {
+        try await json(Endpoint(path: "/answers/\(Endpoint.escape(id))/thread"))
+    }
+
     func deleteAnswer(id: String) async throws(APIError) {
         try await noContent(Endpoint(method: "DELETE", path: "/answers/\(Endpoint.escape(id))"))
     }

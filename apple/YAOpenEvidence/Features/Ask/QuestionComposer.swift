@@ -1,12 +1,19 @@
 import SwiftUI
 import YAOEKit
 
+/// 提问框的两种用途：新建提问，或在智能体会话上追问。
+enum ComposerMode {
+    case ask
+    case followUp
+}
+
 /// 提问输入框：多行输入 + 字数 + 筛选摘要 + 发送。提问页与答案页底部追问共用。
 struct QuestionComposer: View {
     @Binding var text: String
     var placeholder = "输入临床或科研问题…"
     var pending = false
     var focused: FocusState<Bool>.Binding?
+    var mode: ComposerMode = .ask
     let onSubmit: () -> Void
 
     @Environment(AppModel.self) private var app
@@ -15,22 +22,31 @@ struct QuestionComposer: View {
 
     private var trimmed: String { text.trimmingCharacters(in: .whitespacesAndNewlines) }
 
+    /// 追问不带筛选：年份草稿有问题也不该拦住它。
+    private var yearRangeUsable: Bool {
+        mode == .followUp || app.filters.isYearRangeValid()
+    }
+
     private var canSubmit: Bool {
-        !pending && !trimmed.isEmpty && trimmed.count <= 2000 && app.filters.isYearRangeValid()
+        !pending && !trimmed.isEmpty && trimmed.count <= 2000 && yearRangeUsable
     }
 
     var body: some View {
+        @Bindable var app = app
         VStack(alignment: .leading, spacing: 10) {
             textField
 
-            if !app.filters.isYearRangeValid() {
+            if !yearRangeUsable {
                 Text("筛选里的年份范围无效，请先修正。")
                     .font(.caption)
                     .foregroundStyle(.red)
             }
 
             HStack(spacing: 8) {
-                filterChip
+                EnginePicker(engine: $app.filters.engine, locked: mode == .followUp)
+                if mode == .ask {
+                    filterChip
+                }
                 Spacer(minLength: 8)
                 // 只在接近上限时提示字数，常驻计数器是噪音。
                 if trimmed.count >= 1800 {
@@ -95,7 +111,9 @@ struct QuestionComposer: View {
 
     @ViewBuilder
     private var textField: some View {
-        let field = TextField(placeholder, text: $text, axis: .vertical)
+        // 追问续接同一会话，占位得说清这一点，别看着像在开新话题。
+        let hint = mode == .followUp ? "追问这个话题…" : placeholder
+        let field = TextField(hint, text: $text, axis: .vertical)
             .lineLimit(1 ... 6)
             .textFieldStyle(.plain)
             .font(.body)

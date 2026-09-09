@@ -7,6 +7,7 @@ struct ProgressPipelineView: View {
     let live: JobLive
     let connection: JobLiveMonitor.Connection
     var useKb = true
+    var engine: AnswerEngine = .ask
     var cancelRequested = false
     let onCancel: () -> Void
 
@@ -17,7 +18,7 @@ struct ProgressPipelineView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Label("正在生成答案", systemImage: "sparkles")
+                Label(engine == .codex ? "智能体检索" : "正在生成答案", systemImage: "sparkles")
                     .font(.headline)
                     .symbolEffect(.pulse)
                 Spacer()
@@ -28,12 +29,21 @@ struct ProgressPipelineView: View {
                     .disabled(cancelRequested)
             }
 
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(stages, id: \.self) { stage in
-                    stageRow(stage)
+            if engine == .codex {
+                // 智能体只有一个阶段，步骤条无从可画；真正的进展在工具轨迹里。
+                VStack(alignment: .leading, spacing: 12) {
+                    agentStatus
+                    TraceListView(calls: live.tools)
                 }
+                .animation(.default, value: live.tools)
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(stages, id: \.self) { stage in
+                        stageRow(stage)
+                    }
+                }
+                .animation(.default, value: live.stages)
             }
-            .animation(.default, value: live.stages)
 
             if connection == .reconnecting {
                 Label("网络不稳定，正在重新连接…", systemImage: "wifi.exclamationmark")
@@ -44,6 +54,32 @@ struct ProgressPipelineView: View {
             candidates
         }
         .card(padding: 16)
+    }
+
+    /// 智能体的一行状态：阶段没来是「等待启动」，结束是「整理答案」，其余就是在干活。
+    private var agentStatus: some View {
+        let state = live.stages[.agent]
+        let text = state == nil
+            ? "等待智能体启动…"
+            : (state?.status == .finished ? "正在整理答案…" : "智能体正在检索与作答")
+        let suffix = live.tools.isEmpty ? "" : " · 已调用 \(live.tools.count) 次工具"
+        return HStack(spacing: 10) {
+            Group {
+                switch state?.status {
+                case .finished:
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
+                case .running:
+                    ProgressView().controlSize(.small)
+                case nil:
+                    Image(systemName: "circle").foregroundStyle(.quaternary)
+                }
+            }
+            .frame(width: 20, height: 20)
+            Text(text + suffix)
+                .font(.subheadline)
+                .foregroundStyle(state == nil ? .secondary : .primary)
+            Spacer()
+        }
     }
 
     @ViewBuilder
@@ -142,7 +178,7 @@ struct ProgressPipelineView: View {
             return "\(int("relevant"))/\(int("total")) 篇相关"
         case .kb:
             return "知识库共 \(int("items")) 条知识"
-        case .synthesize, .reindex:
+        case .synthesize, .reindex, .agent:
             return ""
         }
     }

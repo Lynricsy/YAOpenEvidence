@@ -127,4 +127,52 @@ struct RequestBuildingTests {
         #expect(status.savedAt != nil)
         #expect(try #require(paywallServer.requestLine).contains("GET /v1/paywall/status"))
     }
+
+    /// 追问与会话脉络是两个新端点：方法或路径写错只会变成 404/405，页面上看不出原因。
+    @Test("追问与会话回合的请求构造")
+    func hitsThreadEndpoints() async throws {
+        let followServer = try MiniHTTPServer(
+            contentType: "application/json",
+            body: """
+            {"id":"a2","status":"queued","question":"再总结一句","engine":"codex","n_turns":2,
+            "root_question":"根问题","parent_id":"a1","created_at":"2026-09-08T10:00:00Z",
+            "queries":[],"papers":[],"citations":[],"kb_hits":[],"trace":[]}
+            """,
+            status: "202 Accepted"
+        )
+        await followServer.start()
+        defer { followServer.stop() }
+
+        let followClient = APIClient(
+            baseURL: URL(string: "http://127.0.0.1:\(followServer.port)")!,
+            tokenProvider: { "token" },
+            onUnauthorized: {}
+        )
+        let created = try await followClient.followUp(id: "a1", question: "再总结一句")
+        #expect(created.parentId == "a1")
+        #expect(created.engine == .codex)
+        #expect(try #require(followServer.requestLine).contains("POST /v1/answers/a1/followup"))
+
+        let threadServer = try MiniHTTPServer(
+            contentType: "application/json",
+            body: """
+            [{"id":"a1","status":"ready","question":"根问题","engine":"codex","n_turns":2,
+            "created_at":"2026-09-08T10:00:00Z"},
+            {"id":"a2","status":"ready","question":"再总结一句","engine":"codex","n_turns":2,
+            "root_question":"根问题","created_at":"2026-09-08T10:01:00Z"}]
+            """
+        )
+        await threadServer.start()
+        defer { threadServer.stop() }
+
+        let threadClient = APIClient(
+            baseURL: URL(string: "http://127.0.0.1:\(threadServer.port)")!,
+            tokenProvider: { "token" },
+            onUnauthorized: {}
+        )
+        let turns = try await threadClient.answerThread(id: "a1")
+        #expect(turns.map(\.id) == ["a1", "a2"])
+        #expect(turns.last?.rootQuestion == "根问题")
+        #expect(try #require(threadServer.requestLine).contains("GET /v1/answers/a1/thread"))
+    }
 }

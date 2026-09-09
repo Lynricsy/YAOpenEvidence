@@ -62,6 +62,7 @@ public extension APIError {
         "cannot_disable_self": "不能禁用自己",
         "last_admin": "必须保留至少一个活跃管理员",
         "too_many_jobs": "进行中的任务已达上限，请等待完成或先取消",
+        "thread_busy": "上一轮还在进行中，稍后再追问",
         "unavailable": "服务暂不可用",
         "fulltext_unavailable": "无可用全文",
     ]
@@ -76,6 +77,7 @@ public enum JobErrorMessage {
         case "llm_unavailable": "模型服务不可用，请稍后重试"
         case "timeout": "任务超时"
         case "internal_error": "内部错误"
+        case "codex_failed": "智能体本轮执行失败，请重试或改用标准引擎"
         default: "任务执行失败"
         }
     }

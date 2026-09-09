@@ -18,10 +18,20 @@ struct FilterSheet: View {
         case custom
     }
 
+    /// 智能体模式下流水线专属的旋钮一律不显示：留在界面上只会让人以为它们还在生效。
+    private var isCodex: Bool { app.filters.engine == .codex }
+
     var body: some View {
         @Bindable var app = app
         NavigationStack {
             Form {
+                if isCodex {
+                    Section {
+                    } footer: {
+                        Text("智能体模式下，字符预算、知识库命中数与机构访问不生效；筛选条件会作为检索要求交给模型。")
+                    }
+                }
+
                 yearSection(app: app)
                 quartileSection(app: app)
                 journalSection(app: app)
@@ -39,35 +49,40 @@ struct FilterSheet: View {
 
                 Section("知识库") {
                     Toggle("写入并使用知识库", isOn: $app.filters.useKb)
-                    Slider(
-                        value: Binding(get: { Double(app.filters.kbHits) }, set: { app.filters.kbHits = Int($0) }),
-                        in: 0 ... 20,
-                        step: 1
-                    ) {
-                        Text("附加知识库条目")
-                    }
-                    .disabled(!app.filters.useKb)
-                    LabeledContent("附加知识库条目", value: "\(app.filters.kbHits) 条")
-                        .foregroundStyle(app.filters.useKb ? .primary : .secondary)
-                }
-
-                Section {
-                    Picker("单篇字符预算", selection: $app.filters.maxChars) {
-                        ForEach(AskFilters.maxCharsOptions, id: \.self) { value in
-                            Text("约 \(value.formatted()) 字").tag(value)
+                    // 智能体自己决定要不要查知识库，附加命中数对它无效，不显示比显示一个假开关好。
+                    if !isCodex {
+                        Slider(
+                            value: Binding(get: { Double(app.filters.kbHits) }, set: { app.filters.kbHits = Int($0) }),
+                            in: 0 ... 20,
+                            step: 1
+                        ) {
+                            Text("附加知识库条目")
                         }
+                        .disabled(!app.filters.useKb)
+                        LabeledContent("附加知识库条目", value: "\(app.filters.kbHits) 条")
+                            .foregroundStyle(app.filters.useKb ? .primary : .secondary)
                     }
-                } header: {
-                    Text("单篇字符预算")
-                } footer: {
-                    Text("每篇文献送入阅读的最大长度，越大越完整但越慢。")
                 }
 
-                Section {
-                } header: {
-                    Text("机构访问")
-                } footer: {
-                    Text(paywallFooter)
+                if !isCodex {
+                    Section {
+                        Picker("单篇字符预算", selection: $app.filters.maxChars) {
+                            ForEach(AskFilters.maxCharsOptions, id: \.self) { value in
+                                Text("约 \(value.formatted()) 字").tag(value)
+                            }
+                        }
+                    } header: {
+                        Text("单篇字符预算")
+                    } footer: {
+                        Text("每篇文献送入阅读的最大长度，越大越完整但越慢。")
+                    }
+
+                    Section {
+                    } header: {
+                        Text("机构访问")
+                    } footer: {
+                        Text(paywallFooter)
+                    }
                 }
 
                 Section {
@@ -178,8 +193,10 @@ struct FilterSheet: View {
                     }
                 }
             }
-            Toggle("含未收录期刊", isOn: $app.filters.keepUnranked)
-                .disabled(app.filters.quartiles.isEmpty)
+            if !isCodex {
+                Toggle("含未收录期刊", isOn: $app.filters.keepUnranked)
+                    .disabled(app.filters.quartiles.isEmpty)
+            }
         } header: {
             Text("期刊分区")
         } footer: {

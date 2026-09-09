@@ -18,6 +18,8 @@ final class AnswerScreenModel {
     /// 旧版导入答案没有 `body_md`，回落到渲染稿（只用于避免重复拉取）。
     private var legacyMarkdown: String?
     var reader: ReaderTarget?
+    /// 智能体会话的全部回合（标准答案恒为空）。
+    var thread: [AnswerSummary] = []
     var monitor: JobLiveMonitor?
     var cancelRequested = false
     var deleting = false
@@ -114,6 +116,10 @@ final class AnswerScreenModel {
         if loaded.status == .ready, loaded.bodyMd == nil || loaded.bodyMd?.isEmpty == true {
             Task { await loadLegacyMarkdown() }
         }
+        // 会话脉络只对智能体有意义：首屏拉一次，本轮进终态后再拉一次拿到新回合的标题。
+        if loaded.engine == .codex, thread.isEmpty || !loaded.status.isActive {
+            Task { await loadThread() }
+        }
         // 只有确认答案已进入终态才停轮询：终态刷新失败时轮询是唯一兜底。
         if !loaded.status.isActive {
             pollTask?.cancel()
@@ -125,6 +131,12 @@ final class AnswerScreenModel {
         guard legacyMarkdown == nil, let client = session?.client else { return }
         legacyMarkdown = try? await client.answerMarkdown(id: answerID)
         if let legacy = legacyMarkdown { render(legacy, citationLimit: nil, structured: false) }
+    }
+
+    private func loadThread() async {
+        guard let client = session?.client else { return }
+        guard let turns = try? await client.answerThread(id: answerID) else { return }
+        thread = turns
     }
 
     /// 首次进入创建监视器；从其他 Tab 回到本页时续订同一个监视器（保留已收到的阶段与日志位置）。

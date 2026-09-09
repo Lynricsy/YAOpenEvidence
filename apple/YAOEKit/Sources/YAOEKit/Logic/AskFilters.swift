@@ -1,5 +1,30 @@
 import Foundation
 
+/// 升级前保存的筛选没有 `engine` 键。缺失时按标准引擎读，而不是让整份筛选解码失败——
+/// `AppModel` 只能回落到默认值，用户攒下的分区/年份/期刊会被静默清空。
+@propertyWrapper
+public struct DefaultAskEngine: Codable, Sendable, Hashable {
+    public var wrappedValue: AnswerEngine
+
+    public init(wrappedValue: AnswerEngine = .ask) {
+        self.wrappedValue = wrappedValue
+    }
+
+    public init(from decoder: any Decoder) throws {
+        wrappedValue = try AnswerEngine(from: decoder)
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        try wrappedValue.encode(to: encoder)
+    }
+}
+
+public extension KeyedDecodingContainer {
+    func decode(_ type: DefaultAskEngine.Type, forKey key: Key) throws -> DefaultAskEngine {
+        try decodeIfPresent(type, forKey: key) ?? DefaultAskEngine()
+    }
+}
+
 /// 提问筛选条件。与 Web 端 `FilterState` 一一对应，取值夹紧规则逐字移植 `frontend/src/lib/filters.ts`。
 public struct AskFilters: Codable, Sendable, Hashable {
     public enum YearMode: String, Codable, Sendable, Hashable, CaseIterable {
@@ -8,6 +33,7 @@ public struct AskFilters: Codable, Sendable, Hashable {
         case range
     }
 
+    @DefaultAskEngine public var engine: AnswerEngine
     public var quartiles: [Int]
     public var keepUnranked: Bool
     public var yearMode: YearMode
@@ -21,6 +47,7 @@ public struct AskFilters: Codable, Sendable, Hashable {
     public var maxChars: Int
 
     public init(
+        engine: AnswerEngine = .ask,
         quartiles: [Int] = [],
         keepUnranked: Bool = false,
         yearMode: YearMode = .recent,
@@ -33,6 +60,7 @@ public struct AskFilters: Codable, Sendable, Hashable {
         kbHits: Int = 0,
         maxChars: Int = 28000
     ) {
+        self.engine = engine
         self.quartiles = quartiles
         self.keepUnranked = keepUnranked
         self.yearMode = yearMode
@@ -66,6 +94,7 @@ public struct AskFilters: Codable, Sendable, Hashable {
     /// 逐字段夹紧到后端接受的范围。越界或非法值一律回落默认值。
     public func normalized(currentYear: Int = Calendar(identifier: .gregorian).component(.year, from: Date())) -> AskFilters {
         var out = AskFilters()
+        out.engine = engine
         out.quartiles = Array(Set(quartiles.filter { $0 >= 1 && $0 <= 4 })).sorted()
         out.keepUnranked = keepUnranked
         out.yearMode = yearMode
@@ -100,18 +129,21 @@ public struct AskFilters: Codable, Sendable, Hashable {
 
     /// 生成创建任务的请求体：years 与 year_from/year_to 互斥，keep_unranked 仅在选了分区时发送。
     public func answerCreate(question: String) -> AnswerCreate {
-        AnswerCreate(
+        // 智能体自己决定读多少、读什么：字符预算与知识库命中数对它无效，不发比发了不生效诚实。
+        let pipeline = engine == .ask
+        return AnswerCreate(
             question: question.trimmingCharacters(in: .whitespacesAndNewlines),
+            engine: engine,
             papers: papers,
             years: yearMode == .recent ? years : nil,
             yearFrom: yearMode == .range ? yearFrom : nil,
             yearTo: yearMode == .range ? yearTo : nil,
             quartiles: quartiles,
             journals: journals,
-            keepUnranked: quartiles.isEmpty ? nil : keepUnranked,
+            keepUnranked: quartiles.isEmpty || !pipeline ? nil : keepUnranked,
             useKb: useKb,
-            kbHits: useKb ? kbHits : 0,
-            maxChars: maxChars
+            kbHits: pipeline ? (useKb ? kbHits : 0) : nil,
+            maxChars: pipeline ? maxChars : nil
         )
     }
 
@@ -120,6 +152,7 @@ public struct AskFilters: Codable, Sendable, Hashable {
         let years = options["years"]?.intValue
         let yearFrom = options["year_from"]?.intValue
         self.init(
+            engine: options["engine"]?.stringValue == "codex" ? .codex : .ask,
             quartiles: options["quartiles"]?.arrayValue?.compactMap(\.intValue) ?? [],
             keepUnranked: options["keep_unranked"]?.boolValue ?? false,
             yearMode: years != nil ? .recent : (yearFrom != nil ? .range : .any),

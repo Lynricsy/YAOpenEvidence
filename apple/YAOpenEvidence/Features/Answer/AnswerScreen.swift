@@ -66,7 +66,7 @@ struct AnswerScreen: View {
         ScrollView {
             LoadableView(state: model.answer, retry: { Task { await model.load() } }) { answer in
                 VStack(alignment: .leading, spacing: Metrics.sectionSpacing) {
-                    AnswerHeader(answer: answer)
+                    AnswerHeader(answer: answer, thread: model.thread)
                     body(for: answer)
                 }
                 .frame(maxWidth: Metrics.contentMaxWidth)
@@ -86,6 +86,7 @@ struct AnswerScreen: View {
                 live: model.monitor?.live ?? .empty,
                 connection: model.monitor?.connection ?? .idle,
                 useKb: AskFilters(options: answer.options).useKb,
+                engine: answer.engine,
                 cancelRequested: model.cancelRequested,
                 onCancel: { Task { await model.cancel() } }
             )
@@ -93,14 +94,29 @@ struct AnswerScreen: View {
         case .ready:
             VStack(alignment: .leading, spacing: 28) {
                 AnswerSectionsView(sections: model.sections, onCite: { model.openReader($0) })
-                SourceListView(
-                    papers: answer.papers,
-                    onOpen: { n, pid in model.reader = ReaderTarget(n: n, pid: pid) }
-                )
+                if answer.engine == .codex {
+                    // 智能体不留逐篇原文快照，来源列表无从可列；能给的溯源就是这条轨迹。
+                    if !answer.trace.isEmpty {
+                        DisclosureGroup("检索轨迹（\(answer.trace.count)）") {
+                            TraceListView(calls: answer.trace)
+                                .padding(.top, 10)
+                        }
+                        .font(.subheadline)
+                        .card()
+                    }
+                } else {
+                    SourceListView(
+                        papers: answer.papers,
+                        onOpen: { n, pid in model.reader = ReaderTarget(n: n, pid: pid) }
+                    )
+                }
                 if !answer.kbHits.isEmpty {
                     KbSupplementView(hits: answer.kbHits)
                 }
-                reaskButton(answer: answer, title: "重新提问")
+                // 智能体的下一步是底部追问，不是把同一个问题再问一遍。
+                if answer.engine != .codex {
+                    reaskButton(answer: answer, title: "重新提问")
+                }
             }
 
         case .failed:
@@ -111,7 +127,10 @@ struct AnswerScreen: View {
                 )
                 .font(.headline)
                 .foregroundStyle(.red)
-                reaskButton(answer: answer, title: "放宽筛选后重新提问")
+                reaskButton(
+                    answer: answer,
+                    title: answer.engine == .codex ? "重新提问" : "放宽筛选后重新提问"
+                )
             }
             .card()
 
@@ -132,11 +151,14 @@ struct AnswerScreen: View {
     }
 
     private var composer: some View {
-        QuestionComposer(
+        // 智能体答完才谈得上续接；其余情况底部输入框就是「开一个新问题」。
+        let continuing = model.current.map { $0.engine == .codex && $0.status == .ready } ?? false
+        return QuestionComposer(
             text: $followUp,
             placeholder: "继续提问…",
             pending: submitting,
-            onSubmit: submitFollowUp
+            mode: continuing ? .followUp : .ask,
+            onSubmit: continuing ? submitFollowUp : submitNew
         )
     }
 
@@ -160,7 +182,26 @@ struct AnswerScreen: View {
         }
     }
 
+    /// 续接同一智能体会话：新一轮沿用上一轮的筛选与 thread。
     private func submitFollowUp() {
+        guard let client = session.client else { return }
+        let question = followUp.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !question.isEmpty else { return }
+        submitting = true
+        Task {
+            defer { submitting = false }
+            do {
+                let created = try await client.followUp(id: answerID, question: question)
+                followUp = ""
+                app.noteAnswersChanged()
+                app.openAnswer(created.id)
+            } catch {
+                errors.present(error)
+            }
+        }
+    }
+
+    private func submitNew() {
         submitting = true
         Task {
             defer { submitting = false }
@@ -222,6 +263,8 @@ private struct ReaderPresentation: ViewModifier {
 
 struct AnswerHeader: View {
     let answer: Answer
+    /// 智能体会话的回合列表；只有一轮时不渲染脉络。
+    var thread: [AnswerSummary] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -233,9 +276,14 @@ struct AnswerHeader: View {
                     Text("·")
                     Text("\(papers) 篇文献")
                 }
+                EngineBadge(engine: answer.engine)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+
+            if thread.count > 1 {
+                ThreadNavView(turns: thread, currentID: answer.id)
+            }
 
             Text(answer.question)
                 .font(.system(.title, design: .serif, weight: .semibold))

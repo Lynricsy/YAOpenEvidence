@@ -121,10 +121,22 @@ struct HistoryRow: View {
                 .font(.body.weight(.medium))
                 .lineLimit(2)
 
+            // 一条会话在列表里只占一行，用「始于」把根问题带出来，否则追问后看不出这轮从哪来。
+            if let root = item.rootQuestion, !root.isEmpty {
+                Text("始于：\(root)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
             HStack(spacing: 6) {
                 // 已完成的答案不需要「已完成」徽标，只有异常状态值得占位。
                 if item.status != .ready {
                     StatusBadge(item.status)
+                }
+                EngineBadge(engine: item.engine)
+                if item.nTurns > 1 {
+                    Pill(text: "\(item.nTurns) 轮")
                 }
                 Text(item.createdAt, format: .relative(presentation: .named))
                 if let papers = item.nPapers {

@@ -8,6 +8,7 @@ public enum StageKey: String, Codable, Sendable, Hashable, CaseIterable {
     case kb
     case synthesize
     case reindex
+    case agent
 
     /// 进度面板的阶段标题。
     public var label: String {
@@ -19,6 +20,7 @@ public enum StageKey: String, Codable, Sendable, Hashable, CaseIterable {
         case .kb: "写入知识库"
         case .synthesize: "综合成稿"
         case .reindex: "重建索引"
+        case .agent: "智能体检索与作答"
         }
     }
 
@@ -83,6 +85,7 @@ public struct JobLive: Sendable, Hashable {
     public var stages: [StageKey: StageState] = [:]
     public var progress: LiveProgress?
     public var logs: [LogLine] = []
+    public var tools: [ToolCall] = []
     public var search: SearchSummary?
     public var terminal: Terminal?
 
@@ -120,6 +123,16 @@ public struct JobLive: Sendable, Hashable {
                 total: Self.count(data["total"]),
                 title: data["title"]?.stringValue
             )
+            return next
+
+        case "tool":
+            guard let call = Self.toolCall(event.data) else { return self }
+            // 同一 call_id 先 started 后终态：就地替换，轨迹行不能翻倍。
+            if let at = next.tools.firstIndex(where: { $0.callId == call.callId }) {
+                next.tools[at] = call
+            } else {
+                next.tools.append(call)
+            }
             return next
 
         case "log":
@@ -160,6 +173,11 @@ public struct JobLive: Sendable, Hashable {
         guard let data = json.data(using: .utf8),
               let value = try? JSONCoding.decoder.decode(JSONValue.self, from: data) else { return [:] }
         return value.objectValue ?? [:]
+    }
+
+    private static func toolCall(_ json: String) -> ToolCall? {
+        guard let data = json.data(using: .utf8) else { return nil }
+        return try? JSONCoding.decoder.decode(ToolCall.self, from: data)
     }
 
     private static func count(_ value: JSONValue?) -> Int {
