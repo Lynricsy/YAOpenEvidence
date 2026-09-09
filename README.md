@@ -127,8 +127,9 @@ flowchart LR
 |---|---|---|
 | 执行方式 | 固定流水线：检索 → 取全文 → 逐篇阅读 → 综合 | Codex agent 自己决定调哪些工具 |
 | 工具面 | 流水线内部直接调 `core/literature.py` 等 | core 的 `semantic_scholar` MCP（与 `./PICOSGpt codex` 同一套） |
-| 产出 | `body_md` 分节 + 逐篇原文快照 + 段落级引用 | 整篇 `answer_md`，无原文快照 |
+| 产出 | `body_md` 分节 + 逐篇原文快照 + 段落级引用 | 整篇 `answer_md` + `trace`（结构化工具调用轨迹），无原文快照 |
 | 生效筛选 | 全部字段，服务端硬过滤 | 年份/分区/期刊等翻成检索要求交给模型 |
+| 多轮 | 每次提问独立 | 同一 codex 会话可 `POST /v1/answers/{id}/followup` 续接追问 |
 
 codex 运行时随 `openai-codex` 依赖一起进镜像（`openai-codex-cli-bin` 带 codex 二进制，不需要 node，也不读 `~/.codex/config.toml`）：provider 与 MCP 全部走每次会话的内联配置，复用 `LLM_BASE` / `LLM_MODEL` / `LOCAL_QWEN_KEY`，因此必须是支持 **Responses API**（`/v1/responses`）的端点——codex 0.147 起不再支持 chat 线协议，LiteLLM 代理满足这一点。会话文件落在 `CODEX_HOME`（镜像内为 `/data/var/codex`，随 `./var` 卷持久化）。
 
@@ -212,7 +213,7 @@ docker compose -f compose.yaml -f compose.fake-llm.yaml up -d --build
 
 它可以执行完整问答流水线而不需要 GPU，但文献检索与全文获取仍需访问 PubMed 和 Europe PMC；假 LLM 只替代模型服务，不替代外部文献源。假 LLM 同时提供 `/v1/chat/completions`（`ask` 用）与 `/v1/responses`（`codex` 用）两条线协议，因此两个引擎都能在这套配置下跑通。
 
-`codex` 的工具闭环也能在这套配置下验证：提问里带 `TOOLTEST_PDF=<pdfs/ 下的文件名>` 时，假模型第一轮会真的调 MCP 的 `read_pdf`，第二轮把工具返回的原文抄进答案。据此可断言 `job.result.tool_calls` 非空且答案含 PDF 原文——工具执行断了这条断言就会失败。同一条闭环也由 `backend/tests/test_codex_engine.py` 覆盖（真起 codex 运行时与 MCP 子进程，不打桩）。
+`codex` 的工具闭环也能在这套配置下验证：提问里带 `TOOLTEST_PDF=<pdfs/ 下的文件名>` 时，假模型第一轮会真的调 MCP 的 `read_pdf`，第二轮把工具返回的原文抄进答案。据此可断言 `Answer.trace` 非空（`tool` 为 `read_pdf`、`status` 为 `completed`）且答案含 PDF 原文——工具执行断了这条断言就会失败。同一条闭环也由 `backend/tests/test_codex_engine.py` 覆盖（真起 codex 运行时与 MCP 子进程，不打桩）。
 
 ## 本地开发
 

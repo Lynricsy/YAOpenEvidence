@@ -222,8 +222,9 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 - 生效字段只有 `question`、`papers`、`years` / `year_from` / `year_to`、`quartiles`、`journals`、`use_kb`——它们被翻成检索要求写进提问，由模型转交工具，不是服务端硬过滤；
 - `keep_unranked`、`use_paywall`、`kb_hits`、`max_chars` 对 codex 无效；
 - 结果没有结构化 `papers` / `citations`，`body_md` 为 `null`，整篇答案只在 `answer_md` 与 `/markdown` 里，`/papers/{n}` 一律 `404`；
-- 事件流只有 `agent` 一个 `stage`，工具调用以 `log` 事件（`mcp: <server>/<tool> (<status>)`）呈现；
-- 成功后 `job.result` 额外带 `thread_id` 与 `tool_calls`，`thread_id` 可用于服务端复盘会话。
+- 事件流只有 `agent` 一个 `stage`，工具调用以 `tool` 事件（`ToolCall`）呈现，同一 `call_id` 先后发 `started` 与终态两条；
+- 成功后 `job.result` 额外带 `thread_id`，`Answer.trace` 保存本轮全部终态工具调用，`Answer.thread_id` 可用于服务端复盘会话与追问；
+- `filters_label` 与 `ask` 同源（如 `年份 2023-2026; 分区 Q1/Q2`，无筛选时为 `无`）。
 
 #### `GET /v1/answers`
 
@@ -232,11 +233,11 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 | 参数 | 类型 | 默认 | 说明 |
 |---|---|---|---|
 | `status` | `queued \| running \| ready \| failed \| cancelled \| null` | `null` | 精确过滤状态。 |
-| `q` | `string` | `""` | 去除首尾空白后对 `question` 做子串匹配。 |
+| `q` | `string` | `""` | 去除首尾空白后对 `question` 做子串匹配；追问行也匹配其会话根问题。 |
 | `limit` | `integer` | `20` | `1..100`。 |
 | `offset` | `integer` | `0` | `>=0`。 |
 
-返回 `Page<AnswerSummary>`。普通用户仅看到自己的答案，管理员看到全部（包括历史无归属答案）。可能错误：`validation_error`、`internal_error`。
+返回 `Page<AnswerSummary>`。普通用户仅看到自己的答案，管理员看到全部（包括历史无归属答案）。同一 codex 会话（`thread_id` 相同）只返回**最新一轮**，`n_turns` 给出该会话的回合数，`root_question` 在本行是追问时给出根问题；`thread_id` 为空的行原样返回。分页与 `total` 都按折叠后的行计数。可能错误：`validation_error`、`internal_error`。
 
 #### `GET /v1/answers/{answer_id}`
 
@@ -263,8 +264,29 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 - answer 为活跃状态：返回 `409 conflict`，既不删除，也不请求取消。需要取消时，使用 `Answer.job_id` 调用独立取消端点。
 - answer 为终态：删除数据库记录、`answers/{id}.md` 与 `answers/{id}_papers/`。删除成功后的重复请求返回 `404 not_found`。
 - 本地文献库 `library/` 与 KB 不随 answer 删除。
+- 删除只影响这一行：会话不级联删除，指向它的追问行 `parent_id` 置为 `null`，`thread_id` 保持不变。
 
 创建该答案的用户或管理员可操作，其他用户得到 `404`。可能错误：`not_found`、`conflict`、`internal_error`。
+
+#### `POST /v1/answers/{answer_id}/followup`
+
+请求体为 `FollowupCreate`：`{"question": string}`，规则同 `AnswerCreate.question`（去除首尾空白后长度 `1..2000`）。
+
+在被追问答案所属的 codex 会话上再跑一轮：其余选项一律沿用被续接的那一轮，只换问题。父行取会话内**最后一个** `ready` 回合，而不是路径里的那一行——失败或取消的回合不阻塞后续追问。新行带 `parent_id` 与同一 `thread_id`，任务 `kind` 为 `codex`。
+
+成功返回 `202 Accepted`、响应头 `Location: /v1/answers/{new_answer_id}`，响应体为新一轮的 `Answer`。
+
+- 答案不可见：`404 not_found`；
+- 非发起人（含管理员对他人答案）：`403 forbidden`——会话归属发起人，续下去会污染对方历史；
+- 答案不是 codex 引擎产出：`409 conflict`；
+- 会话内仍有 `queued` 或 `running` 的回合：`409 thread_busy`；
+- 会话内没有可续接的 `ready` 回合：`409 not_ready`。
+
+其余错误同 `POST /v1/answers`：`too_many_jobs`、`validation_error`、`upstream_unavailable`、`internal_error`。
+
+#### `GET /v1/answers/{answer_id}/thread`
+
+无查询参数。返回 `AnswerSummary[]`：同一 `thread_id` 的全部回合，按 `created_at`、`id` 升序；`thread_id` 为空时返回只含自身的单元素数组。仅本人或管理员可见。可能错误：`not_found`、`internal_error`。
 
 ### 4.2 Jobs
 
@@ -492,6 +514,8 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | `created_at` | `string` | UTC 创建时间。 |
 | `finished_at` | `string \| null` | 终态时间。 |
 | `error` | `JobError \| null` | 失败信息。 |
+| `n_turns` | `integer` | 所属 codex 会话的回合数；非会话行为 `1`。 |
+| `root_question` | `string \| null` | 本行是追问时给出会话根问题，否则 `null`。 |
 
 #### `Answer`
 
@@ -500,6 +524,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `question_en` | `string \| null` | 流水线使用的英文问题。 |
+| `parent_id` | `string \| null` | 被续接的上一轮 answer ID；首轮或非 codex 为 `null`。删除父行后置为 `null`。 |
 | `queries` | `string[]` | 实际执行的检索式，默认 `[]`。 |
 | `options` | `object` | 创建时保存的选项，旧版导入数据可为空对象。 |
 | `started_at` | `string \| null` | 开始执行时间。 |
@@ -507,6 +532,7 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | `body_md` | `string \| null` | 供前端渲染的综合正文；引用为裸标记，不含链接。 |
 | `citations` | `Citation[]` | 正文引用对应的可定位原文。 |
 | `kb_hits` | `KbHit[]` | 综合后附带的既有 KB 命中。 |
+| `trace` | `ToolCall[]` | codex 引擎本轮的终态工具调用，按发生顺序；`ask` 引擎恒为 `[]`。 |
 
 `body_md` 中的直接定位标记是 `[n¶pid]`，例如 `[2¶24]` 表示本次 answer 的第 2 篇论文、第 24 段。若段落无法解析，正文降级为 `[n]`。前端可按以下方式处理：
 
@@ -519,6 +545,26 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 标签可能独占一行、以 `—` 或 `:` 接同行正文，个别情况写成 `## 标签`。前端若要分模块渲染，
 按标签「前缀」识别（问题标题里出现「证据」这类字样很常见，包含匹配会误判），
 并对识别不到任何标签的正文回退到整段渲染。模块的标题文字与图标应由前端固定，不要复用正文里的标签字面量。
+
+#### `FollowupCreate`
+
+| 字段 | 类型 | 必填 | 规则 |
+|---|---|---:|---|
+| `question` | `string` | 是 | 去除首尾空白后长度 `1..2000`。 |
+
+#### `ToolCall`
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `call_id` | `string` | 本次调用的稳定标识；`started` 与终态两条事件共用同一个值。 |
+| `server` | `string` | MCP 服务名；容器内执行命令为 `shell`。 |
+| `tool` | `string` | 工具名，如 `search_papers`、`read_pdf`、`kb_search`；`shell` 下为 `exec`。 |
+| `status` | `started \| completed \| failed` | `started` 只出现在事件流，`Answer.trace` 只保存终态。 |
+| `args` | `object` | 入参摘要，只保留标量值，字符串截断到 200 字符。 |
+| `duration_ms` | `integer \| null` | 调用耗时。 |
+| `error` | `string \| null` | 失败原因；命令执行失败时形如 `exit 1`。 |
+
+同一个 `call_id` 会先收到 `status="started"`、再收到终态一条：客户端应按 `call_id` 就地替换（upsert），不要追加成两行。
 
 #### `AnswerPaper`
 
@@ -797,6 +843,7 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 | `stage` | `{stage, status, detail}`。`stage` 为 `queries \| search \| fulltext \| read \| kb \| synthesize \| reindex \| agent`；`status` 为 `started \| finished`；`detail` 为对象，缺省为空对象。`search/finished` 包含 `candidates`、`kept`、`dropped:{year,quartile,unranked,journal}`、`papers:[{n,pmid,title,year,journal,rank_label,pmcid}]`；`read/finished` 包含 `relevant`、`total`；`agent` 是 codex 引擎唯一的阶段，`finished` 时带 `tool_calls`、`chars`。其他阶段也可在 `detail` 中报告该阶段计数或结果摘要。 |
 | `progress` | `{stage, current, total, pmid?, title?}`，其中 `stage` 为 `fulltext \| read \| kb \| reindex`；`current`、`total` 为非负整数；`pmid`、`title` 为可选 `string \| null`。 |
 | `log` | `{level, message}`；当前 `level` 为 `info \| warning`。只适合展示运行日志，不应据其文案驱动状态机。 |
+| `tool` | `ToolCall`。只出现在 codex 引擎任务：同一 `call_id` 先 `started` 再终态，客户端按 `call_id` upsert 成一行轨迹。终态那条与 `Answer.trace` 的元素一致。 |
 | `succeeded` | 问答任务为 `{answer_id}`；KB 重建任务为 `{items, papers}`；入库任务为 `{key, n_paragraphs, n_facts, items}`。终态。 |
 | `failed` | `{code, message}`，其中 `code` 为 JobError 枚举。终态。 |
 | `cancelled` | `{}`。终态。 |
@@ -999,6 +1046,10 @@ curl -s -X POST -H 'Authorization: Bearer <admin_access_token>' \
 ## 10. 契约迁移
 
 - 用户体系迁移 `0002`：停 API/worker 并备份后迁移，执行 `yaoe create-admin`。旧任务和答案保留，`user_id=null`，仅管理员可见；不会把旧 Key ID 猜测为用户。已有本地 Key 文件不读取、不删除。
+- 答案会话迁移 `0003`：`answers` 增加 `parent_id`（自引用外键，`ON DELETE SET NULL`）、`thread_id` 与 `trace`（`NOT NULL DEFAULT '[]'`）。老行 `trace` 为 `[]`、`thread_id` 为 `null`，在列表里原样返回，不参与会话折叠。
+- codex 引擎的工具调用由 `log` 事件（`mcp: <server>/<tool> (<status>)` 文本）改为结构化 `tool` 事件与 `Answer.trace`；`job.result` 不再带 `tool_calls`（改为 `Answer.trace`），只保留 `answer_id` 与 `thread_id`。依赖旧日志文案解析工具调用的客户端必须改读 `tool` 事件。
+- codex 答案的 `filters_label` 不再是 `codex · N 次工具调用`，改为与 `ask` 同源的筛选描述。
+- `GET /v1/answers` 现在按 codex 会话折叠到最新一轮：单条会话不再占多行，`total` 也按折叠计数。需要完整回合列表时用 `GET /v1/answers/{id}/thread`。
 - 静态 API Key、`YAOE_API_KEYS_FILE`、`YAOE_AUTH_DISABLED` 和 SSE 查询令牌已移除；客户端统一登录后使用 Bearer，原生 `EventSource` 改为带请求头的流客户端。
 - `Job.api_key_id` 改为 `user_id`；`YAOE_MAX_ACTIVE_JOBS_PER_KEY` 改为 `YAOE_MAX_ACTIVE_JOBS_PER_USER`。原来全局可读的答案及所有子资源现在仅本人或管理员可见。
 - 原 `DELETE /v1/jobs/{job_id}` 已移除，取消改用 `POST /v1/jobs/{job_id}/cancel`，成功接受状态由 `204` 改为 `202`，通过 `Location` 观察任务。
