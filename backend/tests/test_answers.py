@@ -458,6 +458,18 @@ def test_cli_citation_rendering_keeps_local_links():
     assert "#p2" not in appendix
 
 
+def test_marker_groups_normalize_ranges_and_keep_prose():
+    """模型写出 [1¶1-¶3, 1¶2] 这类区间/组合标记时，仍要落成可点的逐段标记。"""
+    from ask import resolve_markers
+
+    paper = {"n": 1, "pmid": "123", "md_file": "123.md", "paras": [{"id": i, "sec": "Results", "text": "x"}
+                                                                   for i in (1, 2, 3)]}
+    body, used = resolve_markers(
+        "A [1¶1-¶3, 1¶2] B [1¶2-3] C [1¶1-¶12] D [见 1¶1] E [2024] F [1¶9]", {1: paper}, None)
+    assert body == "A [1¶1] [1¶2] [1¶3] B [1¶2] [1¶3] C [1] D [见 1¶1] E [2024] F [1]"
+    assert used == [(1, 1), (1, 2), (1, 3)]
+
+
 def test_legacy_markdown_cannot_map_other_answer_files(client, snapshot_root):
     root = snapshot_root
     other = root / "other_papers"

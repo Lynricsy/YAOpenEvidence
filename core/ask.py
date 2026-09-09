@@ -427,7 +427,9 @@ You are given PICOS reading notes for several papers, each labelled [n]. Inside 
 "paper 3, paragraph 12" — a verified location in the original text. Write the answer in the SAME LANGUAGE as the
 user's question, using ONLY facts from the notes. Cite every factual claim. PREFER the paragraph markers over plain [n]:
 whenever the note line you are using carries a marker like [3¶12], cite [3¶12] (copy it exactly as given; never invent
-paragraph numbers); use plain [n] only for facts whose note line has no marker. Do not invent numbers, studies or citations; if the notes are insufficient, say what is missing.
+paragraph numbers); use plain [n] only for facts whose note line has no marker. Every bracket holds exactly ONE marker
+copied verbatim from the notes: write [3¶12] [3¶14], never ranges or bundles like [3¶12-¶14] or [3¶12, 3¶14].
+Do not invent numbers, studies or citations; if the notes are insufficient, say what is missing.
 Format:
 **结论 / Bottom line** — 2-4 sentences.
 **证据 / Evidence** — bullets, each with study type, n, effect sizes, ending with [n] or [n¶k].
@@ -463,39 +465,61 @@ def ref_line(p: dict, papers_dir_rel: str | dict[int, str]) -> str:
             f"[原文]({paper_link(p, papers_dir_rel)})")
 
 
-MARK_GROUP_RE = re.compile(r"\[((?:\d{1,2}¶\d{1,4}\??|\d{1,2})(?:\s*[,，;]\s*(?:\d{1,2}¶\d{1,4}\??|\d{1,2}))*)\]")
-MARK_RE = re.compile(r"(\d{1,2})¶(\d{1,4})(\??)")
+# 正文标记词法：`3¶12`、`3¶12-¶14`（区间，破折号变体/第二个 ¶ 可省）、纯篇号 `3`；
+# 结尾 `?` 是未核实引文的标记，按段落照常解析。
+MARK_TOKEN_RE = re.compile(r"(\d{1,2})(?:¶(\d{1,4})(?:\s*[-–—~]\s*¶?(\d{1,4}))?)?\??")
+MARK_GROUP_RE = re.compile(r"\[([^\[\]\n]{1,200})\]")
+MARK_SEPS = " \t,，、;；"
+MARK_RANGE_MAX = 8  # 区间跨度上限：更大的区间等于泛指全篇，降级为 [n]
 
 
 def resolve_markers(body: str, by_n: dict[int, dict],
                     papers_dir_rel: str | dict[int, str] | None) -> tuple[str, list[tuple[int, int]]]:
-    """归一化正文里的 [3¶12] / [3¶26, 3¶29] / [2¶4, 5] 标记，并收集 (n, pid)。
+    """归一化正文里的 [3¶12] / [3¶26, 3¶29] / [2¶4, 5] / [3¶1-¶5, 3¶3] 标记，并收集 (n, pid)。
 
     `papers_dir_rel` 为 None 时输出裸标记 `[n¶pid]`（HTTP 场景：前端自己决定跳哪儿）；
     给了相对目录或资源映射就输出指向本次原文段落锚点的 Markdown 链接。
-    未知段落一律降级为 `[n]`。
+    未知段落一律降级为 `[n]`；组内标记按词法逐个解析，一个畸形写法不再连坐整组。
     """
     used: list[tuple[int, int]] = []
 
-    def _one(tok: str) -> str:
-        m = MARK_RE.fullmatch(tok)
-        if not m:
-            return f"[{tok}]"
-        n, pid = int(m.group(1)), int(m.group(2))
+    def _mark(n: int, pid: int) -> str | None:
+        """已知段落 → 标记/链接；未知段落 → None，由调用方降级。"""
         p = by_n.get(n)
         if not p or not any(q["id"] == pid for q in p["paras"]):
-            return f"[{n}]"  # unknown paragraph: degrade to a plain paper citation
+            return None
         if (n, pid) not in used:
             used.append((n, pid))
         if papers_dir_rel is None:
             return f"[{n}¶{pid}]"
         return f"[{n}¶{pid}]({paper_link(p, papers_dir_rel)}#p{pid})"
 
+    def _token(m: re.Match) -> str:
+        n = int(m.group(1))
+        if m.group(2) is None:
+            return f"[{n}]"
+        lo, hi = int(m.group(2)), int(m.group(3) or m.group(2))
+        if hi < lo or hi - lo + 1 > MARK_RANGE_MAX:
+            return f"[{n}]"
+        marks = [s for pid in range(lo, hi + 1) if (s := _mark(n, pid))]
+        return " ".join(marks) if marks else f"[{n}]"
+
     def _group(m: re.Match) -> str:
-        toks = [t.strip() for t in re.split(r"[,，;]", m.group(1)) if t.strip()]
-        if not any("¶" in t for t in toks):
+        content = m.group(1)
+        if "¶" not in content:  # [4] / [2024]：不是段落引用组，原样保留
             return m.group(0)
-        return " ".join(_one(t) for t in toks)
+        parts: list[str] = []
+        pos = 0
+        for tok in MARK_TOKEN_RE.finditer(content):
+            if content[pos:tok.start()].strip(MARK_SEPS):  # 夹着正文，整组按原文保留
+                return m.group(0)
+            for part in _token(tok).split():
+                if part not in parts:  # 同一降级篇号只留一个 [n]
+                    parts.append(part)
+            pos = tok.end()
+        if not parts or content[pos:].strip(MARK_SEPS):
+            return m.group(0)
+        return " ".join(parts)
     return MARK_GROUP_RE.sub(_group, body), used
 
 
