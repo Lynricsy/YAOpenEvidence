@@ -53,7 +53,7 @@ class CodexFailed(RuntimeError):
 class CodexResult:
     thread_id: str
     answer_md: str
-    tool_calls: list[str] = field(default_factory=list)
+    trace: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _mcp_env() -> dict[str, str]:
@@ -111,39 +111,72 @@ def preflight() -> None:
             raise CodexFailed(f"codex engine asset missing: {path}")
 
 
-def _item_summary(item: dict[str, Any]) -> tuple[str, str] | None:
-    """把一条 thread item 压成 (工具名, 展示文本)；不关心的类型返回 None。"""
+# SDK 的三态（外加 commandExecution 独有的 declined）压成对外契约的三态
+_STATUS = {"inProgress": "started", "completed": "completed", "failed": "failed",
+           "declined": "failed"}
+
+
+def _args_summary(value: Any) -> dict[str, Any]:
+    """工具入参只保留标量：轨迹是给人看的一行摘要，嵌套结构进不了 SSE 契约。"""
+    if not isinstance(value, dict):
+        return {}
+    out: dict[str, Any] = {}
+    for k, v in value.items():
+        if isinstance(v, str):
+            out[str(k)] = v[:200]
+        elif isinstance(v, (int, float, bool)) or v is None:
+            out[str(k)] = v
+    return out
+
+
+def _tool_call(item: dict[str, Any]) -> dict[str, Any] | None:
+    """把一条 thread item 压成 ToolCall dict；不关心的类型返回 None。"""
     kind = item.get("type")
     if kind == "mcpToolCall":
-        server = item.get("server") or "mcp"
-        tool = item.get("tool") or item.get("name") or "?"
-        status = item.get("status") or ""
-        return f"{server}/{tool}", f"mcp: {server}/{tool} ({status})"
+        error = item.get("error") or {}
+        return {
+            "call_id": item.get("id") or "",
+            "server": item.get("server") or "mcp",
+            "tool": item.get("tool") or "?",
+            "status": _STATUS.get(item.get("status") or "", "failed"),
+            "args": _args_summary(item.get("arguments")),
+            "duration_ms": item.get("duration_ms"),
+            "error": error.get("message"),
+        }
     if kind == "commandExecution":
-        cmd = item.get("command") or ""
-        return "exec", f"exec: {cmd[:120]}"
+        status = _STATUS.get(item.get("status") or "", "failed")
+        return {
+            "call_id": item.get("id") or "",
+            "server": "shell",
+            "tool": "exec",
+            "status": status,
+            "args": {"command": (item.get("command") or "")[:200]},
+            "duration_ms": item.get("duration_ms"),
+            "error": f"exit {item.get('exit_code')}" if status == "failed" else None,
+        }
     return None
 
 
 def _drain(stream: Iterator[Any], *, emit: Callable[[dict], None],
-           should_cancel: Callable[[], bool], interrupt: Callable[[], None]) -> tuple[str, list[str]]:
+           should_cancel: Callable[[], bool],
+           interrupt: Callable[[], None]) -> tuple[str, list[dict[str, Any]]]:
     text = ""
-    tools: list[str] = []
+    trace: list[dict[str, Any]] = []
     cancelled = False
     for event in stream:
         if not cancelled and should_cancel():
             cancelled = True
             interrupt()          # 让 codex 自己收尾，别硬杀进程：会话文件要留完整
         payload = event.payload
-        if event.method == "item/completed":
-            item = payload.item.model_dump(mode="json")   # 枚举转成字符串，日志里才是 completed
-            if item.get("type") == "agentMessage":
+        if event.method in ("item/started", "item/completed"):
+            item = payload.item.model_dump(mode="json")   # 枚举转成字符串，契约里才是 completed
+            if item.get("type") == "agentMessage" and event.method == "item/completed":
                 text = item.get("text") or text
-            summary = _item_summary(item)
-            if summary is not None:
-                name, message = summary
-                tools.append(name)
-                emit({"type": "log", "level": "info", "message": message})
+            call = _tool_call(item)
+            if call is not None:
+                emit({"type": "tool", **call})
+                if call["status"] != "started":
+                    trace.append(call)
         elif event.method == "turn/completed":
             turn = payload.turn
             status = getattr(turn.status, "value", turn.status)
@@ -152,7 +185,7 @@ def _drain(stream: Iterator[Any], *, emit: Callable[[dict], None],
             if status != "completed":
                 detail = getattr(turn.error, "message", None) or status
                 raise CodexFailed(f"codex turn {status}: {detail}")
-    return text, tools
+    return text, trace
 
 
 def run_codex(prompt: str, *, thread_id: str | None = None,
@@ -183,7 +216,7 @@ def run_codex(prompt: str, *, thread_id: str | None = None,
             thread = (codex.thread_resume(thread_id, **common) if thread_id
                       else codex.thread_start(**common))
             turn = thread.turn(prompt)
-            text, tools = _drain(turn.stream(), emit=emit, should_cancel=should_cancel,
+            text, trace = _drain(turn.stream(), emit=emit, should_cancel=should_cancel,
                                  interrupt=turn.interrupt)
             resolved = thread.id or thread_id or ""
     except CodexError as exc:
@@ -191,5 +224,5 @@ def run_codex(prompt: str, *, thread_id: str | None = None,
     if not text.strip():
         raise CodexFailed("codex returned an empty answer")
     emit({"type": "stage", "stage": "agent", "status": "finished",
-          "detail": {"tool_calls": len(tools), "chars": len(text)}})
-    return CodexResult(thread_id=resolved, answer_md=text, tool_calls=tools)
+          "detail": {"tool_calls": len(trace), "chars": len(text)}})
+    return CodexResult(thread_id=resolved, answer_md=text, trace=trace)

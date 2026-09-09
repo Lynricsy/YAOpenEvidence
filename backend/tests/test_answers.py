@@ -58,6 +58,100 @@ def test_default_engine_is_ask(client, arq):
     assert [call[0] for call in arq.calls] == ["run_ask_job"]
 
 
+def _ready_codex(client, *, question=VALID["question"], thread_id="t1"):
+    """建一轮已完成的 codex 答案：追问的前提是 thread 里有 ready 回合。"""
+    body = _create(client, engine="codex", question=question).json()
+    with SessionLocal() as db:
+        answer = db.get(Answer, body["id"])
+        answer.status, answer.thread_id, answer.answer_md = "ready", thread_id, "# 结论"
+        db.get(Job, body["job_id"]).status = "succeeded"
+        db.commit()
+    return body["id"]
+
+
+def test_followup_starts_next_turn_on_the_same_thread(client, arq):
+    first = _ready_codex(client)
+
+    r = client.post(f"/v1/answers/{first}/followup", json={"question": "再总结一句"},
+                    headers=auth(OTHER_TOKEN))
+
+    assert r.status_code == 202
+    body = r.json()
+    assert r.headers["location"] == f"/v1/answers/{body['id']}"
+    assert body["parent_id"] == first
+    assert body["question"] == "再总结一句"
+    assert body["engine"] == "codex"
+    with SessionLocal() as db:
+        row = db.get(Answer, body["id"])
+        assert row.thread_id == "t1"
+        job = db.get(Job, body["job_id"])
+        assert job.kind == "codex"
+        assert job.params["question"] == "再总结一句"
+        assert job.params["engine"] == "codex"
+        assert job.params["papers"] == VALID["papers"]   # 其余选项沿用上一轮
+    assert arq.calls[-1][0] == "run_codex_job"
+
+
+def test_followup_on_ask_answer_is_conflict(client, arq):
+    body = _create(client).json()
+    with SessionLocal() as db:
+        db.get(Answer, body["id"]).status = "ready"
+        db.get(Job, body["job_id"]).status = "succeeded"
+        db.commit()
+
+    r = client.post(f"/v1/answers/{body['id']}/followup", json={"question": "再说说"},
+                    headers=auth(OTHER_TOKEN))
+
+    assert r.status_code == 409
+    assert r.json()["code"] == "conflict"
+
+
+def test_followup_needs_a_finished_turn(client, arq):
+    """thread 还在跑就追问，会在同一个会话上开两轮；必须挡住。"""
+    body = _create(client, engine="codex").json()
+    with SessionLocal() as db:
+        db.get(Answer, body["id"]).thread_id = "t1"
+        db.commit()
+
+    r = client.post(f"/v1/answers/{body['id']}/followup", json={"question": "再说说"},
+                    headers=auth(OTHER_TOKEN))
+
+    assert r.status_code == 409
+    assert r.json()["code"] == "thread_busy"
+
+
+def test_followup_is_hidden_from_others_and_refused_for_admin(client, arq):
+    first = _ready_codex(client)
+
+    hidden = client.post(f"/v1/answers/{first}/followup", json={"question": "再说说"},
+                         headers=auth(USER_TOKEN))
+    assert hidden.status_code == 404
+
+    admin = client.post(f"/v1/answers/{first}/followup", json={"question": "再说说"},
+                        headers=auth(ADMIN_TOKEN))
+    assert admin.status_code == 403
+    assert admin.json()["code"] == "forbidden"
+
+
+def test_thread_and_list_collapse_a_conversation_into_one_row(client, arq):
+    first = _ready_codex(client, question="替西帕肽与死亡率")
+    second = client.post(f"/v1/answers/{first}/followup", json={"question": "再总结一句"},
+                         headers=auth(OTHER_TOKEN)).json()["id"]
+
+    thread = client.get(f"/v1/answers/{first}/thread", headers=auth(OTHER_TOKEN)).json()
+    assert [t["id"] for t in thread] == [first, second]
+
+    listing = client.get("/v1/answers", headers=auth(OTHER_TOKEN)).json()
+    assert [item["id"] for item in listing["items"]] == [second]
+    assert listing["total"] == 1
+    assert listing["items"][0]["n_turns"] == 2
+    assert listing["items"][0]["root_question"] == "替西帕肽与死亡率"
+
+    # 搜索根问题也要能找到这条会话，尽管列表里显示的是最后一问
+    found = client.get("/v1/answers", params={"q": "替西帕肽"}, headers=auth(OTHER_TOKEN)).json()
+    assert [item["id"] for item in found["items"]] == [second]
+
+
 @pytest.mark.parametrize("payload, field", [
     ({"years": 3, "year_from": 2020}, "years"),
     ({"year_to": 2024}, "year_to"),

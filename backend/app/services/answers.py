@@ -7,16 +7,17 @@ import os
 import re
 from urllib.parse import unquote, urlsplit
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 import journal_rank as jr
-from ask import AskOptions
+from ask import AskOptions, Filters
 from picos_paths import ANSWERS_DIR
 
 from ..errors import ApiError
 from ..models import Answer
-from ..schemas.answers import AnswerCreate
+from ..schemas.answers import Answer as AnswerSchema
+from ..schemas.answers import AnswerCreate, AnswerSummary
 
 LEGACY_TS_FORMAT = "%Y%m%d_%H%M%S"
 
@@ -80,6 +81,49 @@ def to_codex_prompt(opts: AnswerCreate | dict) -> str:
     rules.append("先用 kb_search 查已入库的原子知识，可直接引用。" if o.use_kb
                  else "不要使用 kb_search，只用本次实时检索到的文献。")
     return o.question + "\n\n检索要求：\n" + "\n".join(f"- {r}" for r in rules)
+
+
+def describe_filters(opts: AnswerCreate | dict) -> str:
+    """筛选条件的中文描述；与 ask 流水线共用 `Filters.describe`，两个引擎的标签同源。"""
+    o = to_ask_options(opts)
+    return Filters(o.years, o.year, o.quartile, o.journal, o.keep_unranked).describe()
+
+
+def thread_rows(db: Session, row: Answer) -> list[Answer]:
+    """一条 codex 会话的全部回合（升序）；没有 thread_id 的行自成一轮。"""
+    if not row.thread_id:
+        return [row]
+    return list(db.scalars(select(Answer).where(Answer.thread_id == row.thread_id)
+                           .order_by(Answer.created_at, Answer.id)))
+
+
+def thread_meta(db: Session, rows: list[Answer]) -> dict[str, tuple[int, str | None]]:
+    """批量取每行的 (会话回合数, 根问题)；根问题只对追问行有意义。"""
+    ids = {r.thread_id for r in rows if r.thread_id}
+    if not ids:
+        return {}
+    counts = dict(db.execute(select(Answer.thread_id, func.count())
+                             .where(Answer.thread_id.in_(ids))
+                             .group_by(Answer.thread_id)).all())
+    roots = dict(db.execute(select(Answer.thread_id, Answer.question)
+                            .where(Answer.thread_id.in_(ids),
+                                   Answer.parent_id.is_(None))).all())
+    return {r.id: (int(counts.get(r.thread_id, 1)),
+                   roots.get(r.thread_id) if r.parent_id else None)
+            for r in rows if r.thread_id}
+
+
+def summaries(db: Session, rows: list[Answer]) -> list[AnswerSummary]:
+    meta = thread_meta(db, rows)
+    return [AnswerSummary.model_validate(r).model_copy(
+        update=dict(zip(("n_turns", "root_question"), meta.get(r.id, (1, None)), strict=True)))
+        for r in rows]
+
+
+def detail(db: Session, row: Answer) -> AnswerSchema:
+    n_turns, root_question = thread_meta(db, [row]).get(row.id, (1, None))
+    return AnswerSchema.model_validate(row).model_copy(
+        update={"n_turns": n_turns, "root_question": root_question})
 
 
 def to_answer_paper(p: dict) -> dict:

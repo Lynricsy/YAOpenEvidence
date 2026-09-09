@@ -29,7 +29,7 @@ from .db import SessionLocal
 from .models import JOB_TO_ANSWER_STATUS, Answer, Job, utcnow
 from .services import codex as codex_engine
 from .services import events
-from .services.answers import to_answer_paper, to_ask_options, to_codex_prompt
+from .services.answers import describe_filters, to_answer_paper, to_ask_options, to_codex_prompt
 
 logger = logging.getLogger("yaoe.worker")
 
@@ -76,8 +76,8 @@ def _terminate(ctx: dict, job_id: str, status: str, error: dict | None = None) -
     _publish(ctx, job_id, {"type": status, **(error or {})})
 
 
-def _claim_answer(ctx: dict, job_id: str) -> tuple[str, dict] | None:
-    """认领一个挂着 answers 行的任务：置 running 并交出 (answer_id, options)。
+def _claim_answer(ctx: dict, job_id: str) -> tuple[str, dict, str | None] | None:
+    """认领一个挂着 answers 行的任务：置 running 并交出 (answer_id, options, thread_id)。
 
     跑不了（行缺失或已被取消）时自己落终态并返回 None。判定放在一个短事务里，
     终态另开 session：两个写事务同时开着会在 SQLite 上互相等锁。
@@ -92,7 +92,7 @@ def _claim_answer(ctx: dict, job_id: str) -> tuple[str, dict] | None:
         if answer is not None and not cancelled:
             job.started_at = answer.started_at = utcnow()
             _set_status(db, job, answer, "running")
-            return answer.id, dict(answer.options or {})
+            return answer.id, dict(answer.options or {}), answer.thread_id
     if answer is None:
         _terminate(ctx, job_id, "failed", {"code": "internal_error", "message": "answer row missing"})
     else:
@@ -119,7 +119,7 @@ async def run_ask_job(ctx: dict, job_id: str) -> None:
     claimed = _claim_answer(ctx, job_id)
     if claimed is None:
         return
-    answer_id, options = claimed
+    answer_id, options, _thread_id = claimed
     emit = _emitter(ctx, job_id)
 
     def should_cancel() -> bool:
@@ -174,19 +174,22 @@ async def run_codex_job(ctx: dict, job_id: str) -> None:
     """codex 引擎：一次 agent 对话，产出整篇答案。
 
     与 ask 的区别只在中间过程——没有结构化 papers/citations，所以 `body_md` 留空，
-    前端按整篇渲染；会话 id 落在 job.result 里，运维可用 `codex exec resume <id>` 复盘。
+    前端按整篇渲染；工具调用落在 `answer.trace`，会话 id 落在 `answer.thread_id`，
+    追问就是在同一个 thread 上再跑一轮。
     """
     claimed = _claim_answer(ctx, job_id)
     if claimed is None:
         return
-    answer_id, options = claimed
+    answer_id, options, thread_id = claimed
     emit = _emitter(ctx, job_id)
 
     def should_cancel() -> bool:
         return events.is_cancel_requested(ctx["redis_sync"], job_id)
 
+    # 追问不重复附「检索要求」：同一个会话里模型已经看过一遍，重复只会稀释新问题
+    prompt = options["question"] if thread_id else to_codex_prompt(options)
     try:
-        res = await asyncio.to_thread(codex_engine.run_codex, to_codex_prompt(options),
+        res = await asyncio.to_thread(codex_engine.run_codex, prompt, thread_id=thread_id,
                                       emit=emit, should_cancel=should_cancel)
     except codex_engine.CodexCancelled:
         _terminate(ctx, job_id, "cancelled")
@@ -204,13 +207,15 @@ async def run_codex_job(ctx: dict, job_id: str) -> None:
         _terminate(ctx, job_id, "failed", {"code": "internal_error", "message": f"{type(e).__name__}: {e}"})
         return
 
-    result = {"answer_id": answer_id, "thread_id": res.thread_id, "tool_calls": res.tool_calls}
+    result = {"answer_id": answer_id, "thread_id": res.thread_id}
     with SessionLocal() as db:
         job = _job(db, job_id)
         answer = _answer_of(db, job) if job is not None else None
         if answer is not None:
             answer.answer_md = res.answer_md
-            answer.filters_label = f"codex · {len(res.tool_calls)} 次工具调用"
+            answer.trace = res.trace
+            answer.thread_id = res.thread_id
+            answer.filters_label = describe_filters(options)
         if job is not None:
             _set_status(db, job, answer, "succeeded", result=result, finished=True)
     _publish(ctx, job_id, {"type": "succeeded", "answer_id": answer_id})

@@ -71,16 +71,18 @@ async def test_successful_job_persists_answer_and_emits_succeeded(worker_ctx, sy
     assert data == {"answer_id": answer_id}
 
 
-async def test_codex_job_persists_answer_and_thread_id(worker_ctx, sync_redis, monkeypatch):
-    """codex 引擎没有结构化 papers，答案与会话 id 是它唯一的产出，必须落库。"""
+async def test_codex_job_persists_answer_trace_and_thread_id(worker_ctx, sync_redis, monkeypatch):
+    """codex 引擎没有结构化 papers，答案、轨迹与会话 id 是它唯一的产出，必须落库。"""
     job_id, answer_id = make_job(kind="codex")
     prompts: list[str] = []
+    call = {"call_id": "c1", "server": "semantic_scholar", "tool": "search_papers",
+            "status": "completed", "args": {"query": "sglt2"}, "duration_ms": 120, "error": None}
 
     def fake_run(prompt, **kw):
         prompts.append(prompt)
-        kw["emit"]({"type": "log", "level": "info", "message": "mcp: semantic_scholar/search_papers (completed)"})
+        kw["emit"]({"type": "tool", **call})
         return codex_engine.CodexResult(thread_id="thread-1", answer_md="# 结论\n\n证据 [1]",
-                                        tool_calls=["semantic_scholar/search_papers"])
+                                        trace=[call])
 
     monkeypatch.setattr(codex_engine, "run_codex", fake_run)
 
@@ -90,14 +92,38 @@ async def test_codex_job_persists_answer_and_thread_id(worker_ctx, sync_redis, m
     with SessionLocal() as db:
         job, answer = db.get(Job, job_id), db.get(Answer, answer_id)
         assert job.status == "succeeded"
-        assert job.result == {"answer_id": answer_id, "thread_id": "thread-1",
-                              "tool_calls": ["semantic_scholar/search_papers"]}
+        assert job.result == {"answer_id": answer_id, "thread_id": "thread-1"}
         assert answer.status == "ready"
         assert answer.answer_md == "# 结论\n\n证据 [1]"
+        assert answer.trace == [call]
+        assert answer.thread_id == "thread-1"
+        assert answer.filters_label == "无"      # 与 ask 同源的筛选描述，不再是工具计数
         assert answer.body_md is None      # 没有分节结构，前端整篇渲染
 
     kinds = [kind for kind, _ in _stream(sync_redis, job_id)]
-    assert kinds[-1] == "succeeded" and "log" in kinds
+    assert kinds[-1] == "succeeded" and "tool" in kinds
+
+
+async def test_codex_followup_resumes_thread_without_repeating_filter_rules(worker_ctx, sync_redis,
+                                                                            monkeypatch):
+    """追问续接同一 thread：会话里已有检索要求，重复附加只会稀释新问题。"""
+    job_id, answer_id = make_job(kind="codex")
+    seen: dict = {}
+
+    def fake_run(prompt, **kw):
+        seen["prompt"], seen["thread_id"] = prompt, kw.get("thread_id")
+        return codex_engine.CodexResult(thread_id="thread-1", answer_md="# 结论")
+
+    monkeypatch.setattr(codex_engine, "run_codex", fake_run)
+    with SessionLocal() as db:
+        db.get(Answer, answer_id).thread_id = "thread-1"
+        db.commit()
+
+    await run_codex_job(worker_ctx, job_id)
+
+    assert seen["thread_id"] == "thread-1"
+    assert seen["prompt"] == "测试问题"
+    assert "检索要求" not in seen["prompt"]
 
 
 async def test_codex_failure_keeps_its_error_code(worker_ctx, sync_redis, monkeypatch):

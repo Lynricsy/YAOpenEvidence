@@ -10,8 +10,8 @@ import os
 import shutil
 
 from fastapi import APIRouter, Depends, Path, Query, Response
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.orm import Session, aliased
 
 from ..auth import Principal, require
 from ..deps import get_arq, get_db
@@ -24,15 +24,19 @@ from ..schemas.answers import (
     AnswerPaperDetail,
     AnswerStatus,
     AnswerSummary,
+    FollowupCreate,
 )
 from ..schemas.common import MarkdownResponse, Page
 from ..services import jobs as jobs_service
 from ..services.answers import (
     answer_paths,
+    detail,
     http_answer_markdown,
     paper_artifact_path,
     paper_stems,
     read_json,
+    summaries,
+    thread_rows,
 )
 
 router = APIRouter(tags=["answers"])
@@ -64,7 +68,47 @@ async def create_answer(payload: AnswerCreate, response: Response,
                                user_id=principal.user_id, fn_name=fn_name, answer=row)
     db.refresh(row)
     response.headers["Location"] = f"/v1/answers/{answer_id}"
-    return Answer.model_validate(row)
+    return detail(db, row)
+
+
+@router.post("/answers/{answer_id}/followup", status_code=202, response_model=Answer,
+             summary="在智能体会话上追问")
+async def followup_answer(answer_id: str, payload: FollowupCreate, response: Response,
+                          db: Session = Depends(get_db), arq=Depends(get_arq),  # noqa: ANN001
+                          principal: Principal = Depends(require())) -> Answer:
+    """在同一个 codex thread 上再跑一轮；选项沿用被续接的那一轮，只换问题。"""
+    row = _row(db, answer_id, principal)
+    if row.user_id != principal.user_id:
+        # 管理员看得到别人的答案，但会话是别人的：续下去会污染对方的历史
+        raise ApiError(403, "forbidden", "只有发起人可以追问")
+    if row.engine != "codex":
+        raise ApiError(409, "conflict", "只有智能体引擎的答案支持追问")
+    thread = thread_rows(db, row)
+    if any(r.status in ("queued", "running") for r in thread):
+        raise ApiError(409, "thread_busy", "上一轮还在进行中，稍后再追问")
+    ready = [r for r in thread if r.status == "ready" and r.thread_id]
+    if not ready:
+        raise ApiError(409, "not_ready", "这轮对话还没有可以续接的回合")
+    parent = ready[-1]            # 永远接在最后一个成功回合上，而不是请求路径里的那一行
+    jobs_service.ensure_capacity(db, principal)
+    options = {**(parent.options or {}), "question": payload.question, "engine": "codex"}
+    new_id = jobs_service.new_id()
+    new_row = AnswerRow(id=new_id, job_id=None, user_id=principal.user_id, status="queued",
+                        question=payload.question, queries=[], options=options, papers=[],
+                        citations=[], kb_hits=[], trace=[],
+                        parent_id=parent.id, thread_id=parent.thread_id)
+    await jobs_service.enqueue(arq, db, kind="codex", params={"answer_id": new_id, **options},
+                               user_id=principal.user_id, fn_name="run_codex_job", answer=new_row)
+    db.refresh(new_row)
+    response.headers["Location"] = f"/v1/answers/{new_id}"
+    return detail(db, new_row)
+
+
+@router.get("/answers/{answer_id}/thread", response_model=list[AnswerSummary],
+            summary="同一会话的全部回合")
+def get_answer_thread(answer_id: str, db: Session = Depends(get_db),
+                      principal: Principal = Depends(require())) -> list[AnswerSummary]:
+    return summaries(db, thread_rows(db, _row(db, answer_id, principal)))
 
 
 @router.get("/answers", response_model=Page[AnswerSummary], summary="问答任务列表")
@@ -78,19 +122,39 @@ def list_answers(status: AnswerStatus | None = None, q: str = "",
     if status:
         conds.append(AnswerRow.status == status)
     if q.strip():
-        conds.append(AnswerRow.question.like(f"%{q.strip()}%"))
+        # 追问行按根问题也能被搜到：会话在列表里只有一行，搜索不该只认最后一问
+        pat = f"%{q.strip()}%"
+        root = aliased(AnswerRow)
+        conds.append(or_(
+            AnswerRow.question.like(pat),
+            AnswerRow.thread_id.in_(
+                select(root.thread_id).where(root.parent_id.is_(None),
+                                             root.thread_id.is_not(None),
+                                             root.question.like(pat))),
+        ))
+    # 会话折叠：同一 thread 只留最新一行，历史列表里一次对话就是一条
+    later = aliased(AnswerRow)
+    conds.append(or_(
+        AnswerRow.thread_id.is_(None),
+        ~select(later.id).where(
+            later.thread_id == AnswerRow.thread_id,
+            later.id != AnswerRow.id,
+            or_(later.created_at > AnswerRow.created_at,
+                and_(later.created_at == AnswerRow.created_at, later.id > AnswerRow.id)),
+        ).exists(),
+    ))
     total = int(db.scalar(select(func.count(AnswerRow.id)).where(*conds)) or 0)
     rows = db.scalars(select(AnswerRow).where(*conds)
                       .order_by(AnswerRow.created_at.desc(), AnswerRow.id.desc())
                       .limit(limit).offset(offset)).all()
-    return Page[AnswerSummary](items=[AnswerSummary.model_validate(r) for r in rows],
+    return Page[AnswerSummary](items=summaries(db, list(rows)),
                                total=total, limit=limit, offset=offset)
 
 
 @router.get("/answers/{answer_id}", response_model=Answer, summary="问答任务详情")
 def get_answer(answer_id: str, db: Session = Depends(get_db),
                principal: Principal = Depends(require())) -> Answer:
-    return Answer.model_validate(_row(db, answer_id, principal))
+    return detail(db, _row(db, answer_id, principal))
 
 
 @router.get("/answers/{answer_id}/markdown", response_class=MarkdownResponse,

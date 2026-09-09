@@ -85,16 +85,23 @@ def test_codex_executes_mcp_tool_and_answers_with_its_output(fake_llm_url, codex
     pdf.parent.mkdir(parents=True, exist_ok=True)
     pdf.write_bytes(_minimal_pdf(MARKER))
     monkeypatch.setattr(ask, "LLM_BASE", fake_llm_url)
-    logs: list[str] = []
+    events: list[dict] = []
 
     result = codex_engine.run_codex(
         f"读取本地 PDF 并复述其内容。TOOLTEST_PDF={pdf.name}",
-        emit=lambda e: logs.append(str(e.get("message", ""))),
+        emit=events.append,
     )
 
-    assert result.tool_calls == ["semantic_scholar/read_pdf"]
+    assert [c["tool"] for c in result.trace] == ["read_pdf"]
+    call = result.trace[0]
+    assert call["server"] == "semantic_scholar"
+    assert call["status"] == "completed"
+    assert isinstance(call["duration_ms"], int)
     assert MARKER in result.answer_md, "工具返回的原文没有回到模型，说明闭环断了"
-    assert any("mcp: semantic_scholar/read_pdf (completed)" in line for line in logs)
+    # 实时轨迹必须是「开始 → 终态」两条同 id 的事件，前端才能原地把 spinner 换成对勾
+    tools = [e for e in events if e["type"] == "tool"]
+    assert [t["status"] for t in tools] == ["started", "completed"]
+    assert len({t["call_id"] for t in tools}) == 1
     assert result.thread_id
 
 
@@ -104,7 +111,7 @@ def test_codex_answers_without_tools_when_prompt_has_no_directive(fake_llm_url, 
 
     result = codex_engine.run_codex("SGLT2 抑制剂对 HFpEF 有什么获益？")
 
-    assert result.tool_calls == []
+    assert result.trace == []
     assert "结论" in result.answer_md
 
 

@@ -78,6 +78,10 @@ class Answer(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     job_id: Mapped[str | None] = mapped_column(String(64), ForeignKey("jobs.id"), nullable=True)
     user_id: Mapped[str | None] = mapped_column(String(64), ForeignKey("users.id"), nullable=True)
+    # 追问链：parent_id 指向上一轮，thread_id 是整条 codex 会话的 id（ask 引擎恒为空）
+    parent_id: Mapped[str | None] = mapped_column(
+        String(64), ForeignKey("answers.id", ondelete="SET NULL"), nullable=True)
+    thread_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(16))
     question: Mapped[str] = mapped_column(Text)
     question_en: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -91,6 +95,7 @@ class Answer(Base):
     answer_md: Mapped[str | None] = mapped_column(Text, nullable=True)
     citations: Mapped[list] = mapped_column(JSON, default=list)
     kb_hits: Mapped[list] = mapped_column(JSON, default=list)
+    trace: Mapped[list] = mapped_column(JSON, default=list)
     error: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     started_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -100,6 +105,7 @@ class Answer(Base):
         Index("ix_answers_status", "status"),
         Index("ix_answers_created", "created_at"),
         Index("ix_answers_user_created", "user_id", "created_at"),
+        Index("ix_answers_thread", "thread_id"),
     )
 
     @property

@@ -48,6 +48,25 @@ class LogEventData(EventData):
     message: str
 
 
+ToolCallStatus = Literal["started", "completed", "failed"]
+
+
+class ToolCall(EventData):
+    """agent 的一次工具调用；同一 `call_id` 先后发 started 与终态两条。
+
+    既是 SSE `tool` 事件的数据，也是 `Answer.trace` 的元素——实时轨迹与落库轨迹
+    必须是同一形状，客户端才能用同一套渲染。
+    """
+
+    call_id: str
+    server: str
+    tool: str
+    status: ToolCallStatus
+    args: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
+    duration_ms: int | None = None
+    error: str | None = None
+
+
 class AnswerSucceededData(EventData):
     answer_id: str
 
@@ -80,6 +99,7 @@ EVENT_MODELS: dict[str, type[BaseModel]] = {
     "stage": StageEventData,
     "progress": ProgressEventData,
     "log": LogEventData,
+    "tool": ToolCall,
     "succeeded": SucceededEventData,
     "failed": FailedEventData,
     "cancelled": CancelledEventData,

@@ -6,12 +6,20 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .common import JobError, UtcDateTime
+from .events import ToolCall
 from .kb import KbHit
 from .papers import Fact, Paragraph, VerifiedQuote
 
 AnswerStatus = Literal["queued", "running", "ready", "failed", "cancelled"]
 AnswerEngine = Literal["ask", "codex"]
 TERMINAL_ANSWER_STATUSES = frozenset({"ready", "failed", "cancelled"})
+
+
+def _strip(v: str) -> str:
+    v = v.strip()
+    if not v:
+        raise ValueError("question must not be blank")
+    return v
 
 
 class AnswerCreate(BaseModel):
@@ -36,13 +44,7 @@ class AnswerCreate(BaseModel):
     kb_hits: int = Field(default=0, ge=0, le=20)
     max_chars: int = Field(default=28000, ge=4000, le=60000)
 
-    @field_validator("question")
-    @classmethod
-    def _strip_question(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("question must not be blank")
-        return v
+    _strip_question = field_validator("question")(staticmethod(_strip))
 
     @field_validator("quartiles")
     @classmethod
@@ -114,6 +116,14 @@ class Citation(BaseModel):
     from_marker: bool = True
 
 
+class FollowupCreate(BaseModel):
+    """在已有 codex 会话上追问；其余选项一律沿用被追问的那一轮。"""
+
+    question: str = Field(min_length=1, max_length=2000)
+
+    _strip_question = field_validator("question")(staticmethod(_strip))
+
+
 class AnswerSummary(BaseModel):
     id: str
     job_id: str | None = None
@@ -126,12 +136,16 @@ class AnswerSummary(BaseModel):
     created_at: UtcDateTime
     finished_at: UtcDateTime | None = None
     error: JobError | None = None
+    # 会话折叠用：同一 thread 的回合数，以及本行是追问时的根问题
+    n_turns: int = 1
+    root_question: str | None = None
 
     model_config = {"from_attributes": True}
 
 
 class Answer(AnswerSummary):
     question_en: str | None = None
+    parent_id: str | None = None
     queries: list[str] = []
     options: dict = {}
     started_at: UtcDateTime | None = None
@@ -139,3 +153,4 @@ class Answer(AnswerSummary):
     body_md: str | None = None
     citations: list[Citation] = []
     kb_hits: list[KbHit] = []
+    trace: list[ToolCall] = []
