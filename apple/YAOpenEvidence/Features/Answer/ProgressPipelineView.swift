@@ -30,10 +30,14 @@ struct ProgressPipelineView: View {
             }
 
             if engine == .codex {
-                // 智能体只有一个阶段，步骤条无从可画；真正的进展在工具轨迹里。
-                VStack(alignment: .leading, spacing: 12) {
-                    agentStatus
-                    TraceListView(calls: live.tools)
+                // 轨迹本身就是进展，不用文字复述系统在干什么；
+                // 还没有轨迹时只给一个转圈表示在跑。
+                Group {
+                    if live.tools.isEmpty {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        TraceListView(calls: live.tools)
+                    }
                 }
                 .animation(.default, value: live.tools)
             } else {
@@ -54,32 +58,6 @@ struct ProgressPipelineView: View {
             candidates
         }
         .card(padding: 16)
-    }
-
-    /// 智能体的一行状态：阶段没来是「等待启动」，结束是「整理答案」，其余就是在干活。
-    private var agentStatus: some View {
-        let state = live.stages[.agent]
-        let text = state == nil
-            ? "等待智能体启动…"
-            : (state?.status == .finished ? "正在整理答案…" : "智能体正在检索与作答")
-        let suffix = live.tools.isEmpty ? "" : " · 已调用 \(live.tools.count) 次工具"
-        return HStack(spacing: 10) {
-            Group {
-                switch state?.status {
-                case .finished:
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
-                case .running:
-                    ProgressView().controlSize(.small)
-                case nil:
-                    Image(systemName: "circle").foregroundStyle(.quaternary)
-                }
-            }
-            .frame(width: 20, height: 20)
-            Text(text + suffix)
-                .font(.subheadline)
-                .foregroundStyle(state == nil ? .secondary : .primary)
-            Spacer()
-        }
     }
 
     @ViewBuilder

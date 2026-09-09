@@ -25,12 +25,10 @@ const steps: [StageKey, string][] = [
   ['synthesize', '综合成稿'],
 ]
 
-const connections: Record<Connection, [string, string]> = {
-  idle: ['同步任务状态', 'bg-muted-foreground'],
-  open: ['实时更新中', 'bg-success'],
+// 只有「在等」和「出问题了」值得占一行字；连接正常是默认预期，说出来是噪音。
+const connections: Partial<Record<Connection, [string, string]>> = {
   connecting: ['正在连接…', 'bg-muted-foreground animate-pulse'],
   reconnecting: ['连接中断，正在重连…', 'bg-warning'],
-  closed: ['同步任务状态', 'bg-muted-foreground'],
 }
 
 function summary(stage: StageKey, detail: Record<string, unknown>) {
@@ -94,9 +92,8 @@ export function ProgressPipeline({
     if (el) el.scrollTop = el.scrollHeight
   }, [live.logs.length])
   const isCodex = engine === 'codex'
-  const agent = live.stages.agent
   const visible = steps.filter(([stage]) => stage !== 'kb' || useKb)
-  const [connectionLabel, dotClass] = connections[connection]
+  const connectionNote = connections[connection]
   const finished = visible.filter(
     ([stage]) => live.stages[stage]?.status === 'finished',
   )
@@ -110,17 +107,19 @@ export function ProgressPipeline({
         <p className="text-sm font-medium">
           {isCodex ? '智能体检索' : '证据流水线'}
         </p>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 text-xs',
-            connection === 'reconnecting'
-              ? 'text-warning'
-              : 'text-muted-foreground',
-          )}
-        >
-          <span className={cn('size-1.5 rounded-full', dotClass)} />
-          {connectionLabel}
-        </span>
+        {connectionNote && (
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 text-xs',
+              connection === 'reconnecting'
+                ? 'text-warning'
+                : 'text-muted-foreground',
+            )}
+          >
+            <span className={cn('size-1.5 rounded-full', connectionNote[1])} />
+            {connectionNote[0]}
+          </span>
+        )}
         {jobId && (
           <Button
             className="ml-auto"
@@ -135,25 +134,14 @@ export function ProgressPipeline({
         )}
       </div>
       {isCodex ? (
-        <div className="mt-5 space-y-3">
-          <p className="flex items-center gap-2 text-sm">
-            {!agent ? (
-              <span className="size-1.5 shrink-0 rounded-full bg-muted-foreground" />
-            ) : agent.status === 'finished' ? (
-              <Check className="size-3.5 shrink-0 text-success" />
-            ) : (
-              <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
-            )}
-            <span className={agent ? undefined : 'text-muted-foreground'}>
-              {!agent
-                ? '等待智能体启动…'
-                : agent.status === 'finished'
-                  ? '正在整理答案…'
-                  : '智能体正在检索与作答'}
-              {live.tools.length > 0 && ` · 已调用 ${live.tools.length} 次工具`}
-            </span>
-          </p>
-          <TraceList calls={live.tools} />
+        // 轨迹本身就是进展，不再用文字复述系统在干什么；
+        // 还没有轨迹时只给一个转圈表示在跑。
+        <div className="mt-5">
+          {live.tools.length > 0 ? (
+            <TraceList calls={live.tools} />
+          ) : (
+            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          )}
         </div>
       ) : (
         <>

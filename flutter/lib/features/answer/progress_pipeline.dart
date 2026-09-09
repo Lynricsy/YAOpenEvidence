@@ -42,7 +42,14 @@ class ProgressPipeline extends StatelessWidget {
         ),
         const SizedBox(height: YaoeTokens.space3),
         if (codex)
-          _AgentStatus(live: live)
+          // 轨迹本身就是进展，不用文字复述系统在干什么；
+          // 还没有轨迹时只给一个转圈表示在跑。
+          live.tools.isEmpty
+              ? const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : TraceList(calls: live.tools, live: true)
         else ...[
           _StageRow(stages: stages, live: live),
           if (progress != null) ...[
@@ -86,59 +93,6 @@ class ProgressPipeline extends StatelessWidget {
         if (live.logs.isNotEmpty) ...[
           const SizedBox(height: YaoeTokens.space3),
           _LogPanel(logs: live.logs),
-        ],
-      ],
-    );
-  }
-}
-
-/// 智能体引擎的状态行 + 检索轨迹（替代阶段步骤条）。
-class _AgentStatus extends StatelessWidget {
-  const _AgentStatus({required this.live});
-
-  final JobLive live;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final agent = live.stages[StageKey.agent];
-    final finished = agent?.status == StageStatus.finished;
-    final tools = live.tools.length;
-    final caption = switch (agent?.status) {
-      null => '等待智能体启动…',
-      StageStatus.running => '智能体正在检索与作答',
-      StageStatus.finished => '正在整理答案…',
-    };
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            SizedBox.square(
-              dimension: 14,
-              child: agent == null
-                  ? null
-                  : finished
-                  ? Icon(Icons.check, size: 14, color: context.yaoe.success)
-                  : const CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: YaoeTokens.space2),
-            Expanded(
-              child: Text(
-                tools > 0 ? '$caption · 已调用 $tools 次工具' : caption,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: agent == null
-                      ? theme.colorScheme.onSurfaceVariant
-                      : null,
-                ),
-              ),
-            ),
-          ],
-        ),
-        if (live.tools.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.space3),
-          TraceList(calls: live.tools, live: true),
         ],
       ],
     );

@@ -343,11 +343,11 @@ class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
     final state = ref.watch(jobLiveMonitorProvider(widget.jobId));
     final progress = state.live.progress;
     final reindexProgress = progress?.stage == StageKey.reindex ? progress : null;
-    final color = switch (state.connection) {
-      SseConnection.open => context.yaoe.success,
-      SseConnection.reconnecting => context.yaoe.warning,
-      _ => Theme.of(context).colorScheme.onSurfaceVariant,
-    };
+    // 正常连接不出现指示灯：只有在等或出问题时才值得占位。
+    final note = state.connection.label;
+    final color = state.connection == SseConnection.reconnecting
+        ? context.yaoe.warning
+        : Theme.of(context).colorScheme.onSurfaceVariant;
     final logs = state.live.logs;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -357,7 +357,8 @@ class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text('重建索引', style: Theme.of(context).textTheme.titleMedium),
-            Pill(text: state.connection.label, color: color, icon: Icons.circle),
+            if (note != null)
+              Pill(text: note, color: color, icon: Icons.circle),
           ],
         ),
         const SizedBox(height: YaoeTokens.space3),

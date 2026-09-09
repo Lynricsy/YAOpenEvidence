@@ -21,12 +21,11 @@ enum SseConnection {
   reconnecting,
   closed;
 
-  String get label => switch (this) {
-    SseConnection.idle => '未连接',
+  /// 只有「在等」和「出问题了」值得占一行字；连接正常是默认预期，说出来是噪音。
+  String? get label => switch (this) {
     SseConnection.connecting => '连接中',
-    SseConnection.open => '实时',
     SseConnection.reconnecting => '重连中',
-    SseConnection.closed => '已结束',
+    SseConnection.idle || SseConnection.open || SseConnection.closed => null,
   };
 }
 

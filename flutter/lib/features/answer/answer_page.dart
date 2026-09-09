@@ -541,11 +541,11 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.yaoe;
-    final indicatorColor = switch (connection) {
-      SseConnection.open => colors.success,
-      SseConnection.reconnecting => colors.warning,
-      _ => theme.colorScheme.onSurfaceVariant,
-    };
+    // 正常连接不出现指示灯：只有在等或出问题时才值得占位。
+    final note = connection?.label;
+    final indicatorColor = connection == SseConnection.reconnecting
+        ? colors.warning
+        : theme.colorScheme.onSurfaceVariant;
 
     return Wrap(
       spacing: YaoeTokens.space3,
@@ -575,7 +575,7 @@ class _MetaRow extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-        if (connection != null)
+        if (note != null)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -589,7 +589,7 @@ class _MetaRow extends StatelessWidget {
               ),
               const SizedBox(width: YaoeTokens.space1),
               Text(
-                connection!.label,
+                note,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: indicatorColor,
                 ),
