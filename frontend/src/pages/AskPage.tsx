@@ -27,7 +27,13 @@ import {
   validYears,
   type FilterState,
 } from '@/lib/filters'
-import { createAnswer, queryClient, useAnswer } from '@/api/queries'
+import {
+  createAnswer,
+  followupAnswer,
+  queryClient,
+  useAnswer,
+} from '@/api/queries'
+import type { components } from '@/api/schema'
 import { useJobEvents } from '@/api/useJobEvents'
 import { ApiError, problemMessage } from '@/api/errors'
 
@@ -89,28 +95,40 @@ export default function AskPage() {
     setFilters(f)
     saveFilters(f)
   }
-  const create = useMutation({
-    mutationFn: createAnswer,
-    onSuccess: (created) => {
-      queryClient.setQueryData(['answer', created.id], created)
-      void queryClient.invalidateQueries({ queryKey: ['answers'] })
-      setQuestion('')
-      navigate('/a/' + created.id)
-    },
+  const onCreated = (created: components['schemas']['Answer']) => {
+    queryClient.setQueryData(['answer', created.id], created)
+    void queryClient.invalidateQueries({ queryKey: ['answers'] })
+    void queryClient.invalidateQueries({ queryKey: ['answer-thread'] })
+    setQuestion('')
+    navigate('/a/' + created.id)
+  }
+  const create = useMutation({ mutationFn: createAnswer, onSuccess: onCreated })
+  const followup = useMutation({
+    mutationFn: followupAnswer,
+    onSuccess: onCreated,
   })
   const fill = (text: string) => {
     setQuestion(text)
     inputRef.current?.focus()
   }
+  // 智能体的已完成答案下方是「续接对话」，不是新建：引擎与筛选都由会话决定
+  const followingUp = answer?.engine === 'codex' && answer.status === 'ready'
   const composer = {
     value: question,
     onChange: setQuestion,
-    onSubmit: () => create.mutate(toAnswerCreate(question, filters)),
-    pending: create.isPending,
+    onSubmit: () =>
+      followingUp && answer
+        ? followup.mutate({ id: answer.id, question: question.trim() })
+        : create.mutate(toAnswerCreate(question, filters)),
+    pending: create.isPending || followup.isPending,
     disabled: !validYears(filters),
     inputRef,
     filterSummary: describeFilters(filters),
     onOpenFilters: filterColumn ? null : () => setFilterOpen(true),
+    engine: filters.engine,
+    onEngineChange: (engine: FilterState['engine']) =>
+      update({ ...filters, engine }),
+    mode: (followingUp ? 'followup' : 'ask') as 'ask' | 'followup',
   }
   const closeReader = () =>
     setSearchParams((previous) => {

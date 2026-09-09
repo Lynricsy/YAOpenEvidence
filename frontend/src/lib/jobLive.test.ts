@@ -48,4 +48,35 @@ describe('任务事件状态', () => {
     expect(state.logs).toHaveLength(200)
     expect(applyEvent(state, 'unknown', {})).toBe(state)
   })
+  it('智能体阶段与工具调用：同一 call_id 就地替换而不是追加', () => {
+    let state = applyEvent(EMPTY_LIVE, 'stage', {
+      stage: 'agent',
+      status: 'started',
+      detail: { resumed: false },
+    })
+    expect(state.stages.agent?.status).toBe('running')
+    state = applyEvent(state, 'tool', {
+      call_id: 'c1',
+      server: 'semantic_scholar',
+      tool: 'read_pdf',
+      status: 'started',
+      args: { path: 'x.pdf' },
+    })
+    state = applyEvent(state, 'tool', {
+      call_id: 'c1',
+      server: 'semantic_scholar',
+      tool: 'read_pdf',
+      status: 'completed',
+      args: { path: 'x.pdf' },
+      duration_ms: 820,
+    })
+    expect(state.tools).toHaveLength(1)
+    expect(state.tools[0]).toMatchObject({
+      callId: 'c1',
+      status: 'completed',
+      durationMs: 820,
+    })
+    // 没有 call_id 的帧无法定位轨迹行，只能丢
+    expect(applyEvent(state, 'tool', { tool: 'read_pdf' })).toBe(state)
+  })
 })

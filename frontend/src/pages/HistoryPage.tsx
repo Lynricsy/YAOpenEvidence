@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { dateTime, relativeTime } from '@/lib/format'
+import { EngineBadge } from '@/components/ask/EnginePicker'
 
 type AnswerStatus = components['schemas']['AnswerSummary']['status']
 const statuses: { value: AnswerStatus; label: string }[] = [
@@ -239,6 +240,14 @@ export default function HistoryPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <StatusBadge status={answer.status} />
+                            <EngineBadge
+                              engine={
+                                answer.engine === 'codex' ? 'codex' : 'ask'
+                              }
+                            />
+                            {(answer.n_turns ?? 1) > 1 && (
+                              <Pill>{answer.n_turns} 轮</Pill>
+                            )}
                             {isAdmin &&
                               answer.status === 'ready' &&
                               answer.filters_label === null &&
@@ -255,6 +264,11 @@ export default function HistoryPage() {
                           >
                             {answer.question}
                           </Link>
+                          {answer.root_question && (
+                            <p className="mt-1 truncate text-xs text-muted-foreground">
+                              始于：{answer.root_question}
+                            </p>
+                          )}
                           {answer.filters_label && (
                             <p className="mt-1.5 text-xs leading-5 break-words text-muted-foreground">
                               {answer.filters_label}

@@ -5,6 +5,8 @@ import { cn } from 'cn'
 import { ease } from '@/lib/motion'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import type { Engine } from '@/lib/filters'
+import { EnginePicker } from './EnginePicker'
 
 export type ComposerProps = {
   variant: 'hero' | 'dock'
@@ -17,6 +19,10 @@ export type ComposerProps = {
   filterSummary: string
   /** 为 null 表示筛选列常驻，芯片只作展示不可点击。 */
   onOpenFilters: (() => void) | null
+  engine: Engine
+  onEngineChange: (engine: Engine) => void
+  /** followup：续接已有 codex 会话，引擎锁定且不再展示筛选芯片。 */
+  mode: 'ask' | 'followup'
 }
 
 export function Composer({
@@ -29,6 +35,9 @@ export function Composer({
   inputRef,
   filterSummary,
   onOpenFilters,
+  engine,
+  onEngineChange,
+  mode,
 }: ComposerProps) {
   const hero = variant === 'hero'
   useLayoutEffect(() => {
@@ -65,9 +74,11 @@ export function Composer({
           hero ? 'min-h-[88px]' : 'min-h-[44px]',
         )}
         placeholder={
-          hero
-            ? '例如：SGLT2 抑制剂对 HFpEF 患者有什么获益？'
-            : '追问或提出新问题…'
+          mode === 'followup'
+            ? '追问这个话题…'
+            : hero
+              ? '例如：SGLT2 抑制剂对 HFpEF 患者有什么获益？'
+              : '追问或提出新问题…'
         }
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -84,25 +95,33 @@ export function Composer({
         }}
       />
       <div className="mt-2 flex items-center justify-between gap-3">
-        {onOpenFilters ? (
-          <button
-            type="button"
-            data-testid="filter-chip"
-            onClick={onOpenFilters}
-            className={cn(
-              chipClass,
-              'transition-colors hover:bg-accent/60 hover:text-foreground',
-            )}
-          >
-            <SlidersHorizontal className="size-3.5 shrink-0" />
-            <span className="truncate">{filterSummary}</span>
-          </button>
-        ) : (
-          <span className={chipClass}>
-            <SlidersHorizontal className="size-3.5 shrink-0" />
-            <span className="truncate">{filterSummary}</span>
-          </span>
-        )}
+        <div className="flex min-w-0 items-center gap-2">
+          <EnginePicker
+            value={engine}
+            onChange={onEngineChange}
+            locked={mode === 'followup'}
+          />
+          {mode === 'ask' &&
+            (onOpenFilters ? (
+              <button
+                type="button"
+                data-testid="filter-chip"
+                onClick={onOpenFilters}
+                className={cn(
+                  chipClass,
+                  'transition-colors hover:bg-accent/60 hover:text-foreground',
+                )}
+              >
+                <SlidersHorizontal className="size-3.5 shrink-0" />
+                <span className="truncate">{filterSummary}</span>
+              </button>
+            ) : (
+              <span className={chipClass}>
+                <SlidersHorizontal className="size-3.5 shrink-0" />
+                <span className="truncate">{filterSummary}</span>
+              </span>
+            ))}
+        </div>
         <div className="flex shrink-0 items-center gap-3">
           {value.length > 0 && (
             <span className="font-mono text-[11px] tabular-nums text-muted-foreground">

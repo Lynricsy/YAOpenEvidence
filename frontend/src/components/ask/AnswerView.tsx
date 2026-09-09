@@ -10,7 +10,8 @@ import {
 import type { components } from '@/api/schema'
 import type { Connection } from '@/api/useJobEvents'
 import { jobErrorMessage } from '@/api/errors'
-import type { JobLive } from '@/lib/jobLive'
+import { toolCallOf, type JobLive } from '@/lib/jobLive'
+import { useAnswerThread } from '@/api/queries'
 import { MARKER_RE } from '@/lib/citations'
 import { dateTime, relativeTime } from '@/lib/format'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -34,6 +35,9 @@ import { KbSupplement } from './KbSupplement'
 import { ProgressPipeline } from './ProgressPipeline'
 import { SourceCard } from './SourceCard'
 import { SourceList } from './SourceList'
+import { EngineBadge } from './EnginePicker'
+import { ThreadNav } from './ThreadNav'
+import { TraceList } from './TraceList'
 
 export function AnswerView({
   answer,
@@ -51,6 +55,10 @@ export function AnswerView({
   onDelete: () => void
 }) {
   const active = answer.status === 'queued' || answer.status === 'running'
+  const isCodex = answer.engine === 'codex'
+  const thread = useAnswerThread(answer.id, isCodex)
+  const turns = thread.data ?? []
+  const trace = (answer.trace ?? []).map(toolCallOf).filter((c) => c !== null)
   const citedCounts: Record<number, number> = {}
   for (const marker of (answer.body_md ?? '').matchAll(MARKER_RE)) {
     const n = Number(marker[1])
@@ -60,6 +68,7 @@ export function AnswerView({
     <article className="@container/answer mx-auto w-full max-w-[760px] px-5 py-8 md:px-8 md:py-10">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <StatusBadge status={answer.status} />
+        <EngineBadge engine={isCodex ? 'codex' : 'ask'} />
         <time dateTime={answer.created_at} title={dateTime(answer.created_at)}>
           {relativeTime(answer.created_at)}
         </time>
@@ -96,6 +105,7 @@ export function AnswerView({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      {turns.length > 1 && <ThreadNav turns={turns} currentId={answer.id} />}
       <h1 className="mt-3 font-serif text-2xl font-semibold leading-snug tracking-tight break-words md:text-[28px]">
         {answer.question}
       </h1>
@@ -134,7 +144,7 @@ export function AnswerView({
             connection={connection}
             jobId={answer.job_id ?? null}
             useKb={answer.options?.use_kb !== false}
-            engine={answer.engine === 'codex' ? 'codex' : 'ask'}
+            engine={isCodex ? 'codex' : 'ask'}
           />
           {!!live.search?.papers.length && (
             <section className="mt-8">
@@ -161,19 +171,38 @@ export function AnswerView({
       ) : answer.status === 'ready' ? (
         <div className="space-y-10">
           <AnswerBody answer={answer} onOpen={onOpenPaper} />
-          <SourceList
-            papers={answer.papers ?? []}
-            nFulltext={answer.n_fulltext ?? 0}
-            citedCounts={citedCounts}
-            onOpen={onOpenPaper}
-          />
-          {!!answer.kb_hits?.length && <KbSupplement hits={answer.kb_hits} />}
-          <div className="border-t pt-6">
-            <Button variant="outline" size="sm" onClick={onReask}>
-              <RotateCcw />
-              沿用此次筛选重新提问
-            </Button>
-          </div>
+          {isCodex ? (
+            // 智能体没有逐篇原文快照；能交代的只有它实际走过的检索路径
+            trace.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground [&>svg]:transition-transform [&[data-state=open]>svg]:rotate-90">
+                  <ChevronRight className="size-3" />
+                  检索轨迹（{trace.length}）
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-3">
+                  <TraceList calls={trace} />
+                </CollapsibleContent>
+              </Collapsible>
+            )
+          ) : (
+            <>
+              <SourceList
+                papers={answer.papers ?? []}
+                nFulltext={answer.n_fulltext ?? 0}
+                citedCounts={citedCounts}
+                onOpen={onOpenPaper}
+              />
+              {!!answer.kb_hits?.length && (
+                <KbSupplement hits={answer.kb_hits} />
+              )}
+              <div className="border-t pt-6">
+                <Button variant="outline" size="sm" onClick={onReask}>
+                  <RotateCcw />
+                  沿用此次筛选重新提问
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       ) : answer.status === 'failed' ? (
         <div role="alert" className="error-panel flex gap-3">
@@ -193,7 +222,7 @@ export function AnswerView({
               size="sm"
               onClick={onReask}
             >
-              放宽筛选后重新提问
+              {isCodex ? '重新提问' : '放宽筛选后重新提问'}
             </Button>
           </div>
         </div>

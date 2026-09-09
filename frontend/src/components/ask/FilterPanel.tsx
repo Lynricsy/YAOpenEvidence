@@ -107,38 +107,6 @@ export function FilterForm({ value: f, onChange }: FilterPanelProps) {
   return (
     <div className="px-5">
       <section className="space-y-3 border-b py-5">
-        <h3 className="section-label">引擎</h3>
-        <ToggleGroup
-          type="single"
-          value={f.engine}
-          onValueChange={(v) =>
-            v && update({ engine: v as FilterState['engine'] })
-          }
-          spacing={1}
-          className="flex w-full gap-1.5"
-        >
-          <ToggleGroupItem
-            className="chip flex-1"
-            value="ask"
-            aria-label="流水线引擎"
-          >
-            流水线
-          </ToggleGroupItem>
-          <ToggleGroupItem
-            className="chip flex-1"
-            value="codex"
-            aria-label="Codex agent 引擎"
-          >
-            Codex agent
-          </ToggleGroupItem>
-        </ToggleGroup>
-        <p className="text-xs text-muted-foreground">
-          {isCodex
-            ? '模型自己决定调哪些检索工具，答案整篇给出，没有逐篇原文快照；字符预算与知识库命中数不生效。'
-            : '固定流水线：检索 → 取全文 → 逐篇阅读 → 综合，产出可逐条溯源的原文快照。'}
-        </p>
-      </section>
-      <section className="space-y-3 border-b py-5">
         <h3 className="section-label">期刊分区</h3>
         <ToggleGroup
           type="multiple"
@@ -164,20 +132,22 @@ export function FilterForm({ value: f, onChange }: FilterPanelProps) {
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
-        <label
-          className={
-            'flex items-center justify-between gap-2 text-xs ' +
-            (!f.quartiles.length || isCodex ? 'text-muted-foreground' : '')
-          }
-        >
-          含未收录期刊
-          <Switch
-            aria-label="含未收录期刊"
-            checked={f.keepUnranked}
-            disabled={!f.quartiles.length || isCodex}
-            onCheckedChange={(v) => update({ keepUnranked: v })}
-          />
-        </label>
+        {!isCodex && (
+          <label
+            className={
+              'flex items-center justify-between gap-2 text-xs ' +
+              (f.quartiles.length ? '' : 'text-muted-foreground')
+            }
+          >
+            含未收录期刊
+            <Switch
+              aria-label="含未收录期刊"
+              checked={f.keepUnranked}
+              disabled={!f.quartiles.length}
+              onCheckedChange={(v) => update({ keepUnranked: v })}
+            />
+          </label>
+        )}
         <RankTablesNote />
       </section>
       <section className="space-y-3 border-b py-5">
@@ -209,6 +179,11 @@ export function FilterForm({ value: f, onChange }: FilterPanelProps) {
           <ChevronDown className="size-4 transition-transform" />
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-6 pt-5">
+          {isCodex && (
+            <p className="text-xs text-muted-foreground">
+              智能体模式下，字符预算、知识库命中数与机构访问不生效；筛选条件会作为检索要求交给模型。
+            </p>
+          )}
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs">
               阅读篇数
@@ -233,41 +208,44 @@ export function FilterForm({ value: f, onChange }: FilterPanelProps) {
               onCheckedChange={(useKb) => update({ useKb })}
             />
           </label>
-          <div className="space-y-3">
-            <div className="flex justify-between text-xs">
-              附加知识库命中
-              <span className="font-mono tabular-nums">{f.kbHits}</span>
-            </div>
-            <Slider
-              aria-label="附加知识库命中"
-              min={0}
-              max={20}
-              step={1}
-              value={[f.kbHits]}
-              disabled={!f.useKb || isCodex}
-              onValueChange={([kbHits]) => update({ kbHits })}
-            />
-          </div>
-          <div className="space-y-2">
-            <span className="text-xs">单篇字符预算</span>
-            <Select
-              value={String(f.maxChars)}
-              disabled={isCodex}
-              onValueChange={(v) => update({ maxChars: Number(v) })}
-            >
-              <SelectTrigger aria-label="单篇字符预算" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[12000, 20000, 28000, 40000, 60000].map((n) => (
-                  <SelectItem value={String(n)} key={n}>
-                    {n.toLocaleString()} 字符
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <PaywallNote />
+          {!isCodex && (
+            <>
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs">
+                  附加知识库命中
+                  <span className="font-mono tabular-nums">{f.kbHits}</span>
+                </div>
+                <Slider
+                  aria-label="附加知识库命中"
+                  min={0}
+                  max={20}
+                  step={1}
+                  value={[f.kbHits]}
+                  disabled={!f.useKb}
+                  onValueChange={([kbHits]) => update({ kbHits })}
+                />
+              </div>
+              <div className="space-y-2">
+                <span className="text-xs">单篇字符预算</span>
+                <Select
+                  value={String(f.maxChars)}
+                  onValueChange={(v) => update({ maxChars: Number(v) })}
+                >
+                  <SelectTrigger aria-label="单篇字符预算" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[12000, 20000, 28000, 40000, 60000].map((n) => (
+                      <SelectItem value={String(n)} key={n}>
+                        {n.toLocaleString()} 字符
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <PaywallNote />
+            </>
+          )}
         </CollapsibleContent>
       </Collapsible>
     </div>

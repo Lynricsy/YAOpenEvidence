@@ -135,7 +135,6 @@ export function fromAnswerOptions(o: Record<string, unknown>): FilterState {
 }
 export function describeFilters(f: FilterState): string {
   return [
-    ...(f.engine === 'codex' ? ['codex 引擎'] : []),
     f.yearMode === 'recent'
       ? '近' + f.years + '年'
       : f.yearMode === 'range'

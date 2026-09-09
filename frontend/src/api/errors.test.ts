@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ApiError, problemMessage, toApiError } from './errors'
+import { ApiError, jobErrorMessage, problemMessage, toApiError } from './errors'
 
 describe('错误文案', () => {
   it('把网关故障与后端 500 区分开', () => {
@@ -34,5 +34,14 @@ describe('错误文案', () => {
     expect(error.status).toBe(502)
     expect(error.code).toBe('internal_error')
     expect(problemMessage(error)).toContain('无法连接到后端服务')
+  })
+
+  it('智能体特有的失败有自己的说法', () => {
+    expect(jobErrorMessage('codex_failed')).toBe(
+      '智能体本轮执行失败，请重试或改用标准引擎',
+    )
+    expect(problemMessage(new ApiError(409, 'thread_busy'))).toBe(
+      '上一轮还在进行中，稍后再追问',
+    )
   })
 })

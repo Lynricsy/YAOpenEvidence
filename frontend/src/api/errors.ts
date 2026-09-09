@@ -44,6 +44,7 @@ const messages: Record<string, string> = {
   not_found: '资源不存在或无权访问',
   not_ready: '答案尚未生成完成',
   conflict: '当前状态不允许该操作',
+  thread_busy: '上一轮还在进行中，稍后再追问',
   username_exists: '用户名已存在',
   cannot_disable_self: '不能禁用自己',
   last_admin: '必须保留至少一个活跃管理员',
@@ -87,6 +88,7 @@ export function jobErrorMessage(code: string): string {
         pdf_unreadable: 'PDF 无法解析出文本（扫描件或加密文件）',
         fulltext_unavailable:
           '机构访问未取到 PDF，请确认登录态有效且该刊已订阅',
+        codex_failed: '智能体本轮执行失败，请重试或改用标准引擎',
       } as Record<string, string>
     )[code] ?? '任务执行失败'
   )

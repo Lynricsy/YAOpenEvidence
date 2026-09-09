@@ -103,6 +103,19 @@ export function useAnswerMarkdown(id: string, enabled = true) {
       ),
   })
 }
+export function useAnswerThread(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['answer-thread', id],
+    enabled,
+    queryFn: ({ signal }) =>
+      dataOf(
+        api.GET('/v1/answers/{answer_id}/thread', {
+          params: { path: { answer_id: id } },
+          signal,
+        }),
+      ),
+  })
+}
 export function usePaperMarkdown(id: string, n: number, enabled = true) {
   return useQuery({
     queryKey: ['paperMarkdown', id, n],
@@ -227,6 +240,19 @@ export function useLiteratureFulltext(ident: string | null, section = '') {
 }
 export const createAnswer = (body: Schemas['AnswerCreate']) =>
   dataOf(api.POST('/v1/answers', { body }))
+export const followupAnswer = ({
+  id,
+  question,
+}: {
+  id: string
+  question: string
+}) =>
+  dataOf(
+    api.POST('/v1/answers/{answer_id}/followup', {
+      params: { path: { answer_id: id } },
+      body: { question },
+    }),
+  )
 export async function deleteAnswer(id: string) {
   await api.DELETE('/v1/answers/{answer_id}', {
     params: { path: { answer_id: id } },

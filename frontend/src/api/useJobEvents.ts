@@ -54,6 +54,9 @@ export function useJobEvents(
               if (live.terminal) {
                 void queryClient.invalidateQueries({ queryKey: ['answer'] })
                 void queryClient.invalidateQueries({ queryKey: ['answers'] })
+                void queryClient.invalidateQueries({
+                  queryKey: ['answer-thread'],
+                })
                 void queryClient.invalidateQueries({ queryKey: ['job', jobId] })
                 if (live.terminal.kind === 'succeeded') {
                   void queryClient.invalidateQueries({ queryKey: ['papers'] })
