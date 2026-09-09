@@ -494,6 +494,21 @@ def resolve_markers(body: str, by_n: dict[int, dict],
             return f"[{n}¶{pid}]"
         return f"[{n}¶{pid}]({paper_link(p, papers_dir_rel)}#p{pid})"
 
+    def _lex(content: str) -> list[re.Match] | None:
+        """整组词法校验：只由标记 token 与分隔符组成才返回 token 列表，夹杂正文返回 None。
+
+        必须先整组校验再解析：`_token` 会往 `used` 里登记段落，边扫边解析会让
+        `[1¶1 说明]` 这类要原样保留的括号污染引用清单（下游误标 from_marker）。
+        """
+        toks: list[re.Match] = []
+        pos = 0
+        for tok in MARK_TOKEN_RE.finditer(content):
+            if content[pos:tok.start()].strip(MARK_SEPS):
+                return None
+            toks.append(tok)
+            pos = tok.end()
+        return toks if toks and not content[pos:].strip(MARK_SEPS) else None
+
     def _token(m: re.Match) -> str:
         n = int(m.group(1))
         if m.group(2) is None:
@@ -508,17 +523,14 @@ def resolve_markers(body: str, by_n: dict[int, dict],
         content = m.group(1)
         if "¶" not in content:  # [4] / [2024]：不是段落引用组，原样保留
             return m.group(0)
+        toks = _lex(content)
+        if toks is None:
+            return m.group(0)
         parts: list[str] = []
-        pos = 0
-        for tok in MARK_TOKEN_RE.finditer(content):
-            if content[pos:tok.start()].strip(MARK_SEPS):  # 夹着正文，整组按原文保留
-                return m.group(0)
+        for tok in toks:
             for part in _token(tok).split():
                 if part not in parts:  # 同一降级篇号只留一个 [n]
                     parts.append(part)
-            pos = tok.end()
-        if not parts or content[pos:].strip(MARK_SEPS):
-            return m.group(0)
         return " ".join(parts)
     return MARK_GROUP_RE.sub(_group, body), used
 

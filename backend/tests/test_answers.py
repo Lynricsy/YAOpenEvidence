@@ -470,6 +470,16 @@ def test_marker_groups_normalize_ranges_and_keep_prose():
     assert used == [(1, 1), (1, 2), (1, 3)]
 
 
+def test_prose_marker_group_leaves_body_and_citation_list_untouched():
+    """保留原样的括号不能进引用清单，否则附录会把没引过的段落标成正文引用。"""
+    from ask import resolve_markers
+
+    paper = {"n": 1, "pmid": "123", "md_file": "123.md", "paras": [{"id": 1, "sec": "Results", "text": "x"}]}
+    body, used = resolve_markers("见 [1¶1 说明]。", {1: paper}, None)
+    assert body == "见 [1¶1 说明]。"
+    assert used == []
+
+
 def test_legacy_markdown_cannot_map_other_answer_files(client, snapshot_root):
     root = snapshot_root
     other = root / "other_papers"
