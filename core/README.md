@@ -200,6 +200,11 @@ python knowledge_store.py search "SGLT2 HFpEF 心衰住院"
 
 > 装在默认的 `<项目根>/.venv` 时，`./PICOSGpt kb ...` 直接可用；装在别处则设 `PICOSGPT_ENV=<环境目录>`。
 
+> **本节及下面两节的命令都不会读 `.env`。** `knowledge_store.py` 只认 `os.environ`，
+> 没有 dotenv 加载；所以直接 `python knowledge_store.py ...` 拿到的是各变量的默认值
+> （实测 `EMBED_THREADS=0` / `EMBED_BACKEND=torch`），跟 API、worker 的实际配置可能
+> 不一致。要复现服务侧的行为，请按 §6.3 的 b) 显式 `set -a && . ../.env && set +a`。
+
 ### 6.2 编码吞吐标定（`EMBED_THREADS` / `EMBED_BATCH_TOKENS`）
 
 CPU 上入库的绝大部分时间花在 bge-m3 的前向推理上，而它对**线程数**极其敏感，最优值
@@ -264,17 +269,23 @@ export_dynamic_quantized_onnx_model(m, 'avx512_vnni', ks.EMBED_MODEL)
 ```
 
 接着**把 `EMBED_BACKEND=onnx` 写进 `.env`**，让 API 与 worker 都持久用同一个后端
-（`compose.yaml:4` 的 `env_file` 会同时喂给两者），重启整栈，最后重建整库：
+（`compose.yaml:4` 的 `env_file` 会同时喂给两者），重启整栈，最后重建整库——两条路选一条：
 
 ```bash
-cd core && python knowledge_store.py reindex     # 换后端必须全量重建
+# a) 跑着 compose 栈：交给已经按 env_file 配好环境的 worker（需管理员，返回 202 + job）
+curl -X POST -H "Authorization: Bearer <管理员 token>" \
+  "http://127.0.0.1:${YAOE_PORT:-8765}/v1/kb/reindex"
+# 是异步任务，进度看 GET /v1/jobs/<返回的 id>；3063 条 / 64 篇实测约 7.6 分钟
+
+# b) 本机直接跑 core/：得自己把 .env 带进这条命令。knowledge_store.py 只读
+#    os.environ、不会加载 .env——直接 `python knowledge_store.py reindex` 实测拿到的是
+#    EMBED_THREADS=0 / EMBED_BACKEND=torch，等于用默认后端重建，白跑一趟。
+cd core && set -a && . ../.env && set +a && python knowledge_store.py reindex
 ```
 
-只在 reindex 命令前临时加一次 `EMBED_BACKEND=onnx` 是**不够的**：那样索引是 int8 的，
-而 API 进程仍用 fp32 编码 query，此时每一次 `/kb/search` 都会撞 `EmbedderMismatch`
-（在加上这道拦截之前，它会静默返回漂掉的结果）。回退到 torch 同理——改回 `.env`
-之后必须再 reindex 一次。
-```
+只让重建这一步用上 onnx 是**不够的**：那样索引是 int8 的，而 API 进程仍用 fp32 编码
+query，每一次 `/v1/kb/search` 都会撞 `EmbedderMismatch`（在加上这道拦截之前，它会静默
+返回漂掉的结果）。回退到 torch 同理——改回 `.env` 之后必须再重建一次。
 
 
 ## 7. 排错
