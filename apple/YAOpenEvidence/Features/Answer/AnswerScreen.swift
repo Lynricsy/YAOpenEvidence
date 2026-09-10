@@ -78,10 +78,15 @@ struct AnswerScreen: View {
         }
         .scrollDismissesKeyboard(.interactively)
         // 仿 Safari 地址栏：向下滚动把提问框缩成小药丸，向上滚动或回到顶部再展开。
-        .onScrollGeometryChange(for: CGFloat.self) { geometry in
-            geometry.contentOffset.y + geometry.contentInsets.top
-        } action: { _, offset in
-            collapse.track(offset: offset)
+        .onScrollGeometryChange(for: ScrollSample.self) { geometry in
+            let insets = geometry.contentInsets
+            return ScrollSample(
+                offset: geometry.contentOffset.y + insets.top,
+                limit: geometry.contentSize.height + insets.top + insets.bottom
+                    - geometry.containerSize.height
+            )
+        } action: { _, sample in
+            collapse.track(sample)
         }
     }
 
