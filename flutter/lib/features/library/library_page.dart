@@ -38,89 +38,83 @@ class LibraryPage extends ConsumerWidget {
             child: AsyncValueView(
               value: page,
               onRetry: controller.reload,
-              builder: (data) => Column(
-                children: [
-                  Expanded(
-                    child: data.items.isEmpty
-                        ? const EmptyState(
-                            icon: Icons.local_library_outlined,
-                            title: '文献库还是空的',
-                            description: '完成一次问答后，读过的文献会出现在这里',
-                          )
-                        : ListView.separated(
-                            itemCount: data.items.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(height: YaoeTokens.space3),
-                            itemBuilder: (context, index) {
-                              final meta = data.items[index];
-                              return YaoeCard(
-                                onTap: () => context.go(
-                                  '/library/${Uri.encodeComponent(meta.key)}',
+              builder: (data) {
+                if (data.items.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.local_library_outlined,
+                    title: '文献库还是空的',
+                    description: '完成一次问答后，读过的文献会出现在这里',
+                  );
+                }
+                // 换页器跟在列表末尾一起滚动，不做固定底栏：它只有翻到尽头时才
+                // 有用，钉住会永久占掉一条屏幕高度（历史与用户列表也都是滚走的）。
+                final showPager = Pager.isUseful(
+                  total: data.total,
+                  limit: data.limit,
+                  offset: data.offset,
+                );
+                return ListView.separated(
+                  itemCount: data.items.length + (showPager ? 1 : 0),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: YaoeTokens.space3),
+                  itemBuilder: (context, index) {
+                    if (index == data.items.length) {
+                      return Pager(
+                        total: data.total,
+                        limit: data.limit,
+                        offset: data.offset,
+                        onChange: controller.setOffset,
+                      );
+                    }
+                    final meta = data.items[index];
+                    return YaoeCard(
+                      onTap: () => context.go(
+                        '/library/${Uri.encodeComponent(meta.key)}',
+                      ),
+                      padding: const EdgeInsets.all(YaoeTokens.space4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(meta.title, style: theme.textTheme.titleMedium),
+                          const SizedBox(height: YaoeTokens.space2),
+                          Wrap(
+                            spacing: YaoeTokens.space2,
+                            runSpacing: YaoeTokens.space2,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                [
+                                  meta.journal,
+                                  meta.year,
+                                ].where((s) => s.isNotEmpty).join(' · '),
+                              ),
+                              RankBadge(quartile: meta.quartile),
+                              for (final type in meta.types.take(3))
+                                Pill(
+                                  text: type,
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                                padding: const EdgeInsets.all(
-                                  YaoeTokens.space4,
+                              if (meta.types.length > 3)
+                                Pill(
+                                  text: '+${meta.types.length - 3}',
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      meta.title,
-                                      style: theme.textTheme.titleMedium,
-                                    ),
-                                    const SizedBox(height: YaoeTokens.space2),
-                                    Wrap(
-                                      spacing: YaoeTokens.space2,
-                                      runSpacing: YaoeTokens.space2,
-                                      crossAxisAlignment:
-                                          WrapCrossAlignment.center,
-                                      children: [
-                                        Text(
-                                          [meta.journal, meta.year]
-                                              .where((s) => s.isNotEmpty)
-                                              .join(' · '),
-                                        ),
-                                        RankBadge(quartile: meta.quartile),
-                                        for (final type in meta.types.take(3))
-                                          Pill(
-                                            text: type,
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                        if (meta.types.length > 3)
-                                          Pill(
-                                            text: '+${meta.types.length - 3}',
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: YaoeTokens.space2),
-                                    if (meta.indexedAt != null)
-                                      Text(
-                                        '入库于 ${relativeTime(meta.indexedAt!)}',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: theme
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            },
+                            ],
                           ),
-                  ),
-                  Pager(
-                    total: data.total,
-                    limit: data.limit,
-                    offset: data.offset,
-                    onChange: controller.setOffset,
-                  ),
-                ],
-              ),
+                          const SizedBox(height: YaoeTokens.space2),
+                          if (meta.indexedAt != null)
+                            Text(
+                              '入库于 ${relativeTime(meta.indexedAt!)}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],

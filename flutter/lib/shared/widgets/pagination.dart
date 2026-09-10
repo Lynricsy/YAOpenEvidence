@@ -18,9 +18,19 @@ class Pager extends StatelessWidget {
   final int offset;
   final void Function(int offset) onChange;
 
+  /// 是否有页可换。列表用它判断要不要在末尾插入换页器，免得为一个空 widget
+  /// 多留一条分隔间距。
+  static bool isUseful({
+    required int total,
+    required int limit,
+    required int offset,
+  }) => total > limit || offset > 0;
+
   @override
   Widget build(BuildContext context) {
-    if (total <= limit && offset == 0) return const SizedBox.shrink();
+    if (!isUseful(total: total, limit: limit, offset: offset)) {
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final first = total == 0 ? 0 : offset + 1;
     final last = offset + limit > total ? total : offset + limit;

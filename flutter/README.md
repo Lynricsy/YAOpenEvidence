@@ -101,6 +101,7 @@ fvm flutter test                     # 单元测试
 | `ScrollChromeController` / `ScrollChrome` | `shared/widgets/scroll_chrome.dart` | 「随滚动收起的底部 chrome」状态，由 `AppShell` 提供，提问框与手机底部导航栏共用一个实例 |
 | `FloatingComposerHost` | `shared/widgets/floating_composer.dart` | 悬浮提问框宿主：把 composer 实测高度写进 body 的 `MediaQuery.padding.bottom`，内容自动避让 |
 | `showAdaptiveSheet` | `shared/widgets/adaptive_sheet.dart` | 紧凑宽度用底部 sheet、其余从右侧滑入抽屉；筛选与全文面板共用 |
+| `Pager` | `shared/widgets/pagination.dart` | 换页器：`Pager.isUseful` 判断有无页可换（`total > limit \|\| offset > 0`），无页可换时不渲染。**必须跟着列表内容滚动，不做固定底栏**——它只有翻到列表尽头才有用，钉住会永久占掉一条屏幕高度；列表用 `itemCount + 1` 把它挂在末尾 |
 
 两条容易踩的框架细节，改主题时注意：
 
