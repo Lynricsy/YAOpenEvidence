@@ -17,6 +17,7 @@ struct AnswerScreen: View {
     @State private var submitting = false
     @State private var showDeleteConfirm = false
     @State private var showQueries = false
+    @State private var collapse = ComposerCollapse()
 
     init(answerID: String) {
         self.answerID = answerID
@@ -76,6 +77,12 @@ struct AnswerScreen: View {
             }
         }
         .scrollDismissesKeyboard(.interactively)
+        // 仿 Safari 地址栏：向下滚动把提问框缩成小药丸，向上滚动或回到顶部再展开。
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, offset in
+            collapse.track(offset: offset)
+        }
     }
 
     @ViewBuilder
@@ -158,6 +165,8 @@ struct AnswerScreen: View {
             placeholder: "继续提问…",
             pending: submitting,
             mode: continuing ? .followUp : .ask,
+            collapsible: true,
+            scrolledDown: collapse.scrolledDown,
             onSubmit: continuing ? submitFollowUp : submitNew
         )
     }
