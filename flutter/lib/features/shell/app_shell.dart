@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/session/session_controller.dart';
 import '../../shared/widgets/brand_logo.dart';
+import '../../shared/widgets/scroll_chrome.dart';
 import 'app_sidebar.dart';
 import 'mobile_tab_bar.dart';
 import 'more_sheet.dart';
@@ -14,45 +15,111 @@ import 'user_menu.dart';
 
 /// 三档自适应外壳：
 /// `< 768` 底部导航 + AppBar；`768–1279` 折叠图标栏；`≥ 1280` 可折叠展开栏。
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
-  void _goBranch(int branch) => navigationShell.goBranch(
-    branch,
-    initialLocation: branch == navigationShell.currentIndex,
-  );
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  /// 提问框与手机底部导航栏共用的收起状态。
+  final _chrome = ScrollChromeController();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    _chrome.dispose();
+    super.dispose();
+  }
+
+  void _goBranch(int branch) {
+    _chrome.reveal();
+    widget.navigationShell.goBranch(
+      branch,
+      initialLocation: branch == widget.navigationShell.currentIndex,
+    );
+  }
+
+  /// 页面滚动时驱动 chrome 收起/恢复；通知继续向上冒泡。
+  bool _onScroll(ScrollNotification notification) {
+    _chrome.handle(notification);
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isCompact = width < YaoeTokens.compactMaxWidth;
     final isExpanded = width >= YaoeTokens.expandedMinWidth;
-    final branch = navigationShell.currentIndex;
+    final branch = widget.navigationShell.currentIndex;
     final isAdmin = ref.watch(isAdminProvider);
 
     if (isCompact) {
+      // 分支内的详情路由（问答 / 文献详情）在顶栏出返回键，其余显示品牌标识。
+      final path = GoRouterState.of(context).uri.path;
+      final isAnswer = path.startsWith('/a/');
+      final isPaper = path.startsWith('/library/');
+      final title = isAnswer
+          ? '问答'
+          : isPaper
+          ? '文献详情'
+          : navItemForBranch(branch)?.label ?? 'YAOpenEvidence';
+
       return Scaffold(
+        // 内容延伸到导航栏底下，玻璃才有东西可透。
+        extendBody: true,
         appBar: AppBar(
-          // 手机顶栏没有抽屉也没有返回键（详情页在分支内自带页头），
-          // leading 留给品牌标识；标题仍是当前分支名。
           leadingWidth: 44,
-          leading: const Padding(
-            padding: EdgeInsets.only(left: YaoeTokens.space3),
-            child: Center(
-              child: BrandLogo(size: 22, semanticLabel: 'YAOpenEvidence'),
-            ),
-          ),
-          title: Text(navItemForBranch(branch)?.label ?? 'YAOpenEvidence'),
+          leading: (isAnswer || isPaper)
+              ? BackButton(
+                  onPressed: () {
+                    final router = GoRouter.of(context);
+                    if (router.canPop()) {
+                      router.pop();
+                    } else {
+                      context.go(isAnswer ? '/' : '/library');
+                    }
+                  },
+                )
+              : const Padding(
+                  padding: EdgeInsets.only(left: YaoeTokens.space3),
+                  child: Center(
+                    child: BrandLogo(size: 22, semanticLabel: 'YAOpenEvidence'),
+                  ),
+                ),
+          title: Text(title),
           actions: const [UserMenu(compact: true)],
         ),
-        body: navigationShell,
-        bottomNavigationBar: MobileTabBar(
-          currentBranch: branch,
-          onSelect: _goBranch,
-          onMore: () =>
-              showMoreSheet(context, isAdmin: isAdmin, onSelect: _goBranch),
+        body: ScrollChrome(
+          notifier: _chrome,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _onScroll,
+            child: widget.navigationShell,
+          ),
+        ),
+        bottomNavigationBar: ListenableBuilder(
+          listenable: _chrome,
+          builder: (context, _) {
+            final keyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
+            final hidden = _chrome.hidden || keyboard;
+            final reduce = MediaQuery.disableAnimationsOf(context);
+            return AnimatedSlide(
+              offset: hidden ? const Offset(0, 1) : Offset.zero,
+              duration: reduce ? Duration.zero : YaoeTokens.motionMedium,
+              curve: YaoeTokens.motionCurve,
+              child: MobileTabBar(
+                currentBranch: branch,
+                onSelect: _goBranch,
+                onMore: () => showMoreSheet(
+                  context,
+                  isAdmin: isAdmin,
+                  onSelect: _goBranch,
+                ),
+              ),
+            );
+          },
         ),
       );
     }
@@ -61,30 +128,38 @@ class AppShell extends ConsumerWidget {
     final collapsed = !isExpanded || (storedCollapsed ?? false);
 
     return Scaffold(
-      body: _SidebarShortcut(
-        enabled: isExpanded,
-        onToggle: () => ref
-            .read(sidebarCollapsedProvider.notifier)
-            .toggle(storedCollapsed ?? false),
-        child: Row(
-          children: [
-            AppSidebar(
-              currentBranch: branch,
-              onSelect: _goBranch,
-              collapsed: collapsed,
-              onToggle: () {
-                if (!isExpanded) {
-                  // 中等宽度下侧栏固定折叠，点按钮直接跳到账号页更有用。
-                  _goBranch(6);
-                  return;
-                }
-                ref
-                    .read(sidebarCollapsedProvider.notifier)
-                    .toggle(storedCollapsed ?? false);
-              },
-            ),
-            Expanded(child: navigationShell),
-          ],
+      body: ScrollChrome(
+        notifier: _chrome,
+        child: _SidebarShortcut(
+          enabled: isExpanded,
+          onToggle: () => ref
+              .read(sidebarCollapsedProvider.notifier)
+              .toggle(storedCollapsed ?? false),
+          child: Row(
+            children: [
+              AppSidebar(
+                currentBranch: branch,
+                onSelect: _goBranch,
+                collapsed: collapsed,
+                onToggle: () {
+                  if (!isExpanded) {
+                    // 中等宽度下侧栏固定折叠，点按钮直接跳到账号页更有用。
+                    _goBranch(6);
+                    return;
+                  }
+                  ref
+                      .read(sidebarCollapsedProvider.notifier)
+                      .toggle(storedCollapsed ?? false);
+                },
+              ),
+              Expanded(
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _onScroll,
+                  child: widget.navigationShell,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
