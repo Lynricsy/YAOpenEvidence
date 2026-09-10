@@ -30,9 +30,10 @@ Terminal? jobTerminal(Job job) => switch (job.status) {
 String reindexTerminalMessage(Terminal terminal) => switch (terminal) {
   Succeeded() => '索引重建完成',
   Cancelled() => '索引重建已取消',
-  Failed(:final code, :final message) => message.isEmpty
-      ? jobErrorMessage(code)
-      : '${jobErrorMessage(code)}：$message',
+  Failed(:final code, :final message) =>
+    message.isEmpty
+        ? jobErrorMessage(code)
+        : '${jobErrorMessage(code)}：$message',
 };
 
 @riverpod
@@ -42,17 +43,15 @@ Future<KbStats> kbStats(Ref ref) => ref.watch(apiClientProvider).kbStats();
 class KbSearchController extends _$KbSearchController {
   String query = '';
   KbKind? kind;
-  int topK = 8;
+
+  /// 命中条数固定 8：三端一致，不作为用户旋钮暴露。
+  static const _topK = 8;
   int _request = 0;
 
   @override
   AsyncValue<KbSearchResult?> build() => const AsyncData(null);
 
   void setKind(KbKind? value) => kind = value;
-
-  void setTopK(int value) {
-    if (const [5, 8, 15, 30].contains(value)) topK = value;
-  }
 
   Future<void> search(String q) async {
     final trimmed = q.trim();
@@ -62,7 +61,7 @@ class KbSearchController extends _$KbSearchController {
     final client = ref.read(apiClientProvider);
     state = const AsyncLoading();
     try {
-      final result = await client.kbSearch(q: query, kind: kind, topK: topK);
+      final result = await client.kbSearch(q: query, kind: kind, topK: _topK);
       if (ref.mounted && request == _request) state = AsyncData(result);
     } catch (error, stack) {
       if (ref.mounted && request == _request) state = AsyncError(error, stack);

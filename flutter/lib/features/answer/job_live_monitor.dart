@@ -13,21 +13,8 @@ import '../../core/session/session_controller.dart';
 part 'job_live_monitor.freezed.dart';
 part 'job_live_monitor.g.dart';
 
-/// SSE 连接状态（答案页指示灯）。
-enum SseConnection {
-  idle,
-  connecting,
-  open,
-  reconnecting,
-  closed;
-
-  /// 只有「在等」和「出问题了」值得占一行字；连接正常是默认预期，说出来是噪音。
-  String? get label => switch (this) {
-    SseConnection.connecting => '连接中',
-    SseConnection.reconnecting => '重连中',
-    SseConnection.idle || SseConnection.open || SseConnection.closed => null,
-  };
-}
+/// SSE 连接状态。仅用于内部重连与刷新决策，不呈现给用户。
+enum SseConnection { idle, connecting, open, reconnecting, closed }
 
 @freezed
 abstract class JobLiveState with _$JobLiveState {

@@ -36,18 +36,21 @@ Future<T?> showAdaptiveSheet<T>(
         child: SizedBox(
           width: _sideWidth(context),
           height: double.infinity,
-          child: SafeArea(child: _SheetFrame(title: title, child: child)),
+          child: SafeArea(
+            child: _SheetFrame(title: title, child: child),
+          ),
         ),
       ),
     ),
     transitionBuilder: (context, animation, secondary, child) =>
         SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(
-            CurvedAnimation(parent: animation, curve: YaoeTokens.motionCurve),
-          ),
+          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+              .animate(
+                CurvedAnimation(
+                  parent: animation,
+                  curve: YaoeTokens.motionCurve,
+                ),
+              ),
           child: child,
         ),
   );

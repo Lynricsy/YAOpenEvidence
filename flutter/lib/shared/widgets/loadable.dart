@@ -69,7 +69,7 @@ class ErrorView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.error_outline,
+            Icons.warning_amber_rounded,
             color: theme.colorScheme.error,
             size: 28,
           ),
@@ -81,7 +81,7 @@ class ErrorView extends StatelessWidget {
           ),
           if (onRetry != null) ...[
             const SizedBox(height: YaoeTokens.space3),
-            OutlinedButton.icon(
+            FilledButton.tonalIcon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh, size: 16),
               label: const Text('重试'),
@@ -97,5 +97,5 @@ class ErrorView extends StatelessWidget {
 String errorMessageOf(Object error) => switch (error) {
   ApiError() => error.userMessage,
   StateError() => '当前状态不可用，请重新登录',
-  _ => '出错了：$error',
+  _ => '网络连接失败，请稍后重试',
 };

@@ -9,6 +9,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loadable.dart';
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/pagination.dart';
+import '../../shared/widgets/surface.dart';
 import 'library_controller.dart';
 
 class LibraryPage extends ConsumerWidget {
@@ -28,7 +29,7 @@ class LibraryPage extends ConsumerWidget {
             initialValue: controller.query,
             onChanged: controller.setQuery,
             decoration: const InputDecoration(
-              labelText: '搜索标题或期刊',
+              hintText: '搜索标题或期刊',
               prefixIcon: Icon(Icons.search_outlined),
             ),
           ),
@@ -52,51 +53,61 @@ class LibraryPage extends ConsumerWidget {
                                 const SizedBox(height: YaoeTokens.space3),
                             itemBuilder: (context, index) {
                               final meta = data.items[index];
-                              return Card(
-                                margin: EdgeInsets.zero,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    YaoeTokens.radiusLg,
-                                  ),
-                                  side: BorderSide(
-                                    color: theme.colorScheme.outlineVariant,
-                                  ),
+                              return YaoeCard(
+                                onTap: () => context.go(
+                                  '/library/${Uri.encodeComponent(meta.key)}',
                                 ),
-                                clipBehavior: Clip.antiAlias,
-                                child: InkWell(
-                                  onTap: () => context.go(
-                                    '/library/${Uri.encodeComponent(meta.key)}',
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(YaoeTokens.space4),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                padding: const EdgeInsets.all(
+                                  YaoeTokens.space4,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      meta.title,
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                    const SizedBox(height: YaoeTokens.space2),
+                                    Wrap(
+                                      spacing: YaoeTokens.space2,
+                                      runSpacing: YaoeTokens.space2,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
                                       children: [
-                                        Text(meta.title, style: theme.textTheme.titleMedium),
-                                        const SizedBox(height: YaoeTokens.space2),
-                                        Wrap(
-                                          spacing: YaoeTokens.space2,
-                                          runSpacing: YaoeTokens.space2,
-                                          crossAxisAlignment: WrapCrossAlignment.center,
-                                          children: [
-                                            Text([meta.journal, meta.year].where((s) => s.isNotEmpty).join(' · ')),
-                                            RankBadge(quartile: meta.quartile),
-                                            for (final type in meta.types.take(3))
-                                              Pill(text: type, color: theme.colorScheme.onSurfaceVariant),
-                                            if (meta.types.length > 3)
-                                              Pill(text: '+${meta.types.length - 3}', color: theme.colorScheme.onSurfaceVariant),
-                                          ],
-                                        ),
-                                        const SizedBox(height: YaoeTokens.space2),
                                         Text(
-                                          '${meta.nParagraphs} 段 / ${meta.nFacts} 事实'
-                                          '${meta.indexedAt == null ? '' : ' · ${relativeTime(meta.indexedAt!)}'}',
-                                          style: theme.textTheme.bodySmall,
+                                          [meta.journal, meta.year]
+                                              .where((s) => s.isNotEmpty)
+                                              .join(' · '),
                                         ),
+                                        RankBadge(quartile: meta.quartile),
+                                        for (final type in meta.types.take(3))
+                                          Pill(
+                                            text: type,
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                        if (meta.types.length > 3)
+                                          Pill(
+                                            text: '+${meta.types.length - 3}',
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                       ],
                                     ),
-                                  ),
+                                    const SizedBox(height: YaoeTokens.space2),
+                                    if (meta.indexedAt != null)
+                                      Text(
+                                        '入库于 ${relativeTime(meta.indexedAt!)}',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                  ],
                                 ),
                               );
                             },

@@ -18,6 +18,7 @@ import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loadable.dart';
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/pagination.dart';
+import '../../shared/widgets/surface.dart';
 import '../ask/engine_picker.dart';
 import 'history_controller.dart';
 
@@ -62,7 +63,6 @@ class HistoryPage extends ConsumerWidget {
             const SizedBox(height: YaoeTokens.space4),
             AsyncValueView<models.Page<AnswerSummary>>(
               value: page,
-              keepPreviousOnRefresh: false,
               onRetry: () => unawaited(controller.reload()),
               builder: (data) => Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -152,9 +152,8 @@ class _HistoryCardState extends ConsumerState<_HistoryCard> {
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessageOf(error))),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(errorMessageOf(error))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -166,95 +165,85 @@ class _HistoryCardState extends ConsumerState<_HistoryCard> {
     final summary = widget.summary;
     final theme = Theme.of(context);
     final active = summary.status.isActive;
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.go('/a/${summary.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(YaoeTokens.space4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return YaoeCard(
+      onTap: () => context.go('/a/${summary.id}'),
+      padding: const EdgeInsets.all(YaoeTokens.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary.question,
+            style: theme.textTheme.titleSmall,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if ((summary.rootQuestion ?? '').isNotEmpty)
+            Text(
+              '始于：${summary.rootQuestion}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          const SizedBox(height: YaoeTokens.space2),
+          Wrap(
+            spacing: YaoeTokens.space3,
+            runSpacing: YaoeTokens.space2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              // 完成态不挂徽标：卡片本身就是「已完成」的常态。
+              if (summary.status != AnswerStatus.ready)
+                StatusBadge(status: summary.status),
+              // Wrap 的 spacing 对零尺寸子项也生效，标准引擎下别留个空档。
+              if (summary.engine.isCodex) EngineBadge(engine: summary.engine),
+              if (summary.nTurns > 1)
+                Pill(
+                  text: '${summary.nTurns} 轮',
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              if (summary.filtersLabel?.isNotEmpty ?? false)
+                Text(summary.filtersLabel!, style: theme.textTheme.bodySmall),
               Text(
-                summary.question,
-                style: theme.textTheme.titleSmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                relativeTime(summary.createdAt),
+                style: theme.textTheme.bodySmall,
               ),
-              if ((summary.rootQuestion ?? '').isNotEmpty)
+              if (summary.nPapers != null)
                 Text(
-                  '始于：${summary.rootQuestion}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              const SizedBox(height: YaoeTokens.space2),
-              Wrap(
-                spacing: YaoeTokens.space3,
-                runSpacing: YaoeTokens.space2,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  StatusBadge(status: summary.status),
-                  // Wrap 的 spacing 对零尺寸子项也生效，标准引擎下别留个空档。
-                  if (summary.engine.isCodex)
-                    EngineBadge(engine: summary.engine),
-                  if (summary.nTurns > 1)
-                    Pill(
-                      text: '${summary.nTurns} 轮',
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  if (summary.filtersLabel?.isNotEmpty ?? false)
-                    Text(summary.filtersLabel!, style: theme.textTheme.bodySmall),
-                  Text(
-                    relativeTime(summary.createdAt),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  if (summary.nPapers != null)
-                    Text(
-                      '${summary.nPapers} 篇文献',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                ],
-              ),
-              if (summary.status == AnswerStatus.failed) ...[
-                const SizedBox(height: YaoeTokens.space2),
-                Text(
-                  jobErrorMessage(summary.error?.code ?? 'internal_error'),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
-                ),
-              ],
-              if (!active || summary.jobId != null)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    tooltip: active ? '取消' : '删除',
-                    onPressed: _busy ? null : _performAction,
-                    icon: _busy
-                        ? const SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(
-                            active
-                                ? Icons.stop_circle_outlined
-                                : Icons.delete_outline,
-                            color: active ? null : theme.colorScheme.error,
-                          ),
-                  ),
+                  '${summary.nPapers} 篇文献',
+                  style: theme.textTheme.bodySmall,
                 ),
             ],
           ),
-        ),
+          if (summary.status == AnswerStatus.failed) ...[
+            const SizedBox(height: YaoeTokens.space2),
+            Text(
+              jobErrorMessage(summary.error?.code ?? 'internal_error'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ],
+          if (!active || summary.jobId != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                tooltip: active ? '取消' : '删除',
+                onPressed: _busy ? null : _performAction,
+                icon: _busy
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        active
+                            ? Icons.stop_circle_outlined
+                            : Icons.delete_outline,
+                        color: active ? null : theme.colorScheme.error,
+                      ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -29,34 +29,35 @@ class Pager extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: YaoeTokens.space3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '第 $first–$last 条 / 共 ${formatCount(total)} 条',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton.outlined(
+              tooltip: '上一页',
+              onPressed: hasPrevious
+                  ? () => onChange((offset - limit).clamp(0, total))
+                  : null,
+              icon: const Icon(Icons.chevron_left, size: 18),
             ),
-          ),
-          Row(
-            children: [
-              OutlinedButton.icon(
-                onPressed: hasPrevious
-                    ? () => onChange((offset - limit).clamp(0, total))
-                    : null,
-                icon: const Icon(Icons.chevron_left, size: 18),
-                label: const Text('上一页'),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: YaoeTokens.space3,
               ),
-              const SizedBox(width: YaoeTokens.space2),
-              OutlinedButton.icon(
-                onPressed: hasNext ? () => onChange(offset + limit) : null,
-                icon: const Icon(Icons.chevron_right, size: 18),
-                label: const Text('下一页'),
-                iconAlignment: IconAlignment.end,
+              child: Text(
+                '第 $first–$last 条 / 共 ${formatCount(total)} 条',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            ],
-          ),
-        ],
+            ),
+            IconButton.outlined(
+              tooltip: '下一页',
+              onPressed: hasNext ? () => onChange(offset + limit) : null,
+              icon: const Icon(Icons.chevron_right, size: 18),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -21,19 +21,22 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: YaoeTokens.space6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: YaoeTokens.pageInset,
+        vertical: YaoeTokens.space6,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 32, color: theme.colorScheme.onSurfaceVariant),
+          Icon(icon, size: 36, color: theme.colorScheme.outline),
           const SizedBox(height: YaoeTokens.space3),
-          Text(title, style: theme.textTheme.titleSmall),
+          Text(title, style: theme.textTheme.titleMedium),
           if (description != null) ...[
             const SizedBox(height: YaoeTokens.space1),
             Text(
               description!,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),

@@ -7,13 +7,13 @@ import 'package:go_router/go_router.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/logic/markdown_document.dart';
 import '../../shared/external_links.dart';
-import '../../shared/format.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loadable.dart';
 import '../../shared/widgets/markdown_view.dart';
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/quote_highlight.dart';
+import '../../shared/widgets/surface.dart';
 import 'library_controller.dart';
 
 class PaperPage extends ConsumerStatefulWidget {
@@ -35,10 +35,19 @@ class _PaperPageState extends ConsumerState<PaperPage>
   int? _flashAnchor;
   int _locationRequest = 0;
 
+  /// 分段控件的选中值：跟随 TabController，切换时重建按钮。
+  int get _tab => _tabs.index;
+
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 2, vsync: this);
+    _tabs.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (_tabs.indexIsChanging) return;
+    setState(() {});
   }
 
   @override
@@ -61,6 +70,7 @@ class _PaperPageState extends ConsumerState<PaperPage>
 
   @override
   void dispose() {
+    _tabs.removeListener(_onTabChanged);
     _tabs.dispose();
     super.dispose();
   }
@@ -86,13 +96,15 @@ class _PaperPageState extends ConsumerState<PaperPage>
       if (!mounted || request != _locationRequest || _tabs.index != 0) return;
       final target = _anchorKeys[pid]?.currentContext;
       if (target == null) return;
-      unawaited(Scrollable.ensureVisible(
-        target,
-        alignment: 0.3,
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 300),
-      ));
+      unawaited(
+        Scrollable.ensureVisible(
+          target,
+          alignment: 0.3,
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : const Duration(milliseconds: 300),
+        ),
+      );
       setState(() {
         _flashAnchor = MediaQuery.disableAnimationsOf(context) ? null : pid;
       });
@@ -137,42 +149,60 @@ class _PaperPageState extends ConsumerState<PaperPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Flexible(
-            flex: 0,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.35),
-              child: SingleChildScrollView(
-                child: AsyncValueView(
-                  value: meta,
-                  onRetry: () => ref.invalidate(paperMetaProvider(widget.paperKey)),
-                  builder: (paper) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          AsyncValueView(
+            value: meta,
+            onRetry: () => ref.invalidate(paperMetaProvider(widget.paperKey)),
+            builder: (paper) => YaoeCard(
+              padding: const EdgeInsets.all(YaoeTokens.space4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(paper.title, style: theme.textTheme.headlineSmall),
+                  const SizedBox(height: YaoeTokens.space2),
+                  Wrap(
+                    spacing: YaoeTokens.space2,
+                    runSpacing: YaoeTokens.space2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(paper.title, style: theme.textTheme.headlineSmall),
-                      const SizedBox(height: YaoeTokens.space2),
-                      Wrap(
-                        spacing: YaoeTokens.space2,
-                        runSpacing: YaoeTokens.space2,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text([paper.journal, paper.year].where((s) => s.isNotEmpty).join(' · ')),
-                          RankBadge(quartile: paper.quartile),
-                        ],
+                      Text(
+                        [
+                          paper.journal,
+                          paper.year,
+                        ].where((s) => s.isNotEmpty).join(' · '),
                       ),
-                      const SizedBox(height: YaoeTokens.space2),
+                      RankBadge(quartile: paper.quartile),
+                    ],
+                  ),
+                  const SizedBox(height: YaoeTokens.space2),
+                  Wrap(
+                    spacing: YaoeTokens.space3,
+                    runSpacing: YaoeTokens.space1,
+                    children: [
                       MonoLabel(label: 'PMID', value: paper.pmid),
                       MonoLabel(label: 'DOI', value: paper.doi),
                       MonoLabel(label: 'PMCID', value: paper.pmcid),
-                      ExternalLinkRow(pmid: paper.pmid, doi: paper.doi, pmcid: paper.pmcid),
                     ],
                   ),
-                ),
+                  ExternalLinkRow(
+                    pmid: paper.pmid,
+                    doi: paper.doi,
+                    pmcid: paper.pmcid,
+                  ),
+                ],
               ),
             ),
           ),
-          TabBar(
-            controller: _tabs,
-            tabs: const [Tab(text: '全文'), Tab(text: '事实')],
+          const SizedBox(height: YaoeTokens.space4),
+          Align(
+            child: SegmentedButton<int>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(value: 0, label: Text('全文')),
+                ButtonSegment(value: 1, label: Text('事实')),
+              ],
+              selected: {_tab},
+              onSelectionChanged: (values) => _tabs.animateTo(values.first),
+            ),
           ),
           Expanded(
             child: TabBarView(
@@ -180,56 +210,68 @@ class _PaperPageState extends ConsumerState<PaperPage>
               children: [
                 AsyncValueView(
                   value: fulltext,
-                  onRetry: () => ref.invalidate(paperFulltextProvider(widget.paperKey)),
+                  onRetry: () =>
+                      ref.invalidate(paperFulltextProvider(widget.paperKey)),
                   builder: _fulltext,
                 ),
                 AsyncValueView(
                   value: facts,
-                  onRetry: () => ref.invalidate(paperFactsProvider(widget.paperKey)),
+                  onRetry: () =>
+                      ref.invalidate(paperFactsProvider(widget.paperKey)),
                   builder: (items) => items.isEmpty
-                      ? const EmptyState(icon: Icons.fact_check_outlined, title: '暂无事实')
+                      ? const EmptyState(
+                          icon: Icons.fact_check_outlined,
+                          title: '暂无事实',
+                        )
                       : ListView.separated(
-                          padding: const EdgeInsets.symmetric(vertical: YaoeTokens.space4),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: YaoeTokens.space4,
+                          ),
                           itemCount: items.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: YaoeTokens.space3),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: YaoeTokens.space3),
                           itemBuilder: (context, index) {
                             final fact = items[index];
-                            return Card(
-                              margin: EdgeInsets.zero,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-                                side: BorderSide(color: theme.colorScheme.outlineVariant),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(YaoeTokens.space4),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Wrap(
-                                      spacing: YaoeTokens.space2,
-                                      runSpacing: YaoeTokens.space2,
-                                      crossAxisAlignment: WrapCrossAlignment.center,
-                                      children: [
-                                        if (fact.kindLabel.isNotEmpty)
-                                          Pill(text: fact.kindLabel, color: theme.colorScheme.primary),
-                                        VerifiedPill(verified: fact.verified),
-                                        Text(formatScore(fact.score), style: theme.textTheme.bodySmall),
-                                        if (fact.pid != null)
-                                          TextButton(
-                                            onPressed: () => _openParagraph(fact.pid!),
-                                            child: Text('¶${fact.pid}'),
+                            return YaoeCard(
+                              padding: const EdgeInsets.all(YaoeTokens.space4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    spacing: YaoeTokens.space2,
+                                    runSpacing: YaoeTokens.space2,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: [
+                                      if (fact.kindLabel.isNotEmpty)
+                                        Pill(
+                                          text: fact.kindLabel,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      VerifiedPill(verified: fact.verified),
+                                      if (fact.pid != null)
+                                        TextButton.icon(
+                                          onPressed: () =>
+                                              _openParagraph(fact.pid!),
+                                          icon: const Icon(
+                                            Icons.subdirectory_arrow_right,
+                                            size: 16,
                                           ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: YaoeTokens.space2),
-                                    SelectableText(fact.factZh.trim().isNotEmpty ? fact.factZh : fact.fact),
-                                    if (fact.quote.isNotEmpty) ...[
-                                      const SizedBox(height: YaoeTokens.space2),
-                                      QuoteHighlight(quote: fact.quote),
+                                          label: const Text('定位原文'),
+                                        ),
                                     ],
+                                  ),
+                                  const SizedBox(height: YaoeTokens.space2),
+                                  SelectableText(
+                                    fact.factZh.trim().isNotEmpty
+                                        ? fact.factZh
+                                        : fact.fact,
+                                  ),
+                                  if (fact.quote.isNotEmpty) ...[
+                                    const SizedBox(height: YaoeTokens.space2),
+                                    QuoteHighlight(quote: fact.quote),
                                   ],
-                                ),
+                                ],
                               ),
                             );
                           },

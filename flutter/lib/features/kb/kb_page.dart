@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/theme/app_theme.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/api/api_error.dart';
 import '../../core/api/endpoints.dart';
@@ -17,7 +18,7 @@ import '../../shared/widgets/confirm_dialog.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loadable.dart';
 import '../../shared/widgets/page_header.dart';
-import '../../shared/widgets/stat_block.dart';
+import '../../shared/widgets/surface.dart';
 import '../answer/job_live_monitor.dart';
 import 'kb_controller.dart';
 
@@ -39,14 +40,16 @@ class _KbPageState extends ConsumerState<KbPage> {
   }
 
   void _search() {
-    unawaited(ref.read(kbSearchControllerProvider.notifier).search(_query.text));
+    unawaited(
+      ref.read(kbSearchControllerProvider.notifier).search(_query.text),
+    );
   }
 
   Future<void> _reindex() async {
     final confirmed = await showConfirm(
       context,
       title: '重建索引',
-      body: '将重新生成知识库的向量索引。确定继续吗？',
+      body: '将重新生成知识库索引，期间检索结果可能不完整。确定继续吗？',
       destructive: true,
     );
     if (!confirmed || !mounted) return;
@@ -57,9 +60,8 @@ class _KbPageState extends ConsumerState<KbPage> {
       reindexJob.set(job);
     } on ApiError catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.userMessage)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.userMessage)));
       }
     } finally {
       if (mounted) setState(() => _startingReindex = false);
@@ -68,88 +70,99 @@ class _KbPageState extends ConsumerState<KbPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final stats = ref.watch(kbStatsProvider);
     final result = ref.watch(kbSearchControllerProvider);
     final controller = ref.read(kbSearchControllerProvider.notifier);
     final job = ref.watch(kbReindexJobProvider);
-    final colors = Theme.of(context).colorScheme;
+    final isAdmin = ref.watch(isAdminProvider);
     return SingleChildScrollView(
       child: PageBody(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PageHeader(
-              title: '知识库',
-              description: '事实与段落的语义检索',
-              actions: [
-                if (ref.watch(isAdminProvider))
-                  OutlinedButton.icon(
-                    onPressed: _startingReindex || job != null ? null : _reindex,
-                    icon: const Icon(Icons.refresh_outlined),
-                    label: Text(_startingReindex ? '提交中' : '重建索引'),
-                  ),
-              ],
-            ),
+            const PageHeader(title: '知识库', description: '事实与段落的语义检索'),
             AsyncValueView<KbStats>(
               value: stats,
               onRetry: () => ref.invalidate(kbStatsProvider),
-              builder: (data) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final width = constraints.maxWidth < 600
-                          ? constraints.maxWidth
-                          : (constraints.maxWidth - YaoeTokens.space3 * 2) / 3;
-                      return Wrap(
-                        spacing: YaoeTokens.space3,
-                        runSpacing: YaoeTokens.space3,
-                        children: [
-                          SizedBox(
-                            width: width,
-                            child: StatBlock(label: '条目', value: formatCount(data.items)),
+              builder: (data) => YaoeCard(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                formatCount(data.items),
+                                style: theme.textTheme.headlineMedium?.merge(
+                                  monoStyle,
+                                ),
+                              ),
+                              Text(
+                                '条知识',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(
-                            width: width,
-                            child: StatBlock(label: '论文', value: formatCount(data.papers)),
-                          ),
-                          SizedBox(
-                            width: width,
-                            child: StatBlock(
-                              label: '嵌入器',
-                              value: data.embedder ?? '未加载',
-                              note: '维度 ${data.dim ?? "未知"}',
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: YaoeTokens.space3),
-                  Wrap(
-                    spacing: YaoeTokens.space2,
-                    runSpacing: YaoeTokens.space2,
-                    children: [
-                      for (final entry in data.byKind.entries)
-                        Pill(
-                          text: '${switch (entry.key) { "fact" => KbKind.fact.label, "paragraph" => KbKind.paragraph.label, _ => entry.key }} ${formatCount(entry.value)}',
-                          color: colors.primary,
                         ),
+                        Text(
+                          '${formatCount(data.papers)} 篇文献',
+                          style: theme.textTheme.labelLarge,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: YaoeTokens.space3),
+                    Wrap(
+                      spacing: YaoeTokens.space2,
+                      runSpacing: YaoeTokens.space2,
+                      children: [
+                        for (final entry in data.byKind.entries)
+                          if (_kindLabel(entry.key) case final String label)
+                            Pill(
+                              text: '$label ${formatCount(entry.value)}',
+                              color: theme.colorScheme.primary,
+                            ),
+                      ],
+                    ),
+                    if (isAdmin) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: YaoeTokens.space3,
+                        ),
+                        child: Divider(height: 1),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          onPressed: _startingReindex || job != null
+                              ? null
+                              : _reindex,
+                          icon: const Icon(Icons.refresh_outlined, size: 16),
+                          label: Text(_startingReindex ? '提交中' : '重建索引'),
+                        ),
+                      ),
                     ],
-                  ),
-                ],
+                    if (job != null) ...[
+                      const SizedBox(height: YaoeTokens.space4),
+                      _ReindexProgress(key: ValueKey(job.id), jobId: job.id),
+                    ],
+                  ],
+                ),
               ),
             ),
-            if (job != null) ...[
-              const SizedBox(height: YaoeTokens.space4),
-              _ReindexProgress(key: ValueKey(job.id), jobId: job.id),
-            ],
-            const SizedBox(height: YaoeTokens.space5),
+            const SizedBox(height: YaoeTokens.sectionSpacing),
             TextField(
               controller: _query,
               textInputAction: TextInputAction.search,
               decoration: const InputDecoration(
-                labelText: '检索知识库',
+                hintText: '检索知识库',
                 prefixIcon: Icon(Icons.search_outlined),
               ),
               onSubmitted: (_) => _search(),
@@ -167,24 +180,8 @@ class _KbPageState extends ConsumerState<KbPage> {
                     ButtonSegment(value: KbKind.paragraph, label: Text('段落')),
                   ],
                   selected: {controller.kind},
-                  onSelectionChanged: (values) => setState(() => controller.setKind(values.first)),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('条数'),
-                    const SizedBox(width: YaoeTokens.space2),
-                    DropdownButton<int>(
-                      value: controller.topK,
-                      items: [
-                        for (final count in const [5, 8, 15, 30])
-                          DropdownMenuItem(value: count, child: Text('$count')),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) setState(() => controller.setTopK(value));
-                      },
-                    ),
-                  ],
+                  onSelectionChanged: (values) =>
+                      setState(() => controller.setKind(values.first)),
                 ),
                 FilledButton.icon(
                   onPressed: result.isLoading ? null : _search,
@@ -199,24 +196,30 @@ class _KbPageState extends ConsumerState<KbPage> {
               onRetry: _search,
               builder: (data) {
                 if (data == null) {
-                  return Container(
-                    padding: const EdgeInsets.all(YaoeTokens.space3),
-                    color: context.yaoe.info.withValues(alpha: 0.08),
+                  return YaoeCard(
+                    tint: context.yaoe.info,
                     child: Text(
-                      '首次检索需加载嵌入模型，约 15 秒',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.yaoe.info),
+                      '首次检索需要预热，约 15 秒',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: context.yaoe.info,
+                      ),
                     ),
                   );
                 }
                 if (data.items.isEmpty) {
-                  return const EmptyState(icon: Icons.search_off_outlined, title: '未找到相关内容');
+                  return const EmptyState(
+                    icon: Icons.search_off_outlined,
+                    title: '未找到相关内容',
+                  );
                 }
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (final hit in data.items)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+                        padding: const EdgeInsets.only(
+                          bottom: YaoeTokens.space3,
+                        ),
                         child: _HitCard(hit: hit),
                       ),
                   ],
@@ -230,6 +233,13 @@ class _KbPageState extends ConsumerState<KbPage> {
   }
 }
 
+/// 已知条目种类 → 中文标签；未知种类返回 null（不渲染，别把内部键名摆给用户）。
+String? _kindLabel(String kind) => switch (kind) {
+  'fact' => KbKind.fact.label,
+  'paragraph' => KbKind.paragraph.label,
+  _ => null,
+};
+
 class _HitCard extends StatelessWidget {
   const _HitCard({required this.hit});
 
@@ -238,44 +248,40 @@ class _HitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: hit.pmid.isEmpty
-            ? null
-            : () => context.go('/library/${Uri.encodeComponent(hit.pmid)}${hit.pid != null ? '?pid=${hit.pid}' : ''}'),
-        child: Padding(
-          padding: const EdgeInsets.all(YaoeTokens.space4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return YaoeCard(
+      padding: const EdgeInsets.all(YaoeTokens.space4),
+      onTap: hit.pmid.isEmpty
+          ? null
+          : () => context.go(
+              '/library/${Uri.encodeComponent(hit.pmid)}'
+              '${hit.pid != null ? '?pid=${hit.pid}' : ''}',
+            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: YaoeTokens.space2,
+            runSpacing: YaoeTokens.space2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Wrap(
-                spacing: YaoeTokens.space2,
-                runSpacing: YaoeTokens.space2,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Pill(text: hit.kind.label, color: theme.colorScheme.primary),
-                  if (hit.verified != null) VerifiedPill(verified: hit.verified!),
-                  if (hit.pid != null) Text('¶${hit.pid}'),
-                  Text('相似度 ${formatScore(hit.score)}', style: theme.textTheme.labelSmall),
-                ],
-              ),
-              const SizedBox(height: YaoeTokens.space3),
-              Text(hit.textZh ?? hit.text, style: theme.textTheme.bodyMedium),
-              const SizedBox(height: YaoeTokens.space3),
-              Text(
-                [hit.title, hit.journal, hit.year].where((part) => part.isNotEmpty).join(' · '),
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
+              Pill(text: hit.kind.label, color: theme.colorScheme.primary),
+              if (hit.verified != null) VerifiedPill(verified: hit.verified!),
             ],
           ),
-        ),
+          const SizedBox(height: YaoeTokens.space3),
+          Text(hit.textZh ?? hit.text, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: YaoeTokens.space3),
+          Text(
+            [
+              hit.title,
+              hit.journal,
+              hit.year,
+            ].where((part) => part.isNotEmpty).join(' · '),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -312,7 +318,7 @@ class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
     try {
       job = await ref.read(apiClientProvider).job(widget.jobId);
     } on ApiError {
-      return;                       // 网络抖动或鉴权失效，下一个周期再试
+      return; // 网络抖动或鉴权失效，下一个周期再试
     }
     if (!mounted) return;
     final terminal = jobTerminal(job);
@@ -340,54 +346,29 @@ class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final state = ref.watch(jobLiveMonitorProvider(widget.jobId));
     final progress = state.live.progress;
-    final reindexProgress = progress?.stage == StageKey.reindex ? progress : null;
-    // 正常连接不出现指示灯：只有在等或出问题时才值得占位。
-    final note = state.connection.label;
-    final color = state.connection == SseConnection.reconnecting
-        ? context.yaoe.warning
-        : Theme.of(context).colorScheme.onSurfaceVariant;
-    final logs = state.live.logs;
+    final reindexProgress = progress?.stage == StageKey.reindex
+        ? progress
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          spacing: YaoeTokens.space3,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text('重建索引', style: Theme.of(context).textTheme.titleMedium),
-            if (note != null)
-              Pill(text: note, color: color, icon: Icons.circle),
-          ],
-        ),
+        Text('重建索引', style: theme.textTheme.labelLarge),
         const SizedBox(height: YaoeTokens.space3),
         LinearProgressIndicator(
           value: reindexProgress != null && reindexProgress.total > 0
-              ? (reindexProgress.current / reindexProgress.total).clamp(0.0, 1.0)
+              ? (reindexProgress.current / reindexProgress.total).clamp(
+                  0.0,
+                  1.0,
+                )
               : null,
         ),
         if (reindexProgress?.title case final String title) ...[
           const SizedBox(height: YaoeTokens.space2),
-          Text(title),
+          Text(title, style: theme.textTheme.bodySmall),
         ],
-        if (logs.isNotEmpty)
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            title: const Text('运行日志'),
-            children: [
-              for (final line in logs.skip(logs.length > 20 ? logs.length - 20 : 0))
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    line.message,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: line.level == LogLevel.warning ? context.yaoe.warning : null,
-                    ),
-                  ),
-                ),
-            ],
-          ),
       ],
     );
   }
