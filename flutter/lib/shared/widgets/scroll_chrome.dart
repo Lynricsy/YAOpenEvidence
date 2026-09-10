@@ -19,9 +19,9 @@ class ScrollChromeController extends ChangeNotifier {
     if (notification is UserScrollNotification) {
       switch (notification.direction) {
         case ScrollDirection.reverse:
-          if (metrics.maxScrollExtent > minScrollExtent && metrics.pixels > 0) {
-            _set(true);
-          }
+          // 不看当前 pixels：从顶部第一次下滑也该收起。回到顶部由下面的
+          // ScrollUpdateNotification 规则负责恢复。
+          if (metrics.maxScrollExtent > minScrollExtent) _set(true);
         case ScrollDirection.forward:
           _set(false);
         case ScrollDirection.idle:
