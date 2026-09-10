@@ -73,64 +73,148 @@ ThemeData buildTheme(Brightness brightness) {
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-        side: BorderSide(color: scheme.outlineVariant),
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusCard),
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      scrolledUnderElevation: 0,
+      scrolledUnderElevation: 1,
+      shadowColor: scheme.onSurface.withValues(alpha: 0.18),
       centerTitle: false,
       titleTextStyle: text.titleMedium,
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: extension.sidebar,
+      // 材质（模糊 + 半透明底 + hairline）由 MobileTabBar 自己画。
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       indicatorColor: scheme.primary.withValues(alpha: 0.14),
+      indicatorShape: const StadiumBorder(),
+      height: 68,
       elevation: 0,
       labelTextStyle: WidgetStatePropertyAll(text.labelMedium),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: extension.card,
+      fillColor: scheme.surfaceContainerHigh,
       isDense: true,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 12,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-        borderSide: BorderSide(color: scheme.outlineVariant),
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-        borderSide: BorderSide(color: scheme.outlineVariant),
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
         borderSide: BorderSide(color: scheme.primary, width: 1.6),
       ),
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: extension.card,
-      side: BorderSide(color: scheme.outlineVariant),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+      backgroundColor: scheme.surfaceContainerHigh,
+      selectedColor: scheme.primary,
+      checkmarkColor: scheme.onPrimary,
+      deleteIconColor: scheme.onSurfaceVariant,
+      showCheckmark: false,
+      side: BorderSide.none,
+      shape: const StadiumBorder(),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+      iconTheme: const IconThemeData(size: 14),
+      labelStyle: WidgetStateTextStyle.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? text.labelMedium!.copyWith(
+                color: scheme.onPrimary,
+                fontWeight: FontWeight.w600,
+              )
+            : text.labelMedium!.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w500,
+              ),
       ),
-      labelStyle: text.labelMedium,
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-        ),
-      ),
+      style: FilledButton.styleFrom(shape: const StadiumBorder()),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         side: BorderSide(color: scheme.outlineVariant),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+        shape: const StadiumBorder(),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(shape: const StadiumBorder()),
+    ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: SegmentedButton.styleFrom(
+        shape: const StadiumBorder(),
+        side: BorderSide(color: scheme.outlineVariant),
+        selectedBackgroundColor: scheme.primary.withValues(alpha: 0.14),
+        selectedForegroundColor: scheme.primary,
+        visualDensity: VisualDensity.compact,
+      ),
+    ),
+    menuTheme: MenuThemeData(
+      style: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(extension.card),
+        surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+        elevation: const WidgetStatePropertyAll(8),
+        shadowColor: WidgetStatePropertyAll(
+          scheme.onSurface.withValues(alpha: 0.25),
+        ),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(YaoeTokens.radiusMenu),
+            side: BorderSide(
+              color: scheme.outlineVariant.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(vertical: 6),
         ),
       ),
+    ),
+    menuButtonTheme: MenuButtonThemeData(
+      style: ButtonStyle(
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        ),
+        textStyle: WidgetStatePropertyAll(text.bodyMedium),
+      ),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: extension.card,
+      surfaceTintColor: Colors.transparent,
+      elevation: 8,
+      shadowColor: scheme.onSurface.withValues(alpha: 0.25),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusMenu),
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.6),
+        ),
+      ),
+      textStyle: text.bodyMedium,
+    ),
+    expansionTileTheme: const ExpansionTileThemeData(
+      shape: Border(),
+      collapsedShape: Border(),
+      tilePadding: EdgeInsets.zero,
+    ),
+    listTileTheme: ListTileThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
     ),
     tabBarTheme: TabBarThemeData(
       indicatorColor: scheme.primary,
@@ -141,7 +225,7 @@ ThemeData buildTheme(Brightness brightness) {
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: scheme.inverseSurface,
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
       ),
       textStyle: text.bodySmall?.copyWith(color: scheme.onInverseSurface),
     ),
@@ -152,23 +236,25 @@ ThemeData buildTheme(Brightness brightness) {
         color: scheme.onInverseSurface,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
       ),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: extension.card,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusXl),
-        side: BorderSide(color: scheme.outlineVariant),
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusCard + 4),
       ),
     ),
     bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: scheme.surface,
+      backgroundColor: extension.card,
       surfaceTintColor: Colors.transparent,
+      showDragHandle: true,
+      dragHandleColor: scheme.outline,
+      clipBehavior: Clip.antiAlias,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(YaoeTokens.radiusXl),
+          top: Radius.circular(YaoeTokens.radiusCard + 4),
         ),
       ),
     ),

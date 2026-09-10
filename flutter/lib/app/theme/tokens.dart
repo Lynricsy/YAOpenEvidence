@@ -6,7 +6,7 @@ abstract final class YaoeTokens {
   static const primaryLight = Color(0xFF1F7583);
   static const onPrimaryLight = Color(0xFFFDFCF8);
   static const surfaceLight = Color(0xFFFCFAF6);
-  static const cardLight = Color(0xFFFFFEFD);
+  static const cardLight = Color(0xFFFFFFFF);
   static const sidebarLight = Color(0xFFF6F3EE);
   static const mutedLight = Color(0xFFF3F0EA);
   static const foregroundLight = Color(0xFF261D16);
@@ -44,6 +44,18 @@ abstract final class YaoeTokens {
   static const radiusLg = 8.0;
   static const radiusXl = 12.0;
 
+  /// 内容卡片圆角（对齐 iOS `Metrics.cardRadius`）。
+  static const radiusCard = 16.0;
+
+  /// 提问框圆角（对齐 iOS `Metrics.composerRadius`）。
+  static const radiusComposer = 26.0;
+
+  /// 弹出菜单圆角。
+  static const radiusMenu = 12.0;
+
+  /// 输入框 / 列表项圆角。
+  static const radiusField = 12.0;
+
   // 间距
   static const space1 = 4.0;
   static const space2 = 8.0;
@@ -51,6 +63,33 @@ abstract final class YaoeTokens {
   static const space4 = 16.0;
   static const space5 = 24.0;
   static const space6 = 32.0;
+
+  /// 页面水平内边距（对齐 iOS `Metrics.pageInset`）。
+  static const pageInset = 16.0;
+
+  /// 阅读列最大宽度（对齐 iOS `Metrics.contentMaxWidth`）。
+  static const contentMaxWidth = 720.0;
+
+  /// 区块内间距（标题↔正文）。
+  static const sectionSpacing = 20.0;
+
+  /// 模块间间距。
+  static const moduleSpacing = 28.0;
+
+  /// 悬浮提问框左右外边距。
+  static const composerInsetH = 12.0;
+
+  /// 悬浮提问框底部外边距。
+  static const composerInsetBottom = 8.0;
+
+  // 语义色提示面的填充/描边透明度
+  static const tintFillAlpha = 0.10;
+  static const tintBorderAlpha = 0.28;
+
+  // 毛玻璃浮层参数
+  static const glassBlur = 24.0;
+  static const glassAlphaLight = 0.78;
+  static const glassAlphaDark = 0.72;
 
   // 布局断点
   static const compactMaxWidth = 768.0;
@@ -80,6 +119,8 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     required this.highlight,
     required this.card,
     required this.sidebar,
+    required this.cardShadow,
+    required this.floatShadow,
   });
 
   final Color info;
@@ -95,6 +136,12 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
   final Color card;
   final Color sidebar;
 
+  /// 内容卡片阴影：Flutter 页面底色与卡片色差极小，靠双层柔和阴影分出层次。
+  final List<BoxShadow> cardShadow;
+
+  /// 悬浮层阴影（提问框等控件层）。
+  final List<BoxShadow> floatShadow;
+
   static const light = YaoeColors(
     info: YaoeTokens.infoLight,
     success: YaoeTokens.successLight,
@@ -106,6 +153,30 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     highlight: Color(0x59FFD54F),
     card: YaoeTokens.cardLight,
     sidebar: YaoeTokens.sidebarLight,
+    cardShadow: [
+      BoxShadow(
+        color: Color(0x0A261D16),
+        offset: Offset(0, 1),
+        blurRadius: 2,
+      ),
+      BoxShadow(
+        color: Color(0x0F261D16),
+        offset: Offset(0, 4),
+        blurRadius: 14,
+      ),
+    ],
+    floatShadow: [
+      BoxShadow(
+        color: Color(0x0F261D16),
+        offset: Offset(0, 1),
+        blurRadius: 3,
+      ),
+      BoxShadow(
+        color: Color(0x1F261D16),
+        offset: Offset(0, 10),
+        blurRadius: 30,
+      ),
+    ],
   );
 
   static const dark = YaoeColors(
@@ -119,6 +190,30 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     highlight: Color(0x59B58900),
     card: YaoeTokens.cardDark,
     sidebar: YaoeTokens.sidebarDark,
+    cardShadow: [
+      BoxShadow(
+        color: Color(0x40000000),
+        offset: Offset(0, 1),
+        blurRadius: 2,
+      ),
+      BoxShadow(
+        color: Color(0x4D000000),
+        offset: Offset(0, 6),
+        blurRadius: 18,
+      ),
+    ],
+    floatShadow: [
+      BoxShadow(
+        color: Color(0x4D000000),
+        offset: Offset(0, 1),
+        blurRadius: 3,
+      ),
+      BoxShadow(
+        color: Color(0x80000000),
+        offset: Offset(0, 10),
+        blurRadius: 30,
+      ),
+    ],
   );
 
   /// 期刊分区色（未收录返回 null，由调用方用灰色）。
@@ -142,6 +237,8 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     Color? highlight,
     Color? card,
     Color? sidebar,
+    List<BoxShadow>? cardShadow,
+    List<BoxShadow>? floatShadow,
   }) => YaoeColors(
     info: info ?? this.info,
     success: success ?? this.success,
@@ -153,6 +250,8 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     highlight: highlight ?? this.highlight,
     card: card ?? this.card,
     sidebar: sidebar ?? this.sidebar,
+    cardShadow: cardShadow ?? this.cardShadow,
+    floatShadow: floatShadow ?? this.floatShadow,
   );
 
   @override
@@ -169,6 +268,8 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
       highlight: Color.lerp(highlight, other.highlight, t)!,
       card: Color.lerp(card, other.card, t)!,
       sidebar: Color.lerp(sidebar, other.sidebar, t)!,
+      cardShadow: BoxShadow.lerpList(cardShadow, other.cardShadow, t)!,
+      floatShadow: BoxShadow.lerpList(floatShadow, other.floatShadow, t)!,
     );
   }
 }
