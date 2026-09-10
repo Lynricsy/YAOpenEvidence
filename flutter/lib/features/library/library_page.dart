@@ -89,6 +89,7 @@ class LibraryPage extends ConsumerWidget {
                                 ].where((s) => s.isNotEmpty).join(' · '),
                               ),
                               RankBadge(quartile: meta.quartile),
+                              SourceBadge(source: meta.source),
                               for (final type in meta.types.take(3))
                                 Pill(
                                   text: type,

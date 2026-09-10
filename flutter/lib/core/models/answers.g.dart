@@ -65,6 +65,7 @@ const _$PaperSourceEnumMap = {
   PaperSource.pmc: 'pmc',
   PaperSource.pdf: 'pdf',
   PaperSource.inst: 'inst',
+  PaperSource.upload: 'upload',
   PaperSource.abstract: 'abstract',
 };
 

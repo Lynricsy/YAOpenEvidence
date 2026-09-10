@@ -10,6 +10,7 @@ import { Pagination } from '@/components/common/Pagination'
 import { Pill } from '@/components/common/Pill'
 import { QueryError } from '@/components/common/QueryError'
 import { RankBadge } from '@/components/common/RankBadge'
+import { SourceBadge } from '@/components/common/SourceBadge'
 import { Input } from '@/components/ui/input'
 import { dateTime } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -97,6 +98,7 @@ export default function LibraryPage() {
                   </p>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <RankBadge quartile={paper.quartile} />
+                    <SourceBadge source={paper.source} />
                     {paper.types?.map((type) => (
                       <Pill
                         tone="neutral"

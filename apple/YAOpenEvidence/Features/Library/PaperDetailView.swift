@@ -110,6 +110,7 @@ struct PaperDetailView: View {
     private func badges(_ meta: PaperMeta) -> some View {
         FlowLayout {
             RankBadge(quartile: meta.quartile)
+            SourceBadge(source: meta.source)
             ForEach(meta.types.prefix(3), id: \.self) { type in
                 Pill(text: type)
             }

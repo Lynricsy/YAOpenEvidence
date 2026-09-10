@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'answers.dart';
+
 part 'papers.freezed.dart';
 part 'papers.g.dart';
 
@@ -78,7 +80,9 @@ abstract class PaperMeta with _$PaperMeta {
     @Default('') String issn,
     @Default('') String quartile,
     @Default('') String authors,
-    @Default('') String source,
+    @JsonKey(unknownEnumValue: PaperSource.abstract)
+    @Default(PaperSource.abstract)
+    PaperSource source,
     @Default(<String>[]) List<String> types,
     DateTime? indexedAt,
     @Default(0) int nParagraphs,

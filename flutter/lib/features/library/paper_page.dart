@@ -171,6 +171,7 @@ class _PaperPageState extends ConsumerState<PaperPage>
                         ].where((s) => s.isNotEmpty).join(' · '),
                       ),
                       RankBadge(quartile: paper.quartile),
+                      SourceBadge(source: paper.source),
                     ],
                   ),
                   const SizedBox(height: YaoeTokens.space2),

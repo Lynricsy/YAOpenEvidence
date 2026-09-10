@@ -115,7 +115,8 @@ class SourceBadge extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = context.yaoe;
     final color = switch (source) {
-      PaperSource.pmc || PaperSource.pdf => colors.success,
+      PaperSource.pmc || PaperSource.pdf || PaperSource.upload =>
+        colors.success,
       PaperSource.inst => colors.info,
       PaperSource.abstract => theme.colorScheme.onSurfaceVariant,
     };

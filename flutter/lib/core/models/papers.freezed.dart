@@ -883,7 +883,7 @@ as bool,
 /// @nodoc
 mixin _$PaperMeta {
 
- String get key; String get pmid; String get doi; String get pmcid; String get title; String get year; String get journal; String get issn; String get quartile; String get authors; String get source; List<String> get types; DateTime? get indexedAt; int get nParagraphs; int get nFacts;
+ String get key; String get pmid; String get doi; String get pmcid; String get title; String get year; String get journal; String get issn; String get quartile; String get authors;@JsonKey(unknownEnumValue: PaperSource.abstract) PaperSource get source; List<String> get types; DateTime? get indexedAt; int get nParagraphs; int get nFacts;
 /// Create a copy of PaperMeta
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -921,7 +921,7 @@ abstract mixin class $PaperMetaCopyWith<$Res>  {
   factory $PaperMetaCopyWith(PaperMeta value, $Res Function(PaperMeta) _then) = _$PaperMetaCopyWithImpl;
 @useResult
 $Res call({
- String key, String pmid, String doi, String pmcid, String title, String year, String journal, String issn, String quartile, String authors, String source, List<String> types, DateTime? indexedAt, int nParagraphs, int nFacts
+ String key, String pmid, String doi, String pmcid, String title, String year, String journal, String issn, String quartile, String authors,@JsonKey(unknownEnumValue: PaperSource.abstract) PaperSource source, List<String> types, DateTime? indexedAt, int nParagraphs, int nFacts
 });
 
 
@@ -951,7 +951,7 @@ as String,issn: null == issn ? _self.issn : issn // ignore: cast_nullable_to_non
 as String,quartile: null == quartile ? _self.quartile : quartile // ignore: cast_nullable_to_non_nullable
 as String,authors: null == authors ? _self.authors : authors // ignore: cast_nullable_to_non_nullable
 as String,source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
-as String,types: null == types ? _self.types : types // ignore: cast_nullable_to_non_nullable
+as PaperSource,types: null == types ? _self.types : types // ignore: cast_nullable_to_non_nullable
 as List<String>,indexedAt: freezed == indexedAt ? _self.indexedAt : indexedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,nParagraphs: null == nParagraphs ? _self.nParagraphs : nParagraphs // ignore: cast_nullable_to_non_nullable
 as int,nFacts: null == nFacts ? _self.nFacts : nFacts // ignore: cast_nullable_to_non_nullable
@@ -1040,7 +1040,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  String pmid,  String doi,  String pmcid,  String title,  String year,  String journal,  String issn,  String quartile,  String authors,  String source,  List<String> types,  DateTime? indexedAt,  int nParagraphs,  int nFacts)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  String pmid,  String doi,  String pmcid,  String title,  String year,  String journal,  String issn,  String quartile,  String authors, @JsonKey(unknownEnumValue: PaperSource.abstract)  PaperSource source,  List<String> types,  DateTime? indexedAt,  int nParagraphs,  int nFacts)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PaperMeta() when $default != null:
 return $default(_that.key,_that.pmid,_that.doi,_that.pmcid,_that.title,_that.year,_that.journal,_that.issn,_that.quartile,_that.authors,_that.source,_that.types,_that.indexedAt,_that.nParagraphs,_that.nFacts);case _:
@@ -1061,7 +1061,7 @@ return $default(_that.key,_that.pmid,_that.doi,_that.pmcid,_that.title,_that.yea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  String pmid,  String doi,  String pmcid,  String title,  String year,  String journal,  String issn,  String quartile,  String authors,  String source,  List<String> types,  DateTime? indexedAt,  int nParagraphs,  int nFacts)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  String pmid,  String doi,  String pmcid,  String title,  String year,  String journal,  String issn,  String quartile,  String authors, @JsonKey(unknownEnumValue: PaperSource.abstract)  PaperSource source,  List<String> types,  DateTime? indexedAt,  int nParagraphs,  int nFacts)  $default,) {final _that = this;
 switch (_that) {
 case _PaperMeta():
 return $default(_that.key,_that.pmid,_that.doi,_that.pmcid,_that.title,_that.year,_that.journal,_that.issn,_that.quartile,_that.authors,_that.source,_that.types,_that.indexedAt,_that.nParagraphs,_that.nFacts);case _:
@@ -1081,7 +1081,7 @@ return $default(_that.key,_that.pmid,_that.doi,_that.pmcid,_that.title,_that.yea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  String pmid,  String doi,  String pmcid,  String title,  String year,  String journal,  String issn,  String quartile,  String authors,  String source,  List<String> types,  DateTime? indexedAt,  int nParagraphs,  int nFacts)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  String pmid,  String doi,  String pmcid,  String title,  String year,  String journal,  String issn,  String quartile,  String authors, @JsonKey(unknownEnumValue: PaperSource.abstract)  PaperSource source,  List<String> types,  DateTime? indexedAt,  int nParagraphs,  int nFacts)?  $default,) {final _that = this;
 switch (_that) {
 case _PaperMeta() when $default != null:
 return $default(_that.key,_that.pmid,_that.doi,_that.pmcid,_that.title,_that.year,_that.journal,_that.issn,_that.quartile,_that.authors,_that.source,_that.types,_that.indexedAt,_that.nParagraphs,_that.nFacts);case _:
@@ -1096,7 +1096,7 @@ return $default(_that.key,_that.pmid,_that.doi,_that.pmcid,_that.title,_that.yea
 @JsonSerializable()
 
 class _PaperMeta implements PaperMeta {
-  const _PaperMeta({required this.key, this.pmid = '', this.doi = '', this.pmcid = '', this.title = '', this.year = '', this.journal = '', this.issn = '', this.quartile = '', this.authors = '', this.source = '',  List<String> types = const <String>[], this.indexedAt, this.nParagraphs = 0, this.nFacts = 0}): _types = types;
+  const _PaperMeta({required this.key, this.pmid = '', this.doi = '', this.pmcid = '', this.title = '', this.year = '', this.journal = '', this.issn = '', this.quartile = '', this.authors = '', @JsonKey(unknownEnumValue: PaperSource.abstract) this.source = PaperSource.abstract,  List<String> types = const <String>[], this.indexedAt, this.nParagraphs = 0, this.nFacts = 0}): _types = types;
   factory _PaperMeta.fromJson(Map<String, dynamic> json) => _$PaperMetaFromJson(json);
 
 @override final  String key;
@@ -1109,7 +1109,7 @@ class _PaperMeta implements PaperMeta {
 @override@JsonKey() final  String issn;
 @override@JsonKey() final  String quartile;
 @override@JsonKey() final  String authors;
-@override@JsonKey() final  String source;
+@override@JsonKey(unknownEnumValue: PaperSource.abstract) final  PaperSource source;
  final  List<String> _types;
 @override@JsonKey() List<String> get types {
   if (_types is EqualUnmodifiableListView) return _types;
@@ -1156,7 +1156,7 @@ abstract mixin class _$PaperMetaCopyWith<$Res> implements $PaperMetaCopyWith<$Re
   factory _$PaperMetaCopyWith(_PaperMeta value, $Res Function(_PaperMeta) _then) = __$PaperMetaCopyWithImpl;
 @override @useResult
 $Res call({
- String key, String pmid, String doi, String pmcid, String title, String year, String journal, String issn, String quartile, String authors, String source, List<String> types, DateTime? indexedAt, int nParagraphs, int nFacts
+ String key, String pmid, String doi, String pmcid, String title, String year, String journal, String issn, String quartile, String authors,@JsonKey(unknownEnumValue: PaperSource.abstract) PaperSource source, List<String> types, DateTime? indexedAt, int nParagraphs, int nFacts
 });
 
 
@@ -1186,7 +1186,7 @@ as String,issn: null == issn ? _self.issn : issn // ignore: cast_nullable_to_non
 as String,quartile: null == quartile ? _self.quartile : quartile // ignore: cast_nullable_to_non_nullable
 as String,authors: null == authors ? _self.authors : authors // ignore: cast_nullable_to_non_nullable
 as String,source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
-as String,types: null == types ? _self._types : types // ignore: cast_nullable_to_non_nullable
+as PaperSource,types: null == types ? _self._types : types // ignore: cast_nullable_to_non_nullable
 as List<String>,indexedAt: freezed == indexedAt ? _self.indexedAt : indexedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,nParagraphs: null == nParagraphs ? _self.nParagraphs : nParagraphs // ignore: cast_nullable_to_non_nullable
 as int,nFacts: null == nFacts ? _self.nFacts : nFacts // ignore: cast_nullable_to_non_nullable

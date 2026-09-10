@@ -82,7 +82,13 @@ _PaperMeta _$PaperMetaFromJson(Map<String, dynamic> json) => _PaperMeta(
   issn: json['issn'] as String? ?? '',
   quartile: json['quartile'] as String? ?? '',
   authors: json['authors'] as String? ?? '',
-  source: json['source'] as String? ?? '',
+  source:
+      $enumDecodeNullable(
+        _$PaperSourceEnumMap,
+        json['source'],
+        unknownValue: PaperSource.abstract,
+      ) ??
+      PaperSource.abstract,
   types:
       (json['types'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const <String>[],
@@ -105,9 +111,17 @@ Map<String, dynamic> _$PaperMetaToJson(_PaperMeta instance) =>
       'issn': instance.issn,
       'quartile': instance.quartile,
       'authors': instance.authors,
-      'source': instance.source,
+      'source': _$PaperSourceEnumMap[instance.source]!,
       'types': instance.types,
       'indexed_at': ?instance.indexedAt?.toIso8601String(),
       'n_paragraphs': instance.nParagraphs,
       'n_facts': instance.nFacts,
     };
+
+const _$PaperSourceEnumMap = {
+  PaperSource.pmc: 'pmc',
+  PaperSource.pdf: 'pdf',
+  PaperSource.inst: 'inst',
+  PaperSource.upload: 'upload',
+  PaperSource.abstract: 'abstract',
+};

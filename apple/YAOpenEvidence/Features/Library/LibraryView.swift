@@ -160,6 +160,7 @@ struct PaperRow: View {
 
             FlowLayout {
                 RankBadge(quartile: paper.quartile)
+                SourceBadge(source: paper.source)
                 ForEach(paper.types.prefix(3), id: \.self) { type in
                     Pill(text: type)
                 }

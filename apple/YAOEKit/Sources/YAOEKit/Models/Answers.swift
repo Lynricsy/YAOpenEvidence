@@ -59,6 +59,7 @@ public enum PaperSource: String, Codable, Sendable, Hashable {
     case pmc
     case pdf
     case inst
+    case upload
     case abstract
 
     /// 后端未来新增来源时不至于整份答案解码失败。
@@ -72,6 +73,7 @@ public enum PaperSource: String, Codable, Sendable, Hashable {
         case .pmc: "全文 · PMC"
         case .pdf: "全文 · PDF"
         case .inst: "全文 · 机构"
+        case .upload: "全文 · 上传"
         case .abstract: "仅摘要"
         }
     }

@@ -33,12 +33,14 @@ enum PaperSource {
   pmc,
   pdf,
   inst,
+  upload,
   abstract;
 
   String get label => switch (this) {
     PaperSource.pmc => '全文 · PMC',
     PaperSource.pdf => '全文 · PDF',
     PaperSource.inst => '全文 · 机构',
+    PaperSource.upload => '全文 · 上传',
     PaperSource.abstract => '仅摘要',
   };
 }

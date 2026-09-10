@@ -75,7 +75,7 @@ final class KbSearchControllerProvider
 }
 
 String _$kbSearchControllerHash() =>
-    r'7774c864da606293395c0cac02df335a72f34122';
+    r'33d32d6030dbb8c7ed8798931f0d5f06068e7a85';
 
 abstract class _$KbSearchController
     extends $Notifier<AsyncValue<KbSearchResult?>> {

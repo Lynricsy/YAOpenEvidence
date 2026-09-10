@@ -682,7 +682,8 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 |---|---|---|
 | `key` | `string` | 本地文献库 key。 |
 | `pmid` / `doi` / `pmcid` | `string` | 外部标识符。 |
-| `title` / `year` / `journal` / `issn` / `quartile` / `authors` / `source` | `string` | 文献元数据。 |
+| `title` / `year` / `journal` / `issn` / `quartile` / `authors` | `string` | 文献元数据。 |
+| `source` | `pmc \| pdf \| inst \| upload \| abstract` | 入库时实际读到的内容：`abstract` 表示这一条只有摘要，`fulltext.md` 里也就只有摘要。客户端据此在文献库列表与详情标注「仅摘要 / 全文 · …」。 |
 | `types` | `string[]` | 文献类型。 |
 | `indexed_at` | `string \| null` | 入库时间。 |
 | `n_paragraphs` / `n_facts` | `integer` | 段落与事实数。 |

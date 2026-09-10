@@ -62,7 +62,7 @@ public struct PaperMeta: Codable, Sendable, Hashable, Identifiable {
     public var issn: String
     public var quartile: String
     public var authors: String
-    public var source: String
+    public var source: PaperSource
     public var types: [String]
     public var indexedAt: Date?
     public var nParagraphs: Int
