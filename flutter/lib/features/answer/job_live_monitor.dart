@@ -107,9 +107,7 @@ class JobLiveMonitor extends _$JobLiveMonitor {
       }
       if (_cancelled) return;
       await Future<void>.delayed(delay);
-      delay = Duration(
-        milliseconds: math.min(delay.inMilliseconds * 2, 10000),
-      );
+      delay = Duration(milliseconds: math.min(delay.inMilliseconds * 2, 10000));
     }
   }
 

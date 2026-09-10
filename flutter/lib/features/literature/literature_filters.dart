@@ -1,94 +1,165 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/tokens.dart';
+import '../../core/logic/ask_filters.dart' show YearMode;
 import '../../core/models/literature.dart';
 import '../../shared/widgets/filter_pickers.dart';
+import '../../shared/widgets/surface.dart';
 import 'literature_controller.dart';
 
+/// 文献类型的中文标签；值仍是上游接受的英文名。
+const _typeLabels = <String, String>{
+  'Review': '综述',
+  'Systematic Review': '系统综述',
+  'Meta-Analysis': '荟萃分析',
+  'Randomized Controlled Trial': '随机对照试验',
+  'Clinical Trial': '临床试验',
+  'Observational Study': '观察性研究',
+};
+
+/// 查文献的筛选面板（放进 `showAdaptiveSheet`）。
 class LiteratureFilterPanel extends StatelessWidget {
   const LiteratureFilterPanel({
     super.key,
     required this.filters,
     required this.source,
+    required this.limit,
     required this.onChanged,
+    required this.onLimitChanged,
   });
 
   final LiteratureFilters filters;
   final LiteratureSource source;
+  final int limit;
   final ValueChanged<LiteratureFilters> onChanged;
+  final ValueChanged<int> onLimitChanged;
 
-  static const _types = <String>[
-    'Review',
-    'Clinical Trial',
-    'Randomized Controlled Trial',
-    'Meta-Analysis',
-    'Systematic Review',
-    'Observational Study',
-  ];
+  /// 入口按钮上的一行摘要；全默认时为 null。
+  static String? summarize(LiteratureFilters filters) {
+    final parts = [
+      switch (filters.yearMode) {
+        YearMode.any => '',
+        YearMode.recent => '近 ${filters.years} 年',
+        YearMode.range =>
+          '${filters.yearFrom ?? ''}–${filters.yearTo ?? ''}'.replaceAll(
+            RegExp(r'^–|–$'),
+            '',
+          ),
+      },
+      if (filters.quartiles.isNotEmpty)
+        (filters.quartiles.toList()..sort()).map((q) => 'Q$q').join('/'),
+      if (filters.publicationTypes.isNotEmpty)
+        '${filters.publicationTypes.length} 种类型',
+      if (filters.journals.isNotEmpty) '${filters.journals.length} 本期刊',
+      if (filters.openAccessOnly) '仅开放获取',
+    ].where((part) => part.isNotEmpty);
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
 
   @override
-  Widget build(BuildContext context) => ExpansionTile(
-    tilePadding: EdgeInsets.zero,
-    title: const Text('高级筛选'),
-    childrenPadding: const EdgeInsets.only(bottom: YaoeTokens.space4),
-    children: [
-      YaoeYearPicker(
-        mode: filters.yearMode,
-        years: filters.years,
-        yearFrom: filters.yearFrom,
-        yearTo: filters.yearTo,
-        onModeChanged: (value) => onChanged(filters.copyWith(yearMode: value)),
-        onYearsChanged: (value) => onChanged(filters.copyWith(years: value)),
-        onRangeChanged: (from, to) =>
-            onChanged(filters.copyWith(yearFrom: from, yearTo: to)),
-        errorText: filters.rangeError,
-      ),
-      const SizedBox(height: YaoeTokens.space4),
-      QuartilePicker(
-        quartiles: filters.quartiles,
-        onChanged: (value) => onChanged(filters.copyWith(quartiles: value)),
-      ),
-      const SizedBox(height: YaoeTokens.space4),
-      JournalPicker(
-        journals: filters.journals,
-        onChanged: (value) => onChanged(filters.copyWith(journals: value)),
-      ),
-      const SizedBox(height: YaoeTokens.space4),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Text('文献类型', style: Theme.of(context).textTheme.labelLarge),
-      ),
-      const SizedBox(height: YaoeTokens.space2),
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Wrap(
-          spacing: YaoeTokens.space2,
-          runSpacing: YaoeTokens.space2,
-          children: [
-            for (final type in _types)
-              FilterChip(
-                label: Text(type),
-                selected: filters.publicationTypes.contains(type),
-                onSelected: (selected) => onChanged(
-                  filters.copyWith(
-                    publicationTypes: selected
-                        ? [...filters.publicationTypes, type]
-                        : filters.publicationTypes.where((v) => v != type).toList(),
-                  ),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(YaoeTokens.pageInset),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilterGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('返回条数', style: theme.textTheme.labelLarge),
+                const SizedBox(height: YaoeTokens.space2),
+                SegmentedButton<int>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(value: 10, label: Text('10 条')),
+                    ButtonSegment(value: 20, label: Text('20 条')),
+                    ButtonSegment(value: 30, label: Text('30 条')),
+                  ],
+                  selected: {limit},
+                  onSelectionChanged: (values) => onLimitChanged(values.first),
                 ),
-              ),
-          ],
-        ),
+              ],
+            ),
+          ),
+          const SizedBox(height: YaoeTokens.space3),
+          FilterGroup(
+            child: YaoeYearPicker(
+              mode: filters.yearMode,
+              years: filters.years,
+              yearFrom: filters.yearFrom,
+              yearTo: filters.yearTo,
+              onModeChanged: (value) =>
+                  onChanged(filters.copyWith(yearMode: value)),
+              onYearsChanged: (value) =>
+                  onChanged(filters.copyWith(years: value)),
+              onRangeChanged: (from, to) =>
+                  onChanged(filters.copyWith(yearFrom: from, yearTo: to)),
+              errorText: filters.rangeError,
+            ),
+          ),
+          const SizedBox(height: YaoeTokens.space3),
+          FilterGroup(
+            child: QuartilePicker(
+              quartiles: filters.quartiles,
+              onChanged: (value) =>
+                  onChanged(filters.copyWith(quartiles: value)),
+            ),
+          ),
+          const SizedBox(height: YaoeTokens.space3),
+          FilterGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('文献类型', style: theme.textTheme.labelLarge),
+                const SizedBox(height: YaoeTokens.space2),
+                Wrap(
+                  spacing: YaoeTokens.space2,
+                  runSpacing: YaoeTokens.space2,
+                  children: [
+                    for (final entry in _typeLabels.entries)
+                      FilterChip(
+                        label: Text(entry.value),
+                        selected: filters.publicationTypes.contains(entry.key),
+                        onSelected: (selected) => onChanged(
+                          filters.copyWith(
+                            publicationTypes: selected
+                                ? [...filters.publicationTypes, entry.key]
+                                : filters.publicationTypes
+                                      .where((v) => v != entry.key)
+                                      .toList(),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: YaoeTokens.space3),
+          FilterGroup(
+            child: JournalPicker(
+              journals: filters.journals,
+              onChanged: (value) =>
+                  onChanged(filters.copyWith(journals: value)),
+            ),
+          ),
+          const SizedBox(height: YaoeTokens.space3),
+          FilterGroup(
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text('仅开放获取', style: theme.textTheme.labelLarge),
+              subtitle: const Text('仅 Semantic Scholar 有效'),
+              value: filters.openAccessOnly,
+              onChanged: source == LiteratureSource.s2
+                  ? (value) =>
+                        onChanged(filters.copyWith(openAccessOnly: value))
+                  : null,
+            ),
+          ),
+        ],
       ),
-      SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        title: const Text('仅开放获取'),
-        subtitle: const Text('仅 Semantic Scholar 有效'),
-        value: filters.openAccessOnly,
-        onChanged: source == LiteratureSource.s2
-            ? (value) => onChanged(filters.copyWith(openAccessOnly: value))
-            : null,
-      ),
-    ],
-  );
+    );
+  }
 }

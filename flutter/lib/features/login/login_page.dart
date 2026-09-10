@@ -97,52 +97,60 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(YaoeTokens.space5),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 480),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  BrandLockup(
-                    logoSize: 44,
-                    textStyle: theme.textTheme.headlineMedium,
+                  // BrandLockup 只支持横排，这里要竖排（Logo 在上、标题在下）。
+                  const Center(
+                    child: BrandLogo(size: 72, semanticLabel: 'YAOpenEvidence'),
+                  ),
+                  const SizedBox(height: YaoeTokens.space3),
+                  Text(
+                    'YAOpenEvidence',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium,
                   ),
                   const SizedBox(height: YaoeTokens.space2),
                   Text(
                     '基于文献证据的临床问答',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: YaoeTokens.space6),
+                  const SizedBox(height: 28),
+                  _FieldLabel('服务器地址'),
                   TextFormField(
                     controller: _server,
                     autocorrect: false,
                     keyboardType: TextInputType.url,
                     decoration: const InputDecoration(
-                      labelText: '服务器地址',
                       hintText: defaultServerUrl,
                     ),
                     validator: (value) => validateServerUrl(value ?? ''),
                   ),
                   const SizedBox(height: YaoeTokens.space3),
+                  _FieldLabel('用户名'),
                   TextFormField(
                     controller: _username,
                     autocorrect: false,
                     textCapitalization: TextCapitalization.none,
-                    decoration: const InputDecoration(labelText: '用户名'),
+                    decoration: const InputDecoration(hintText: '请输入用户名'),
                     validator: (value) =>
                         (value ?? '').trim().isEmpty ? '请输入用户名' : null,
                   ),
                   const SizedBox(height: YaoeTokens.space3),
+                  _FieldLabel('密码'),
                   TextFormField(
                     controller: _password,
                     obscureText: _obscure,
                     autocorrect: false,
                     onFieldSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
-                      labelText: '密码',
+                      hintText: '请输入密码',
                       suffixIcon: IconButton(
                         tooltip: _obscure ? '显示密码' : '隐藏密码',
                         onPressed: () => setState(() => _obscure = !_obscure),
@@ -169,6 +177,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   const SizedBox(height: YaoeTokens.space5),
                   FilledButton(
                     onPressed: (_submitting || _cooldown > 0) ? null : _submit,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
                     child: _submitting
                         ? const SizedBox(
                             width: 18,
@@ -177,10 +188,39 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           )
                         : Text(_cooldown > 0 ? '$_cooldown 秒后重试' : '登录'),
                   ),
+                  const SizedBox(height: YaoeTokens.space4),
+                  Text(
+                    '本应用输出仅供医学专业人员参考，不构成诊疗建议。',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 输入框上方的字段名（对齐 iOS 的表单排版）。
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: YaoeTokens.space1),
+      child: Text(
+        text,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );

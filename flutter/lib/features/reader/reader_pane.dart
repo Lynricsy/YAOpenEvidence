@@ -11,12 +11,12 @@ import '../../core/models/answers.dart';
 import '../../core/models/papers.dart';
 import '../../core/session/session_controller.dart';
 import '../../shared/external_links.dart';
-import '../../shared/format.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loadable.dart';
 import '../../shared/widgets/markdown_view.dart';
 import '../../shared/widgets/quote_highlight.dart';
+import '../../shared/widgets/surface.dart';
 import '../answer/answer_controller.dart';
 import 'paragraph_markdown.dart';
 
@@ -123,9 +123,8 @@ class _ReaderPaneState extends ConsumerState<ReaderPane>
         Expanded(
           child: AsyncValueView<ReaderMaterial>(
             value: material,
-            onRetry: () => ref.invalidate(
-              readerMaterialProvider(widget.answerId, n),
-            ),
+            onRetry: () =>
+                ref.invalidate(readerMaterialProvider(widget.answerId, n)),
             builder: (data) => switch (data) {
               ReaderDetail(:final detail) => _DetailTabs(
                 detail: detail,
@@ -148,12 +147,12 @@ class _ReaderPaneState extends ConsumerState<ReaderPane>
                     ? const EmptyState(
                         icon: Icons.hourglass_empty,
                         title: '该文献尚未阅读完成',
-                        description: '任务仍在进行中，原文与核实材料会在逐篇阅读阶段结束后出现。',
+                        description: '任务完成后这里会显示原文与核实材料',
                       )
                     : const EmptyState(
                         icon: Icons.inbox_outlined,
                         title: '此答案没有逐篇材料',
-                        description: '旧版导入的问答只保留了正文。',
+                        description: '这份答案没有保存原文快照。',
                       ),
               ),
             },
@@ -194,12 +193,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        YaoeTokens.space4,
-        YaoeTokens.space3,
-        YaoeTokens.space2,
-        YaoeTokens.space3,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -247,11 +241,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           if (onClose != null)
-            IconButton(
-              tooltip: '关闭阅读器',
-              onPressed: onClose,
-              icon: const Icon(Icons.close, size: 18),
-            ),
+            TextButton(onPressed: onClose, child: const Text('完成')),
         ],
       ),
     );
@@ -311,10 +301,7 @@ class _DetailTabs extends StatelessWidget {
                         blocks: parseMarkdown(detail.notesMd),
                       ),
               ),
-              _QuoteList(
-                quotes: detail.citations,
-                onParagraph: onParagraph,
-              ),
+              _QuoteList(quotes: detail.citations, onParagraph: onParagraph),
               _FactList(facts: detail.facts, onParagraph: onParagraph),
             ],
           ),
@@ -340,52 +327,52 @@ class _QuoteList extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(YaoeTokens.space4),
+      padding: const EdgeInsets.all(YaoeTokens.pageInset),
       itemCount: quotes.length,
       separatorBuilder: (context, index) =>
           const SizedBox(height: YaoeTokens.space3),
       itemBuilder: (context, index) {
         final quote = quotes[index];
         final pid = quote.pid ?? quote.claimedPid;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                VerifiedPill(verified: quote.verified),
-                const SizedBox(width: YaoeTokens.space2),
-                if (pid > 0)
-                  TextButton(
-                    onPressed: () => onParagraph(pid),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
+        return YaoeCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  VerifiedPill(verified: quote.verified),
+                  const SizedBox(width: YaoeTokens.space2),
+                  if (quote.keyFinding)
+                    Icon(Icons.star, size: 14, color: context.yaoe.warning),
+                  const Spacer(),
+                  if (pid > 0)
+                    TextButton.icon(
+                      onPressed: () => onParagraph(pid),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      icon: const Icon(
+                        Icons.subdirectory_arrow_right,
+                        size: 16,
+                      ),
+                      label: const Text('定位原文'),
                     ),
-                    child: Text('¶$pid'),
-                  ),
-                if (quote.keyFinding)
-                  Icon(Icons.star, size: 14, color: context.yaoe.warning),
-                const Spacer(),
+                ],
+              ),
+              const SizedBox(height: YaoeTokens.space1),
+              QuoteHighlight(quote: quote.quote),
+              if ((quote.noteSection ?? '').isNotEmpty) ...[
+                const SizedBox(height: YaoeTokens.space1),
                 Text(
-                  formatScore(quote.score),
+                  quote.noteSection!,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: YaoeTokens.space1),
-            QuoteHighlight(quote: quote.quote),
-            if ((quote.noteSection ?? '').isNotEmpty) ...[
-              const SizedBox(height: YaoeTokens.space1),
-              Text(
-                quote.noteSection!,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
             ],
-          ],
+          ),
         );
       },
     );
@@ -402,45 +389,49 @@ class _FactList extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     if (facts.isEmpty) {
-      return const EmptyState(
-        icon: Icons.lightbulb_outline,
-        title: '没有抽取到事实',
-      );
+      return const EmptyState(icon: Icons.lightbulb_outline, title: '没有抽取到事实');
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(YaoeTokens.space4),
+      padding: const EdgeInsets.all(YaoeTokens.pageInset),
       itemCount: facts.length,
       separatorBuilder: (context, index) =>
           const SizedBox(height: YaoeTokens.space3),
       itemBuilder: (context, index) {
         final fact = facts[index];
         final text = fact.factZh.isNotEmpty ? fact.factZh : fact.fact;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Pill(text: fact.kindLabel, color: theme.colorScheme.primary),
-                const SizedBox(width: YaoeTokens.space2),
-                VerifiedPill(verified: fact.verified),
-                if (fact.pid != null)
-                  TextButton(
-                    onPressed: () => onParagraph(fact.pid!),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
+        return YaoeCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Pill(text: fact.kindLabel, color: theme.colorScheme.primary),
+                  const SizedBox(width: YaoeTokens.space2),
+                  VerifiedPill(verified: fact.verified),
+                  const Spacer(),
+                  if (fact.pid != null)
+                    TextButton.icon(
+                      onPressed: () => onParagraph(fact.pid!),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      icon: const Icon(
+                        Icons.subdirectory_arrow_right,
+                        size: 16,
+                      ),
+                      label: const Text('定位原文'),
                     ),
-                    child: Text('¶${fact.pid}'),
-                  ),
-              ],
-            ),
-            const SizedBox(height: YaoeTokens.space1),
-            Text(text, style: theme.textTheme.bodySmall),
-            if (fact.quote.isNotEmpty) ...[
+                ],
+              ),
               const SizedBox(height: YaoeTokens.space1),
-              QuoteHighlight(quote: fact.quote, maxLines: 3),
+              Text(text, style: theme.textTheme.bodySmall),
+              if (fact.quote.isNotEmpty) ...[
+                const SizedBox(height: YaoeTokens.space1),
+                QuoteHighlight(quote: fact.quote, maxLines: 3),
+              ],
             ],
-          ],
+          ),
         );
       },
     );

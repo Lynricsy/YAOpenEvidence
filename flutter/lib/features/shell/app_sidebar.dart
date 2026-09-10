@@ -231,47 +231,56 @@ class _SidebarTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = selected
-        ? theme.colorScheme.primary
-        : theme.colorScheme.onSurface;
-    final tile = InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: collapsed ? 0 : YaoeTokens.space3,
-          vertical: YaoeTokens.space2 + 2,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? theme.colorScheme.primary.withValues(alpha: 0.12)
-              : null,
-          borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-        ),
-        child: Row(
-          mainAxisAlignment: collapsed
-              ? MainAxisAlignment.center
-              : MainAxisAlignment.start,
-          children: [
-            Icon(icon, size: 18, color: color),
-            if (!collapsed) ...[
-              const SizedBox(width: YaoeTokens.space3),
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge?.copyWith(color: color),
-                ),
+    final tile = Material(
+      color: selected
+          ? theme.colorScheme.primary.withValues(alpha: 0.12)
+          : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: collapsed ? 0 : YaoeTokens.space3,
+            vertical: 10,
+          ),
+          child: Row(
+            mainAxisAlignment: collapsed
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
+              if (!collapsed) ...[
+                const SizedBox(width: YaoeTokens.space3),
+                Expanded(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: selected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: collapsed ? YaoeTokens.space2 : YaoeTokens.space2,
-        vertical: 1,
+      padding: const EdgeInsets.symmetric(
+        horizontal: YaoeTokens.space2,
+        vertical: 2,
       ),
       child: collapsed ? Tooltip(message: label, child: tile) : tile,
     );
@@ -311,7 +320,7 @@ class _RecentAnswers extends ConsumerWidget {
             ),
             child: InkWell(
               onTap: () => context.go('/a/${answer.id}'),
-              borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+              borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: YaoeTokens.space3,

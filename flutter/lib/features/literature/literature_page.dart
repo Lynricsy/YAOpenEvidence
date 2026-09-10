@@ -7,10 +7,12 @@ import '../../app/theme/tokens.dart';
 import '../../core/models/literature.dart';
 import '../../shared/external_links.dart';
 import '../../shared/format.dart';
+import '../../shared/widgets/adaptive_sheet.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loadable.dart';
 import '../../shared/widgets/page_header.dart';
+import '../../shared/widgets/surface.dart';
 import 'fulltext_sheet.dart';
 import 'literature_controller.dart';
 import 'literature_filters.dart';
@@ -27,19 +29,24 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
   Widget build(BuildContext context) {
     final value = ref.watch(literatureControllerProvider);
     final controller = ref.read(literatureControllerProvider.notifier);
-    final canSearch = controller.query.trim().isNotEmpty &&
-        controller.filters.rangeError == null && !value.isLoading;
+    final canSearch =
+        controller.query.trim().isNotEmpty &&
+        controller.filters.rangeError == null &&
+        !value.isLoading;
+    final filterSummary = LiteratureFilterPanel.summarize(controller.filters);
     return SingleChildScrollView(
       child: PageBody(
-        maxWidth: 1040,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const PageHeader(title: '查文献', description: '直接检索 PubMed / Semantic Scholar'),
+            const PageHeader(
+              title: '查文献',
+              description: '直接检索 PubMed / Semantic Scholar',
+            ),
             TextFormField(
               initialValue: controller.query,
               decoration: const InputDecoration(
-                labelText: '检索词',
+                hintText: '检索词',
                 prefixIcon: Icon(Icons.search),
               ),
               textInputAction: TextInputAction.search,
@@ -49,50 +56,68 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
               },
             ),
             const SizedBox(height: YaoeTokens.space3),
-            Wrap(
-              spacing: YaoeTokens.space3,
-              runSpacing: YaoeTokens.space3,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
               children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SegmentedButton<LiteratureSource>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (final source in LiteratureSource.values)
-                        ButtonSegment(value: source, label: Text(source.label)),
-                    ],
-                    selected: {controller.source},
-                    onSelectionChanged: (values) =>
-                        setState(() => controller.setSource(values.single)),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SegmentedButton<LiteratureSource>(
+                      showSelectedIcon: false,
+                      segments: [
+                        for (final source in LiteratureSource.values)
+                          ButtonSegment(
+                            value: source,
+                            label: Text(source.label),
+                          ),
+                      ],
+                      selected: {controller.source},
+                      onSelectionChanged: (values) =>
+                          setState(() => controller.setSource(values.single)),
+                    ),
                   ),
                 ),
-                SizedBox(
-                  width: 116,
-                  child: DropdownButtonFormField<int>(
-                    key: ValueKey(controller.limit),
-                    initialValue: controller.limit,
-                    decoration: const InputDecoration(labelText: '条数'),
-                    items: [
-                      for (final limit in const [10, 20, 30])
-                        DropdownMenuItem(value: limit, child: Text('$limit 条')),
-                    ],
-                    onChanged: (limit) {
-                      if (limit != null) setState(() => controller.setLimit(limit));
-                    },
-                  ),
-                ),
+                const SizedBox(width: YaoeTokens.space2),
                 FilledButton.icon(
-                  onPressed: canSearch ? () => unawaited(controller.search()) : null,
+                  onPressed: canSearch
+                      ? () => unawaited(controller.search())
+                      : null,
                   icon: const Icon(Icons.search),
                   label: Text(value.isLoading ? '检索中' : '检索'),
                 ),
               ],
             ),
-            LiteratureFilterPanel(
-              filters: controller.filters,
-              source: controller.source,
-              onChanged: (filters) => setState(() => controller.setFilters(filters)),
+            const SizedBox(height: YaoeTokens.space3),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.filter_list, size: 16),
+                label: Text(filterSummary ?? '高级筛选'),
+                onPressed: () => unawaited(
+                  showAdaptiveSheet<void>(
+                    context,
+                    title: '检索筛选',
+                    child: StatefulBuilder(
+                      // sheet 有自己的 element 树，改动要同时刷新 sheet 与页面。
+                      builder: (context, setSheetState) =>
+                          LiteratureFilterPanel(
+                            filters: controller.filters,
+                            source: controller.source,
+                            limit: controller.limit,
+                            onChanged: (filters) {
+                              controller.setFilters(filters);
+                              setSheetState(() {});
+                              setState(() {});
+                            },
+                            onLimitChanged: (limit) {
+                              controller.setLimit(limit);
+                              setSheetState(() {});
+                              setState(() {});
+                            },
+                          ),
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: YaoeTokens.space4),
             AsyncValueView<LiteratureSearchResult?>(
@@ -102,21 +127,18 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
                 if (result == null) {
                   return const EmptyState(icon: Icons.search, title: '尚未检索');
                 }
-                final fallback = result.fallbackReason;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('来源 ${result.source.label} · 上游共 ${result.total} 条',
-                      style: Theme.of(context).textTheme.titleSmall),
-                    if (fallback != null && fallback.isNotEmpty) ...[
+                    Text(
+                      '找到 ${formatCount(result.total)} 条',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    if ((result.fallbackReason ?? '').isNotEmpty) ...[
                       const SizedBox(height: YaoeTokens.space3),
-                      Container(
-                        padding: const EdgeInsets.all(YaoeTokens.space3),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: context.yaoe.warning),
-                          borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-                        ),
-                        child: Text('已改用 PubMed：$fallback'),
+                      YaoeCard(
+                        tint: context.yaoe.warning,
+                        child: const Text('所选来源暂不可用，已改用 PubMed'),
                       ),
                     ],
                     const SizedBox(height: YaoeTokens.space3),
@@ -125,7 +147,9 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
                     else
                       for (final record in result.items)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+                          padding: const EdgeInsets.only(
+                            bottom: YaoeTokens.space3,
+                          ),
                           child: _LiteratureCard(
                             key: ValueKey('${record.source.name}:${record.id}'),
                             record: record,
@@ -162,38 +186,50 @@ class _LiteratureCardState extends State<_LiteratureCard> {
         ? record.tldr!
         : record.abstract ?? '';
     final ident = record.fulltextIdent;
-    final metadata = [record.journal, record.year]
-        .whereType<String>().where((value) => value.isNotEmpty).join(' · ');
-    return Container(
+    final metadata = [
+      record.journal,
+      record.year,
+    ].whereType<String>().where((value) => value.isNotEmpty).join(' · ');
+    return YaoeCard(
       padding: const EdgeInsets.all(YaoeTokens.space4),
-      decoration: BoxDecoration(
-        color: context.yaoe.card,
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(record.title, style: theme.textTheme.titleSmall),
           if (record.authors.isNotEmpty) ...[
             const SizedBox(height: YaoeTokens.space2),
-            Text(formatAuthors(record.authors), style: theme.textTheme.bodySmall),
+            Text(
+              formatAuthors(record.authors),
+              style: theme.textTheme.bodySmall,
+            ),
           ],
-          if (metadata.isNotEmpty) Text(metadata, style: theme.textTheme.bodySmall),
+          if (metadata.isNotEmpty)
+            Text(metadata, style: theme.textTheme.bodySmall),
           const SizedBox(height: YaoeTokens.space2),
           Wrap(
             spacing: YaoeTokens.space2,
             runSpacing: YaoeTokens.space2,
             children: [
-              RankBadge(quartile: record.rank?.quartile ?? '', label: record.rank?.quartile),
+              RankBadge(
+                quartile: record.rank?.quartile ?? '',
+                label: record.rank?.quartile,
+              ),
               if (record.citedBy != null)
-                Pill(text: '被引 ${record.citedBy}', color: theme.colorScheme.onSurfaceVariant),
+                Pill(
+                  text: '被引 ${record.citedBy}',
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
             ],
           ),
           if (summary.isNotEmpty) ...[
             const SizedBox(height: YaoeTokens.space3),
-            Text(summary, maxLines: _expanded ? null : 3,
-              overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis),
+            Text(
+              summary,
+              maxLines: _expanded ? null : 3,
+              overflow: _expanded
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
+            ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -208,22 +244,36 @@ class _LiteratureCardState extends State<_LiteratureCard> {
             spacing: YaoeTokens.space3,
             runSpacing: YaoeTokens.space2,
             children: [
-              if (record.pmid?.isNotEmpty == true) MonoLabel(label: 'PMID', value: record.pmid!),
-              if (record.doi?.isNotEmpty == true) MonoLabel(label: 'DOI', value: record.doi!),
-              if (record.pmcid?.isNotEmpty == true) MonoLabel(label: 'PMCID', value: record.pmcid!),
+              if (record.pmid?.isNotEmpty == true)
+                MonoLabel(label: 'PMID', value: record.pmid!),
+              if (record.doi?.isNotEmpty == true)
+                MonoLabel(label: 'DOI', value: record.doi!),
+              if (record.pmcid?.isNotEmpty == true)
+                MonoLabel(label: 'PMCID', value: record.pmcid!),
             ],
           ),
           const SizedBox(height: YaoeTokens.space3),
-          ExternalLinkRow(pmid: record.pmid, doi: record.doi,
-            pmcid: record.pmcid, pdf: record.openAccessPdf),
+          ExternalLinkRow(
+            pmid: record.pmid,
+            doi: record.doi,
+            pmcid: record.pmcid,
+            pdf: record.openAccessPdf,
+          ),
           const SizedBox(height: YaoeTokens.space3),
           Align(
             alignment: Alignment.centerLeft,
             child: Tooltip(
               message: ident == null ? '无可用标识符' : '查看全文',
               child: OutlinedButton.icon(
-                onPressed: ident == null ? null : () => unawaited(showFulltextSheet(
-                  context, ident: ident, title: record.title)),
+                onPressed: ident == null
+                    ? null
+                    : () => unawaited(
+                        showFulltextSheet(
+                          context,
+                          ident: ident,
+                          title: record.title,
+                        ),
+                      ),
                 icon: const Icon(Icons.article_outlined),
                 label: const Text('查看全文'),
               ),

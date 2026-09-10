@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../app/theme/tokens.dart';
 import '../../core/session/prefs.dart';
 
 part 'split_view.g.dart';
@@ -46,7 +45,7 @@ class SplitView extends ConsumerStatefulWidget {
 }
 
 class _SplitViewState extends ConsumerState<SplitView> {
-  static const dividerWidth = 8.0;
+  static const dividerWidth = 12.0;
   static const minReaderWidth = 360.0;
 
   double? _dragFraction;
@@ -96,19 +95,25 @@ class _SplitViewState extends ConsumerState<SplitView> {
                 child: Container(
                   width: dividerWidth,
                   height: double.infinity,
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: 0.6,
-                  ),
+                  color: Colors.transparent,
                   alignment: Alignment.center,
-                  child: Container(
-                    width: 2,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.outline,
-                      borderRadius: BorderRadius.circular(
-                        YaoeTokens.radiusSm,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 1,
+                        height: double.infinity,
+                        color: theme.colorScheme.outlineVariant,
                       ),
-                    ),
+                      Container(
+                        width: 4,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.outline,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
