@@ -476,6 +476,10 @@ def _writer_lock(kb_dir: str, should_cancel: Callable[[], bool] = lambda: False)
             fcntl.flock(lock, fcntl.LOCK_UN)
 
 # ====================================================================== store
+class EmbedderMismatch(RuntimeError):
+    """索引的后端与本进程的编码器不一致。向量不可比，读写都必须拒绝。"""
+
+
 class KnowledgeStore:
     """向量库。整份索引是**一个文件**（`kb/index.npz`）。
 
@@ -576,9 +580,8 @@ class KnowledgeStore:
 
     def _merge(self, pmid: str, items: list[dict], vecs: np.ndarray, replace: bool) -> int:
         """把编码好的条目并进当前快照并落盘。调用方保证已持锁（或在 staging 中）。"""
+        self._require_same_embedder("add_paper")
         old_meta, old_vecs, info = self._snapshot
-        if info.get("embedder") and info["embedder"] != self.embedder.name:
-            log(f"[kb] WARNING index built with {info['embedder']} but current embedder is {self.embedder.name}; run `reindex`")
         if replace and pmid in self.indexed_pmids():
             keep = [i for i, m in enumerate(old_meta) if m.get("pmid") != pmid]
             old_meta = [old_meta[i] for i in keep]
@@ -598,10 +601,31 @@ class KnowledgeStore:
             except FileNotFoundError:
                 pass
 
+    def _require_same_embedder(self, action: str) -> None:
+        """后端不一致就停下，别只是警告。
+
+        向量只在同一后端内可比。光警告是不够的：`_merge` 会照样 vstack，还会把
+        info 里的标签覆盖成当前后端，于是混代从下一次调用起彻底隐身；`search`
+        更是连 info 都不看，直接拿新后端的 query 点乘旧矩阵，静默返回漂掉的结果。
+        维度检查也拦不住——bge-m3 与它的 int8 量化版都是 1024 维，余弦却只有
+        0.937、top-5 邻居重合率 0.875。
+
+        空索引不受限制：那正是初始化或 reindex 到 staging 的正常起点。
+        """
+        meta, _, info = self._snapshot
+        built = info.get("embedder")
+        if not meta or not built or built == self.embedder.name:
+            return
+        raise EmbedderMismatch(
+            f"{self.index_path} 是用 {built!r} 建的，本进程的编码器是 "
+            f"{self.embedder.name!r}：{action} 会混入不可比的向量。请让所有 API/worker "
+            f"进程用同一个 EMBED_BACKEND/EMBED_MODEL，再 `reindex` 重建整库。")
+
     def search(self, query: str, top_k: int = 8, kind: str = "", pmids: Optional[set[str]] = None) -> list[dict]:
         meta, vecs, _ = self._snapshot
         if vecs is None or not len(meta):
             return []
+        self._require_same_embedder("search")
         q = self.embedder.encode([query])[0]
         scores = vecs @ q
         order = np.argsort(-scores)

@@ -189,7 +189,7 @@ python -c "from huggingface_hub import snapshot_download as d; \
 - 末级目录名必须正好是 `bge-m3`：`Embedder` 的后端名取自 `os.path.basename(model_path)`，要与索引里记的 `"embedder": "bge-m3"` 一致。
 - 排除 `onnx/`：上游的 `onnx/model.onnx_data` 单独 2.27G，与 `pytorch_model.bin` 是同一模型的另一份格式，默认的 torch 后端只读 `.bin`。排除后约 2.2G。想用 ONNX 后端不需要下它，按 §6.3 自己导出 int8 权重（约 570M）即可。
 - 无 GPU 无需改代码，`Embedder` 只在 `torch.cuda.is_available()` 为真时才切 GPU；CPU 路径的调优见 §6.2。
-- **装完必须验证**：缺模型或缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)，而现有索引里的向量是 1024 维，`search` 会在矩阵乘处维度报错。
+- **装完必须验证**：缺模型或缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)。它与索引里记的 `bge-m3` 不是同一后端，`search` / `add_paper` 会抛 `EmbedderMismatch` 并说明该重建还是该修环境——但**报错时机是第一次读写**，所以别等到那会儿才发现。
 
 ```bash
 python -c "from knowledge_store import Embedder; e=Embedder(); print(e.name, e.dim)"
@@ -241,9 +241,11 @@ done
 
 ### 6.3 可选：ONNX int8 后端（`EMBED_BACKEND=onnx`）
 
-比 torch fp32 快约 2.2×（156 → 76 ms/条），代价是**向量会变**，`Embedder.name` 因此带上
-`+onnx-int8` 后缀，好让旧索引触发 reindex 警告而不是新旧精度静默混代。改之前先掂量：
-实测与 fp32 的 `cos` 最低 0.937、top-5 邻居重合率只有 0.875，检索结果会漂。
+比 torch fp32 快约 2.2×（156 → 76 ms/条），代价是**向量会变**：实测与 fp32 的 `cos` 最低
+0.937、top-5 邻居重合率只有 0.875，检索结果会漂。所以两个后端的向量**不能共存于一份
+索引，也不能跨进程混用**——`Embedder.name` 带上 `+onnx-int8` 后缀，`search` 与 `add_paper`
+在读到非空且标签不符的索引时直接抛 `EmbedderMismatch`，不是打一行警告就继续。
+注意维度检查在这里帮不上忙：两者都是 1024 维。
 
 `optimum` 故意**不在** `pyproject.toml` 里：uv 的 lock 对所有 extra 统一求解，即便没人装
 这个 extra，它也会把 transformers 压到 `<5`、连带把 sentence-transformers 从 6.0.1 拖回
@@ -259,7 +261,19 @@ m = SentenceTransformer(ks.EMBED_MODEL, backend='onnx')      # 首次会先导�
 export_dynamic_quantized_onnx_model(m, 'avx512_vnni', ks.EMBED_MODEL)
 "
 # 产出 models/BAAI/bge-m3/onnx/model_qint8_avx512_vnni.onnx（约 570M）
-EMBED_BACKEND=onnx python knowledge_store.py reindex     # 换后端必须全量重建
+```
+
+接着**把 `EMBED_BACKEND=onnx` 写进 `.env`**，让 API 与 worker 都持久用同一个后端
+（`compose.yaml:4` 的 `env_file` 会同时喂给两者），重启整栈，最后重建整库：
+
+```bash
+cd core && python knowledge_store.py reindex     # 换后端必须全量重建
+```
+
+只在 reindex 命令前临时加一次 `EMBED_BACKEND=onnx` 是**不够的**：那样索引是 int8 的，
+而 API 进程仍用 fp32 编码 query，此时每一次 `/kb/search` 都会撞 `EmbedderMismatch`
+（在加上这道拦截之前，它会静默返回漂掉的结果）。回退到 torch 同理——改回 `.env`
+之后必须再 reindex 一次。
 ```
 
 

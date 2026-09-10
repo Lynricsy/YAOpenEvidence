@@ -255,3 +255,31 @@ def test_cached_search_survives_same_mtime_generation_change(tmp_path, monkeypat
         assert result.result(timeout=10)[0]["pmid"] == "1001"
     assert asyncio.run(service.search("query"))[0]["pmid"] == "2001"
     assert service.get_store().embedder is embedder
+
+
+async def test_search_refuses_mismatched_backend_as_unavailable(tmp_path, monkeypatch):
+    """索引是另一个向量后端建的：检索要报 503 配置问题，而不是落到 500 兜底。
+
+    两个后端可以同维度（bge-m3 与它的 int8 量化版都是 1024 维），维度检查拦不住，
+    静默混用只会让检索结果漂。
+    """
+    import knowledge_store as ks
+    from app.errors import ApiError
+    from app.services import kb as service_module
+
+    class Embedder:
+        name = "test-cache+onnx-int8"
+
+        def encode(self, texts):
+            return ks.np.array([[1.0, 0.0] for _ in texts], dtype="float32")
+
+    ks.write_index(str(tmp_path / ks.INDEX_FILE), [{"pmid": "1001", "kind": "paragraph"}],
+                   ks.np.array([[1.0, 0.0]], dtype="float32"), {"embedder": "test-cache", "dim": 2})
+    monkeypatch.setattr(service_module, "KB_DIR", str(tmp_path))
+    service = service_module.KbService()
+    service._store = ks.KnowledgeStore(str(tmp_path), Embedder())
+    service._mtime = service._index_mtime()
+
+    with pytest.raises(ApiError) as err:
+        await service.search("query")
+    assert (err.value.status, err.value.code) == (503, "unavailable")

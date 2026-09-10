@@ -203,6 +203,12 @@ class _TinyEmbedder:
         return ks.np.array([[1.0, 0.0] for _ in texts], dtype="float32")
 
 
+class _OtherBackend(_TinyEmbedder):
+    """同维度、不同后端名——正是 bge-m3 与它的 int8 量化版之间的关系。"""
+
+    name = "test-two-dimensional+quantised"
+
+
 def _add(store, pmid):
     return store.add_paper({"pmid": pmid, "title": pmid},
                            [{"id": 1, "sec": "", "text": pmid}], [])
@@ -221,6 +227,33 @@ def test_preloaded_writers_preserve_both_papers(tmp_path):
     _add(first, "1001")
     _add(second, "2001")
     assert _pmids(Path(first.dir)) == {"1001", "2001"}
+
+
+def test_other_backend_is_refused_instead_of_silently_mixed(tmp_path):
+    """换了后端却没重建：读和写都必须报错，而不是拿新 query 点乘旧矩阵。
+
+    维度检查在这里帮不上忙——bge-m3 与它的 int8 量化版都是 1024 维，余弦却只有
+    0.937、top-5 邻居重合率 0.875，混起来只会静默漂。
+    """
+    kb_dir = str(tmp_path / "kb")
+    _add(ks.KnowledgeStore(kb_dir, _TinyEmbedder()), "1001")
+
+    other = ks.KnowledgeStore(kb_dir, _OtherBackend())
+    with pytest.raises(ks.EmbedderMismatch):
+        other.search("query")
+    with pytest.raises(ks.EmbedderMismatch):
+        _add(other, "2001")
+
+    assert _pmids(Path(kb_dir)) == {"1001"}, "被拒的写入不许留下痕迹"
+    assert ks.index_info(kb_dir)["embedder"] == _TinyEmbedder.name, "标签不许被覆盖成新后端"
+
+
+def test_empty_index_accepts_any_backend(tmp_path):
+    """空库没有可比性问题：初始化和 reindex 到 staging 都从这里起步。"""
+    store = ks.KnowledgeStore(str(tmp_path / "kb"), _OtherBackend())
+    assert store.search("query") == []
+    assert _add(store, "1001") == 1
+    assert ks.index_info(store.dir)["embedder"] == _OtherBackend.name
 
 
 def test_process_writers_reload_latest_baseline(tmp_path):

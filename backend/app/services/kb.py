@@ -4,9 +4,17 @@ from __future__ import annotations
 import os
 import threading
 
-from knowledge_store import INDEX_FILE, KnowledgeStore
+from knowledge_store import INDEX_FILE, EmbedderMismatch, KnowledgeStore
 from picos_paths import KB_DIR
 from starlette.concurrency import run_in_threadpool
+
+from ..errors import ApiError
+
+# 后端错配是配置问题、不是未知故障：全局兜底会把它变成 500 internal_error，那既
+# 分类错了、又只留在日志里。检索在这种状态下无法给出可比的结果，所以报 503。
+# detail 不透传异常原文——那里带着索引的绝对路径。
+_MISMATCH_DETAIL = ("知识库索引与本进程的向量后端不一致：所有 API / worker 必须使用同一个 "
+                    "EMBED_BACKEND 与 EMBED_MODEL，切换后需重建整库（POST /kb/reindex）。")
 
 
 class KbService:
@@ -46,7 +54,10 @@ class KbService:
     async def search(self, q: str, kind: str = "", top_k: int = 8,
                      pmids: set[str] | None = None) -> list[dict]:
         store = self.get_store()
-        return await run_in_threadpool(store.search, q, top_k, kind, pmids)
+        try:
+            return await run_in_threadpool(store.search, q, top_k, kind, pmids)
+        except EmbedderMismatch as exc:
+            raise ApiError(503, "unavailable", _MISMATCH_DETAIL) from exc
 
     def stats(self) -> dict:
         return self.get_store().stats()
