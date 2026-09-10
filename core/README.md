@@ -187,8 +187,8 @@ python -c "from huggingface_hub import snapshot_download as d; \
 
 - 目标路径固定为 `<项目根>/models/BAAI/bge-m3`（`knowledge_store.py` 的 `EMBED_MODEL` 默认值，可用同名环境变量覆盖）。
 - 末级目录名必须正好是 `bge-m3`：`Embedder` 的后端名取自 `os.path.basename(model_path)`，要与索引里记的 `"embedder": "bge-m3"` 一致。
-- 排除 `onnx/`：`onnx/model.onnx_data` 单独 2.27G，与 `pytorch_model.bin` 是同一模型的另一份格式，`SentenceTransformer` 只读 `.bin`。排除后约 2.2G。
-- 无 GPU 无需改代码，`Embedder` 只在 `torch.cuda.is_available()` 为真时才切 GPU。
+- 排除 `onnx/`：上游的 `onnx/model.onnx_data` 单独 2.27G，与 `pytorch_model.bin` 是同一模型的另一份格式，默认的 torch 后端只读 `.bin`。排除后约 2.2G。想用 ONNX 后端不需要下它，按 §6.3 自己导出 int8 权重（约 570M）即可。
+- 无 GPU 无需改代码，`Embedder` 只在 `torch.cuda.is_available()` 为真时才切 GPU；CPU 路径的调优见 §6.2。
 - **装完必须验证**：缺模型或缺 torch 时 `Embedder` 只打一行 log 就静默退化成 `hash-bow-v1`(4096 维)，而现有索引里的向量是 1024 维，`search` 会在矩阵乘处维度报错。
 
 ```bash
@@ -199,6 +199,69 @@ python knowledge_store.py search "SGLT2 HFpEF 心衰住院"
 ```
 
 > 装在默认的 `<项目根>/.venv` 时，`./PICOSGpt kb ...` 直接可用；装在别处则设 `PICOSGPT_ENV=<环境目录>`。
+
+### 6.2 编码吞吐标定（`EMBED_THREADS` / `EMBED_BATCH_TOKENS`）
+
+CPU 上入库的绝大部分时间花在 bge-m3 的前向推理上，而它对**线程数**极其敏感，最优值
+又只能按机器实测——容器和虚拟机读不到宿主的 SMT 拓扑（本机 KVM guest 报 24 个 vCPU、
+`Thread(s) per core: 1`，宿主其实是 16 核 32 线程），所以代码不做任何推断，只认
+`EMBED_THREADS`。**留空就沿用 torch 默认（= 逻辑核数），实测往往正好是最差的一档。**
+
+```bash
+cd core
+for t in 6 8 12 16 24; do EMBED_THREADS=$t python - <<'PY' 2>&1 | tail -1
+import json, os, time
+import knowledge_store as ks
+texts = []
+for d in sorted(os.listdir(ks.LIB_DIR)):
+    p = os.path.join(ks.LIB_DIR, d, "paragraphs.json")
+    if os.path.exists(p):
+        texts += [x["text"] for x in json.load(open(p))]
+    if len(texts) >= 128:
+        break
+texts = texts[:128]
+e = ks.Embedder()
+e.encode(texts[:4])                      # 预热，别把首批的一次性开销算进去
+t0 = time.perf_counter(); e.encode(texts); dt = time.perf_counter() - t0
+print(f"EMBED_THREADS={os.environ['EMBED_THREADS']:>3}: {dt/len(texts)*1000:6.1f} ms/条")
+PY
+done
+```
+
+把最快的那档写进 `.env`。24 vCPU / 宿主 7950X3D 上的实测曲线（128 段真实文本、23.7k token）：
+
+| threads | 6 | 8 | 10 | **12** | 14 | 16 | 20 | 24 |
+|---|---|---|---|---|---|---|---|---|
+| ms/条 | 242 | 191 | 183 | **156** | 167 | 173 | 182 | 420 |
+
+`EMBED_BATCH_TOKENS`（默认 1024）是单批 **padding 之后** 的 token 上限。批的真实成本是
+`最长那条 × 批内条数`，所以固定条数的分批遇到长短混排会大量空转：同一批文本用
+`batch_size=16` 要 436 ms/条、`batch_size=128` 要 1893 ms/条。注意两个参数有先后——
+线程数没调对时按 token 分批几乎白干（1.04×），调对之后才拿到 2.24×。
+
+### 6.3 可选：ONNX int8 后端（`EMBED_BACKEND=onnx`）
+
+比 torch fp32 快约 2.2×（156 → 76 ms/条），代价是**向量会变**，`Embedder.name` 因此带上
+`+onnx-int8` 后缀，好让旧索引触发 reindex 警告而不是新旧精度静默混代。改之前先掂量：
+实测与 fp32 的 `cos` 最低 0.937、top-5 邻居重合率只有 0.875，检索结果会漂。
+
+`optimum` 故意**不在** `pyproject.toml` 里：uv 的 lock 对所有 extra 统一求解，即便没人装
+这个 extra，它也会把 transformers 压到 `<5`、连带把 sentence-transformers 从 6.0.1 拖回
+5.7.0。所以它只能手动装，并且要清楚这会降级上面两个包：
+
+```bash
+uv pip install "optimum[onnxruntime]>=1.24"      # 会降级 transformers / sentence-transformers
+cd core && python -c "
+from sentence_transformers import SentenceTransformer
+from sentence_transformers.backend import export_dynamic_quantized_onnx_model
+import knowledge_store as ks
+m = SentenceTransformer(ks.EMBED_MODEL, backend='onnx')      # 首次会先导出 fp32 ONNX，约 21s
+export_dynamic_quantized_onnx_model(m, 'avx512_vnni', ks.EMBED_MODEL)
+"
+# 产出 models/BAAI/bge-m3/onnx/model_qint8_avx512_vnni.onnx（约 570M）
+EMBED_BACKEND=onnx python knowledge_store.py reindex     # 换后端必须全量重建
+```
+
 
 ## 7. 排错
 

@@ -32,15 +32,23 @@ import re
 import shutil
 import sys
 import tempfile
+import threading
 import time
-from contextlib import contextmanager, nullcontext
-from typing import Callable, Optional
+from contextlib import contextmanager
+from typing import Callable, Iterator, Optional
 
 import numpy as np
 
 from picos_paths import KB_DIR, LIB_DIR, MODELS_DIR
 
 EMBED_MODEL = os.environ.get("EMBED_MODEL") or os.path.join(MODELS_DIR, "BAAI", "bge-m3")
+# 后端默认 torch fp32。换 onnx 会改变向量（实测 cos_min 0.937、top-5 邻居重合 0.875），
+# 所以 `Embedder.name` 必须跟着变——让旧索引触发已有的 reindex 警告，而不是新旧精度
+# 的向量静默混进同一个矩阵里。
+EMBED_BACKEND = (os.environ.get("EMBED_BACKEND") or "torch").strip().lower()
+EMBED_BATCH_TOKENS = int(os.environ.get("EMBED_BATCH_TOKENS") or 1024)
+EMBED_THREADS = int(os.environ.get("EMBED_THREADS") or 0)
+ONNX_INT8_FILE = "onnx/model_qint8_avx512_vnni.onnx"
 HASH_DIM = 4096
 
 
@@ -256,38 +264,99 @@ def extract_facts(paras: list[dict], llm: Callable[[str, str, int], str], questi
 
 
 # ====================================================================== embeddings
+# 线程数不做推断，只认 EMBED_THREADS。
+#
+# CPU 上 GEMM 的最优线程数几乎从不超过**物理**核数，可是容器和虚拟机里读不到真实
+# 拓扑：本机 KVM guest 报 24 个 vCPU、`Thread(s) per core: 1`、24 个互不相同的
+# core_id，宿主其实是 16 核 32 线程的 7950X3D——按 `thread_siblings_list` 推物理核
+# 只会得到 24，正好是实测最差的那一档。猜错比不猜贵得多（同一批 128 段、23.7k token）：
+#
+#   threads   6     8    10    12    14    16    20    24
+#   ms/条   242   191   183   156   167   173   182   420
+#
+# 而且两件事有先后：线程数没调对时，按 token 分批几乎白干（threads=24 上只有
+# 1.04×）；调对之后才拿到 2.24×。所以这是个必须按机器标定一次的运维参数，
+# 标定脚本见 core/README.md「6.2 编码吞吐标定」。
+
+
 class Embedder:
-    def __init__(self, model_path: str = EMBED_MODEL, device: str = ""):
+    def __init__(self, model_path: str = EMBED_MODEL, device: str = "",
+                 backend: str = EMBED_BACKEND, batch_tokens: int = EMBED_BATCH_TOKENS):
         self.name = "hash-bow-v1"
         self.model = None
         self.dim = HASH_DIM
-        if os.path.isdir(model_path):
-            try:
-                import torch
-                from sentence_transformers import SentenceTransformer
-                if not device:
-                    device = "cpu"
-                    if torch.cuda.is_available():
-                        free = [(torch.cuda.mem_get_info(i)[0], i) for i in range(torch.cuda.device_count())]
-                        best_free, best_i = max(free)
-                        if best_free > 4 * 1024 ** 3:
-                            device = f"cuda:{best_i}"
-                self.model = SentenceTransformer(model_path, device=device)
-                self.dim = (self.model.get_embedding_dimension() if hasattr(self.model, "get_embedding_dimension") else self.model.get_sentence_embedding_dimension())
-                self.name = os.path.basename(model_path.rstrip("/"))
-                log(f"[kb] embedder {self.name} on {device}")
-            except Exception as e:  # noqa: BLE001
-                log(f"[kb] embedding model unavailable ({e}); using hashed bag-of-words")
-        else:
+        self.batch_tokens = max(1, batch_tokens)
+        # tokenizers 的 Rust fast tokenizer 不是线程安全的：两个线程同时进
+        # `enable_padding` 会撞上 `RuntimeError: Already borrowed`，实测能让并发入库
+        # 的其中一篇整篇丢失。以前 encode 在 `_writer_lock` 里跑，顺带被保护；把它
+        # 挪出去之后，这把锁就得自己带上。锁只圈编码器，不圈索引文件——多个 worker
+        # 进程各有自己的 Embedder，仍然是真并行，只在 merge/persist 的毫秒窗口争文件锁。
+        self._lock = threading.Lock()
+        if not os.path.isdir(model_path):
             log(f"[kb] no embedding model at {model_path}; using hashed bag-of-words (set EMBED_MODEL)")
+            return
+        try:
+            import torch
+            from sentence_transformers import SentenceTransformer
+            if not device:
+                device = "cpu"
+                if torch.cuda.is_available():
+                    free = [(torch.cuda.mem_get_info(i)[0], i) for i in range(torch.cuda.device_count())]
+                    best_free, best_i = max(free)
+                    if best_free > 4 * 1024 ** 3:
+                        device = f"cuda:{best_i}"
+            if device == "cpu" and EMBED_THREADS:
+                torch.set_num_threads(EMBED_THREADS)
+            threads = torch.get_num_threads()
+            self.name = os.path.basename(model_path.rstrip("/"))
+            if backend == "onnx":
+                import onnxruntime as ort
+                opts = ort.SessionOptions()
+                opts.intra_op_num_threads = threads
+                self.model = SentenceTransformer(model_path, backend="onnx", model_kwargs={
+                    "file_name": ONNX_INT8_FILE, "provider": "CPUExecutionProvider", "session_options": opts})
+                self.name += "+onnx-int8"
+            else:
+                self.model = SentenceTransformer(model_path, device=device)
+            self.dim = (self.model.get_embedding_dimension() if hasattr(self.model, "get_embedding_dimension") else self.model.get_sentence_embedding_dimension())
+            log(f"[kb] embedder {self.name} on {device} ({threads} threads, {self.batch_tokens} tok/batch)")
+        except Exception as e:  # noqa: BLE001
+            self.name, self.model, self.dim = "hash-bow-v1", None, HASH_DIM
+            log(f"[kb] embedding model unavailable ({e}); using hashed bag-of-words")
 
     def encode(self, texts: list[str]) -> np.ndarray:
         if not texts:
             return np.zeros((0, self.dim), dtype=np.float32)
-        if self.model is not None:
-            v = self.model.encode(texts, batch_size=16, normalize_embeddings=True, show_progress_bar=False)
-            return np.asarray(v, dtype=np.float32)
-        return np.stack([self._hash(t) for t in texts]).astype(np.float32)
+        if self.model is None:
+            return np.stack([self._hash(t) for t in texts]).astype(np.float32)
+        out = np.empty((len(texts), self.dim), dtype=np.float32)
+        with self._lock:
+            for grp in self._batches(texts):
+                v = self.model.encode([texts[i] for i in grp], batch_size=len(grp),
+                                      normalize_embeddings=True, show_progress_bar=False)
+                out[grp] = np.asarray(v, dtype=np.float32)
+        return out
+
+    def _batches(self, texts: list[str]) -> Iterator[list[int]]:
+        """按 padding 之后的 token 总量分批，而不是按固定条数。
+
+        一批的真实成本是 `最长那条的 token 数 × 批内条数`：混进一条 1500 token 的
+        段落，同批 15 条短文本就全被 pad 到 1500 一起算。实测 128 段（23.7k token，
+        最长 1510）：batch_size=16 要 57.3s、batch_size=128 要 242s，本分组只要 21.8s，
+        且向量与逐条编码逐位相同（cos=1.0000）——省掉的纯粹是 padding 上的空转。
+        """
+        tok = self.model.tokenizer
+        cap = getattr(self.model, "max_seq_length", None) or 512
+        lens = [len(tok(t, truncation=True, max_length=cap)["input_ids"]) for t in texts]
+        order = sorted(range(len(texts)), key=lambda i: -lens[i])
+        i = 0
+        while i < len(order):
+            grp, longest = [order[i]], lens[order[i]]
+            i += 1
+            while i < len(order) and longest * (len(grp) + 1) <= self.batch_tokens:
+                grp.append(order[i])
+                i += 1
+            yield grp
 
     @staticmethod
     def _hash(text: str) -> np.ndarray:
@@ -300,6 +369,24 @@ class Embedder:
         v = np.log1p(v)
         n = np.linalg.norm(v)
         return v / n if n else v
+
+
+_shared_embedder: Optional[Embedder] = None
+_shared_embedder_lock = threading.Lock()
+
+
+def shared_embedder() -> Embedder:
+    """进程内共享一个编码器实例。
+
+    bge-m3 是 2.2GB 权重：冷启动 8s，页缓存命中也要约 1s。中位数论文只有 27 个条目
+    （约 5s 编码），也就是说「每篇论文新建一个 Embedder」的加载开销能和真正的计算
+    持平。worker 是一篇接一篇地跑 ingest，共享实例把这笔固定开销摊成整个进程一次。
+    """
+    global _shared_embedder
+    with _shared_embedder_lock:
+        if _shared_embedder is None:
+            _shared_embedder = Embedder()
+        return _shared_embedder
 
 
 # ====================================================================== index container
@@ -425,7 +512,7 @@ class KnowledgeStore:
     @property
     def embedder(self) -> Embedder:
         if self._embedder is None:
-            self._embedder = Embedder()
+            self._embedder = shared_embedder()
         return self._embedder
 
     def _load(self) -> None:
@@ -458,20 +545,22 @@ class KnowledgeStore:
 
     def add_paper(self, meta: dict, paras: list[dict], facts: list[dict], replace: bool = True) -> int:
         """Index one paper's facts and paragraphs. Returns number of items added."""
-        with nullcontext() if self._staging else _writer_lock(self.dir):
-            if not self._staging:
-                self._load()
-            return self._add_paper(meta, paras, facts, replace)
-
-    def _add_paper(self, meta: dict, paras: list[dict], facts: list[dict], replace: bool) -> int:
+        items, texts = self._rows(meta, paras, facts)
+        if not items:
+            return 0
+        # 编码放在锁外：它只吃 CPU，既不读也不写索引，而且是整条流水线里最慢的一段
+        # （一篇大文献 20s 以上）。留在锁内会让并发上传彼此排队等对方算完。
+        vecs = self.embedder.encode(texts)
         pmid = str(meta.get("pmid") or meta.get("doi") or meta.get("title"))
-        old_meta, old_vecs, info = self._snapshot
-        if info.get("embedder") and info["embedder"] != self.embedder.name:
-            log(f"[kb] WARNING index built with {info['embedder']} but current embedder is {self.embedder.name}; run `reindex`")
-        if replace and pmid in self.indexed_pmids():
-            keep = [i for i, m in enumerate(old_meta) if m.get("pmid") != pmid]
-            old_meta = [old_meta[i] for i in keep]
-            old_vecs = old_vecs[keep] if old_vecs is not None and len(keep) else None
+        if self._staging:
+            return self._merge(pmid, items, vecs, replace)
+        with _writer_lock(self.dir):
+            self._load()      # 等锁期间别人可能已经换代，拿到锁才有资格读基线
+            return self._merge(pmid, items, vecs, replace)
+
+    @staticmethod
+    def _rows(meta: dict, paras: list[dict], facts: list[dict]) -> tuple[list[dict], list[str]]:
+        """展开成待索引的条目与其编码文本；与索引状态无关，所以能在锁外算。"""
         base = {k: meta.get(k) for k in ("pmid", "doi", "pmcid", "title", "year", "journal", "quartile", "source", "authors")}
         items, texts = [], []
         for fct in facts:
@@ -483,11 +572,19 @@ class KnowledgeStore:
             items.append({**base, "kind": "paragraph", "pid": p["id"], "sec": p["sec"], "page": p.get("page"),
                           "text": p["text"]})
             texts.append(f"{meta.get('title', '')}. {p['sec']}: {p['text']}")
-        if not items:
-            return 0
-        v = self.embedder.encode(texts)
-        vecs = v if old_vecs is None or len(old_vecs) == 0 else np.vstack([old_vecs, v])
-        snapshot = (old_meta + items, vecs, {"embedder": self.embedder.name, "dim": int(v.shape[1])})
+        return items, texts
+
+    def _merge(self, pmid: str, items: list[dict], vecs: np.ndarray, replace: bool) -> int:
+        """把编码好的条目并进当前快照并落盘。调用方保证已持锁（或在 staging 中）。"""
+        old_meta, old_vecs, info = self._snapshot
+        if info.get("embedder") and info["embedder"] != self.embedder.name:
+            log(f"[kb] WARNING index built with {info['embedder']} but current embedder is {self.embedder.name}; run `reindex`")
+        if replace and pmid in self.indexed_pmids():
+            keep = [i for i, m in enumerate(old_meta) if m.get("pmid") != pmid]
+            old_meta = [old_meta[i] for i in keep]
+            old_vecs = old_vecs[keep] if old_vecs is not None and len(keep) else None
+        merged = vecs if old_vecs is None or len(old_vecs) == 0 else np.vstack([old_vecs, vecs])
+        snapshot = (old_meta + items, merged, {"embedder": self.embedder.name, "dim": int(vecs.shape[1])})
         if not self._staging:
             self._persist(snapshot)
         self._snapshot = snapshot
