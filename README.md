@@ -90,6 +90,8 @@ fvm flutter run -d linux         # 或 -d <android-device>
 
 界面沿用 web 的「学术编辑风」：暖纸色背景 + 深青主色、衬线标题（自带裁剪版 Noto Serif SC）、正文数字用 Inter、8 色引用色板与 Q1–Q4 分区色。布局三档自适应：`< 768` 底部导航 + 「更多」表单、`768–1279` 折叠图标侧栏、`≥ 1280` 240 px 可折叠侧栏（`Ctrl/Cmd+B`）并支持答案与原文并排分栏（分隔条可拖拽，比例持久化）。令牌存系统安全存储（Android EncryptedSharedPreferences、Linux libsecret、Windows DPAPI）；平台无安全存储时回退为明文偏好并在账号页显式提示。明文 `http://` 服务器地址同样只允许本地网络，公网必须 https。
 
+视觉基准与 iOS 版对齐（`apple/YAOpenEvidence/Components/Surface.swift` 的 `Metrics`）：卡片圆角 16、页面内边距 16、阅读列 720、区块间距 20/28；内容层是无描边的卡片 + 两层柔和阴影（Flutter 的页面底色与卡片色差极小，靠阴影而非描边分层），玻璃只用于悬浮控件层——提问与追问是 `BackdropFilter` 模糊的大圆角悬浮输入框（发送键在框内、引擎与筛选摘要作胶囊），向下滚动时它和手机底部导航栏一起滑出、向上滚动 / 触顶触底 / 聚焦时恢复；答案页的操作收进头部「⋯」菜单（重新提问 / 查看检索式 / 删除），检索式单独成面不占正文。面向用户的界面同样刻意不展示 SSE 连接状态、运行日志、检索式、相似度打分、嵌入模型与维度这类开发者信息。
+
 构建：Linux 桌面需要 `clang`、`cmake`、`ninja`、`gtk3`、`libsecret`；Android 需要 Android SDK 与 JDK 17（`fvm flutter config --android-sdk ... --jdk-dir ...`）。Windows 目录随模板入库，但只能在 Windows 主机上构建。
 
 ## 架构

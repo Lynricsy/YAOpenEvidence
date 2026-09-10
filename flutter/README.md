@@ -51,7 +51,7 @@ python tools/generate_brand_assets.py     # 需要 rsvg-convert
 | `android/app/src/main/res/drawable-{density}/brand_splash{,_dark}.png` | 启动画面图形（浅/深） |
 | `windows/runner/resources/app_icon.ico` | 可执行文件与窗口图标（`Runner.rc` 的 `IDI_APP_ICON`） |
 
-界面接入统一走 `lib/shared/widgets/brand_logo.dart`：`BrandLogo` 按 `Theme.of(context).brightness` 选浅/深资源并固定宽高，`BrandLockup` 是「标识 + 文字」组合（语义由文字承载，图形不重复朗读）。落点为登录页、会话恢复启动页、侧栏页头（展开为组合标记、折叠为竖排标识）、手机顶栏 `leading`、提问页 Hero 标签。列表与导航里的书本图标是功能图标，保持不变。
+界面接入统一走 `lib/shared/widgets/brand_logo.dart`：`BrandLogo` 按 `Theme.of(context).brightness` 选浅/深资源并固定宽高，`BrandLockup` 是「标识 + 文字」横排组合（语义由文字承载，图形不重复朗读）。落点为登录页（72 px 标识竖排在标题上方，故直接用 `BrandLogo`）、会话恢复启动页、侧栏页头（展开为组合标记、折叠为竖排标识）、手机顶栏 `leading`（详情路由改显示返回键）、提问页 Hero 顶部的 40 px 标识。列表与导航里的书本图标是功能图标，保持不变。
 
 Android 侧：`mipmap-anydpi-v26/ic_launcher.xml` 与 `mipmap-night-anydpi-v26/ic_launcher.xml` 给出浅/深自适应图标（背景取 `@color/brand_canvas`，浅 `#F7FAF9` / 深 `#182C30`）；`drawable/launch_background.xml` 与 `drawable-night/launch_background.xml` 是 API 31 以下的启动窗口背景；`values-v31/styles.xml` 与 `values-night-v31/styles.xml` 用 `windowSplashScreenBackground` + `windowSplashScreenAnimatedIcon` 接管 Android 12+ 的系统启动画面，避免冷启动闪默认图标。night 限定符的优先级高于版本限定符，因此深色下 `drawable-night` 会盖掉同名的浅色资源。
 
@@ -84,8 +84,30 @@ fvm flutter test                     # 单元测试
 - `test/core/models/`：线上字段映射（snake_case、未知枚举回落、null 省略）。
 - `test/core/session/`：服务器地址校验（明文 http 仅限本地网络）。
 - `test/features/answer/`：SSE 断线重连退避与探活（`fake_async`）。
+- `test/shared/widgets/`：滚动收起状态机（向下滚隐藏 / 向上滚与触顶触底恢复 / 短页面不收起）与悬浮提问框（内容底部避让、收起时滑出视口）。
 
-用例集与 `apple/YAOEKit/Tests/` 同源，改动纯逻辑时两边应同步。
+`test/core/` 的用例集与 `apple/YAOEKit/Tests/` 同源，改动纯逻辑时两边应同步；`test/shared/`、`test/features/` 下的是 Flutter 独有的组件行为回归。
+
+## 设计系统
+
+视觉基准是 iOS 版的 `apple/YAOpenEvidence/Components/Surface.swift`；令牌集中在 `lib/app/theme/tokens.dart`，组件外观集中在 `lib/app/theme/app_theme.dart` 的 `buildTheme`，页面不再手写 `Container + BoxDecoration`。
+
+| 原语 | 位置 | 用途 |
+|---|---|---|
+| `YaoeCard` | `shared/widgets/surface.dart` | 内容卡：圆角 16、无描边、两层柔和阴影；`tint` 参数给语义提示卡（底 10% + 描边 28%、无阴影），`elevated: false` 给次级卡 |
+| `GlassPanel` | 同上 | 悬浮控件层材质：`BackdropFilter` 模糊 + 半透明卡片色 + 悬浮阴影 |
+| `FilterGroup` | 同上 | 筛选面板的一组控件（一张卡） |
+| `PageBody` | `shared/widgets/page_header.dart` | 页面统一约束：最大宽 720、水平内边距 16，并只消费一次底部保留区 |
+| `ScrollChromeController` / `ScrollChrome` | `shared/widgets/scroll_chrome.dart` | 「随滚动收起的底部 chrome」状态，由 `AppShell` 提供，提问框与手机底部导航栏共用一个实例 |
+| `FloatingComposerHost` | `shared/widgets/floating_composer.dart` | 悬浮提问框宿主：把 composer 实测高度写进 body 的 `MediaQuery.padding.bottom`，内容自动避让 |
+| `showAdaptiveSheet` | `shared/widgets/adaptive_sheet.dart` | 紧凑宽度用底部 sheet、其余从右侧滑入抽屉；筛选与全文面板共用 |
+
+两条容易踩的框架细节，改主题时注意：
+
+- `ChipThemeData.labelStyle` 会被 `RawChip` 的 `labelStyle.merge(widget.labelStyle)` 抹平，`WidgetStateTextStyle` 的字段会全部丢失；框架只对 `labelStyle.color` 解析 `WidgetStateProperty`，所以选中态颜色必须写成 `WidgetStateColor`。
+- `FloatingComposerHost` 所在的 `Row` 必须用 `CrossAxisAlignment.stretch`。默认的 `center` 会给子项松高度约束，`Stack` 于是收缩到内容高度、内容被整体垂直居中。
+
+面向用户的界面刻意不展示 SSE 连接状态、运行日志、检索式（收在答案页「⋯」菜单的独立面里）、相似度打分、嵌入模型与维度、后端错误 message 这类开发者信息；这些只保留在 Web 端与后端日志。
 
 ## 构建
 
