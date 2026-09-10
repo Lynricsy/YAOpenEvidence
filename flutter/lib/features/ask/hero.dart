@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/tokens.dart';
 import '../../shared/widgets/brand_logo.dart';
+import '../../shared/widgets/surface.dart';
 
 /// 提问页示例问题（文案与 Web 端一致）。
 const askExamples = <String>[
@@ -10,11 +11,9 @@ const askExamples = <String>[
   '他汀类药物一级预防在老年人中的获益与风险',
 ];
 
-/// 提问页 Hero：标签 + 衬线大标题 + 副标题。
+/// 提问页 Hero：品牌标识 + 衬线大标题 + 副标题。
 class AskHero extends StatelessWidget {
-  const AskHero({super.key, required this.onExample});
-
-  final void Function(String question) onExample;
+  const AskHero({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,21 +23,8 @@ class AskHero extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 品牌标记；语义由紧随的文字承载。
-            const BrandLogo(size: 18),
-            const SizedBox(width: YaoeTokens.space1),
-            Text(
-              '循证医学文献问答',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: YaoeTokens.space4),
+        const BrandLogo(size: 40, semanticLabel: 'YAOpenEvidence'),
+        const SizedBox(height: YaoeTokens.space3),
         Text(
           '请提出您的临床或科研问题',
           style:
@@ -47,7 +33,7 @@ class AskHero extends StatelessWidget {
                       : theme.textTheme.headlineMedium)
                   ?.copyWith(height: 1.2),
         ),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: YaoeTokens.space2),
         Text(
           '从 PubMed / Europe PMC 检索并逐篇核实，生成可回溯到原文段落的循证综述。',
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -73,40 +59,28 @@ class AskExamples extends StatelessWidget {
       children: [
         Text(
           '试试这些问题',
-          style: theme.textTheme.labelSmall?.copyWith(
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w600,
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: YaoeTokens.space2),
         for (final example in askExamples)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
-            child: InkWell(
+            padding: const EdgeInsets.only(bottom: YaoeTokens.space2 + 2),
+            child: YaoeCard(
               onTap: () => onExample(example),
-              borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: YaoeTokens.space3,
-                  vertical: YaoeTokens.space2 + 2,
-                ),
-                decoration: BoxDecoration(
-                  color: context.yaoe.card,
-                  borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(example, style: theme.textTheme.bodySmall),
-                    ),
-                    Icon(
-                      Icons.north_east,
-                      size: 14,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ],
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(example, style: theme.textTheme.bodyMedium),
+                  ),
+                  Icon(
+                    Icons.north_east,
+                    size: 14,
+                    color: theme.colorScheme.outline,
+                  ),
+                ],
               ),
             ),
           ),

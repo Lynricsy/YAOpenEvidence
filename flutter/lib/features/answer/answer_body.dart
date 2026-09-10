@@ -7,6 +7,7 @@ import '../../core/logic/markdown_document.dart';
 import '../../core/models/answers.dart';
 import '../../shared/widgets/markdown_view.dart';
 import '../../shared/widgets/section_heading.dart';
+import '../../shared/widgets/surface.dart';
 import 'citation_chip.dart';
 import 'picos_cards.dart';
 
@@ -101,16 +102,9 @@ class AnswerBody extends StatelessWidget {
 
     switch (section.kind) {
       case AnswerSectionKind.conclusion:
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(YaoeTokens.space4),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-            border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.28),
-            ),
-          ),
+        return YaoeCard(
+          tint: theme.colorScheme.primary,
+          padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

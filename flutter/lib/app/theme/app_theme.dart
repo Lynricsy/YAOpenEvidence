@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../core/models/answers.dart';
@@ -30,30 +29,38 @@ const monoStyle = TextStyle(
 
 ThemeData buildTheme(Brightness brightness) {
   final dark = brightness == Brightness.dark;
-  final scheme = ColorScheme.fromSeed(
-    seedColor: dark ? YaoeTokens.primaryDark : YaoeTokens.primaryLight,
-    brightness: brightness,
-  ).copyWith(
-    primary: dark ? YaoeTokens.primaryDark : YaoeTokens.primaryLight,
-    onPrimary: dark ? YaoeTokens.onPrimaryDark : YaoeTokens.onPrimaryLight,
-    surface: dark ? YaoeTokens.surfaceDark : YaoeTokens.surfaceLight,
-    surfaceContainerLowest: dark ? YaoeTokens.cardDark : YaoeTokens.cardLight,
-    surfaceContainerLow: dark ? YaoeTokens.cardDark : YaoeTokens.cardLight,
-    surfaceContainer: dark ? YaoeTokens.sidebarDark : YaoeTokens.sidebarLight,
-    surfaceContainerHigh: dark ? YaoeTokens.mutedDark : YaoeTokens.mutedLight,
-    surfaceContainerHighest: dark
-        ? YaoeTokens.mutedDark
-        : YaoeTokens.mutedLight,
-    onSurface: dark ? YaoeTokens.foregroundDark : YaoeTokens.foregroundLight,
-    onSurfaceVariant: (dark
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: dark ? YaoeTokens.primaryDark : YaoeTokens.primaryLight,
+        brightness: brightness,
+      ).copyWith(
+        primary: dark ? YaoeTokens.primaryDark : YaoeTokens.primaryLight,
+        onPrimary: dark ? YaoeTokens.onPrimaryDark : YaoeTokens.onPrimaryLight,
+        surface: dark ? YaoeTokens.surfaceDark : YaoeTokens.surfaceLight,
+        surfaceContainerLowest: dark
+            ? YaoeTokens.cardDark
+            : YaoeTokens.cardLight,
+        surfaceContainerLow: dark ? YaoeTokens.cardDark : YaoeTokens.cardLight,
+        surfaceContainer: dark
+            ? YaoeTokens.sidebarDark
+            : YaoeTokens.sidebarLight,
+        surfaceContainerHigh: dark
+            ? YaoeTokens.mutedDark
+            : YaoeTokens.mutedLight,
+        surfaceContainerHighest: dark
+            ? YaoeTokens.mutedDark
+            : YaoeTokens.mutedLight,
+        onSurface: dark
             ? YaoeTokens.foregroundDark
-            : YaoeTokens.foregroundLight)
-        .withValues(alpha: 0.68),
-    outlineVariant: dark ? YaoeTokens.borderDark : YaoeTokens.borderLight,
-    outline: (dark ? YaoeTokens.borderDark : YaoeTokens.borderLight),
-    error: dark ? YaoeTokens.errorDark : YaoeTokens.errorLight,
-    onError: dark ? YaoeTokens.onPrimaryDark : YaoeTokens.onPrimaryLight,
-  );
+            : YaoeTokens.foregroundLight,
+        onSurfaceVariant:
+            (dark ? YaoeTokens.foregroundDark : YaoeTokens.foregroundLight)
+                .withValues(alpha: 0.68),
+        outlineVariant: dark ? YaoeTokens.borderDark : YaoeTokens.borderLight,
+        outline: (dark ? YaoeTokens.borderDark : YaoeTokens.borderLight),
+        error: dark ? YaoeTokens.errorDark : YaoeTokens.errorLight,
+        onError: dark ? YaoeTokens.onPrimaryDark : YaoeTokens.onPrimaryLight,
+      );
 
   final extension = dark ? YaoeColors.dark : YaoeColors.light;
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
@@ -74,9 +81,7 @@ ThemeData buildTheme(Brightness brightness) {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(YaoeTokens.radiusCard),
-        side: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.6),
-        ),
+        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
       ),
     ),
     appBarTheme: AppBarTheme(
@@ -102,10 +107,7 @@ ThemeData buildTheme(Brightness brightness) {
       filled: true,
       fillColor: scheme.surfaceContainerHigh,
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 12,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
         borderSide: BorderSide.none,
@@ -199,9 +201,7 @@ ThemeData buildTheme(Brightness brightness) {
       shadowColor: scheme.onSurface.withValues(alpha: 0.25),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(YaoeTokens.radiusMenu),
-        side: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.6),
-        ),
+        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
       ),
       textStyle: text.bodyMedium,
     ),

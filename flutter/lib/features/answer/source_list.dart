@@ -9,6 +9,7 @@ import '../../shared/format.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/quote_highlight.dart';
 import '../../shared/widgets/section_heading.dart';
+import '../../shared/widgets/surface.dart';
 
 /// 答案下方的来源列表。
 class SourceList extends StatelessWidget {
@@ -38,7 +39,7 @@ class SourceList extends StatelessWidget {
         const SizedBox(height: YaoeTokens.space4),
         for (final paper in papers)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+            padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
             child: SourceCard(
               paper: paper,
               markerCount: counts[paper.n] ?? 0,
@@ -65,84 +66,76 @@ class SourceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
+    return YaoeCard(
       onTap: onOpen,
-      borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-      child: Container(
-        padding: const EdgeInsets.all(YaoeTokens.space3),
-        decoration: BoxDecoration(
-          color: context.yaoe.card,
-          borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CitationSquare(n: paper.n),
-                const SizedBox(width: YaoeTokens.space3),
-                Expanded(
-                  child: Text(
-                    paper.title.isEmpty ? '（无标题）' : paper.title,
-                    style: theme.textTheme.labelLarge,
-                  ),
+      padding: const EdgeInsets.all(YaoeTokens.space3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CitationSquare(n: paper.n),
+              const SizedBox(width: YaoeTokens.space3),
+              Expanded(
+                child: Text(
+                  paper.title.isEmpty ? '（无标题）' : paper.title,
+                  style: theme.textTheme.labelLarge,
                 ),
-              ],
-            ),
-            const SizedBox(height: YaoeTokens.space2),
-            Text(
-              [
-                paper.journal,
-                paper.year,
-              ].where((part) => part.isNotEmpty).join(' · '),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
               ),
+            ],
+          ),
+          const SizedBox(height: YaoeTokens.space2),
+          Text(
+            [
+              paper.journal,
+              paper.year,
+            ].where((part) => part.isNotEmpty).join(' · '),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: YaoeTokens.space2),
-            Wrap(
-              spacing: YaoeTokens.space2,
-              runSpacing: YaoeTokens.space1,
-              children: [
-                RankBadge(quartile: paper.quartile, label: paper.rankLabel),
-                SourceBadge(source: paper.source),
-                if (paper.nCitations > 0)
-                  Pill(
-                    text: '已核实 ${paper.nCitationsVerified}/${paper.nCitations}',
-                    color: paper.nCitationsVerified == paper.nCitations
-                        ? context.yaoe.success
-                        : context.yaoe.warning,
-                  ),
-                if (markerCount > 0)
-                  Pill(
-                    text: '正文引用 $markerCount 处',
-                    color: theme.colorScheme.primary,
-                  ),
-              ],
-            ),
-            const SizedBox(height: YaoeTokens.space2),
-            Row(
-              children: [
-                Expanded(
-                  child: Wrap(
-                    spacing: YaoeTokens.space3,
-                    children: [
-                      MonoLabel(label: 'PMID', value: paper.pmid),
-                      MonoLabel(label: 'DOI', value: paper.doi),
-                    ],
-                  ),
+          ),
+          const SizedBox(height: YaoeTokens.space2),
+          Wrap(
+            spacing: YaoeTokens.space2,
+            runSpacing: YaoeTokens.space1,
+            children: [
+              RankBadge(quartile: paper.quartile, label: paper.rankLabel),
+              SourceBadge(source: paper.source),
+              if (paper.nCitations > 0)
+                Pill(
+                  text: '已核实 ${paper.nCitationsVerified}/${paper.nCitations}',
+                  color: paper.nCitationsVerified == paper.nCitations
+                      ? context.yaoe.success
+                      : context.yaoe.warning,
                 ),
-                ExternalLinkRow(
-                  pmid: paper.pmid,
-                  doi: paper.doi,
-                  pmcid: paper.pmcid,
+              if (markerCount > 0)
+                Pill(
+                  text: '正文引用 $markerCount 处',
+                  color: theme.colorScheme.primary,
                 ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: YaoeTokens.space2),
+          Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: YaoeTokens.space3,
+                  children: [
+                    MonoLabel(label: 'PMID', value: paper.pmid),
+                    MonoLabel(label: 'DOI', value: paper.doi),
+                  ],
+                ),
+              ),
+              ExternalLinkRow(
+                pmid: paper.pmid,
+                doi: paper.doi,
+                pmcid: paper.pmcid,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -165,14 +158,9 @@ class KbSupplementList extends StatelessWidget {
         const SizedBox(height: YaoeTokens.space4),
         for (final hit in hits)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
-            child: Container(
+            padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+            child: YaoeCard(
               padding: const EdgeInsets.all(YaoeTokens.space3),
-              decoration: BoxDecoration(
-                color: context.yaoe.card,
-                borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-                border: Border.all(color: theme.colorScheme.outlineVariant),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -78,9 +78,8 @@ class SectionHeading extends StatelessWidget {
               height: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: tone.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-                border: Border.all(color: tone.withValues(alpha: 0.30)),
+                color: tone.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
               ),
               child: Icon(module.icon, size: 16, color: tone),
             ),

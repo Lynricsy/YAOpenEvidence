@@ -154,23 +154,11 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     card: YaoeTokens.cardLight,
     sidebar: YaoeTokens.sidebarLight,
     cardShadow: [
-      BoxShadow(
-        color: Color(0x0A261D16),
-        offset: Offset(0, 1),
-        blurRadius: 2,
-      ),
-      BoxShadow(
-        color: Color(0x0F261D16),
-        offset: Offset(0, 4),
-        blurRadius: 14,
-      ),
+      BoxShadow(color: Color(0x0A261D16), offset: Offset(0, 1), blurRadius: 2),
+      BoxShadow(color: Color(0x0F261D16), offset: Offset(0, 4), blurRadius: 14),
     ],
     floatShadow: [
-      BoxShadow(
-        color: Color(0x0F261D16),
-        offset: Offset(0, 1),
-        blurRadius: 3,
-      ),
+      BoxShadow(color: Color(0x0F261D16), offset: Offset(0, 1), blurRadius: 3),
       BoxShadow(
         color: Color(0x1F261D16),
         offset: Offset(0, 10),
@@ -191,23 +179,11 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     card: YaoeTokens.cardDark,
     sidebar: YaoeTokens.sidebarDark,
     cardShadow: [
-      BoxShadow(
-        color: Color(0x40000000),
-        offset: Offset(0, 1),
-        blurRadius: 2,
-      ),
-      BoxShadow(
-        color: Color(0x4D000000),
-        offset: Offset(0, 6),
-        blurRadius: 18,
-      ),
+      BoxShadow(color: Color(0x40000000), offset: Offset(0, 1), blurRadius: 2),
+      BoxShadow(color: Color(0x4D000000), offset: Offset(0, 6), blurRadius: 18),
     ],
     floatShadow: [
-      BoxShadow(
-        color: Color(0x4D000000),
-        offset: Offset(0, 1),
-        blurRadius: 3,
-      ),
+      BoxShadow(color: Color(0x4D000000), offset: Offset(0, 1), blurRadius: 3),
       BoxShadow(
         color: Color(0x80000000),
         offset: Offset(0, 10),

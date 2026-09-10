@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/models/answers.dart';
 import '../../shared/widgets/badges.dart';
+import '../../shared/widgets/surface.dart';
 
 /// 一条智能体会话的全部回合：追问把上下文摊平在页面上，不用回历史里翻。
 class ThreadNav extends StatelessWidget {
@@ -16,16 +17,10 @@ class ThreadNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final at = turns.indexWhere((t) => t.id == currentId);
-    return Container(
-      width: double.infinity,
+    return YaoeCard(
+      color: theme.colorScheme.surfaceContainerHigh,
+      elevated: false,
       padding: const EdgeInsets.all(YaoeTokens.space3),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.5,
-        ),
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -37,11 +32,7 @@ class ThreadNav extends StatelessWidget {
           ),
           const SizedBox(height: YaoeTokens.space2),
           for (final (index, turn) in turns.indexed)
-            _TurnRow(
-              index: index,
-              turn: turn,
-              current: turn.id == currentId,
-            ),
+            _TurnRow(index: index, turn: turn, current: turn.id == currentId),
         ],
       ),
     );

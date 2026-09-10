@@ -16,7 +16,7 @@ extension AnswerEngineDisplay on AnswerEngine {
   };
 
   IconData get icon => switch (this) {
-    AnswerEngine.ask => Icons.account_tree_outlined,
+    AnswerEngine.ask => Icons.list_alt_outlined,
     AnswerEngine.codex => Icons.auto_awesome,
   };
 }
@@ -42,24 +42,22 @@ class EnginePicker extends StatelessWidget {
         child: Chip(
           avatar: Icon(AnswerEngine.codex.icon, size: 14),
           label: const Text('智能体 · 续接对话'),
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       );
     }
 
     final theme = Theme.of(context);
     return MenuAnchor(
+      alignmentOffset: const Offset(0, 6),
       menuChildren: [
         for (final engine in AnswerEngine.values)
           MenuItemButton(
-            leadingIcon: Icon(engine.icon, size: 16),
-            trailingIcon: engine == value
+            leadingIcon: engine == value
                 ? const Icon(Icons.check, size: 16)
-                : null,
+                : Icon(engine.icon, size: 16),
             onPressed: () => onChanged(engine),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 280),
+              constraints: const BoxConstraints(maxWidth: 300),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -86,8 +84,6 @@ class EnginePicker extends StatelessWidget {
           ],
         ),
         tooltip: value.hint,
-        visualDensity: VisualDensity.compact,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         onPressed: () =>
             controller.isOpen ? controller.close() : controller.open(),
       ),

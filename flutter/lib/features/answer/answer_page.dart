@@ -14,7 +14,10 @@ import '../../core/session/session_controller.dart';
 import '../../shared/format.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/confirm_dialog.dart';
+import '../../shared/widgets/floating_composer.dart';
 import '../../shared/widgets/loadable.dart';
+import '../../shared/widgets/page_header.dart';
+import '../../shared/widgets/surface.dart';
 import '../ask/ask_state.dart';
 import '../ask/composer.dart';
 import '../ask/engine_picker.dart';
@@ -85,12 +88,13 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
       ),
       transitionBuilder: (context, animation, secondary, child) =>
           SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1, 0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: YaoeTokens.motionCurve),
-            ),
+            position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+                .animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: YaoeTokens.motionCurve,
+                  ),
+                ),
             child: child,
           ),
     ).whenComplete(_closeReader);
@@ -131,9 +135,8 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
       context.go('/a/${answer.id}');
     } on ApiError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.userMessage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.userMessage)));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -153,9 +156,8 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
           .cancel();
     } on ApiError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.userMessage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.userMessage)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -178,9 +180,8 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
       context.go('/history');
     } on ApiError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.userMessage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.userMessage)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -203,8 +204,7 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
 
     final main = AsyncValueView<Answer>(
       value: answerAsync,
-      onRetry: () =>
-          ref.invalidate(answerControllerProvider(widget.answerId)),
+      onRetry: () => ref.invalidate(answerControllerProvider(widget.answerId)),
       builder: (answer) => _AnswerContent(
         answer: answer,
         busy: _busy,
@@ -226,7 +226,11 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
     if (wide && target != null) {
       return SplitView(
         left: main,
-        right: _ReaderHost(answerId: widget.answerId, onClose: _closeReader),
+        // 阅读器滚动不该把提问框收起来。
+        right: NotificationListener<ScrollNotification>(
+          onNotification: (_) => true,
+          child: _ReaderHost(answerId: widget.answerId, onClose: _closeReader),
+        ),
       );
     }
     return main;
@@ -306,100 +310,108 @@ class _AnswerContent extends ConsumerWidget {
               const <AnswerSummary>[])
         : const <AnswerSummary>[];
 
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(YaoeTokens.space5),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 860),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (thread.length > 1) ...[
-                      ThreadNav(turns: thread, currentId: answer.id),
-                      const SizedBox(height: YaoeTokens.space3),
-                    ],
-                    Text(answer.question, style: theme.textTheme.headlineSmall),
-                    const SizedBox(height: YaoeTokens.space3),
-                    _MetaRow(answer: answer, connection: liveState?.connection),
-                    if (answer.queries.isNotEmpty) ...[
-                      const SizedBox(height: YaoeTokens.space2),
-                      _Queries(queries: answer.queries),
-                    ],
-                    const SizedBox(height: YaoeTokens.space3),
-                    Wrap(
-                      spacing: YaoeTokens.space2,
-                      runSpacing: YaoeTokens.space2,
-                      children: [
-                        if (answer.status.isActive && answer.jobId != null)
-                          OutlinedButton.icon(
-                            onPressed: (busy || cancelRequested)
-                                ? null
-                                : onCancel,
-                            icon: const Icon(Icons.stop_circle_outlined,
-                                size: 16),
-                            label: Text(cancelRequested ? '正在取消…' : '取消'),
-                          ),
-                        if (!answer.status.isActive)
-                          OutlinedButton.icon(
-                            onPressed: busy ? null : onDelete,
-                            icon: const Icon(Icons.delete_outline, size: 16),
-                            label: const Text('删除'),
-                          ),
-                        OutlinedButton.icon(
-                          onPressed: onReuse,
-                          icon: const Icon(Icons.refresh, size: 16),
-                          // 智能体没有「筛选」这层语义，只是重新问一次。
-                          label: Text(codex ? '重新提问' : '沿用筛选重新提问'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: YaoeTokens.space5),
-                    if (answer.status.isActive)
-                      liveState == null
-                          ? const LoadingView()
-                          : ProgressPipeline(
-                              state: liveState,
-                              engine: answer.engine,
-                              onCandidateTap: (pmid) => ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(
+    final followUp = codex && answer.status == AnswerStatus.ready;
+
+    return FloatingComposerHost(
+      body: SingleChildScrollView(
+        child: PageBody(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AnswerHeader(
+                answer: answer,
+                thread: thread,
+                onReuse: onReuse,
+                onDelete: (busy || answer.status.isActive) ? null : onDelete,
+              ),
+              const SizedBox(height: YaoeTokens.sectionSpacing),
+              if (answer.status.isActive)
+                liveState == null
+                    ? const LoadingView()
+                    : YaoeCard(
+                        child: ProgressPipeline(
+                          state: liveState,
+                          engine: answer.engine,
+                          onCandidateTap: (pmid) =>
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
                                     '任务仍在进行中，原文与核实材料会在逐篇阅读阶段结束后出现。',
                                   ),
                                 ),
                               ),
-                            ),
-                    if (answer.status == AnswerStatus.failed)
-                      _FailureCard(error: answer.error),
-                    if (answer.status == AnswerStatus.cancelled)
-                      _NoticeCard(
-                        icon: Icons.stop_circle_outlined,
-                        color: context.yaoe.warning,
-                        title: '任务已取消',
-                        body: '可以调整筛选后重新提问。',
+                          onCancel:
+                              (busy || cancelRequested || answer.jobId == null)
+                              ? null
+                              : onCancel,
+                          cancelRequested: cancelRequested,
+                        ),
                       ),
-                    if (answer.status == AnswerStatus.ready)
-                      _ReadyBody(answer: answer, onOpenReader: onOpenReader),
-                  ],
+              // 失败只给中文错误标题：后端 message 是排障信息，不给用户看。
+              if (answer.status == AnswerStatus.failed)
+                YaoeCard(
+                  tint: theme.colorScheme.error,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 18,
+                            color: theme.colorScheme.error,
+                          ),
+                          const SizedBox(width: YaoeTokens.space3),
+                          Expanded(
+                            child: Text(
+                              jobErrorMessage(
+                                answer.error?.code ?? 'internal_error',
+                              ),
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: YaoeTokens.space3),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton(
+                          onPressed: onReuse,
+                          child: Text(codex ? '重新提问' : '放宽筛选后重新提问'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              if (answer.status == AnswerStatus.cancelled)
+                _NoticeCard(
+                  icon: Icons.stop_circle_outlined,
+                  color: context.yaoe.warning,
+                  title: '任务已取消',
+                  body: '可以调整筛选后重新提问。',
+                  action: OutlinedButton(
+                    onPressed: onReuse,
+                    child: const Text('重新提问'),
+                  ),
+                ),
+              if (answer.status == AnswerStatus.ready)
+                _ReadyBody(answer: answer, onOpenReader: onOpenReader),
+            ],
           ),
         ),
-        _ComposerDock(
-          controller: composer,
-          submitting: submitting,
-          onSubmit: onSubmit,
-          // 智能体的已完成回合可以续接，输入框锁定引擎并换占位文案。
-          mode: (codex && answer.status == AnswerStatus.ready)
-              ? ComposerMode.followUp
-              : ComposerMode.ask,
-        ),
-      ],
+      ),
+      composer: Composer(
+        controller: composer,
+        onSubmit: onSubmit,
+        submitting: submitting,
+        // 智能体的已完成回合可以续接，输入框锁定引擎并换占位文案。
+        mode: followUp ? ComposerMode.followUp : ComposerMode.ask,
+        hintText: followUp ? null : '继续提问…',
+        onFilterTap: followUp ? null : () => showFilterSheet(context),
+      ),
     );
   }
 }
@@ -469,14 +481,11 @@ class _AgentBody extends StatelessWidget {
           structured: false,
         ),
         if (answer.trace.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.space5),
-          Theme(
-            data: theme.copyWith(dividerColor: Colors.transparent),
+          const SizedBox(height: YaoeTokens.moduleSpacing),
+          YaoeCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             child: ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              childrenPadding: const EdgeInsets.only(
-                bottom: YaoeTokens.space2,
-              ),
+              childrenPadding: const EdgeInsets.only(bottom: 10),
               title: Text(
                 '检索轨迹（${answer.trace.length}）',
                 style: theme.textTheme.labelLarge,
@@ -486,7 +495,7 @@ class _AgentBody extends StatelessWidget {
           ),
         ],
         if (answer.kbHits.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.space6),
+          const SizedBox(height: YaoeTokens.moduleSpacing),
           KbSupplementList(hits: answer.kbHits),
         ],
       ],
@@ -517,137 +526,201 @@ class _BodyWithSources extends StatelessWidget {
         onCitationTap: onOpenReader,
         structured: structured,
       ),
-      const SizedBox(height: YaoeTokens.space6),
-      SourceList(
-        papers: answer.papers,
-        bodyMd: bodyMd,
-        onOpen: onOpenReader,
-      ),
+      const SizedBox(height: YaoeTokens.moduleSpacing),
+      SourceList(papers: answer.papers, bodyMd: bodyMd, onOpen: onOpenReader),
       if (answer.kbHits.isNotEmpty) ...[
-        const SizedBox(height: YaoeTokens.space6),
+        const SizedBox(height: YaoeTokens.moduleSpacing),
         KbSupplementList(hits: answer.kbHits),
       ],
     ],
   );
 }
 
-class _MetaRow extends StatelessWidget {
-  const _MetaRow({required this.answer, required this.connection});
+/// 答案页头部：元信息一行 + 更多菜单 + 会话导航 + 问题 + 筛选摘要。
+class _AnswerHeader extends StatelessWidget {
+  const _AnswerHeader({
+    required this.answer,
+    required this.thread,
+    required this.onReuse,
+    required this.onDelete,
+  });
 
   final Answer answer;
-  final SseConnection? connection;
+  final List<AnswerSummary> thread;
+  final VoidCallback onReuse;
+
+  /// 为 null 时菜单里的删除项禁用（活动中或正忙）。
+  final Future<void> Function()? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = context.yaoe;
-    // 正常连接不出现指示灯：只有在等或出问题时才值得占位。
-    final note = connection?.label;
-    final indicatorColor = connection == SseConnection.reconnecting
-        ? colors.warning
-        : theme.colorScheme.onSurfaceVariant;
+    final wide = MediaQuery.sizeOf(context).width >= YaoeTokens.compactMaxWidth;
+    final caption = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
 
-    return Wrap(
-      spacing: YaoeTokens.space3,
-      runSpacing: YaoeTokens.space2,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        StatusBadge(status: answer.status),
-        // Wrap 的 spacing 对零尺寸子项也生效，标准引擎下别留个空档。
-        if (answer.engine.isCodex) EngineBadge(engine: answer.engine),
-        if ((answer.filtersLabel ?? '').isNotEmpty)
-          Text(
-            answer.filtersLabel!,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(relativeTime(answer.createdAt), style: caption),
+                  if (answer.status == AnswerStatus.ready &&
+                      answer.nPapers != null) ...[
+                    Text('·', style: caption),
+                    Text('${answer.nPapers} 篇文献', style: caption),
+                  ],
+                  if (answer.engine.isCodex) EngineBadge(engine: answer.engine),
+                ],
+              ),
             ),
-          ),
-        Text(
-          relativeTime(answer.createdAt),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+            _AnswerMenu(answer: answer, onReuse: onReuse, onDelete: onDelete),
+          ],
         ),
-        if (answer.nPapers != null)
-          Text(
-            '阅读 ${answer.nPapers} 篇 · 全文 ${answer.nFulltext ?? 0} 篇',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+        if (thread.length > 1) ...[
+          const SizedBox(height: YaoeTokens.space3),
+          ThreadNav(turns: thread, currentId: answer.id),
+        ],
+        const SizedBox(height: YaoeTokens.space3),
+        SelectableText(
+          answer.question,
+          style: wide
+              ? theme.textTheme.headlineMedium
+              : theme.textTheme.headlineSmall,
+        ),
+        if ((answer.filtersLabel ?? '').isNotEmpty) ...[
+          const SizedBox(height: YaoeTokens.space2),
+          Pill(
+            text: answer.filtersLabel!,
+            color: theme.colorScheme.onSurfaceVariant,
+            icon: Icons.filter_list,
           ),
-        if (note != null)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: indicatorColor,
-                ),
-              ),
-              const SizedBox(width: YaoeTokens.space1),
-              Text(
-                note,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: indicatorColor,
-                ),
-              ),
-            ],
-          ),
+        ],
       ],
     );
   }
 }
 
-class _Queries extends StatelessWidget {
-  const _Queries({required this.queries});
+enum _AnswerAction { reuse, queries, delete }
 
-  final List<String> queries;
+/// 头部右侧「更多」菜单：重新提问 / 查看检索式 / 删除。
+class _AnswerMenu extends StatelessWidget {
+  const _AnswerMenu({
+    required this.answer,
+    required this.onReuse,
+    required this.onDelete,
+  });
+
+  final Answer answer;
+  final VoidCallback onReuse;
+  final Future<void> Function()? onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Theme(
-      data: theme.copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        title: Text(
-          '检索式 ${queries.length} 条',
-          style: theme.textTheme.labelLarge,
+    final scheme = Theme.of(context).colorScheme;
+    final codex = answer.engine.isCodex;
+    return PopupMenuButton<_AnswerAction>(
+      tooltip: '更多',
+      icon: const Icon(Icons.more_horiz),
+      onSelected: (action) {
+        switch (action) {
+          case _AnswerAction.reuse:
+            onReuse();
+          case _AnswerAction.queries:
+            showQueriesSheet(context, answer.queries);
+          case _AnswerAction.delete:
+            onDelete?.call();
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: _AnswerAction.reuse,
+          // 智能体没有「筛选」这层语义，只是重新问一次。
+          child: Text(codex ? '重新提问' : '沿用筛选重新提问'),
         ),
-        children: [
-          for (final query in queries)
-            Padding(
-              padding: const EdgeInsets.only(bottom: YaoeTokens.space1),
-              child: SelectableText(
-                query,
-                style: theme.textTheme.labelSmall?.merge(monoStyle),
-              ),
-            ),
-        ],
-      ),
+        PopupMenuItem(
+          value: _AnswerAction.queries,
+          enabled: answer.queries.isNotEmpty,
+          child: const Text('查看检索式'),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: _AnswerAction.delete,
+          enabled: onDelete != null,
+          child: Text('删除', style: TextStyle(color: scheme.error)),
+        ),
+      ],
     );
   }
 }
 
-class _FailureCard extends StatelessWidget {
-  const _FailureCard({required this.error});
+/// 检索式单独成面：不占正文位置。
+void showQueriesSheet(BuildContext context, List<String> queries) {
+  final theme = Theme.of(context);
+  final lines = [
+    for (final query in queries)
+      Padding(
+        padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+        child: SelectableText(
+          query,
+          style: theme.textTheme.labelSmall?.merge(monoStyle),
+        ),
+      ),
+  ];
 
-  final JobError? error;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final code = error?.code ?? 'internal_error';
-    return _NoticeCard(
-      icon: Icons.error_outline,
-      color: theme.colorScheme.error,
-      title: jobErrorMessage(code),
-      body: (error?.message ?? '').isEmpty ? null : error!.message,
+  if (MediaQuery.sizeOf(context).width < YaoeTokens.compactMaxWidth) {
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.all(YaoeTokens.pageInset),
+          children: [
+            Text('检索式', style: theme.textTheme.titleMedium),
+            const SizedBox(height: YaoeTokens.space3),
+            ...lines,
+          ],
+        ),
+      ),
     );
+    return;
   }
+
+  showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('检索式'),
+      content: SizedBox(
+        width: 560,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: lines,
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('完成'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _NoticeCard extends StatelessWidget {
@@ -656,6 +729,7 @@ class _NoticeCard extends StatelessWidget {
     required this.color,
     required this.title,
     this.body,
+    this.action,
   });
 
   final IconData icon;
@@ -663,17 +737,15 @@ class _NoticeCard extends StatelessWidget {
   final String title;
   final String? body;
 
+  /// 文字下方的行动按钮。
+  final Widget? action;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
+    return YaoeCard(
+      tint: color,
       padding: const EdgeInsets.all(YaoeTokens.space4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -691,73 +763,14 @@ class _NoticeCard extends StatelessWidget {
                   const SizedBox(height: YaoeTokens.space1),
                   Text(body!, style: theme.textTheme.bodySmall),
                 ],
+                if (action != null) ...[
+                  const SizedBox(height: YaoeTokens.space3),
+                  Align(alignment: Alignment.centerLeft, child: action!),
+                ],
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 底部常驻提问 Dock：新建一轮问答，或在智能体会话上追问。
-class _ComposerDock extends ConsumerWidget {
-  const _ComposerDock({
-    required this.controller,
-    required this.submitting,
-    required this.onSubmit,
-    required this.mode,
-  });
-
-  final TextEditingController controller;
-  final bool submitting;
-  final void Function(String question) onSubmit;
-  final ComposerMode mode;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final followUp = mode == ComposerMode.followUp;
-    final filters = ref.watch(askFiltersControllerProvider);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: theme.colorScheme.outlineVariant),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(
-        YaoeTokens.space4,
-        YaoeTokens.space2,
-        YaoeTokens.space4,
-        YaoeTokens.space3,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860),
-          child: Composer(
-            controller: controller,
-            onSubmit: onSubmit,
-            submitting: submitting,
-            dock: true,
-            mode: mode,
-            // 追问沿用会话引擎，占位文案由 mode 决定。
-            hintText: followUp ? null : '继续提问…',
-            engine: followUp ? AnswerEngine.codex : filters.engine,
-            onEngineChanged: (engine) => ref
-                .read(askFiltersControllerProvider.notifier)
-                .set(filters.copyWith(engine: engine)),
-            trailing: followUp
-                ? const []
-                : [
-                    IconButton(
-                      tooltip: '筛选',
-                      onPressed: () => showFilterSheet(context),
-                      icon: const Icon(Icons.tune, size: 18),
-                    ),
-                  ],
-          ),
-        ),
       ),
     );
   }

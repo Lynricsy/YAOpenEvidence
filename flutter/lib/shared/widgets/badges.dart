@@ -6,7 +6,7 @@ import '../../core/logic/citations.dart';
 import '../../core/models/answers.dart';
 import '../../core/models/jobs.dart';
 
-/// 通用小徽标：底色为 [color] 的 10%，描边 30%。
+/// 通用小徽标：胶囊、底色为 [color] 的 16%、无描边。
 class Pill extends StatelessWidget {
   const Pill({super.key, required this.text, required this.color, this.icon});
 
@@ -18,11 +18,10 @@ class Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
+        color: color.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -33,7 +32,10 @@ class Pill extends StatelessWidget {
           ],
           Text(
             text,
-            style: theme.textTheme.labelSmall?.copyWith(color: color),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -182,9 +184,9 @@ class MonoLabel extends StatelessWidget {
     if (value.trim().isEmpty) return const SizedBox.shrink();
     return SelectableText(
       '$label $value',
-      style: theme.textTheme.labelSmall?.merge(monoStyle).copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
+      style: theme.textTheme.labelSmall
+          ?.merge(monoStyle)
+          .copyWith(color: theme.colorScheme.onSurfaceVariant),
     );
   }
 }

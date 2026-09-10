@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,8 @@ import '../../app/theme/tokens.dart';
 import '../../core/api/api_error.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/session/session_controller.dart';
+import '../../shared/widgets/floating_composer.dart';
+import '../../shared/widgets/page_header.dart';
 import 'ask_state.dart';
 import 'composer.dart';
 import 'filter_panel.dart';
@@ -45,12 +49,6 @@ class _AskPageState extends ConsumerState<AskPage> {
 
   Future<void> _submit(String question) async {
     final filters = ref.read(askFiltersControllerProvider);
-    if (!filters.isYearRangeValid()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('年份区间不合法：结束年不得早于起始年')),
-      );
-      return;
-    }
     setState(() => _submitting = true);
     try {
       final answer = await ref
@@ -63,9 +61,8 @@ class _AskPageState extends ConsumerState<AskPage> {
       context.go('/a/${answer.id}');
     } on ApiError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.userMessage)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.userMessage)));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -73,9 +70,7 @@ class _AskPageState extends ConsumerState<AskPage> {
 
   void _useExample(String question) {
     _controller.text = question;
-    _controller.selection = TextSelection.collapsed(
-      offset: question.length,
-    );
+    _controller.selection = TextSelection.collapsed(offset: question.length);
     ref.read(askDraftProvider.notifier).set(question);
   }
 
@@ -83,57 +78,49 @@ class _AskPageState extends ConsumerState<AskPage> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final wide = width >= YaoeTokens.expandedMinWidth;
-    final filters = ref.watch(askFiltersControllerProvider);
     // 草稿可能被答案页的「沿用筛选重新提问」改写。
     ref.listen(askDraftProvider, (previous, next) {
       if (next != _controller.text) _controller.text = next;
     });
 
-    final main = SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: YaoeTokens.space5,
-        vertical: YaoeTokens.space6,
-      ),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
+    // 桌面进页面直接抢焦点；移动端不抢，免得键盘一上来就盖住 Tab 栏。
+    const desktop = {
+      TargetPlatform.linux,
+      TargetPlatform.windows,
+      TargetPlatform.macOS,
+    };
+
+    final host = FloatingComposerHost(
+      body: SingleChildScrollView(
+        child: PageBody(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AskHero(onExample: _useExample),
-              const SizedBox(height: YaoeTokens.space6),
-              Composer(
-                controller: _controller,
-                onSubmit: _submit,
-                engine: filters.engine,
-                onEngineChanged: (engine) => ref
-                    .read(askFiltersControllerProvider.notifier)
-                    .set(filters.copyWith(engine: engine)),
-                submitting: _submitting,
-                autofocus: true,
-                trailing: wide
-                    ? const []
-                    : [
-                        IconButton(
-                          tooltip: '筛选',
-                          onPressed: () => showFilterSheet(context),
-                          icon: const Icon(Icons.tune, size: 18),
-                        ),
-                      ],
-              ),
-              const SizedBox(height: YaoeTokens.space6),
+              const AskHero(),
+              const SizedBox(height: YaoeTokens.moduleSpacing),
               AskExamples(onExample: _useExample),
             ],
           ),
         ),
       ),
+      composer: Composer(
+        controller: _controller,
+        onSubmit: _submit,
+        submitting: _submitting,
+        autofocus: desktop.contains(defaultTargetPlatform),
+        onFilterTap: wide ? null : () => showFilterSheet(context),
+      ),
     );
 
-    if (!wide) return main;
+    if (!wide) return host;
     return Row(
       children: [
-        Expanded(child: main),
-        const FilterColumn(),
+        Expanded(child: host),
+        // 吞掉筛选列的滚动通知：滚它不该把提问框收起来。
+        NotificationListener<ScrollNotification>(
+          onNotification: (_) => true,
+          child: const FilterColumn(),
+        ),
       ],
     );
   }

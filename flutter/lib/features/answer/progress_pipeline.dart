@@ -4,11 +4,12 @@ import '../../app/theme/tokens.dart';
 import '../../core/logic/job_live.dart';
 import '../../core/models/answers.dart';
 import '../../shared/widgets/badges.dart';
+import '../../shared/widgets/surface.dart';
 import 'job_live_monitor.dart';
 import 'trace_list.dart';
 
 /// 任务进度。标准引擎是阶段流水线 + 当前阶段进度 + 检索摘要；
-/// 智能体引擎没有固定阶段，改用一行状态 + 检索轨迹。两者都带运行日志。
+/// 智能体引擎没有固定阶段，改用一行状态 + 检索轨迹。运行日志刻意不展示。
 class ProgressPipeline extends StatelessWidget {
   const ProgressPipeline({
     super.key,
@@ -16,6 +17,8 @@ class ProgressPipeline extends StatelessWidget {
     this.stages = StageKey.askPipeline,
     this.engine = AnswerEngine.ask,
     required this.onCandidateTap,
+    this.onCancel,
+    this.cancelRequested = false,
   });
 
   final JobLiveState state;
@@ -24,6 +27,10 @@ class ProgressPipeline extends StatelessWidget {
 
   /// 点击候选文献卡（进行中时材料可能还没生成）。
   final void Function(String pmid) onCandidateTap;
+
+  /// 取消任务；为 null 时不显示取消入口（除非 [cancelRequested]）。
+  final VoidCallback? onCancel;
+  final bool cancelRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +43,21 @@ class ProgressPipeline extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          codex ? '智能体检索' : '证据流水线',
-          style: theme.textTheme.labelLarge,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                codex ? '智能体检索' : '证据流水线',
+                style: theme.textTheme.labelLarge,
+              ),
+            ),
+            if (onCancel != null || cancelRequested)
+              TextButton.icon(
+                onPressed: onCancel,
+                icon: const Icon(Icons.stop_circle_outlined, size: 16),
+                label: Text(cancelRequested ? '正在取消…' : '取消'),
+              ),
+          ],
         ),
         const SizedBox(height: YaoeTokens.space3),
         if (codex)
@@ -89,10 +108,6 @@ class ProgressPipeline extends StatelessWidget {
               onCandidateTap: onCandidateTap,
             ),
           ],
-        ],
-        if (live.logs.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.space3),
-          _LogPanel(logs: live.logs),
         ],
       ],
     );
@@ -168,9 +183,11 @@ class _StageChip extends StatelessWidget {
         vertical: YaoeTokens.space1 + 2,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-        border: Border.all(color: color.withValues(alpha: 0.26)),
+        color: color.withValues(alpha: YaoeTokens.tintFillAlpha),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withValues(alpha: YaoeTokens.tintBorderAlpha),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -180,10 +197,7 @@ class _StageChip extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: textTheme.labelMedium?.copyWith(color: color),
-              ),
+              Text(label, style: textTheme.labelMedium?.copyWith(color: color)),
               if ((summary ?? '').isNotEmpty)
                 Text(
                   summary!,
@@ -298,91 +312,43 @@ class _CandidateCard extends StatelessWidget {
     final pmid = paper.pmid ?? '';
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 320),
-      child: InkWell(
+      child: YaoeCard(
         onTap: pmid.isEmpty ? null : () => onTap(pmid),
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-        child: Container(
-          padding: const EdgeInsets.all(YaoeTokens.space3),
-          decoration: BoxDecoration(
-            color: context.yaoe.card,
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
-            border: Border.all(color: theme.colorScheme.outlineVariant),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  if (paper.n != null) ...[
-                    CitationSquare(n: paper.n!, size: 18),
-                    const SizedBox(width: YaoeTokens.space2),
-                  ],
-                  Expanded(
-                    child: Text(
-                      paper.title ?? '（无标题）',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelLarge,
-                    ),
-                  ),
+        padding: const EdgeInsets.all(YaoeTokens.space3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (paper.n != null) ...[
+                  CitationSquare(n: paper.n!, size: 18),
+                  const SizedBox(width: YaoeTokens.space2),
                 ],
-              ),
-              const SizedBox(height: YaoeTokens.space1),
-              Text(
-                [
-                  paper.journal ?? '',
-                  paper.year ?? '',
-                  paper.rankLabel ?? '',
-                ].where((part) => part.isNotEmpty).join(' · '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LogPanel extends StatelessWidget {
-  const _LogPanel({required this.logs});
-
-  final List<LogLine> logs;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Theme(
-      data: theme.copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: YaoeTokens.space2),
-        title: Text('运行日志 ${logs.length} 条', style: theme.textTheme.labelLarge),
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 220),
-            child: ListView.builder(
-              shrinkWrap: true,
-              reverse: true,
-              itemCount: logs.length,
-              itemBuilder: (context, index) {
-                final line = logs[logs.length - 1 - index];
-                return Text(
-                  line.message,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: line.level == LogLevel.warning
-                        ? context.yaoe.warning
-                        : theme.colorScheme.onSurfaceVariant,
+                Expanded(
+                  child: Text(
+                    paper.title ?? '（无标题）',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge,
                   ),
-                );
-              },
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: YaoeTokens.space1),
+            Text(
+              [
+                paper.journal ?? '',
+                paper.year ?? '',
+                paper.rankLabel ?? '',
+              ].where((part) => part.isNotEmpty).join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

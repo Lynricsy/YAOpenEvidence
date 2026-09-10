@@ -32,9 +32,11 @@ class CitationChip extends StatelessWidget {
     final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.09),
+        color: color.withValues(alpha: YaoeTokens.tintFillAlpha),
         borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+        border: Border.all(
+          color: color.withValues(alpha: YaoeTokens.tintBorderAlpha),
+        ),
       ),
       child: Text(
         label,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/tokens.dart';
 import '../../core/logic/markdown_document.dart';
 import '../../shared/widgets/markdown_view.dart';
+import '../../shared/widgets/surface.dart';
 
 /// 窄屏下的 PICOS 证据表：每个表体行一张卡，卡内首行是引用芯片，
 /// 其余按表头顺序逐列一行（标签取表格实际表头文字）。
@@ -31,14 +32,9 @@ class PicosCardList extends StatelessWidget {
       children: [
         for (final row in rows)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
-            child: Container(
+            padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+            child: YaoeCard(
               padding: const EdgeInsets.all(YaoeTokens.space3),
-              decoration: BoxDecoration(
-                color: context.yaoe.card,
-                borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
-                border: Border.all(color: theme.colorScheme.outlineVariant),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
