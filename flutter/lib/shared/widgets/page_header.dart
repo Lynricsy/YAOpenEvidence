@@ -19,7 +19,7 @@ class PageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: YaoeTokens.space4),
+      padding: const EdgeInsets.only(bottom: YaoeTokens.sectionSpacing),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -32,7 +32,7 @@ class PageHeader extends StatelessWidget {
                   const SizedBox(height: YaoeTokens.space1),
                   Text(
                     description!,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -50,7 +50,11 @@ class PageHeader extends StatelessWidget {
 
 /// 页面内容的统一约束：最大宽度 + 内边距。
 class PageBody extends StatelessWidget {
-  const PageBody({super.key, required this.child, this.maxWidth = 960});
+  const PageBody({
+    super.key,
+    required this.child,
+    this.maxWidth = YaoeTokens.contentMaxWidth,
+  });
 
   final Widget child;
   final double maxWidth;
@@ -61,11 +65,18 @@ class PageBody extends StatelessWidget {
     child: ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: YaoeTokens.space4,
-          vertical: YaoeTokens.space4,
+        padding: EdgeInsets.fromLTRB(
+          YaoeTokens.pageInset,
+          YaoeTokens.space5,
+          YaoeTokens.pageInset,
+          YaoeTokens.space5 + MediaQuery.paddingOf(context).bottom,
         ),
-        child: child,
+        // 底部保留区只消费一次，防止内部 ListView 再叠一遍。
+        child: MediaQuery.removePadding(
+          context: context,
+          removeBottom: true,
+          child: child,
+        ),
       ),
     ),
   );
