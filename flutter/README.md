@@ -92,9 +92,15 @@ fvm flutter test                     # 单元测试
 ```bash
 fvm flutter build linux --release
 ANDROID_HOME=/opt/android-sdk fvm flutter build apk --debug
+# arm64 发布包（真机安装用这条）
+ANDROID_HOME=/opt/android-sdk fvm flutter build apk --release --split-per-abi --target-platform android-arm64
 ```
 
 APK 产物在 `build/app/outputs/flutter-apk/`。Windows 目录随 `flutter create` 入库，但只能在 Windows 主机上构建（本仓库的 CI/开发机为 Linux）。
+
+构建 arm64 包必须带 `--split-per-abi`：只给 `--target-platform android-arm64` 时仅 Flutter 引擎与 AOT 产物受限，插件的 `armeabi-v7a`/`x86_64` 原生库仍会被打进同一个 APK，装到 32 位设备会因缺 `libflutter.so` 崩溃。`--split-per-abi` 下 `versionCode` 由 Flutter 自动加 `1000 * ABI_VERSION`（arm64 为 `2001`）。
+
+`release` 目前用 debug 签名（仓库无发布证书，见 `android/app/build.gradle.kts`），产物可安装但不能上架，也无法与正式签名的版本互相覆盖升级。
 
 ## 端到端冒烟
 
