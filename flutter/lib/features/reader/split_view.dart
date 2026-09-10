@@ -69,6 +69,8 @@ class _SplitViewState extends ConsumerState<SplitView> {
         }
 
         return Row(
+          // 两栏撑满高度：答案侧的悬浮提问框依赖父级给出确定的高度。
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(width: leftWidth, child: widget.left),
             MouseRegion(

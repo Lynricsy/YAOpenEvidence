@@ -132,16 +132,16 @@ ThemeData buildTheme(Brightness brightness) {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       labelPadding: const EdgeInsets.symmetric(horizontal: 2),
       iconTheme: const IconThemeData(size: 14),
-      labelStyle: WidgetStateTextStyle.resolveWith(
-        (states) => states.contains(WidgetState.selected)
-            ? text.labelMedium!.copyWith(
-                color: scheme.onPrimary,
-                fontWeight: FontWeight.w600,
-              )
-            : text.labelMedium!.copyWith(
-                color: scheme.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
+      // ChipThemeData 只解析 labelStyle.color 上的 WidgetStateProperty
+      // （RawChip 里 labelStyle.merge 会把 WidgetStateTextStyle 的字段抹掉），
+      // 所以状态色必须挂在 color 上。
+      labelStyle: text.labelMedium!.copyWith(
+        fontWeight: FontWeight.w500,
+        color: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? scheme.onPrimary
+              : scheme.onSurface,
+        ),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(

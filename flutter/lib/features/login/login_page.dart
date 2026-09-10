@@ -193,7 +193,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     '本应用输出仅供医学专业人员参考，不构成诊疗建议。',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.outline,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],

@@ -114,6 +114,8 @@ class _AskPageState extends ConsumerState<AskPage> {
 
     if (!wide) return host;
     return Row(
+      // 两列都必须撑满高度，否则 Stack 收缩到内容高度、内容被垂直居中。
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(child: host),
         // 吞掉筛选列的滚动通知：滚它不该把提问框收起来。
