@@ -1,7 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 联网是本应用的核心能力，必须在 main 声明：模板只在 debug/profile 清单里给
+         INTERNET（供热重载用），release 变体合并不到，装上去无法请求后端。 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- 允许明文 http：默认后端为 http://localhost:8765，且客户端明确支持局域网
+         明文部署（core/session/server_url.dart 的 isLocalHost 放行 127/8、10/8、
+         192.168/16、172.16/12、169.254/16、*.local）。这些网段无法用
+         network-security-config 的 domain 枚举，只能整体放行；「公网地址必须 https」
+         由 validateServerUrl 在应用层强制。 -->
     <application
         android:label="YAOpenEvidence"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
