@@ -11,10 +11,13 @@ export function Pagination({
   offset: number
   onChange: (offset: number) => void
 }) {
+  // 只有一页且停在首页时无页可换：不留两个永远禁用的箭头，也不占版面。
+  // 不在首页就一律保留，「上一页」必须始终可达（与 Flutter 端 Pager 判据一致）。
+  if (total <= limit && offset === 0) return null
   return (
     <nav
       aria-label="分页"
-      className="flex flex-wrap items-center justify-between gap-3 border-t py-5"
+      className="flex flex-wrap items-center justify-between gap-3 border-t py-3"
     >
       <span className="text-xs text-muted-foreground">
         第 {total ? offset + 1 : 0}–{Math.min(offset + limit, total)} 条，共{' '}
