@@ -42,9 +42,6 @@ String formatCount(int value) {
   return out.toString();
 }
 
-/// 相似度分数两位小数。
-String formatScore(double score) => score.toStringAsFixed(2);
-
 /// 作者列表：前 3 位 + 「等」。
 String formatAuthors(List<String> authors, {int limit = 3}) {
   if (authors.isEmpty) return '';

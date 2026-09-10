@@ -75,15 +75,6 @@ ThemeData buildTheme(Brightness brightness) {
       thickness: 1,
       space: 1,
     ),
-    cardTheme: CardThemeData(
-      color: extension.card,
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusCard),
-        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
-      ),
-    ),
     appBarTheme: AppBarTheme(
       backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,

@@ -5,7 +5,6 @@ import '../../core/logic/citations.dart';
 import '../../core/models/answers.dart';
 import '../../core/models/kb.dart';
 import '../../shared/external_links.dart';
-import '../../shared/format.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/quote_highlight.dart';
 import '../../shared/widgets/section_heading.dart';
@@ -173,13 +172,6 @@ class KbSupplementList extends StatelessWidget {
                       const SizedBox(width: YaoeTokens.space2),
                       if (hit.verified != null)
                         VerifiedPill(verified: hit.verified!),
-                      const Spacer(),
-                      Text(
-                        formatScore(hit.score),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: YaoeTokens.space2),
