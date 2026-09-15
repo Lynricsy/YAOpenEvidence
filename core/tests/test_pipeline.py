@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import httpx
 import pytest
 
 import ask
@@ -122,6 +123,23 @@ def test_llm_unavailable_raises_instead_of_empty_string(monkeypatch):
         ask.llm("sys", "user", emit=warnings.append)
     assert len(warnings) == 3
     assert all(w["level"] == "warning" for w in warnings)
+
+
+@pytest.mark.parametrize(("content", "reason", "message"), [
+    (None, "length", "truncated"),
+    ("尚未写完的证据", "length", "truncated"),
+    ("   ", "stop", "empty"),
+    ("<think>仅有推理，没有正文</think>", "stop", "empty"),
+])
+def test_llm_rejects_incomplete_answers(monkeypatch, content, reason, message):
+    """HTTP 200 不等于答案完成；推理耗尽预算和空正文都不能作为成功结果返回。"""
+    response = httpx.Response(200, request=httpx.Request("POST", "http://llm/chat/completions"),
+                              json={"choices": [{"finish_reason": reason,
+                                                 "message": {"content": content}}]})
+    monkeypatch.setattr(ask.httpx, "post", lambda *a, **kw: response)
+    monkeypatch.setattr(ask.time, "sleep", lambda *_: None)
+    with pytest.raises(ask.LLMUnavailable, match=message):
+        ask.llm("system", "question", think=True)
 
 
 @pytest.mark.parametrize(("notes", "expected"), [

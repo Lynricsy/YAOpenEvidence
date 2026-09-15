@@ -100,8 +100,17 @@ def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, tem
             r = httpx.post(f"{LLM_BASE}/chat/completions", json=body,
                            headers={"Authorization": f"Bearer {LLM_KEY}"}, timeout=600)
             r.raise_for_status()
-            txt = r.json()["choices"][0]["message"]["content"] or ""
-            return re.sub(r"<think>.*?</think>", "", txt, flags=re.S).strip()
+            choice = r.json()["choices"][0]
+            if choice.get("finish_reason") == "length":
+                raise LLMUnavailable(f"LLM output truncated at max_tokens={max_tokens}; no complete answer")
+            txt = choice["message"]["content"] or ""
+            txt = re.sub(r"<think>.*?(?:</think>|$)", "", txt, flags=re.S).strip()
+            if not txt:
+                raise LLMUnavailable("LLM returned an empty answer")
+            return txt
+        except LLMUnavailable:
+            # 相同预算重试无法修复截断；让任务明确失败，不能把空正文标为完成。
+            raise
         except Exception as e:  # noqa: BLE001
             last = str(e)
             emit({"type": "log", "level": "warning", "message": f"LLM error ({e}); retry {attempt+1}"})
@@ -442,7 +451,8 @@ Do NOT write the reference list; it will be appended automatically."""
 def synthesize(question: str, papers: list[dict], *, emit: Emit = print_emit) -> str:
     notes = "\n\n".join(f"[{p['n']}] {p['title']} ({p['year']}) — {p['journal']} {jr.label(p.get('rank'))} — text source: {p['source']}\n"
                         f"{p.get('notes_for_synthesis') or p['notes']}" for p in papers)
-    return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}", max_tokens=2800, think=True, emit=emit)
+    # 思考与正文共享输出预算；短预算可能全被推理消耗，尚未作答就截断。
+    return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}", max_tokens=16384, think=True, emit=emit)
 
 
 def _short_authors(a: str) -> str:
