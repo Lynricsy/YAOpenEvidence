@@ -86,7 +86,7 @@ class PipelineCancelled(Exception):
 
 # ------------------------------------------------------------------ LLM
 def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, temperature: float = 0.2,
-        *, emit: Emit = print_emit) -> str:
+        *, thinking_token_budget: int | None = None, emit: Emit = print_emit) -> str:
     body = {
         "model": LLM_MODEL,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
@@ -94,6 +94,8 @@ def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, tem
         "temperature": temperature,
         "chat_template_kwargs": {"enable_thinking": think},
     }
+    if thinking_token_budget is not None:
+        body["thinking_token_budget"] = thinking_token_budget
     last = ""
     for attempt in range(3):
         try:
@@ -451,8 +453,9 @@ Do NOT write the reference list; it will be appended automatically."""
 def synthesize(question: str, papers: list[dict], *, emit: Emit = print_emit) -> str:
     notes = "\n\n".join(f"[{p['n']}] {p['title']} ({p['year']}) — {p['journal']} {jr.label(p.get('rank'))} — text source: {p['source']}\n"
                         f"{p.get('notes_for_synthesis') or p['notes']}" for p in papers)
-    # 思考与正文共享输出预算；短预算可能全被推理消耗，尚未作答就截断。
-    return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}", max_tokens=16384, think=True, emit=emit)
+    # 思考与正文共享总额度；独立限制思考，避免耗尽预算或在作答前超时。
+    return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}",
+               max_tokens=16384, think=True, thinking_token_budget=4096, emit=emit)
 
 
 def _short_authors(a: str) -> str:
