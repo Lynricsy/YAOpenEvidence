@@ -1,0 +1,24 @@
+services:
+  llm-tunnel:
+    build:
+      context: .
+      dockerfile: deploy/llm-tunnel.Dockerfile
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - ./.llm-ssh:/ssh:ro
+    ports:
+      - "127.0.0.1:29913:29913"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:29913/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+  api:
+    depends_on:
+      llm-tunnel: { condition: service_healthy }
+  worker:
+    depends_on:
+      llm-tunnel: { condition: service_healthy }

@@ -19,6 +19,7 @@ smk_*.zip
 # uv 虚拟环境 / 运行期数据 / 本地密钥
 .venv/
 var/
+.llm-ssh/
 backend/api_keys.toml
 .env
 

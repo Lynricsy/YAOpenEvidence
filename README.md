@@ -105,7 +105,7 @@ flowchart LR
     Redis[(redis<br/>任务队列与事件流)]
     Worker[worker<br/>arq]
     Data[(共享数据卷<br/>answers / library / kb / data / models / pdfs / var)]
-    LLM[宿主机<br/>LiteLLM :4000 + vLLM]
+    LLM[SSH 隧道<br/>远端 vLLM / Qwen3.8-27B]
     Sources[PubMed / Europe PMC<br/>Semantic Scholar]
 
     Browser --> Web
@@ -133,13 +133,13 @@ flowchart LR
 | 生效筛选 | 全部字段，服务端硬过滤 | 年份/分区/期刊等翻成检索要求交给模型 |
 | 多轮 | 每次提问独立 | 同一 codex 会话可 `POST /v1/answers/{id}/followup` 续接追问 |
 
-codex 运行时随 `openai-codex` 依赖一起进镜像（`openai-codex-cli-bin` 带 codex 二进制，不需要 node，也不读 `~/.codex/config.toml`）：provider 与 MCP 全部走每次会话的内联配置，复用 `LLM_BASE` / `LLM_MODEL` / `LOCAL_QWEN_KEY`，因此必须是支持 **Responses API**（`/v1/responses`）的端点——codex 0.147 起不再支持 chat 线协议，LiteLLM 代理满足这一点。会话文件落在 `CODEX_HOME`（镜像内为 `/data/var/codex`，随 `./var` 卷持久化）。
+codex 运行时随 `openai-codex` 依赖一起进镜像（`openai-codex-cli-bin` 带 codex 二进制，不需要 node，也不读 `~/.codex/config.toml`）：provider 与 MCP 全部走每次会话的内联配置，复用 `LLM_BASE` / `LLM_MODEL` / `LOCAL_QWEN_KEY`，因此必须是支持 **Responses API**（`/v1/responses`）的端点——codex 0.147 起不再支持 chat 线协议。当前远端 vLLM 同时提供 Chat Completions 和 Responses API，无需 LiteLLM 中转。会话文件落在 `CODEX_HOME`（镜像内为 `/data/var/codex`，随 `./var` 卷持久化）。
 
 服务端运行以 `sandbox=read-only` + `approval_mode=deny_all` 启动，工作目录是 `CODEX_HOME/work` 空目录而非代码树。注意这两项只挡住写入与升权批准：**read-only 不限制读取范围**，`cwd` 也只是工作目录，真正的租户隔离靠容器与运行用户，多租户对外开放前必须在容器/进程层面隔离。
 
 ## 快速开始：Docker Compose
 
-需要 Docker、Docker Compose，以及可供容器访问的宿主机 LiteLLM/vLLM。
+需要 Docker、Docker Compose，以及可供容器访问、同时支持 Chat Completions 和 Responses API 的模型服务。
 
 ### 1. 准备配置和目录
 
@@ -150,15 +150,26 @@ mkdir -p var core/pdfs
 
 账号存储在 API 数据库中，不再配置静态 API Key。不要在公开网络上以明文 HTTP 传输密码或会话令牌。
 
-### 2. 在宿主机启动模型服务
+### 2. 连接模型服务
 
-```bash
-cd core
-./PICOSGpt start
-cd ..
+当前项目接入远端 **Qwen3.8-27B FP8**（服务模型名 `Qwen3.8-27B`，上下文上限 262144）。模型仅监听远端 `127.0.0.1:29913`，通过两跳 SSH 隧道接入，不向公网开放无鉴权 API。在 `.env` 设置：
+
+```dotenv
+COMPOSE_FILE=compose.yaml:compose.qwen.yaml
+LLM_BASE=http://llm-tunnel:29913/v1
+LLM_MODEL=Qwen3.8-27B
+LOCAL_QWEN_KEY=EMPTY
 ```
 
-默认 Compose 配置通过 `http://host.docker.internal:4000/v1` 访问 LiteLLM。
+`.llm-ssh/` 保存专用 `id_ed25519`、固定主机指纹的 `known_hosts` 和 OpenSSH `config`，均不提交，也不进入镜像构建上下文。密钥仅挂载到隧道容器，不放入 API、worker 可读取的 `var/` 卷。目录权限为 `700`，私钥和配置为 `600`。配置中的 `qwen-target` 经 `qwen-jump` 连接；两者都指定 `/ssh/id_ed25519`、`IdentitiesOnly yes`、`BatchMode yes`、`StrictHostKeyChecking yes` 和 `UserKnownHostsFile /ssh/known_hosts`。具体地址与用户名只写入本地配置。
+
+在两台机器登记公钥前须取得授权；公钥选项使用 `restrict,port-forwarding,command="/bin/false",permitopen="目的地址:端口"`，跳板只允许转发到目标 SSH 端口，目标只允许转发到 `127.0.0.1:29913`。不保存密码，不放开 shell 权限，也不禁用主机指纹校验。迁移主机时重新登记专用公钥，不能只复制 Compose 文件。
+
+`llm-tunnel` 容器以只读方式挂载密钥，自动重启；API 和 worker 等待隧道健康后启动。宿主机仅在 `127.0.0.1:29913` 发布端口，宿主机直接运行 Python 时将 `LLM_BASE` 覆盖为 `http://127.0.0.1:29913/v1`。远端 vLLM 应启用 `--reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml`。
+
+流水线保留现有逐阶段策略：检索、抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。262144 是输入与输出共享上限，不代表两路满长度请求能并发，也不代表已完成医学领域精度评估。
+
+如使用其他兼容端点，移除 `COMPOSE_FILE` 并设置其地址、模型名和密钥即可；基础 Compose 默认仍访问宿主机 `http://host.docker.internal:4000/v1`。`core/PICOSGpt start` 是旧版宿主机本地模型启动方案，不用于上述远端部署。
 
 ### 3. 启动工作台与后端
 

@@ -14,6 +14,7 @@ core/.backup
 core/.bak_rename
 core/*.bak_*
 var
+.llm-ssh
 backend/api_keys.toml
 .env
 frontend
