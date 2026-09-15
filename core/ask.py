@@ -85,26 +85,27 @@ class PipelineCancelled(Exception):
 
 
 # ------------------------------------------------------------------ LLM
-def llm(system: str, user: str, max_tokens: int = 2000, think: bool = False, temperature: float = 0.2,
-        *, thinking_token_budget: int | None = None, emit: Emit = print_emit) -> str:
+def llm(system: str, user: str, max_tokens: int | None = 2000, think: bool = False, temperature: float = 0.2,
+        *, timeout: float | None = 600, emit: Emit = print_emit) -> str:
     body = {
         "model": LLM_MODEL,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "max_tokens": max_tokens,
         "temperature": temperature,
         "chat_template_kwargs": {"enable_thinking": think},
     }
-    if thinking_token_budget is not None:
-        body["thinking_token_budget"] = thinking_token_budget
+    if max_tokens is not None:
+        body["max_tokens"] = max_tokens
     last = ""
     for attempt in range(3):
         try:
             r = httpx.post(f"{LLM_BASE}/chat/completions", json=body,
-                           headers={"Authorization": f"Bearer {LLM_KEY}"}, timeout=600)
+                           headers={"Authorization": f"Bearer {LLM_KEY}"},
+                           timeout=httpx.Timeout(timeout, connect=30, write=30, pool=30))
             r.raise_for_status()
             choice = r.json()["choices"][0]
             if choice.get("finish_reason") == "length":
-                raise LLMUnavailable(f"LLM output truncated at max_tokens={max_tokens}; no complete answer")
+                limit = f"max_tokens={max_tokens}" if max_tokens is not None else "server context limit"
+                raise LLMUnavailable(f"LLM output truncated at {limit}; no complete answer")
             txt = choice["message"]["content"] or ""
             txt = re.sub(r"<think>.*?(?:</think>|$)", "", txt, flags=re.S).strip()
             if not txt:
@@ -453,9 +454,9 @@ Do NOT write the reference list; it will be appended automatically."""
 def synthesize(question: str, papers: list[dict], *, emit: Emit = print_emit) -> str:
     notes = "\n\n".join(f"[{p['n']}] {p['title']} ({p['year']}) — {p['journal']} {jr.label(p.get('rank'))} — text source: {p['source']}\n"
                         f"{p.get('notes_for_synthesis') or p['notes']}" for p in papers)
-    # 思考与正文共享总额度；独立限制思考，避免耗尽预算或在作答前超时。
+    # 不设独立思考或输出额度，由服务端分配剩余上下文；生成期间不设读取超时。
     return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}",
-               max_tokens=16384, think=True, thinking_token_budget=4096, emit=emit)
+               max_tokens=None, think=True, timeout=None, emit=emit)
 
 
 def _short_authors(a: str) -> str:

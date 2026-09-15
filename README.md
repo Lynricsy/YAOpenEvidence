@@ -159,6 +159,7 @@ COMPOSE_FILE=compose.yaml:compose.qwen.yaml
 LLM_BASE=http://llm-tunnel:29913/v1
 LLM_MODEL=Qwen3.8-27B
 LOCAL_QWEN_KEY=EMPTY
+YAOE_JOB_TIMEOUT_S=86400
 ```
 
 `.llm-ssh/` 保存专用 `id_ed25519`、固定主机指纹的 `known_hosts` 和 OpenSSH `config`，均不提交，也不进入镜像构建上下文。密钥仅挂载到隧道容器，不放入 API、worker 可读取的 `var/` 卷。目录权限为 `700`，私钥和配置为 `600`。配置中的 `qwen-target` 经 `qwen-jump` 连接；两者都指定 `/ssh/id_ed25519`、`IdentitiesOnly yes`、`BatchMode yes`、`StrictHostKeyChecking yes` 和 `UserKnownHostsFile /ssh/known_hosts`。具体地址与用户名只写入本地配置。
@@ -167,7 +168,7 @@ LOCAL_QWEN_KEY=EMPTY
 
 `llm-tunnel` 容器以只读方式挂载密钥，自动重启；API 和 worker 等待隧道健康后启动。宿主机仅在 `127.0.0.1:29913` 发布端口，宿主机直接运行 Python 时将 `LLM_BASE` 覆盖为 `http://127.0.0.1:29913/v1`。远端 vLLM 应启用 `--reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml`。
 
-流水线保留现有逐阶段策略：检索、抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。综合阶段总输出额度为 16384 tokens，并通过 vLLM 的 `thinking_token_budget=4096` 单独限制思考，为正文保留额度；只提高总额度而不限制思考仍可能在作答前超时。此参数要求网关支持 vLLM 的思考预算扩展。模型返回空正文或 `finish_reason=length` 时，任务明确失败，不会保存为完成答案，也不会用相同预算反复重试。262144 是输入与输出共享上限，不代表两路满长度请求能并发，也不代表已完成医学领域精度评估。
+流水线保留现有逐阶段策略：检索、抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。综合阶段不再发送 `thinking_token_budget` 或 `max_tokens`，由 vLLM 按剩余上下文分配可生成额度；当前模型总上下文为 262144 tokens，输入、思考和正文共享，不能真正无限。综合请求取消生成读取超时，连接、写入和连接池等待仍保留 30 秒超时；其他阶段保持原有输出额度和 600 秒读取超时。当前远端部署将 `YAOE_JOB_TIMEOUT_S` 设为 86400（24 小时），不要设为 0（队列会立即超时），也不要直接关闭队列超时而破坏运行锁的有效期。长思考可能占用单卡数小时并阻塞后续任务，现有取消机制在流水线阶段边界生效。空正文或 `finish_reason=length` 仍会使任务明确失败，不会保存为完成答案。放宽额度不保证回答更准确，也不代表已完成医学领域精度评估。
 
 如使用其他兼容端点，移除 `COMPOSE_FILE` 并设置其地址、模型名和密钥即可；基础 Compose 默认仍访问宿主机 `http://host.docker.internal:4000/v1`。`core/PICOSGpt start` 是旧版宿主机本地模型启动方案，不用于上述远端部署。
 
@@ -314,7 +315,7 @@ uv run --directory backend yaoe reset-password admin
 | `YAOE_HOST` | `127.0.0.1` | `yaoe serve` 默认监听地址 |
 | `YAOE_PORT` | `8765` | `yaoe serve` 默认端口；Compose 也用它设置宿主机映射端口 |
 | `YAOE_WORKER_MAX_JOBS` | `1` | 单个 worker 同时执行的最大任务数 |
-| `YAOE_JOB_TIMEOUT_S` | `1800` | worker 任务超时秒数 |
+| `YAOE_JOB_TIMEOUT_S` | `1800` | worker 任务超时秒数；当前远端 Qwen 部署设为 `86400`（24 小时） |
 | `YAOE_MAX_ACTIVE_JOBS_PER_USER` | `2` | 每个用户允许的 queued/running 任务上限，多个会话共享，必须大于 0 |
 | `YAOE_EVENTS_TTL_S` | `604800` | Redis 任务事件流与取消标记的保留秒数，默认 7 天 |
 | `YAOE_EVENTS_MAXLEN` | `2000` | 每个任务 Redis Stream 的近似最大事件数 |
