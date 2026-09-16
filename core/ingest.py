@@ -94,7 +94,7 @@ def run_ingest(src: IngestSource, *, emit: Emit = print_emit,
     _check()
     _stage("kb", "started", title=title)
     emit({"type": "progress", "stage": "kb", "current": 0, "total": 1, "title": title})
-    facts = ks.extract_facts(paras, lambda s, u, mt: llm(s, u, max_tokens=mt, emit=emit), "")
+    facts = ks.extract_facts(paras, lambda s, u: llm(s, u, emit=emit), "")
     emit({"type": "progress", "stage": "kb", "current": 1, "total": 1, "title": title})
 
     _check()

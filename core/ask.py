@@ -85,16 +85,14 @@ class PipelineCancelled(Exception):
 
 
 # ------------------------------------------------------------------ LLM
-def llm(system: str, user: str, max_tokens: int | None = 2000, think: bool = False, temperature: float = 0.2,
-        *, timeout: float | None = 600, emit: Emit = print_emit) -> str:
+def llm(system: str, user: str, *, think: bool = False, temperature: float = 0.2,
+        timeout: float | None = 600, emit: Emit = print_emit) -> str:
     body = {
         "model": LLM_MODEL,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": temperature,
         "chat_template_kwargs": {"enable_thinking": think},
     }
-    if max_tokens is not None:
-        body["max_tokens"] = max_tokens
     last = ""
     for attempt in range(3):
         try:
@@ -104,8 +102,7 @@ def llm(system: str, user: str, max_tokens: int | None = 2000, think: bool = Fal
             r.raise_for_status()
             choice = r.json()["choices"][0]
             if choice.get("finish_reason") == "length":
-                limit = f"max_tokens={max_tokens}" if max_tokens is not None else "server context limit"
-                raise LLMUnavailable(f"LLM output truncated at {limit}; no complete answer")
+                raise LLMUnavailable("LLM output truncated at server context limit; no complete answer")
             txt = choice["message"]["content"] or ""
             txt = re.sub(r"<think>.*?(?:</think>|$)", "", txt, flags=re.S).strip()
             if not txt:
@@ -197,7 +194,7 @@ def make_queries(question: str, *, emit: Emit = print_emit) -> tuple[list[str], 
     sysmsg = ("You are a medical librarian. Convert the user's question into PubMed search queries. "
               "Return ONLY JSON: {\"english_question\": str, \"queries\": [str, str, str]}. "
               "Queries must be English, 3-8 words, use synonyms/MeSH-like terms, no boolean operators, no quotes.")
-    out = llm(sysmsg, question, max_tokens=400, emit=emit)
+    out = llm(sysmsg, question, emit=emit)
     m = re.search(r"\{.*\}", out, re.S)
     try:
         js = json.loads(m.group(0))
@@ -419,7 +416,7 @@ def read_paper(i: int, p: dict, question_en: str, *, emit: Emit = print_emit) ->
         p["cites"] = []
         return p
     user = f"QUESTION: {question_en}\n\nPAPER [{i}] {p['title']} ({p['year']}, {p['journal']}) — source: {p['source']}\n\n{p['text']}"
-    p["notes"] = llm(READ_SYS, user, max_tokens=2000, emit=emit)
+    p["notes"] = llm(READ_SYS, user, emit=emit)
     p["relevance"] = parse_relevance(p["notes"])
     p["cites"] = ks.verify_citations(p["notes"], p["paras"])
     # rewrite the notes so the synthesis model sees corrected/verified paragraph ids: (¶12: "...") -> [n¶12]
@@ -456,7 +453,7 @@ def synthesize(question: str, papers: list[dict], *, emit: Emit = print_emit) ->
                         f"{p.get('notes_for_synthesis') or p['notes']}" for p in papers)
     # 不设独立思考或输出额度，由服务端分配剩余上下文；生成期间不设读取超时。
     return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}",
-               max_tokens=None, think=True, timeout=None, emit=emit)
+               think=True, timeout=None, emit=emit)
 
 
 def _short_authors(a: str) -> str:
@@ -762,7 +759,7 @@ def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_e
         facts_by_n: dict[int, list[dict]] = {}
         with cf.ThreadPoolExecutor(opts.workers) as ex:   # LLM calls in parallel; store.add_paper is done serially below
             futs = {ex.submit(ks.extract_facts, p["paras"],
-                              lambda s, u, mt: llm(s, u, max_tokens=mt, emit=emit), q_en): p
+                              lambda s, u: llm(s, u, emit=emit), q_en): p
                     for p in papers if p.get("paras")}
             for k, fut in enumerate(cf.as_completed(futs), 1):
                 p = futs[fut]

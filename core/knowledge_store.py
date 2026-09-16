@@ -221,13 +221,13 @@ Return ONLY a JSON array, 5-20 items (most important first), each:
 Rules: never invent numbers; every fact must have a real pid and a verbatim quote; skip references/funding boilerplate."""
 
 
-def extract_facts(paras: list[dict], llm: Callable[[str, str, int], str], question: str = "", max_chars: int = 24000) -> list[dict]:
+def extract_facts(paras: list[dict], llm: Callable[[str, str], str], question: str = "", max_chars: int = 24000) -> list[dict]:
     """Ask the model for atomic facts; verify each quote; return the verified list (unverified are flagged)."""
     text = numbered_text(paras)
     if len(text) > max_chars:
         text = text[:max_chars] + "\n[... truncated ...]"
     user = (f"(context question, optional: {question})\n\n" if question else "") + text
-    raw = llm(FACTS_SYS, user, 3200)
+    raw = llm(FACTS_SYS, user)
     start = raw.find("[")
     if start < 0:
         return []
@@ -236,7 +236,7 @@ def extract_facts(paras: list[dict], llm: Callable[[str, str, int], str], questi
     try:
         items = json.loads(blob[:end + 1] if end > 0 else blob)
     except json.JSONDecodeError:
-        # tolerate trailing commas / truncated output (max_tokens hit): keep the complete objects only
+        # 容忍 JSON 格式不完整，仅保留完整对象；生成截断由模型调用层检查。
         objs = re.findall(r"\{[^{}]*\}", blob, re.S)
         items = []
         for o in objs:
