@@ -12,6 +12,8 @@ enum JobKind {
   kbReindex,
   @JsonValue('paper_ingest')
   paperIngest,
+  @JsonValue('answer_kb')
+  answerKb,
 }
 
 enum JobStatus {

@@ -1205,7 +1205,8 @@
                     "ask",
                     "codex",
                     "kb_reindex",
-                    "paper_ingest"
+                    "paper_ingest",
+                    "answer_kb"
                   ],
                   "type": "string"
                 },
@@ -4075,7 +4076,8 @@
               "ask",
               "codex",
               "kb_reindex",
-              "paper_ingest"
+              "paper_ingest",
+              "answer_kb"
             ],
             "title": "Kind"
           },

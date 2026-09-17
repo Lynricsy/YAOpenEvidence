@@ -41,6 +41,14 @@ def pipeline(monkeypatch, tmp_path):
     monkeypatch.setattr(ask, "ANSWERS_DIR", str(answers))
     monkeypatch.setattr(ask, "llm", lambda system, user, **kw: fake_llm(system, user))
 
+    class IsolatedStore(ks.KnowledgeStore):
+        def __init__(self):
+            super().__init__(kb_dir=str(tmp_path / "kb"))
+
+    monkeypatch.setattr(ks, "KnowledgeStore", IsolatedStore)
+    monkeypatch.setattr(ks, "KB_DIR", str(tmp_path / "kb"))
+    monkeypatch.setattr(ks, "LIB_DIR", str(tmp_path / "library"))
+
     def _search_all(queries, n_papers, flt, *, emit=ask.print_emit):
         flt.candidates = flt.kept = 1
         return [_candidate()]
@@ -121,8 +129,11 @@ def test_llm_unavailable_raises_instead_of_empty_string(monkeypatch):
     warnings: list[dict] = []
     with pytest.raises(ask.LLMUnavailable):
         ask.llm("sys", "user", emit=warnings.append)
-    assert len(warnings) == 3
-    assert all(w["level"] == "warning" for w in warnings)
+    metrics = [json.loads(e["message"].removeprefix("llm_metrics "))
+               for e in warnings if e["message"].startswith("llm_metrics ")]
+    assert [m["attempt"] for m in metrics] == [1, 2, 3]
+    assert all(not m["success"] and m["elapsed_s"] >= 0 for m in metrics)
+    assert len({m["request_id"] for m in metrics}) == 3
 
 
 @pytest.mark.parametrize(("content", "reason", "message"), [
@@ -159,3 +170,114 @@ def test_parse_relevance_reads_the_score_not_the_range(notes, expected):
 def test_papers_without_text_are_not_treated_as_relevant():
     p = ask.read_paper(1, {"pmid": "1", "text": ""}, "question")
     assert p["relevance"] == 0
+
+
+def test_deferred_snapshot_recovers_after_index_failure(pipeline, monkeypatch, tmp_path):
+    original_extract = ks.extract_facts
+    monkeypatch.setattr(ks, "extract_facts", lambda *a, **kw: pytest.fail("foreground extracted facts"))
+    res = ask.run_ask(ask.AskOptions(question="benefit", workers=1, use_paywall=False),
+                      run_id="deferred", defer_kb=True, emit=lambda e: None)
+    assert "[1¶2]" in res.body_md
+    assert not (tmp_path / "kb").exists()
+    snapshot = ask.save_kb_snapshot(res)
+    before = Path(res.out_path).read_bytes()
+    # 输入已独立落盘，恢复不再依赖调用方保留的内存对象。
+    res.papers.clear()
+    monkeypatch.setattr(ks, "extract_facts", original_extract)
+    real_add = ks.KnowledgeStore.add_paper
+    monkeypatch.setattr(ks.KnowledgeStore, "add_paper",
+                        lambda *a, **kw: (_ for _ in ()).throw(OSError("interrupted index")))
+    with pytest.raises(OSError, match="interrupted index"):
+        ask.index_kb_snapshot(snapshot, position=0, emit=lambda e: None)
+    monkeypatch.setattr(ks.KnowledgeStore, "add_paper", real_add)
+    monkeypatch.setattr(ks, "extract_facts", lambda *a, **kw: pytest.fail("recovery re-extracted facts"))
+    first = ask.index_kb_snapshot(snapshot, position=0, emit=lambda e: None)
+    replay = ask.index_kb_snapshot(snapshot, position=0, emit=lambda e: None)
+    assert first == replay
+    assert (first["paper_count"], first["next_position"]) == (1, 1)
+    store = ks.KnowledgeStore()
+    assert store.stats()["items"] == first["items"]
+    assert store.stats()["papers"] == 1
+    assert any(h["kind"] == "fact" for h in store.search("tirzepatide", top_k=100))
+    assert Path(res.out_path).read_bytes() == before
+
+
+def test_snapshot_rejects_partial_checkpoint_and_obeys_cancel(pipeline, monkeypatch, tmp_path):
+    res = ask.run_ask(ask.AskOptions(question="benefit", workers=1, use_paywall=False),
+                      run_id="partial", defer_kb=True, emit=lambda e: None)
+    snapshot = ask.save_kb_snapshot(res)
+    checkpoint = Path(res.papers_dir, "kb-facts-1.json")
+    checkpoint.write_text('{"version": 1, "facts": [', encoding="utf-8")
+    with pytest.raises(ask.PipelineCancelled):
+        ask.index_kb_snapshot(snapshot, position=0, should_cancel=lambda: True, emit=lambda e: None)
+    assert not (tmp_path / "kb").exists()
+    result = ask.index_kb_snapshot(snapshot, position=0, emit=lambda e: None)
+    assert result["items"] > len(_paras())
+    assert json.loads(checkpoint.read_text(encoding="utf-8"))["facts"]
+
+
+def test_nothing_relevant_skips_expensive_kb(pipeline, monkeypatch):
+    def read_irrelevant(i, p, question_en, **kwargs):
+        p.update(notes="Relevance 0", relevance=0, cites=[])
+        return p
+
+    monkeypatch.setattr(ask, "read_paper", read_irrelevant)
+    monkeypatch.setattr(ks, "extract_facts", lambda *a, **kw: pytest.fail("irrelevant facts extraction"))
+    with pytest.raises(ask.NothingRelevant):
+        ask.run_ask(ask.AskOptions(question="irrelevant", workers=1, use_paywall=False),
+                    run_id="irrelevant", emit=lambda e: None)
+
+
+def test_llm_metrics_preserve_usage_without_content_or_secrets(monkeypatch):
+    events = []
+    response = httpx.Response(200, request=httpx.Request("POST", "http://llm/chat/completions"),
+                             json={"id": "provider-id", "model": "served-model",
+                                   "choices": [{"finish_reason": "stop", "message": {"content": "private answer"}}],
+                                   "usage": {"prompt_tokens": 12, "completion_tokens": 7,
+                                             "completion_tokens_details": {"reasoning_tokens": 3},
+                                             "prompt_tokens_details": {"cached_tokens": 4}}})
+    monkeypatch.setattr(ask.httpx, "post", lambda *a, **kw: response)
+    monkeypatch.setattr(ask, "LLM_KEY", "secret-key")
+    assert ask.llm("private system", "private question", operation="read", emit=events.append) == "private answer"
+    logged = json.dumps(events)
+    assert "private" not in logged and "secret-key" not in logged
+    metrics = json.loads(events[0]["message"].removeprefix("llm_metrics "))
+    assert metrics["success"] and metrics["operation"] == "read"
+    assert metrics["response_id"] == "provider-id"
+    assert (metrics["prompt_tokens"], metrics["completion_tokens"], metrics["reasoning_tokens"],
+            metrics["cached_tokens"]) == (12, 7, 3, 4)
+
+
+def test_snapshot_processes_all_papers_one_at_a_time_including_empty(pipeline, monkeypatch, tmp_path):
+    res = ask.run_ask(ask.AskOptions(question="benefit", workers=1, use_paywall=False),
+                      run_id="batch", defer_kb=True, emit=lambda e: None)
+    # 无相关性/无段落的候选也必须保留在完整快照中，但不能启动模型抽取。
+    res.papers.append({**res.papers[0], "n": 2, "pmid": "empty", "paras": [], "fulltext_md": ""})
+    snapshot = ask.save_kb_snapshot(res)
+    first = ask.index_kb_snapshot(snapshot, position=0, emit=lambda e: None)
+    assert (first["paper_count"], first["next_position"]) == (2, 1)
+    monkeypatch.setattr(ks, "extract_facts", lambda *a, **kw: pytest.fail("empty paragraphs extracted"))
+    assert ask.index_kb_snapshot(snapshot, position=1, emit=lambda e: None) == {
+        "paper_count": 2, "next_position": 2, "items": 0}
+    assert ks.KnowledgeStore().stats()["items"] == first["items"]
+
+
+def test_default_pipeline_still_indexes_synchronously(pipeline, monkeypatch, tmp_path):
+    res = ask.run_ask(ask.AskOptions(question="benefit", workers=1, use_paywall=False),
+                      run_id="sync", emit=lambda e: None)
+    assert any(h["kind"] == "fact" for h in ks.KnowledgeStore().search("tirzepatide", top_k=100))
+    assert json.loads(Path(res.papers_dir, "39133485_facts.json").read_text(encoding="utf-8")) == res.papers[0]["facts"]
+
+
+def test_deferred_kb_hits_only_include_history(pipeline, monkeypatch, tmp_path):
+    store = ks.KnowledgeStore()
+    for pmid in ("history", "39133485"):
+        store.add_paper({"pmid": pmid, "title": "tirzepatide"}, [],
+                        [{"fact": "tirzepatide clinical benefit", "verified": False}])
+    monkeypatch.setattr(ks, "extract_facts", lambda *a, **kw: pytest.fail("history lookup extracted facts"))
+    res = ask.run_ask(ask.AskOptions(question="tirzepatide benefit", workers=1,
+                                    use_paywall=False, kb_hits=10),
+                      run_id="history", defer_kb=True, emit=lambda e: None)
+    assert {hit["pmid"] for hit in res.kb_hits} == {"history"}
+    assert "PMID:history" in res.answer_md
+    assert "[1¶2]" in res.body_md

@@ -7,7 +7,7 @@
 
 # YAOpenEvidence
 
-YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问题出发，由 LLM 生成检索式，经 PubMed 与 Europe PMC 检索并获取全文，再按 PICOS 框架逐篇阅读、把引文逐条回到原文核实、将原子知识写入本地知识库，最终生成带段落级引用定位的综述。系统提供浏览器工作台、本机使用的 `core/PICOSGpt` CLI，以及 `/v1` REST + SSE API。
+YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问题出发，由 LLM 生成检索式，经 PubMed 与 Europe PMC 检索并获取全文，再按 PICOS 框架逐篇阅读、把引文逐条回到原文核实，生成带段落级引用定位的综述。API 优先交付答案，再可靠地后台提取原子知识并入库；本机 CLI 保持同步入库。系统提供浏览器工作台、本机使用的 `core/PICOSGpt` CLI，以及 `/v1` REST + SSE API。
 
 API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md)；CLI 内核的详细用法见 [core/README.md](core/README.md)。
 
@@ -121,6 +121,10 @@ flowchart LR
 
 问答流水线通常运行数分钟，因此 API 只负责接收请求、持久化任务并入队，独立 worker 执行耗时工作；`YAOE_WORKER_MAX_JOBS` 默认为 `1`，适合单 GPU 串行执行。任务事件使用 Redis Stream 而非 Pub/Sub，因为 SSE 客户端断线后需要携带 `Last-Event-ID` 续传历史事件。取消采用协作式机制：API 写入取消标记，worker 在阶段边界和逐篇处理边界检查；已经开始的单次 LLM 调用不会被强行中断。
 
+`ask` 引擎开启 `use_kb` 时，API 将 `Answer.ready`、问答任务成功及独立的 `answer_kb` 后台任务在同一数据库事务中保存；问答的 `job.result.kb_job_id` 指向后台任务。答案和逐篇原文此时已经可读，后台失败或取消不会改写、撤回答案。Web 答案页单独显示入库状态；三端不再把未执行的 `kb` 阶段显示为前台等待步骤。`use_kb=false` 不创建后台任务；`kb_hits` 仍只引用既有知识，不等待本次文献入库。
+
+后台由数据库持久任务驱动，worker 启动和每 10 秒扫描恢复，Redis 投递失败不会丢掉任务。每次只处理一篇；有其他种类任务排队或运行时，不派发下一篇。已开始的一篇不会被抢占，所以新问答最多仍需等待当前篇完成，而不是等待整批入库。事实抽取完成后原子保存检查点，重试可复用；每篇最多尝试 3 次，逐篇保存恢复游标。取消后台任务不回滚此前已写入的文献。多个 worker 必须共享 `answers/`、`library/`、`kb/` 与 `var/`，且共享文件系统须支持 POSIX 文件锁及原子重命名；`var/answer-kb.lock` 保证跨进程后台串行，运行期间不要删除锁文件。本机 CLI 不走后台队列，仍同步抽取与索引。
+
 ### 两个问答引擎
 
 `POST /v1/answers` 的 `engine` 决定 worker 走哪条路：
@@ -169,6 +173,8 @@ YAOE_JOB_TIMEOUT_S=86400
 `llm-tunnel` 容器以只读方式挂载密钥，自动重启；API 和 worker 等待隧道健康后启动。宿主机仅在 `127.0.0.1:29913` 发布端口，宿主机直接运行 Python 时将 `LLM_BASE` 覆盖为 `http://127.0.0.1:29913/v1`。远端 vLLM 应启用 `--reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml`。
 
 流水线保留现有逐阶段策略：检索、阅读、事实抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。检索、阅读、事实抽取（含单篇入库）和综合阶段均不发送 `thinking_token_budget` 或 `max_tokens`，不再设置应用层输出或独立思考额度，由 vLLM 按剩余上下文分配可生成额度；当前模型总上下文为 262144 tokens，输入、思考和正文共享，不能真正无限。综合请求取消生成读取超时，连接、写入和连接池等待仍保留 30 秒超时；其他阶段保留 600 秒读取超时。当前远端部署将 `YAOE_JOB_TIMEOUT_S` 设为 86400（24 小时），不要设为 0（队列会立即超时），也不要直接关闭队列超时而破坏运行锁的有效期。长思考可能占用单卡数小时并阻塞后续任务，现有取消机制在流水线阶段边界生效。空正文或 `finish_reason=length` 仍会使任务明确失败，不会保存为完成答案。放宽额度不保证回答更准确，也不代表已完成医学领域精度评估。
+
+固定流水线的模型调用每次尝试都会输出 `llm_metrics {JSON}` 日志，沿用现有 `log` 事件，不改变 SSE 事件类型或 `llm()` 返回值。字段包含 `stage`、`operation`、`request_id`、`attempt`、`model`、`response_id`、`success`、`elapsed_s`、`finish_reason`，以及服务端返回的 `prompt_tokens`、`completion_tokens`、`reasoning_tokens`、`cached_tokens`；缺失用量为 `null`，不是零。`elapsed_s` 是客户端单次调用总耗时，不能据此拆分服务端排队、预填充与解码时间。日志不包含提示词、回答正文或密钥；这些度量用于分析耗时，不改变生成额度、思考策略或上下文长度。后台事实抽取的日志归属于 `answer_kb` 任务，而非已经完成的问答任务。
 
 如使用其他兼容端点，移除 `COMPOSE_FILE` 并设置其地址、模型名和密钥即可；基础 Compose 默认仍访问宿主机 `http://host.docker.internal:4000/v1`。`core/PICOSGpt start` 是旧版宿主机本地模型启动方案，不用于上述远端部署。
 

@@ -70,7 +70,15 @@ class ProgressPipeline extends StatelessWidget {
                 )
               : TraceList(calls: live.tools, live: true)
         else ...[
-          _StageRow(stages: stages, live: live),
+          _StageRow(
+            stages: stages
+                .where(
+                  (stage) =>
+                      stage != StageKey.kb || live.stages.containsKey(stage),
+                )
+                .toList(),
+            live: live,
+          ),
           if (progress != null) ...[
             const SizedBox(height: YaoeTokens.space3),
             Text(

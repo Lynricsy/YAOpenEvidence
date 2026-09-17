@@ -11,7 +11,7 @@ import type { components } from '@/api/schema'
 import type { Connection } from '@/api/useJobEvents'
 import { jobErrorMessage } from '@/api/errors'
 import { toolCallOf, type JobLive } from '@/lib/jobLive'
-import { useAnswerThread } from '@/api/queries'
+import { useAnswerThread, useJob } from '@/api/queries'
 import { MARKER_RE } from '@/lib/citations'
 import { dateTime, relativeTime } from '@/lib/format'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -38,6 +38,34 @@ import { SourceList } from './SourceList'
 import { EngineBadge } from './EnginePicker'
 import { ThreadNav } from './ThreadNav'
 import { TraceList } from './TraceList'
+
+function BackgroundKbStatus({ jobId }: { jobId: string }) {
+  const parent = useJob(jobId)
+  const rawId = parent.data?.result?.kb_job_id
+  const background = useJob(typeof rawId === 'string' ? rawId : null)
+  const job = background.data
+  if (parent.isError || background.isError) {
+    return <p role="status">知识库状态暂时无法读取，已生成的答案不受影响。</p>
+  }
+  if (!job) return null
+  const messages = {
+    queued: '知识库等待后台处理，优先执行新问答。',
+    running: '知识库正在后台写入，无需等待即可阅读答案。',
+    succeeded: '本次文献已写入知识库。',
+    failed: '知识库写入失败，已生成的答案不受影响。',
+    cancelled: '知识库写入已取消，已生成的答案不受影响。',
+  } as const
+  return (
+    <p role="status">
+      {messages[job.status]}
+      {job.progress?.total != null && (
+        <>
+          （{job.progress.current ?? 0}/{job.progress.total} 篇）
+        </>
+      )}
+    </p>
+  )
+}
 
 export function AnswerView({
   answer,
@@ -170,6 +198,9 @@ export function AnswerView({
         </>
       ) : answer.status === 'ready' ? (
         <div className="space-y-10">
+          {!isCodex && answer.options?.use_kb !== false && answer.job_id && (
+            <BackgroundKbStatus jobId={answer.job_id} />
+          )}
           <AnswerBody answer={answer} onOpen={onOpenPaper} />
           {isCodex ? (
             // 智能体没有逐篇原文快照；能交代的只有它实际走过的检索路径

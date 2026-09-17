@@ -1269,7 +1269,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "ask" | "codex" | "kb_reindex" | "paper_ingest";
+            kind: "ask" | "codex" | "kb_reindex" | "paper_ingest" | "answer_kb";
             /**
              * Status
              * @enum {string}
@@ -2832,7 +2832,7 @@ export interface operations {
     list_jobs_v1_jobs_get: {
         parameters: {
             query?: {
-                kind?: ("ask" | "codex" | "kb_reindex" | "paper_ingest") | null;
+                kind?: ("ask" | "codex" | "kb_reindex" | "paper_ingest" | "answer_kb") | null;
                 status?: ("queued" | "running" | "succeeded" | "failed" | "cancelled") | null;
                 limit?: number;
                 offset?: number;

@@ -77,6 +77,11 @@ async def cancel_job(job_id: str, db: Session = Depends(get_db), redis=Depends(g
 
 def _terminal_payload(job: JobRow) -> dict:
     if job.status == "succeeded":
+        if job.kind == "ask":
+            return {"answer_id": (job.result or {}).get("answer_id")}
+        if job.kind == "answer_kb":
+            result = job.result or {}
+            return {"items": result.get("items", 0), "papers": result.get("paper_count", 0)}
         return job.result or {}
     if job.status == "failed":
         return job.error or {"code": "internal_error", "message": "job failed"}

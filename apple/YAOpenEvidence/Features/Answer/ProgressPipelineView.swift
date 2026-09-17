@@ -12,7 +12,7 @@ struct ProgressPipelineView: View {
     let onCancel: () -> Void
 
     private var stages: [StageKey] {
-        StageKey.askPipeline.filter { useKb || $0 != .kb }
+        StageKey.askPipeline.filter { $0 != .kb || (useKb && live.stages[.kb] != nil) }
     }
 
     var body: some View {

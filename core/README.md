@@ -80,6 +80,8 @@ cd <项目根>              # 本仓库为 core/
 
 索引保存为单个 `kb/index.npz` 快照，旧三文件索引会在下次入库时迁移。CLI 与 HTTP worker 共用 `kb.lock`，串行执行增量写入和重建；重建期间检索仍可读取完整的旧代。共享目录与文件锁的部署要求见[项目说明](../README.md#cli-与-api-共存)。
 
+本机 `PICOSGpt ask` 保持同步抽取与入库。通过 API 执行的 `ask` 则先交付答案，另建持久的 `answer_kb` 任务后台入库，不让事实抽取与嵌入计算阻塞答案阅读；关闭 `use_kb` 时不会创建该任务。后台依赖逐篇原文快照、事实检查点与数据库游标恢复，不会在重试时重写已经交付的答案，详见[项目架构说明](../README.md#架构)。
+
 ```bash
 ./PICOSGpt kb search "SGLT2 HFpEF 心衰住院"     # 语义检索（中英文均可）
 ./PICOSGpt kb search "..." --kind paragraph      # 只搜原文段落

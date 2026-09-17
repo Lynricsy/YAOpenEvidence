@@ -92,7 +92,9 @@ export function ProgressPipeline({
     if (el) el.scrollTop = el.scrollHeight
   }, [live.logs.length])
   const isCodex = engine === 'codex'
-  const visible = steps.filter(([stage]) => stage !== 'kb' || useKb)
+  const visible = steps.filter(
+    ([stage]) => stage !== 'kb' || (useKb && live.stages.kb != null),
+  )
   const connectionNote = connections[connection]
   const finished = visible.filter(
     ([stage]) => live.stages[stage]?.status === 'finished',

@@ -14,7 +14,8 @@ import datetime as dt
 import logging
 import os
 
-from arq import cron
+import threading
+from arq import cron, func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -28,7 +29,8 @@ from .config import settings
 from .db import SessionLocal
 from .models import JOB_TO_ANSWER_STATUS, Answer, Job, utcnow
 from .services import codex as codex_engine
-from .services import events
+from .services import events, jobs
+from .services.answer_kb import dispatch_answer_kb, process_answer_kb
 from .services.answers import describe_filters, to_answer_paper, to_ask_options, to_codex_prompt
 
 logger = logging.getLogger("yaoe.worker")
@@ -44,6 +46,8 @@ def _job(db: Session, job_id: str) -> Job | None:
 
 
 def _answer_of(db: Session, job: Job) -> Answer | None:
+    if job.kind not in ("ask", "codex"):
+        return None
     answer_id = (job.params or {}).get("answer_id")
     if answer_id:
         return db.get(Answer, answer_id)
@@ -87,6 +91,8 @@ def _claim_answer(ctx: dict, job_id: str) -> tuple[str, dict, str | None] | None
         if job is None:
             logger.warning("job %s not found in db; dropping", job_id)
             return None
+        if job.status in ("succeeded", "failed", "cancelled"):
+            return None
         answer = _answer_of(db, job)
         cancelled = events.is_cancel_requested(ctx["redis_sync"], job_id)
         if answer is not None and not cancelled:
@@ -128,9 +134,10 @@ async def run_ask_job(ctx: dict, job_id: str) -> None:
     opts = to_ask_options(options)
     try:
         res = await asyncio.to_thread(ask.run_ask, opts, run_id=answer_id, emit=emit,
-                                      should_cancel=should_cancel,
+                                      should_cancel=should_cancel, defer_kb=True,
                                       paper_urls={n: f"/v1/answers/{answer_id}/papers/{n}/markdown"
                                                   for n in range(1, opts.papers + 1)})
+        snapshot_path = await asyncio.to_thread(ask.save_kb_snapshot, res) if opts.use_kb else None
     except ask.PipelineCancelled:
         _terminate(ctx, job_id, "cancelled")
         return
@@ -166,7 +173,15 @@ async def run_ask_job(ctx: dict, job_id: str) -> None:
             answer.citations = res.citations
             answer.kb_hits = res.kb_hits
         if job is not None:
-            _set_status(db, job, answer, "succeeded", result={"answer_id": answer_id}, finished=True)
+            result = {"answer_id": answer_id}
+            if snapshot_path is not None:
+                kb_job = Job(id=jobs.new_id(), kind="answer_kb", status="queued", user_id=job.user_id,
+                             params={"answer_id": answer_id, "snapshot_path": snapshot_path},
+                             progress={"stage": "kb", "current": 0, "total": len(res.papers)},
+                             result={"position": 0, "items": 0, "paper_count": len(res.papers), "attempt": 0})
+                db.add(kb_job)
+                result["kb_job_id"] = kb_job.id
+            _set_status(db, job, answer, "succeeded", result=result, finished=True)
     _publish(ctx, job_id, {"type": "succeeded", "answer_id": answer_id})
 
 
@@ -322,6 +337,16 @@ async def run_paper_ingest_job(ctx: dict, job_id: str) -> None:
     _publish(ctx, job_id, {"type": "succeeded", **result})
 
 
+async def run_answer_kb_job(ctx: dict, job_id: str, position: int) -> None:
+    """一次只处理一篇；超时后锁仍由实际工作的线程持有，不会双写。"""
+    stopped = threading.Event()
+    try:
+        await asyncio.to_thread(process_answer_kb, ctx, job_id, position, stopped)
+    except asyncio.CancelledError:
+        stopped.set()
+        raise
+
+
 async def refresh_journal_ranks(ctx: dict) -> None:
     """每月拉一次上一年度 SCImago 表；已存在就跳过。
 
@@ -348,6 +373,7 @@ async def on_startup(ctx: dict) -> None:
     ctx["redis_sync"] = redis.Redis.from_url(settings.redis_url)
     ctx["redis_async"] = aioredis.from_url(settings.redis_url)
     logger.info("worker up: redis=%s db=%s", settings.redis_url, settings.database_url)
+    await dispatch_answer_kb(ctx)
 
 
 async def on_shutdown(ctx: dict) -> None:
@@ -366,9 +392,11 @@ def _redis_settings():
 
 
 class WorkerSettings:
-    functions = [run_ask_job, run_codex_job, run_kb_reindex_job, run_paper_ingest_job]
+    functions = [run_ask_job, run_codex_job, run_kb_reindex_job, run_paper_ingest_job,
+                 func(run_answer_kb_job, keep_result=0, max_tries=1)]
     # 每月 1 日 03:00（容器时区 UTC）；arq 默认 unique=True，多 worker 只会跑一份
-    cron_jobs = [cron(refresh_journal_ranks, day=1, hour=3, minute=0, timeout=900)]
+    cron_jobs = [cron(refresh_journal_ranks, day=1, hour=3, minute=0, timeout=900),
+                 cron(dispatch_answer_kb, second=set(range(0, 60, 10)), keep_result=0)]
     redis_settings = _redis_settings()
     max_jobs = settings.worker_max_jobs
     job_timeout = settings.job_timeout_s
@@ -384,4 +412,4 @@ def run() -> None:
 
 
 __all__ = ["WorkerSettings", "refresh_journal_ranks", "run", "run_ask_job", "run_codex_job",
-           "run_kb_reindex_job", "run_paper_ingest_job"]
+           "run_kb_reindex_job", "run_paper_ingest_job", "run_answer_kb_job", "dispatch_answer_kb"]

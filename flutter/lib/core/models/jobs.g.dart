@@ -60,6 +60,7 @@ const _$JobKindEnumMap = {
   JobKind.codex: 'codex',
   JobKind.kbReindex: 'kb_reindex',
   JobKind.paperIngest: 'paper_ingest',
+  JobKind.answerKb: 'answer_kb',
 };
 
 const _$JobStatusEnumMap = {

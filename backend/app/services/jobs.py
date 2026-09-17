@@ -8,8 +8,10 @@
 from __future__ import annotations
 
 import uuid
+import logging
 
-from sqlalchemy.orm import Session
+from sqlalchemy import update
+from sqlalchemy.orm import Session, object_session
 
 from ..config import settings
 from ..errors import ApiError
@@ -52,7 +54,8 @@ def active_job_count(db: Session, user_id: str | None) -> int:
     from sqlalchemy import func, select
 
     stmt = (select(func.count(Job.id))
-            .where(Job.user_id == user_id, Job.status.in_(("queued", "running"))))
+            .where(Job.user_id == user_id, Job.kind != "answer_kb",
+                   Job.status.in_(("queued", "running"))))
     return int(db.scalar(stmt) or 0)
 
 
@@ -74,4 +77,21 @@ async def cancel(job: Job, redis, principal) -> None:  # noqa: ANN001
         raise ApiError(404, "not_found", f"job {job.id!r} not found")
     if job.status in TERMINAL_JOB_STATUSES:
         raise ApiError(409, "conflict", f"job {job.id} already {job.status}")
+    if job.kind == "answer_kb":
+        # 后台可能长时间等前台，取消必须持久化，不能仅依赖有 TTL 的 Redis 标记。
+        db = object_session(job)
+        if db is None:
+            raise RuntimeError("background cancellation requires an attached job")
+        changed = db.execute(update(Job).where(
+            Job.id == job.id, Job.status.in_(("queued", "running")))
+            .values(status="cancelled", finished_at=utcnow(), error=None)
+            .execution_options(synchronize_session=False)).rowcount
+        db.commit()
+        if changed != 1:
+            raise ApiError(409, "conflict", f"job {job.id} already finished")
+        try:
+            await events.request_cancel(redis, job.id, settings.events_ttl_s)
+        except Exception:
+            logging.getLogger(__name__).exception("cancel signal unavailable for %s", job.id)
+        return
     await events.request_cancel(redis, job.id, settings.events_ttl_s)

@@ -23,18 +23,19 @@ from .conftest import make_job
 from .test_events import finish_sse, live_sse, streaming_app
 
 
-def _result(answer_id: str) -> ask.AskResult:
+def _result(answer_id: str, papers_dir: str) -> ask.AskResult:
     paper = {"n": 1, "pmid": "39133485", "doi": "10.1/x", "pmcid": "PMC1", "title": "T", "year": "2024",
              "journal": "JAMA Netw Open", "issn": "2574-3805", "authors": "Chuang MH", "quartile": "Q1",
              "rank": None, "source": "pmc", "relevance": 2,
              "paras": [{"id": 1, "sec": "Abstract", "page": None, "text": "x"}],
+             "fulltext_md": "x",
              "cites": [{"pid": 1, "verified": True}, {"pid": 2, "verified": False}]}
     return ask.AskResult(run_id=answer_id, question="测试问题", question_en="test question",
                          queries=["q1"], filters_label="无", papers=[paper], used_n=[1],
                          body_md="结论 [1¶1]", answer_md="# Q\n\n结论 [1¶1](x.md#p1)",
                          citations=[{"n": 1, "pmid": "39133485", "pid": 1, "sec": "Abstract", "page": None,
                                      "text": "x", "quotes": ["x"], "from_marker": True}],
-                         kb_hits=[], out_path="/tmp/x.md", papers_dir="/tmp/x_papers", n_fulltext=1)
+                         kb_hits=[], out_path="/tmp/x.md", papers_dir=papers_dir, n_fulltext=1)
 
 
 def _stream(sync_redis, job_id: str) -> list[tuple[str, dict]]:
@@ -46,9 +47,10 @@ def _stream(sync_redis, job_id: str) -> list[tuple[str, dict]]:
     return out
 
 
-async def test_successful_job_persists_answer_and_emits_succeeded(worker_ctx, sync_redis, monkeypatch):
+async def test_successful_job_persists_answer_and_emits_succeeded(worker_ctx, sync_redis, monkeypatch,
+                                                                tmp_path):
     job_id, answer_id = make_job()
-    monkeypatch.setattr(ask, "run_ask", lambda opts, **kw: _result(answer_id))
+    monkeypatch.setattr(ask, "run_ask", lambda opts, **kw: _result(answer_id, str(tmp_path)))
 
     await run_ask_job(worker_ctx, job_id)
 
@@ -183,12 +185,12 @@ async def test_cancel_requested_before_start_skips_pipeline(worker_ctx, sync_red
     assert _stream(sync_redis, job_id)[-1][0] == "cancelled"
 
 
-async def test_progress_events_land_in_job_row(worker_ctx, sync_redis, monkeypatch):
+async def test_progress_events_land_in_job_row(worker_ctx, sync_redis, monkeypatch, tmp_path):
     job_id, answer_id = make_job()
 
-    def with_progress(opts, *, run_id, emit, should_cancel, paper_urls):
+    def with_progress(opts, *, run_id, emit, should_cancel, paper_urls, defer_kb):
         emit({"type": "progress", "stage": "read", "current": 2, "total": 3, "pmid": "1", "title": "t"})
-        return _result(run_id)
+        return _result(run_id, str(tmp_path))
 
     monkeypatch.setattr(ask, "run_ask", with_progress)
     await run_ask_job(worker_ctx, job_id)
@@ -328,14 +330,18 @@ def test_quartiles_and_journals_map_to_cli_strings():
 
 @pytest.mark.parametrize("status", ["succeeded", "failed"])
 async def test_terminal_xadd_failure_converges_after_stage_replay(
-        worker_ctx, sync_redis, monkeypatch, status):
+        worker_ctx, sync_redis, monkeypatch, status, tmp_path):
     job_id, answer_id = make_job(user_id="reader")
+    with SessionLocal() as db:
+        answer = db.get(Answer, answer_id)
+        answer.options = {**answer.options, "use_kb": True}
+        db.commit()
 
     def run(opts, *, emit, **kwargs):
         emit({"type": "stage", "stage": "search", "status": "started"})
         if status == "failed":
             raise ask.NoPapers("nothing found")
-        return _result(answer_id)
+        return _result(answer_id, str(tmp_path))
 
     xadd = sync_redis.xadd
 
@@ -348,6 +354,9 @@ async def test_terminal_xadd_failure_converges_after_stage_replay(
     monkeypatch.setattr(sync_redis, "xadd", fail_terminal)
     with pytest.raises(RedisConnectionError, match="terminal XADD"):
         await run_ask_job(worker_ctx, job_id)
+    if status == "succeeded":
+        with SessionLocal() as db:
+            assert db.get(Job, job_id).result["kb_job_id"]
 
     # 保留真实 stage 流而不是删流；终态已经由真实 worker 事务提交。
     redis = aioredis.from_url(settings.redis_url)

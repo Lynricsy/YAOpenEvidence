@@ -5,6 +5,7 @@ public enum JobKind: String, Codable, Sendable, Hashable {
     case codex
     case kbReindex = "kb_reindex"
     case paperIngest = "paper_ingest"
+    case answerKb = "answer_kb"
 }
 
 public enum JobStatus: String, Codable, Sendable, Hashable {

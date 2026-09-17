@@ -209,7 +209,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 | `journals` | `string[]` | 否 | `[]` | 每项去除首尾空白后长度 `1..100`。 |
 | `keep_unranked` | `boolean` | 否 | `false` | 使用分区过滤时是否保留未收录期刊。 |
 | `use_paywall` | `boolean` | 否 | `true` | 是否尝试机构订阅来源；容器部署不具备该能力，见“未纳入 v1”。 |
-| `use_kb` | `boolean` | 否 | `true` | 是否提取事实并写入/使用知识库。 |
+| `use_kb` | `boolean` | 否 | `true` | 是否在答案交付后后台提取事实并入库，同时允许使用既有知识。为 `false` 时不创建后台任务。 |
 | `kb_hits` | `integer` | 否 | `0` | `0..20`，综合后附带的既有 KB 命中数。 |
 | `max_chars` | `integer` | 否 | `28000` | 单篇送入流水线的字符预算，`4000..60000`。 |
 
@@ -294,7 +294,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 | 参数 | 类型 | 默认 | 说明 |
 |---|---|---|---|
-| `kind` | `ask \| codex \| kb_reindex \| paper_ingest \| null` | `null` | 精确过滤任务种类。 |
+| `kind` | `ask \| codex \| kb_reindex \| paper_ingest \| answer_kb \| null` | `null` | 精确过滤任务种类。 |
 | `status` | `queued \| running \| succeeded \| failed \| cancelled \| null` | `null` | 精确过滤状态。 |
 | `limit` | `integer` | `20` | `1..100`。 |
 | `offset` | `integer` | `0` | `>=0`。 |
@@ -304,6 +304,8 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 #### `GET /v1/jobs/{job_id}`
 
 返回 `Job`。普通用户查询别人的 job 与不存在的 job 均返回 `404 not_found`。可能错误：`not_found`、`internal_error`。
+
+`ask` 成功且开启 `use_kb` 时，`result.kb_job_id` 指向同一所有者的独立 `answer_kb` 任务；该任务不占用户的前台活跃任务额度，可通过同一组查询、SSE 和取消接口观察。答案完成不代表入库完成。后台任务的 `result` 在运行期间也有值，用于保存 `position`、`paper_count`、`items`、`attempt` 恢复进度；重试期间可能重新进入 `queued`。每篇最多尝试 3 次，失败、取消均不影响已交付答案。后台按篇让位给其他种类任务；不强行中断当前篇。
 
 #### `GET /v1/jobs/{job_id}/events`
 
@@ -613,13 +615,13 @@ DOI 中的斜杠属于参数值，例如 `/v1/literature/resolve?ident=10.1000/f
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `id` | `string` | job ID。 |
-| `kind` | `ask \| codex \| kb_reindex \| paper_ingest` | 任务种类。 |
+| `kind` | `ask \| codex \| kb_reindex \| paper_ingest \| answer_kb` | 任务种类。 |
 | `status` | `queued \| running \| succeeded \| failed \| cancelled` | job 生命周期状态。 |
 | `user_id` | `string \| null` | 所有者的用户 ID；历史迁移或 CLI 导入的无归属数据为 `null`，仅管理员可见。 |
 | `params` | `object` | 入队参数。 |
 | `progress` | `JobProgress \| null` | 最近一次阶段/进度快照。 |
 | `error` | `JobError \| null` | 失败信息。 |
-| `result` | `object \| null` | 成功结果；ask 通常为 `{"answer_id": string}`，KB 重建为条目与论文计数，入库为 `{"key", "n_paragraphs", "n_facts", "items"}`。 |
+| `result` | `object \| null` | ask 成功为 `{"answer_id": string}`，开启知识库时额外包含 `kb_job_id`；KB 重建为条目与论文计数，单篇入库为 `{"key", "n_paragraphs", "n_facts", "items"}`。`answer_kb` 还在运行期间保存恢复游标，见 Jobs 说明。 |
 | `created_at` / `started_at` / `finished_at` | `string` / `string \| null` / `string \| null` | UTC 生命周期时间。 |
 
 #### `JobProgress`
@@ -845,11 +847,11 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 | `progress` | `{stage, current, total, pmid?, title?}`，其中 `stage` 为 `fulltext \| read \| kb \| reindex`；`current`、`total` 为非负整数；`pmid`、`title` 为可选 `string \| null`。 |
 | `log` | `{level, message}`；当前 `level` 为 `info \| warning`。只适合展示运行日志，不应据其文案驱动状态机。 |
 | `tool` | `ToolCall`。只出现在 codex 引擎任务：同一 `call_id` 先 `started` 再终态，客户端按 `call_id` upsert 成一行轨迹。终态那条与 `Answer.trace` 的元素一致。 |
-| `succeeded` | 问答任务为 `{answer_id}`；KB 重建任务为 `{items, papers}`；入库任务为 `{key, n_paragraphs, n_facts, items}`。终态。 |
+| `succeeded` | 问答任务为 `{answer_id}`；KB 重建与答案后台入库任务为 `{items, papers}`；单篇入库任务为 `{key, n_paragraphs, n_facts, items}`。终态。 |
 | `failed` | `{code, message}`，其中 `code` 为 JobError 枚举。终态。 |
 | `cancelled` | `{}`。终态。 |
 
-`kb` 阶段在问答 `use_kb=true` 与入库任务中出现；`reindex` 阶段用于 KB 重建。入库任务只用 `fulltext` 与 `kb` 两个阶段值。事件数据模型位于 OpenAPI 的 `components.schemas`，由 SSE 成功响应 `content["text/event-stream"]["x-sse-events"]` 按事件名引用。该扩展描述每帧 JSON `data`，HTTP 响应本身仍是 SSE 文本，不是 JSON 数组。Redis 发布边界与 OpenAPI 共用这些模型。
+`ask` 前台依次执行 `queries → search → fulltext → read → synthesize`，不再等待 `kb`；其成功事件仍仅含 `answer_id`，后台任务 ID 从 `GET /v1/jobs/{job_id}` 的 `result.kb_job_id` 读取。`kb` 阶段用于独立 `answer_kb` 和单篇入库任务，历史问答事件中也可能出现；`reindex` 阶段用于 KB 重建。单篇入库任务只用 `fulltext` 与 `kb` 两个阶段值。事件数据模型位于 OpenAPI 的 `components.schemas`，由 SSE 成功响应 `content["text/event-stream"]["x-sse-events"]` 按事件名引用。该扩展描述每帧 JSON `data`，HTTP 响应本身仍是 SSE 文本，不是 JSON 数组。Redis 发布边界与 OpenAPI 共用这些模型。
 
 ### 6.3 重连、心跳与过期
 
@@ -859,10 +861,12 @@ Answer 状态迁移为 `queued → running → ready|failed|cancelled`；对应 
 - 连接空闲时约每 15 秒发送一条 SSE 注释心跳。客户端应忽略注释行。
 - 事件流默认保留 7 天，并受最大长度配置约束。订阅开始时以及活动订阅的空读周期（约 5 秒）会检查数据库终态；数据库连接只用于短期查询，不随 SSE 长连接持续占用。
 - 数据库已终态时，先回放游标之后仍保留的事件；若终态事件发布失败、已过期，或客户端游标已越过终态事件，则补发数据库中的终态并关闭。合成事件沿用最后游标（没有历史游标时为 `0-0`），客户端不得仅因 ID 与上一条相同而丢弃终态。
-- 合成 `succeeded` 使用 `job.result`，`failed` 使用 `job.error`，`cancelled` 的 `data` 为空对象。已终态任务无需等待下一个空读周期。
+- 合成 `succeeded` 从 `job.result` 按任务种类提取上述成功事件字段，不包含 `kb_job_id` 或后台恢复游标；`failed` 使用 `job.error`，`cancelled` 的 `data` 为空对象。已终态任务无需等待下一个空读周期。
 - 会话在每次发送前及空读轮询时重新验证，注销、到期或禁用后停止发送并关闭。空闲流通常在下一次约 5 秒的轮询时结束；已收到的内容无法收回。非终态断开时先调用 `/v1/auth/me`，若为 `401` 则重新登录，不要携带失效令牌无限重试。
 
 取消是异步且协作式的：`POST /v1/jobs/{job_id}/cancel` 的 `202` 只表示已写入取消请求。worker 在任务开始前、阶段边界和逐篇完成边界检查取消标记；它不会中断正在执行的 LLM 调用。客户端必须观察实际终态，不能把 `202` 当成已经取消成功；接近完成时也可能先进入 `succeeded`。
+
+`answer_kb` 的取消还会持久化到数据库，避免 Redis 标记过期后恢复任务。即使状态已变为 `cancelled`，正在进行的单次调用仍可能完成，已写入的文献不会回滚；取消后台入库不改变 `Answer.ready`。
 
 ### 6.4 浏览器 fetch 流
 

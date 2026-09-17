@@ -18,10 +18,13 @@ from __future__ import annotations
 import argparse
 import concurrent.futures as cf
 import datetime as dt
+import hashlib
 import json
 import os
 import re
 import time
+import tempfile
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -86,7 +89,7 @@ class PipelineCancelled(Exception):
 
 # ------------------------------------------------------------------ LLM
 def llm(system: str, user: str, *, think: bool = False, temperature: float = 0.2,
-        timeout: float | None = 600, emit: Emit = print_emit) -> str:
+        timeout: float | None = 600, emit: Emit = print_emit, operation: str = "llm") -> str:
     body = {
         "model": LLM_MODEL,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
@@ -95,26 +98,46 @@ def llm(system: str, user: str, *, think: bool = False, temperature: float = 0.2
     }
     last = ""
     for attempt in range(3):
+        started = time.monotonic()
+        metrics = {"stage": "kb" if operation == "facts" else operation, "operation": operation,
+                   "request_id": uuid.uuid4().hex, "attempt": attempt + 1, "model": LLM_MODEL,
+                   "finish_reason": None, "response_id": None, "prompt_tokens": None,
+                   "completion_tokens": None, "reasoning_tokens": None, "cached_tokens": None,
+                   "success": False}
         try:
             r = httpx.post(f"{LLM_BASE}/chat/completions", json=body,
                            headers={"Authorization": f"Bearer {LLM_KEY}"},
                            timeout=httpx.Timeout(timeout, connect=30, write=30, pool=30))
             r.raise_for_status()
-            choice = r.json()["choices"][0]
+            payload = r.json()
+            choice = payload["choices"][0]
+            usage = payload.get("usage") or {}
+            metrics.update(
+                model=payload.get("model") or LLM_MODEL,
+                response_id=payload.get("id"), finish_reason=choice.get("finish_reason"),
+                prompt_tokens=usage.get("prompt_tokens"), completion_tokens=usage.get("completion_tokens"),
+                reasoning_tokens=(usage.get("completion_tokens_details") or {}).get("reasoning_tokens"),
+                cached_tokens=(usage.get("prompt_tokens_details") or {}).get("cached_tokens"),
+            )
             if choice.get("finish_reason") == "length":
                 raise LLMUnavailable("LLM output truncated at server context limit; no complete answer")
             txt = choice["message"]["content"] or ""
             txt = re.sub(r"<think>.*?(?:</think>|$)", "", txt, flags=re.S).strip()
             if not txt:
                 raise LLMUnavailable("LLM returned an empty answer")
+            metrics["success"] = True
             return txt
         except LLMUnavailable:
             # 相同预算重试无法修复截断；让任务明确失败，不能把空正文标为完成。
             raise
         except Exception as e:  # noqa: BLE001
-            last = str(e)
-            emit({"type": "log", "level": "warning", "message": f"LLM error ({e}); retry {attempt+1}"})
-            time.sleep(3)
+            last = type(e).__name__
+            emit({"type": "log", "level": "warning", "message": f"LLM error ({last}); retry {attempt+1}"})
+        finally:
+            metrics["elapsed_s"] = round(time.monotonic() - started, 6)
+            emit({"type": "log", "level": "info",
+                  "message": "llm_metrics " + json.dumps(metrics, ensure_ascii=False)})
+        time.sleep(3)
     # 返回空串会让后续阶段静默产出空答案；让调用方看到真实原因
     raise LLMUnavailable(f"LLM unavailable after 3 attempts: {last}")
 
@@ -194,7 +217,7 @@ def make_queries(question: str, *, emit: Emit = print_emit) -> tuple[list[str], 
     sysmsg = ("You are a medical librarian. Convert the user's question into PubMed search queries. "
               "Return ONLY JSON: {\"english_question\": str, \"queries\": [str, str, str]}. "
               "Queries must be English, 3-8 words, use synonyms/MeSH-like terms, no boolean operators, no quotes.")
-    out = llm(sysmsg, question, emit=emit)
+    out = llm(sysmsg, question, emit=emit, operation="queries")
     m = re.search(r"\{.*\}", out, re.S)
     try:
         js = json.loads(m.group(0))
@@ -416,7 +439,7 @@ def read_paper(i: int, p: dict, question_en: str, *, emit: Emit = print_emit) ->
         p["cites"] = []
         return p
     user = f"QUESTION: {question_en}\n\nPAPER [{i}] {p['title']} ({p['year']}, {p['journal']}) — source: {p['source']}\n\n{p['text']}"
-    p["notes"] = llm(READ_SYS, user, emit=emit)
+    p["notes"] = llm(READ_SYS, user, emit=emit, operation="read")
     p["relevance"] = parse_relevance(p["notes"])
     p["cites"] = ks.verify_citations(p["notes"], p["paras"])
     # rewrite the notes so the synthesis model sees corrected/verified paragraph ids: (¶12: "...") -> [n¶12]
@@ -453,7 +476,7 @@ def synthesize(question: str, papers: list[dict], *, emit: Emit = print_emit) ->
                         f"{p.get('notes_for_synthesis') or p['notes']}" for p in papers)
     # 不设独立思考或输出额度，由服务端分配剩余上下文；生成期间不设读取超时。
     return llm(SYN_SYS, f"USER QUESTION: {question}\n\nREADING NOTES:\n{notes}",
-               think=True, timeout=None, emit=emit)
+               think=True, timeout=None, emit=emit, operation="synthesize")
 
 
 def _short_authors(a: str) -> str:
@@ -645,9 +668,133 @@ class AskResult:
     n_fulltext: int
 
 
+_KB_META_FIELDS = ("pmid", "doi", "pmcid", "title", "year", "journal", "issn",
+                   "quartile", "authors", "source", "types")
+
+
+def _atomic_json(path: str, value: object) -> None:
+    """同目录写完并同步后替换，恢复只会读到完整版本。"""
+    fd, temporary = tempfile.mkstemp(prefix=".kb-", suffix=".tmp", dir=os.path.dirname(path))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(value, f, ensure_ascii=False, indent=1, allow_nan=False)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary, path)
+        directory = os.open(os.path.dirname(path), os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def save_kb_snapshot(res: AskResult) -> str:
+    """保存所有候选论文的独立入库输入，不依赖答案行或可变 library 文件。"""
+    papers = [{**{k: p.get(k) for k in _KB_META_FIELDS}, "n": p["n"],
+               "paras": p["paras"], "fulltext_md": p["fulltext_md"]} for p in res.papers]
+    path = os.path.join(res.papers_dir, "kb-input.json")
+    _atomic_json(path, {"version": 1, "question_en": res.question_en, "papers": papers})
+    return path
+
+
+def _valid_facts(facts: object) -> bool:
+    return isinstance(facts, list) and all(
+        isinstance(f, dict) and isinstance(f.get("fact"), str) and bool(f["fact"].strip())
+        and isinstance(f.get("verified"), bool)
+        and (f.get("pid") is None or type(f["pid"]) is int)
+        and isinstance(f.get("quote"), str)
+        for f in facts
+    )
+
+
+def _extract_kb_facts(p: dict, question_en: str, outdir: str, *,
+                      emit: Emit, should_cancel: Callable[[], bool]) -> list[dict]:
+    def check() -> None:
+        if should_cancel():
+            raise PipelineCancelled()
+
+    check()
+    # 指纹绑定完整输入，旧答案/改过的段落/半写文件不能作为已完成抽取复用。
+    identity = {"meta": {k: p.get(k) for k in _KB_META_FIELDS}, "paras": p["paras"],
+                "fulltext_md": p["fulltext_md"], "question_en": question_en}
+    digest = hashlib.sha256(json.dumps(identity, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    checkpoint = os.path.join(outdir, f"kb-facts-{p['n']}.json")
+    facts = None
+    try:
+        with open(checkpoint, encoding="utf-8") as f:
+            cached = json.load(f)
+        if (isinstance(cached, dict) and cached.get("version") == 1
+                and cached.get("input_sha256") == digest and _valid_facts(cached.get("facts"))):
+            facts = cached["facts"]
+    except (FileNotFoundError, json.JSONDecodeError, UnicodeDecodeError):
+        pass
+    if facts is None:
+        facts = (ks.extract_facts(p["paras"], lambda s, u: llm(s, u, emit=emit, operation="facts"),
+                                  question_en) if p["paras"] else [])
+        if not _valid_facts(facts):
+            raise ValueError("invalid extracted facts")
+        # 即使取消在请求期间到达，也先保留完整抽取结果，恢复无需再花一次模型请求。
+        _atomic_json(checkpoint, {"version": 1, "input_sha256": digest, "facts": facts})
+    check()
+    return facts
+
+
+def _index_kb_paper(p: dict, facts: list[dict], outdir: str, store: ks.KnowledgeStore, *,
+                    emit: Emit, should_cancel: Callable[[], bool]) -> int:
+    def check() -> None:
+        if should_cancel():
+            raise PipelineCancelled()
+
+    check()
+    p["facts"] = facts
+    # 保留 CLI 既有的 facts 导出；恢复判定只信带输入指纹的 checkpoint。
+    _atomic_json(os.path.join(outdir, f"{p['pmid'] or 'paper'}_facts.json"), facts)
+    meta = {k: p.get(k) for k in _KB_META_FIELDS}
+    meta.update({"indexed_at": dt.datetime.now().isoformat(timespec="seconds"),
+                 "n_paragraphs": len(p["paras"]), "n_facts": len(facts)})
+    p["library_dir"] = ks.save_to_library(meta, p["paras"], facts, p["fulltext_md"])
+    check()
+    # 索引失败必须交给后台任务重试；replace 默认语义保证重复执行不产生重复行。
+    n_items = store.add_paper(meta, p["paras"], facts)
+    emit({"type": "log", "level": "info",
+          "message": f"  [{p['n']}] {len(facts)} facts + {len(p['paras'])} paragraphs -> kb ({n_items} items)"})
+    return n_items
+
+
+def index_kb_snapshot(snapshot_path: str, *, position: int, emit: Emit = print_emit,
+                      should_cancel: Callable[[], bool] = lambda: False) -> dict:
+    """一次只处理一篇；位置由 durable job 保存，重试可安全重放同一位置。"""
+    if should_cancel():
+        raise PipelineCancelled()
+    with open(snapshot_path, encoding="utf-8") as f:
+        snapshot = json.load(f)
+    if not isinstance(snapshot, dict) or snapshot.get("version") != 1:
+        raise ValueError("unsupported kb snapshot")
+    papers = snapshot["papers"]
+    if not isinstance(papers, list) or not isinstance(snapshot["question_en"], str):
+        raise ValueError("invalid kb snapshot")
+    if type(position) is not int or not 0 <= position < len(papers):
+        raise ValueError("kb snapshot position out of range")
+    p = papers[position]
+    if (not isinstance(p, dict) or type(p.get("n")) is not int
+            or not isinstance(p.get("paras"), list) or not isinstance(p.get("fulltext_md"), str)):
+        raise ValueError("invalid kb snapshot paper")
+    outdir = os.path.dirname(snapshot_path)
+    facts = _extract_kb_facts(p, snapshot["question_en"], outdir,
+                              emit=emit, should_cancel=should_cancel)
+    items = _index_kb_paper(p, facts, outdir, ks.KnowledgeStore(),
+                            emit=emit, should_cancel=should_cancel)
+    emit({"type": "progress", "stage": "kb", "current": position + 1, "total": len(papers),
+          "pmid": p.get("pmid"), "title": p.get("title")})
+    return {"paper_count": len(papers), "next_position": position + 1, "items": items}
+
+
 def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_emit,
             should_cancel: Callable[[], bool] = lambda: False,
-            paper_urls: dict[int, str] | None = None) -> AskResult:
+            paper_urls: dict[int, str] | None = None, defer_kb: bool = False) -> AskResult:
     """整条问答流水线。CLI 与 HTTP worker 共用；进度通过 `emit` 推出，取消通过 `should_cancel` 轮询。
 
     失败用异常表达（NoPapers / NothingRelevant / LLMUnavailable / PipelineCancelled），
@@ -750,47 +897,36 @@ def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_e
     emit({"type": "log", "level": "info", "message": f"relevant papers: {len(used)}/{len(papers)}"})
     _stage("read", "finished", relevant=len(used), total=len(papers))
 
+    if not used:
+        raise NothingRelevant("nothing relevant found in the retrieved papers")
+
     store = None
-    if opts.use_kb:
+    if opts.use_kb and not defer_kb:
         _check()
         _stage("kb", "started", total=len(papers))
         emit({"type": "log", "level": "info", "message": "extracting atomic knowledge + indexing into kb/ ..."})
         store = ks.KnowledgeStore()
         facts_by_n: dict[int, list[dict]] = {}
-        with cf.ThreadPoolExecutor(opts.workers) as ex:   # LLM calls in parallel; store.add_paper is done serially below
-            futs = {ex.submit(ks.extract_facts, p["paras"],
-                              lambda s, u: llm(s, u, emit=emit), q_en): p
-                    for p in papers if p.get("paras")}
+        # CLI 保留原并发抽取；checkpoint 各篇独立，真正的索引写入仍串行。
+        with cf.ThreadPoolExecutor(opts.workers) as ex:
+            futs = {ex.submit(_extract_kb_facts, p, q_en, outdir,
+                              emit=emit, should_cancel=should_cancel): p for p in papers}
             for k, fut in enumerate(cf.as_completed(futs), 1):
                 p = futs[fut]
                 facts_by_n[p["n"]] = fut.result()
-                emit({"type": "progress", "stage": "kb", "current": k, "total": len(futs),
+                emit({"type": "progress", "stage": "kb", "current": k, "total": len(papers),
                       "pmid": p["pmid"], "title": p["title"]})
                 _check()
         for p in papers:
-            facts = facts_by_n.get(p["n"], [])
-            p["facts"] = facts
-            with open(os.path.join(outdir, f"{p['pmid'] or 'paper'}_facts.json"), "w", encoding="utf-8") as f:
-                json.dump(facts, f, ensure_ascii=False, indent=1)
-            meta = {k: p.get(k) for k in ("pmid", "doi", "pmcid", "title", "year", "journal", "issn", "quartile", "authors", "source", "types")}
-            meta.update({"indexed_at": dt.datetime.now().isoformat(timespec="seconds"), "n_paragraphs": len(p["paras"]), "n_facts": len(facts)})
-            p["library_dir"] = ks.save_to_library(meta, p["paras"], facts, p["fulltext_md"])
-            try:
-                n_items = store.add_paper(meta, p["paras"], facts)
-            except Exception as e:  # noqa: BLE001
-                emit({"type": "log", "level": "warning", "message": f"  kb index failed for PMID:{p['pmid']}: {e}"})
-                n_items = 0
-            nv = sum(f["verified"] for f in facts)
-            emit({"type": "log", "level": "info",
-                  "message": (f"  [{p['n']}] {len(facts)} facts ({nv} located) + {len(p['paras'])} paragraphs "
-                              f"-> kb ({n_items} items)  library/{os.path.basename(p['library_dir'])}")})
+            _index_kb_paper(p, facts_by_n[p["n"]], outdir, store,
+                            emit=emit, should_cancel=should_cancel)
         st = store.stats()
         emit({"type": "log", "level": "info",
               "message": f"kb now holds {st['items']} items from {st['papers']} papers (embedder: {st.get('embedder')})"})
         _stage("kb", "finished", items=st["items"], papers=st["papers"])
 
-    if not used:
-        raise NothingRelevant("nothing relevant found in the retrieved papers")
+    if opts.use_kb and opts.kb_hits and store is None:
+        store = ks.KnowledgeStore()
 
     _check()
     _stage("synthesize", "started", papers=len(used))
@@ -806,7 +942,7 @@ def run_ask(opts: AskOptions, *, run_id: str | None = None, emit: Emit = print_e
     kb_note, hits = "", []
     if store is not None and opts.kb_hits:
         hits = store.search(q_en, top_k=opts.kb_hits, kind="fact", pmids=None)
-        hits = [h for h in hits if h.get("pmid") not in {p["pmid"] for p in used}]
+        hits = [h for h in hits if h.get("pmid") not in {p["pmid"] for p in papers}]
         if hits:
             kb_note = "\n\n**知识库相关事实（来自以往检索，未纳入本次综合）**\n" + "\n".join(
                 f"- {h['text']} — {h.get('title', '')[:80]} ({h.get('year')}) PMID:{h.get('pmid')} ¶{h.get('pid')}" for h in hits)
