@@ -172,6 +172,19 @@ YAOE_JOB_TIMEOUT_S=86400
 
 `llm-tunnel` 容器以只读方式挂载密钥，自动重启；API 和 worker 等待隧道健康后启动。宿主机仅在 `127.0.0.1:29913` 发布端口，宿主机直接运行 Python 时将 `LLM_BASE` 覆盖为 `http://127.0.0.1:29913/v1`。远端 vLLM 应启用 `--reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_xml`。
 
+2026-09-17 已在单张 L20 上完成部署侧对照并发布：vLLM `0.29.0+cu129`，保留 Marlin FP8 权重内核、FP8 KV、FLASHINFER、前缀缓存及 262144 上下文；启用 `speculative_config={"method":"mtp","num_speculative_tokens":1}`，将 `max_num_seqs` 设为 `4`、`gpu_memory_utilization` 设为 `0.92`。这些参数集中保存在模型主机 `/data1/lings/Qwen3_8_27B/deployment.json`，由同目录 `serve.py` 读取；不属于本项目 Compose 参数。KV 总容量约 266637 tokens，四路只是调度上限，**不代表可同时运行四份 256K 请求**。
+
+独立重启后的确认结果如下（相同输入，每项三轮取中位数；单流开启思考，四篇阅读关闭思考）：
+
+| 热前缀固定输出负载 | 原配置：无 MTP、两路 | 当前配置：MTP 单步、四路 | 耗时减少 |
+| --- | ---: | ---: | ---: |
+| 单流综合，输入 14318、生成 1024 tokens | 42.58 秒 | 27.56 秒 | 35.3% |
+| 四篇阅读闭合批次，每篇生成 512 tokens | 48.50 秒 | 20.49 秒 | 57.8% |
+
+确认轮 MTP 草稿接受率为 94.39%，没有 KV 抢占；八路上限没有超出波动的批次收益，Triton 线性后端反而更慢，均未采用。MTP 两步及三步在显存比例 0.92 下无法容纳完整 256K，未以缩短上下文换速度。上述固定输出额度**仅用于性能基准**，不是生产生成限制，也不能把这些百分比当作完整八篇问答提速或开放到达吞吐量。功能验收实际输入 261192 tokens，正确找回开头校验码并自然结束；Responses、自动工具调用通过。真实单篇问答使用检索所得摘要，273.53 秒完成，综合包含 8670 个思考 tokens、以 `stop` 自然结束；这是通路验收，不是医学精度评估。
+
+原始测量、Prometheus 指标、输入和校验清单保存在模型主机 `/data1/lings/Qwen3_8_27B/performance/20260917-mtp1-seq4/`，当前验收追加于 `verification.json` 的 `performance_tuning_20260917`，原有记录保留为调优前证据。服务由用户级 `lings-qwen38-27b-29913.service` 托管；授权管理会话可运行 `/data1/lings/Qwen3_8_27B/.venv/bin/python /data1/lings/Qwen3_8_27B/service.py restart`，随后须等待 `/health` 成功，不能只看 systemd 的 `active`。回滚时先暂停请求生产者并确认模型无进行中请求，停止该 unit，将同目录 `serve.py.pre-tune-20260917`、`deployment.json.pre-tune-20260917` **成对恢复**为原文件，再启动、验证健康并恢复 Worker；不要给生产转发密钥扩大 shell 权限。本轮未升级共享 GPU 驱动，也未调整其他 GPU 服务。
+
 流水线保留现有逐阶段策略：检索、阅读、事实抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。检索、阅读、事实抽取（含单篇入库）和综合阶段均不发送 `thinking_token_budget` 或 `max_tokens`，不再设置应用层输出或独立思考额度，由 vLLM 按剩余上下文分配可生成额度；当前模型总上下文为 262144 tokens，输入、思考和正文共享，不能真正无限。综合请求取消生成读取超时，连接、写入和连接池等待仍保留 30 秒超时；其他阶段保留 600 秒读取超时。当前远端部署将 `YAOE_JOB_TIMEOUT_S` 设为 86400（24 小时），不要设为 0（队列会立即超时），也不要直接关闭队列超时而破坏运行锁的有效期。长思考可能占用单卡数小时并阻塞后续任务，现有取消机制在流水线阶段边界生效。空正文或 `finish_reason=length` 仍会使任务明确失败，不会保存为完成答案。放宽额度不保证回答更准确，也不代表已完成医学领域精度评估。
 
 固定流水线的模型调用每次尝试都会输出 `llm_metrics {JSON}` 日志，沿用现有 `log` 事件，不改变 SSE 事件类型或 `llm()` 返回值。字段包含 `stage`、`operation`、`request_id`、`attempt`、`model`、`response_id`、`success`、`elapsed_s`、`finish_reason`，以及服务端返回的 `prompt_tokens`、`completion_tokens`、`reasoning_tokens`、`cached_tokens`；缺失用量为 `null`，不是零。`elapsed_s` 是客户端单次调用总耗时，不能据此拆分服务端排队、预填充与解码时间。日志不包含提示词、回答正文或密钥；这些度量用于分析耗时，不改变生成额度、思考策略或上下文长度。后台事实抽取的日志归属于 `answer_kb` 任务，而非已经完成的问答任务。
