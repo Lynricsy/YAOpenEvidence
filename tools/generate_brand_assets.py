@@ -156,6 +156,8 @@ def main() -> None:
     dark_icon = icon_svg(dark, DARK_BACKGROUND)
     desktop_icon = icon_svg(source, LIGHT_BACKGROUND, rounded=True)
     save_bytes("docs/assets/logo-dark.svg", dark_svg)
+    # PDF 导出页眉用同一枚亮色 logo，内联进打印 HTML
+    save_bytes("backend/app/export/logo.svg", light_svg)
 
     web = "frontend/public/brand"
     save_bytes(f"{web}/logo-light.svg", light_svg)

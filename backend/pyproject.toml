@@ -16,6 +16,9 @@ dependencies = [
   "sse-starlette>=2.1",
   "argon2-cffi>=25.1",
   "python-multipart>=0.0.20",
+  # PDF 导出：markdown-it-py 渲染正文（自定义引用芯片规则），jinja2 组装打印用 HTML
+  "markdown-it-py>=3",
+  "jinja2>=3.1",
   # codex 引擎：SDK 依赖 openai-codex-cli-bin，二进制随 wheel 进镜像，容器内无需 node
   "openai-codex>=0.147",
 ]

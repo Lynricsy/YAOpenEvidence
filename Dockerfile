@@ -18,6 +18,9 @@ ENV PATH=/app/.venv/bin:$PATH PICOSGPT_DATA=/data PLAYWRIGHT_BROWSERS_PATH=/ms-p
     CODEX_HOME=/data/var/codex
 # 机构订阅取全文与 SCImago 分区表下载都要真浏览器；缺它这两条路径只能报 fulltext_unavailable
 RUN playwright install --with-deps chromium
+# PDF 导出用 Chromium 打印：中文用 Noto Serif CJK，数字/元信息用 Inter，与三端界面同一字体家族
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-noto-cjk fonts-inter \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/backend
 CMD ["yaoe", "serve", "--host", "0.0.0.0", "--port", "8765"]
 
