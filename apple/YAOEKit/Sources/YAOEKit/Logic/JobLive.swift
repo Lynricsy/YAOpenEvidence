@@ -24,8 +24,9 @@ public enum StageKey: String, Codable, Sendable, Hashable, CaseIterable {
         }
     }
 
-    /// 问答任务的阶段顺序（`reindex` 属于知识库任务，不在其中）。
-    public static let askPipeline: [StageKey] = [.queries, .search, .fulltext, .read, .kb, .synthesize]
+    /// 问答任务的阶段顺序。`reindex` 属于知识库任务；`kb`（写入知识库）也不在其中——
+    /// API 侧 `defer_kb=True`，写库排到答案交付之后，由 `askRailNodes` 作为末尾节点补上。
+    public static let askPipeline: [StageKey] = [.queries, .search, .fulltext, .read, .synthesize]
 }
 
 /// SSE 事件归约出的实时状态。逐字移植 `frontend/src/lib/jobLive.ts`。

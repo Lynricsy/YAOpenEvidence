@@ -11,8 +11,10 @@ struct ProgressPipelineView: View {
     var cancelRequested = false
     let onCancel: () -> Void
 
-    private var stages: [StageKey] {
-        StageKey.askPipeline.filter { $0 != .kb || (useKb && live.stages[.kb] != nil) }
+    /// 运行中的节点序列。写库节点恒为未开始：API 侧 `defer_kb=True`，
+    /// 那一步排到答案交付之后才有后台任务可查。
+    private var nodes: [RailNode] {
+        askRailNodes(live: live, useKb: useKb)
     }
 
     var body: some View {
@@ -41,12 +43,9 @@ struct ProgressPipelineView: View {
                 }
                 .animation(.default, value: live.tools)
             } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    ForEach(stages, id: \.self) { stage in
-                        stageRow(stage)
-                    }
+                StageRailView(nodes: nodes) { node in
+                    stageDetail(node)
                 }
-                .animation(.default, value: live.stages)
             }
 
             if connection == .reconnecting {
@@ -92,51 +91,31 @@ struct ProgressPipelineView: View {
         }
     }
 
+    /// 节点下的阶段细节：结束后的摘要、进行中的进度条。节点 key 就是阶段 rawValue。
     @ViewBuilder
-    private func stageRow(_ stage: StageKey) -> some View {
-        let state = live.stages[stage]
-        let running = state?.status == .running
-        HStack(alignment: .top, spacing: 10) {
-            Group {
-                switch state?.status {
-                case .finished:
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
-                case .running:
-                    ProgressView().controlSize(.small)
-                case nil:
-                    Image(systemName: "circle").foregroundStyle(.quaternary)
+    private func stageDetail(_ node: RailNode) -> some View {
+        if let stage = StageKey(rawValue: node.key), let state = live.stages[stage] {
+            // 只在阶段结束后给摘要：进行中的 detail 只有 total，会渲染出一串 0。
+            if state.status == .finished {
+                let caption = Self.stageCaption(stage, detail: state.detail)
+                if !caption.isEmpty {
+                    Text(caption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .frame(width: 20, height: 20)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(stage.label)
-                    .font(running ? .subheadline.weight(.semibold) : .subheadline)
-                    .foregroundStyle(state == nil ? .secondary : .primary)
-
-                // 只在阶段结束后给摘要：进行中的 detail 只有 total，会渲染出一串 0。
-                if state?.status == .finished, let detail = state?.detail {
-                    let caption = Self.stageCaption(stage, detail: detail)
-                    if !caption.isEmpty {
-                        Text(caption)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if running, live.terminal == nil, let progress = live.progress,
-                   progress.stage == stage, progress.total > 0 {
-                    ProgressView(value: Double(progress.current), total: Double(progress.total))
-                        .tint(Color.accentColor)
-                    if let title = progress.title, !title.isEmpty {
-                        Text(title)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
+            if state.status == .running, live.terminal == nil, let progress = live.progress,
+               progress.stage == stage, progress.total > 0 {
+                ProgressView(value: Double(progress.current), total: Double(progress.total))
+                    .tint(Color.accentColor)
+                if let title = progress.title, !title.isEmpty {
+                    Text(title)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
-            Spacer()
         }
     }
 

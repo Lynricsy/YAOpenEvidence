@@ -105,6 +105,25 @@ struct AnswerScreen: View {
 
         case .ready:
             VStack(alignment: .leading, spacing: 28) {
+                // 答案已出：前序阶段一律按已完成渲染（重新进入本页时 SSE 实时状态是空的），
+                // 末尾的写库节点跟着后台任务走。
+                if let kb = model.backgroundKb, answer.engine == .ask,
+                   AskFilters(options: answer.options).useKb {
+                    StageRailView(
+                        nodes: askRailNodes(
+                            live: model.monitor?.live ?? .empty,
+                            useKb: true,
+                            kb: kb,
+                            settled: true
+                        )
+                    ) { node in
+                        if node.key == "kb", kb.status == .running, kb.total > 0 {
+                            ProgressView(value: Double(kb.current), total: Double(kb.total))
+                                .tint(Color.accentColor)
+                        }
+                    }
+                    .card(padding: 16)
+                }
                 AnswerSectionsView(sections: model.sections, onCite: { model.openReader($0) })
                 if answer.engine == .codex {
                     // 智能体不留逐篇原文快照，来源列表无从可列；能给的溯源就是这条轨迹。

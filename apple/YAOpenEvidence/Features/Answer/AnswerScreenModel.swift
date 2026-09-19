@@ -21,6 +21,8 @@ final class AnswerScreenModel {
     /// 智能体会话的全部回合（标准答案恒为空）。
     var thread: [AnswerSummary] = []
     var monitor: JobLiveMonitor?
+    /// 后台写库任务的状态；nil 表示还没有可查的任务信息。
+    var backgroundKb: BackgroundKb?
     var cancelRequested = false
     var deleting = false
 
@@ -28,6 +30,7 @@ final class AnswerScreenModel {
     private var app: AppModel?
     private var errors: ErrorPresenter?
     private var pollTask: Task<Void, Never>?
+    private var kbTask: Task<Void, Never>?
     /// answer GET 的请求序号：多个刷新在途时只采用最新一次的结果。
     private var fetchSeq = 0
 
@@ -40,6 +43,8 @@ final class AnswerScreenModel {
         monitor?.stop()
         pollTask?.cancel()
         pollTask = nil
+        kbTask?.cancel()
+        kbTask = nil
     }
 
     var current: Answer? { answer.value }
@@ -85,6 +90,7 @@ final class AnswerScreenModel {
         await fetch(showLoading: answer.value == nil)
         startMonitorIfNeeded(client: client)
         startPollingIfNeeded()
+        startKbTrackingIfNeeded()
     }
 
     func reload() async {
@@ -125,6 +131,7 @@ final class AnswerScreenModel {
             pollTask?.cancel()
             pollTask = nil
         }
+        startKbTrackingIfNeeded()
     }
 
     private func loadLegacyMarkdown() async {
@@ -160,6 +167,57 @@ final class AnswerScreenModel {
                 guard let self, current?.status.isActive == true else { return }
                 if monitor?.connection != .open { await reload() }
             }
+        }
+    }
+
+    /// 后台写库任务：API 侧 `defer_kb=True`，原子事实抽取不在问答流水线里跑，
+    /// 答案交付后 worker 才建一个 `answer_kb` 子任务并挂在父任务的 `result.kb_job_id` 上。
+    /// 所以只有答案已出、且本轮开启了写库时才有东西可查。
+    private func startKbTrackingIfNeeded() {
+        guard kbTask == nil, let answer = current, let jobID = answer.jobId else { return }
+        guard answer.status == .ready, answer.engine == .ask,
+              AskFilters(options: answer.options).useKb else { return }
+        kbTask = Task { [weak self] in
+            await self?.trackBackgroundKb(jobID: jobID)
+        }
+    }
+
+    /// 父任务 → `result.kb_job_id` → 子任务两级查询；子任务未进终态时每 5 秒看一次。
+    /// 请求失败按「状态暂时无法读取」处理并停止轮询（与 Web 端一致）。
+    private func trackBackgroundKb(jobID: String) async {
+        guard let client = session?.client else { return }
+        while !Task.isCancelled {
+            let parent: Job
+            do {
+                parent = try await client.job(id: jobID)
+            } catch {
+                backgroundKb = BackgroundKb(status: .unknown)
+                return
+            }
+            guard let kbJobID = parent.result?["kb_job_id"]?.stringValue else {
+                // 父任务已终态却没有子任务 id：本轮不会再写库，别再问了。
+                guard parent.status.isActive, await Self.waitBeforeRefresh() else { return }
+                continue
+            }
+            do {
+                let job = try await client.job(id: kbJobID)
+                backgroundKb = BackgroundKb(job: job)
+                guard job.status.isActive else { return }
+            } catch {
+                backgroundKb = BackgroundKb(status: .unknown)
+                return
+            }
+            guard await Self.waitBeforeRefresh() else { return }
+        }
+    }
+
+    /// 轮询间隔；页面消失时任务被取消，睡眠抛错即退出。
+    private static func waitBeforeRefresh() async -> Bool {
+        do {
+            try await Task.sleep(for: .seconds(5))
+            return true
+        } catch {
+            return false
         }
     }
 
