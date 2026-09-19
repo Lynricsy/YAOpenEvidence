@@ -6,8 +6,10 @@
 """
 from __future__ import annotations
 
+import logging
 import os
 import shutil
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 from sqlalchemy import and_, func, or_, select
@@ -16,6 +18,7 @@ from sqlalchemy.orm import Session, aliased
 from ..auth import Principal, require
 from ..deps import get_arq, get_db
 from ..errors import ApiError
+from ..export.answer_pdf import build_answer_html, export_filename, render_pdf
 from ..models import Answer as AnswerRow
 from ..schemas.answers import (
     TERMINAL_ANSWER_STATUSES,
@@ -26,7 +29,7 @@ from ..schemas.answers import (
     AnswerSummary,
     FollowupCreate,
 )
-from ..schemas.common import MarkdownResponse, Page
+from ..schemas.common import MarkdownResponse, Page, PdfResponse
 from ..services import jobs as jobs_service
 from ..services.answers import (
     answer_paths,
@@ -40,6 +43,7 @@ from ..services.answers import (
 )
 
 router = APIRouter(tags=["answers"])
+logger = logging.getLogger(__name__)
 
 
 def _row(db: Session, answer_id: str, principal: Principal) -> AnswerRow:
@@ -165,6 +169,28 @@ def get_answer_markdown(answer_id: str, db: Session = Depends(get_db),
     if row.status != "ready":
         raise ApiError(409, "not_ready", f"answer {answer_id!r} is {row.status}")
     return MarkdownResponse(http_answer_markdown(row), headers={"Cache-Control": "no-store"})
+
+
+@router.get("/answers/{answer_id}/pdf", response_class=PdfResponse, summary="导出 PDF",
+            responses={200: {"content": {"application/pdf": {
+                "schema": {"type": "string", "format": "binary"}}}}})
+async def get_answer_pdf(answer_id: str, db: Session = Depends(get_db),
+                         principal: Principal = Depends(require())) -> Response:
+    """服务端统一渲染：三端下载到的是同一份字节，排版不随客户端漂移。"""
+    row = _row(db, answer_id, principal)
+    if row.status != "ready":
+        raise ApiError(409, "not_ready", f"answer {answer_id!r} is {row.status}")
+    html = build_answer_html(row, root_question=detail(db, row).root_question)
+    try:
+        pdf = await render_pdf(html, row.question)
+    except Exception as exc:  # 打印超时、Chromium 缺失、渲染崩溃：对客户端一律是「稍后重试」
+        logger.exception("pdf export failed for %s", answer_id)
+        raise ApiError(503, "export_failed", "PDF 渲染失败，请稍后重试") from exc
+    ascii_name, utf8_name = export_filename(row)
+    return PdfResponse(pdf, headers={
+        "Content-Disposition":
+            f'attachment; filename="{ascii_name}"; filename*=UTF-8\'\'{quote(utf8_name)}',
+        "Cache-Control": "no-store"})
 
 
 @router.get("/answers/{answer_id}/papers/{n}/markdown", response_class=MarkdownResponse,

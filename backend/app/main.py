@@ -67,7 +67,7 @@ def create_app() -> FastAPI:
             allow_origins=settings.cors_origins,
             allow_methods=["*"],
             allow_headers=["Authorization", "Content-Type", "Last-Event-ID"],
-            expose_headers=["Location", "Retry-After", "WWW-Authenticate"],
+            expose_headers=["Location", "Retry-After", "WWW-Authenticate", "Content-Disposition"],
         )
     register_handlers(app)
     # 不传 model：FastAPI 会按成功响应的媒体类型为附加模型自动补 content。
