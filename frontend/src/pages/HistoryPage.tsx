@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import {
+  FileDown,
   History,
   MoreHorizontal,
   Plus,
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { components } from '@/api/schema'
-import { cancelJob, useAnswers } from '@/api/queries'
+import { cancelJob, downloadAnswerPdf, useAnswers } from '@/api/queries'
 import { jobErrorMessage } from '@/api/errors'
 import { useAuth } from '@/auth/store'
 import { DeleteAnswerDialog } from '@/components/common/DeleteAnswerDialog'
@@ -87,6 +88,10 @@ export default function HistoryPage() {
       setCancelRequested((current) => new Set(current).add(id))
       toast.success('已请求取消，等待任务响应')
     },
+  })
+  const exportPdf = useMutation({
+    mutationFn: downloadAnswerPdf,
+    onSuccess: () => toast.success('PDF 已导出'),
   })
   function changeOffset(value: number) {
     setSearchParams((current) => {
@@ -320,13 +325,25 @@ export default function HistoryPage() {
                                   {cancelling ? '取消中…' : '取消任务'}
                                 </DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem
-                                  variant="destructive"
-                                  onSelect={() => setDeleteId(answer.id)}
-                                >
-                                  <Trash2 />
-                                  删除
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem
+                                    disabled={
+                                      answer.status !== 'ready' ||
+                                      exportPdf.isPending
+                                    }
+                                    onSelect={() => exportPdf.mutate(answer.id)}
+                                  >
+                                    <FileDown />
+                                    导出 PDF
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onSelect={() => setDeleteId(answer.id)}
+                                  >
+                                    <Trash2 />
+                                    删除
+                                  </DropdownMenuItem>
+                                </>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
