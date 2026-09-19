@@ -1,13 +1,11 @@
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Check, ChevronDown, Loader2, Square } from 'lucide-react'
-import * as m from 'motion/react-m'
 import { toast } from 'sonner'
 import { cn } from 'cn'
 import { cancelJob } from '@/api/queries'
 import type { Connection } from '@/api/useJobEvents'
 import type { JobLive, StageKey } from '@/lib/jobLive'
-import { ease } from '@/lib/motion'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -15,15 +13,9 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { TraceList } from './TraceList'
-
-const steps: [StageKey, string][] = [
-  ['queries', '生成检索式'],
-  ['search', '检索文献'],
-  ['fulltext', '获取全文'],
-  ['read', '逐篇阅读'],
-  ['kb', '写入知识库'],
-  ['synthesize', '综合成稿'],
-]
+import { StageRail } from './StageRail'
+import { askRailNodes, steps } from './askRail'
+import type { KbBackground } from './useBackgroundKb'
 
 // 只有「在等」和「出问题了」值得占一行字；连接正常是默认预期，说出来是噪音。
 const connections: Partial<Record<Connection, [string, string]>> = {
@@ -74,12 +66,14 @@ export function ProgressPipeline({
   connection,
   jobId,
   useKb,
+  kb,
   engine,
 }: {
   live: JobLive
   connection: Connection
   jobId: string | null
   useKb: boolean
+  kb: KbBackground | null
   engine: 'ask' | 'codex'
 }) {
   const cancel = useMutation({
@@ -92,11 +86,8 @@ export function ProgressPipeline({
     if (el) el.scrollTop = el.scrollHeight
   }, [live.logs.length])
   const isCodex = engine === 'codex'
-  const visible = steps.filter(
-    ([stage]) => stage !== 'kb' || (useKb && live.stages.kb != null),
-  )
   const connectionNote = connections[connection]
-  const finished = visible.filter(
+  const finished = steps.filter(
     ([stage]) => live.stages[stage]?.status === 'finished',
   )
   const progress =
@@ -147,116 +138,23 @@ export function ProgressPipeline({
         </div>
       ) : (
         <>
-          <ol
-            className="mt-6 grid gap-4 md:grid-cols-[repeat(var(--n),minmax(0,1fr))] md:gap-0"
-            style={{ '--n': visible.length } as CSSProperties}
-          >
-            {visible.map(([stage, label], index) => {
-              const state = live.stages[stage]
-              const done = state?.status === 'finished'
-              return (
-                <li
-                  key={stage}
-                  className="relative flex gap-3 md:flex-col md:items-center md:text-center"
-                >
-                  {index !== visible.length - 1 && (
-                    <span
-                      className={cn(
-                        'absolute top-7 left-3.5 h-[calc(100%+1rem-1.75rem)] w-px md:top-3.5 md:left-1/2 md:h-px md:w-full',
-                        done ? 'bg-primary' : 'bg-border',
-                      )}
-                    />
-                  )}
-                  <span
-                    className={cn(
-                      'relative z-1 grid size-7 shrink-0 place-items-center rounded-full border text-[11px] font-medium',
-                      done
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : state
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'bg-background text-muted-foreground',
-                    )}
-                  >
-                    {done ? (
-                      <m.span
-                        initial={{ scale: 0.4 }}
-                        animate={{ scale: 1 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 500,
-                          damping: 30,
-                        }}
-                      >
-                        <Check className="size-3.5" />
-                      </m.span>
-                    ) : state ? (
-                      <>
-                        <Loader2 className="size-3.5 animate-spin" />
-                        <m.span
-                          className="absolute inset-0 rounded-full border border-primary"
-                          animate={{ scale: [1, 1.7], opacity: [0.6, 0] }}
-                          transition={{
-                            duration: 1.4,
-                            repeat: Infinity,
-                            ease: 'easeOut',
-                          }}
-                        />
-                      </>
-                    ) : (
-                      index + 1
-                    )}
+          <StageRail
+            className="mt-6"
+            nodes={askRailNodes(live, { useKb, kb })}
+            progress={progress}
+          />
+          {finished.length > 0 && (
+            <ul className="mt-5 space-y-1 text-xs text-muted-foreground">
+              {finished.map(([stage, label]) => (
+                <li key={stage} className="flex items-start gap-1.5">
+                  <Check className="mt-1 size-3 shrink-0 text-success" />
+                  <span className="min-w-0 break-words">
+                    {label}：{summary(stage, live.stages[stage]?.detail ?? {})}
                   </span>
-                  <p
-                    className={cn(
-                      'text-xs md:mt-2',
-                      state
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground',
-                    )}
-                  >
-                    {label}
-                  </p>
                 </li>
-              )
-            })}
-          </ol>
-          <div className="mt-5 space-y-3">
-            {progress && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between gap-3 text-xs text-muted-foreground">
-                  <span className="truncate">{progress.title}</span>
-                  <span className="tabular-nums">
-                    {progress.current}/{progress.total}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                  <m.div
-                    className="h-full rounded-full bg-primary"
-                    animate={{
-                      width:
-                        (progress.total > 0
-                          ? (progress.current / progress.total) * 100
-                          : 0) + '%',
-                    }}
-                    transition={{ duration: 0.4, ease }}
-                  />
-                </div>
-              </div>
-            )}
-            {finished.length > 0 && (
-              <ul className="space-y-1 text-xs text-muted-foreground">
-                {finished.map(([stage, label]) => (
-                  <li key={stage} className="flex items-start gap-1.5">
-                    <Check className="mt-1 size-3 shrink-0 text-success" />
-                    <span className="min-w-0 break-words">
-                      {label}：
-                      {summary(stage, live.stages[stage]?.detail ?? {})}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+              ))}
+            </ul>
+          )}
         </>
       )}
       <Collapsible className="mt-5 border-t pt-3">
