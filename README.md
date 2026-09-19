@@ -68,6 +68,8 @@ cd YAOEKit && swift test
 
 工程描述集中在 `apple/project.yml`（XcodeGen），Bundle ID 为 `plus.ling.YAOpenEvidence`；仓库内没有开发者账号，默认使用 ad-hoc 签名（`CODE_SIGN_IDENTITY = "-"`），换成自己的团队时改这三行签名设置即可。App 沙箱只申请 `network.client`，ATS 仅放开本地网络：明文 `http://` 服务器地址必须是 localhost 或私有网段，公网主机需使用 https。
 
+没有 Mac 时用 GitHub Actions 出包：`.github/workflows/ios.yml` 在 `macos-26` 镜像（Xcode 26.6 / iOS 26 SDK）上跑 XcodeGen + `xcodebuild archive`，关闭签名后手工组 `Payload/` 结构，产出未签名 IPA 作为构建产物 `YAOpenEvidence-unsigned-ipa`。推送 `apple/**` 自动触发，也可 `gh workflow run ios.yml`；取包用 `gh run download <run-id> -n YAOpenEvidence-unsigned-ipa`。产物未签名，装真机前需自行签名（如 `codesign` + 自己的证书描述文件，或 AltStore / Sideloadly 侧载时重签）。
+
 客户端首屏要求填写服务器地址（默认 `http://localhost:8765`）与账号密码；令牌存 Keychain，`expires_at`、用户资料与服务器地址存 UserDefaults，任何受保护端点返回 401 即清会话回登录页。问答进度走 `GET /v1/jobs/{id}/events` 的 SSE：1 秒起指数退避重连（上限 10 秒）、重连前用 `/v1/auth/me` 探活、SSE 未连通时每 5 秒兜底轮询答案。界面遵循 Apple HIG（系统字体与语义色、`sidebarAdaptable` 侧栏、regular 宽度用检查器展示原文阅读器），只保留品牌深青 accent、8 色引用色板与 Q1–Q4 分区色。
 
 界面按 iOS 26 规范打磨：提问与追问用悬浮的大圆角玻璃输入框（`glassEffect`，发送键在框内、筛选摘要作胶囊），玻璃只用于悬浮控件层，内容卡片一律是 `secondarySystemBackground` 平面填充；答案页的输入框仿 Safari 地址栏三档收放（聚焦 / 有草稿 / 提交中是完整形态，静止收成单行，向下滚动再横向缩成居中小药丸），输入框始终留在视图树上，焦点与草稿不会在收放间丢失；历史、文献库与用户列表是无限滚动而非分页按钮；知识库与查文献用原生 `.searchable`（知识库带「全部 / 事实 / 段落」搜索范围）；滚动时收起底部 Tab 栏，关键操作带触觉反馈。面向用户的界面刻意不展示 SSE 连接状态、运行日志、候选文献原始数据、检索式、相关性打分、嵌入模型与相似度这类开发者信息——检索式移到「…」菜单的 sheet 里，其余只保留在 Web 端与后端日志。
