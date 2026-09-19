@@ -88,10 +88,23 @@ export function AnswerView({
             {answer.n_papers} 篇文献 · {answer.n_fulltext ?? 0} 篇全文
           </span>
         )}
+        {answer.status === 'ready' && (
+          // 导出是答案页的主动作之一，藏进「…」菜单里没人找得到，所以独立成按钮
+          <Button
+            className="ml-auto"
+            variant="outline"
+            size="sm"
+            disabled={exporting}
+            onClick={onExportPdf}
+          >
+            <FileDown />
+            {exporting ? '导出中…' : '导出 PDF'}
+          </Button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className="ml-auto"
+              className={answer.status === 'ready' ? undefined : 'ml-auto'}
               variant="ghost"
               size="icon-sm"
               aria-label="答案操作"
@@ -103,13 +116,6 @@ export function AnswerView({
             <DropdownMenuItem onSelect={onReask}>
               <RotateCcw />
               沿用此次筛选重新提问
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={answer.status !== 'ready' || exporting}
-              onSelect={onExportPdf}
-            >
-              <FileDown />
-              导出 PDF
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

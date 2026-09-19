@@ -669,11 +669,20 @@ class _AnswerHeader extends StatelessWidget {
                 ],
               ),
             ),
+            // 导出是主动作：塞进「更多」菜单没人找得到，就绪时独立成按钮
+            if (answer.status == AnswerStatus.ready)
+              Padding(
+                padding: const EdgeInsets.only(right: YaoeTokens.space2),
+                child: OutlinedButton.icon(
+                  onPressed: onExportPdf,
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                  label: const Text('导出 PDF'),
+                ),
+              ),
             _AnswerMenu(
               answer: answer,
               onReuse: onReuse,
               onDelete: onDelete,
-              onExportPdf: onExportPdf,
             ),
           ],
         ),
@@ -701,23 +710,19 @@ class _AnswerHeader extends StatelessWidget {
   }
 }
 
-enum _AnswerAction { reuse, queries, exportPdf, delete }
+enum _AnswerAction { reuse, queries, delete }
 
-/// 头部右侧「更多」菜单：重新提问 / 查看检索式 / 导出 PDF / 删除。
+/// 头部右侧「更多」菜单：重新提问 / 查看检索式 / 删除。导出 PDF 已独立成按钮。
 class _AnswerMenu extends StatelessWidget {
   const _AnswerMenu({
     required this.answer,
     required this.onReuse,
     required this.onDelete,
-    required this.onExportPdf,
   });
 
   final Answer answer;
   final VoidCallback onReuse;
   final Future<void> Function()? onDelete;
-
-  /// 为 null 时菜单里的导出项禁用（答案未就绪或正忙）。
-  final Future<void> Function()? onExportPdf;
 
   @override
   Widget build(BuildContext context) {
@@ -732,8 +737,6 @@ class _AnswerMenu extends StatelessWidget {
             onReuse();
           case _AnswerAction.queries:
             showQueriesSheet(context, answer.queries);
-          case _AnswerAction.exportPdf:
-            onExportPdf?.call();
           case _AnswerAction.delete:
             onDelete?.call();
         }
@@ -748,11 +751,6 @@ class _AnswerMenu extends StatelessWidget {
           value: _AnswerAction.queries,
           enabled: answer.queries.isNotEmpty,
           child: const Text('查看检索式'),
-        ),
-        PopupMenuItem(
-          value: _AnswerAction.exportPdf,
-          enabled: onExportPdf != null,
-          child: const Text('导出 PDF'),
         ),
         const PopupMenuDivider(),
         PopupMenuItem(

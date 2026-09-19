@@ -215,6 +215,17 @@ struct AnswerScreen: View {
 
     @ToolbarContentBuilder
     private var toolbarMenu: some ToolbarContent {
+        // 导出是主动作：只放在「…」里用户找不到，就绪时单独占一个工具栏位。
+        if model.current?.status == .ready {
+            ToolbarItem {
+                Button {
+                    Task { exported = await model.exportPDF() }
+                } label: {
+                    Label("导出 PDF", systemImage: "square.and.arrow.down")
+                }
+                .disabled(model.exporting)
+            }
+        }
         ToolbarItem {
             Menu {
                 if let answer = model.current {
@@ -223,10 +234,6 @@ struct AnswerScreen: View {
                     }
                     Button("查看检索式") { showQueries = true }
                         .disabled(answer.queries.isEmpty)
-                    Button("导出 PDF") {
-                        Task { exported = await model.exportPDF() }
-                    }
-                    .disabled(answer.status != .ready || model.exporting)
                     Button("删除", role: .destructive) { showDeleteConfirm = true }
                         .disabled(answer.status.isActive || model.deleting)
                 }
