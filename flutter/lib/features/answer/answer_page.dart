@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +15,7 @@ import '../../core/logic/citations.dart';
 import '../../core/logic/job_live.dart';
 import '../../core/models/answers.dart';
 import '../../core/session/session_controller.dart';
+import '../../shared/export_file.dart';
 import '../../shared/format.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/confirm_dialog.dart';
@@ -191,6 +194,34 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
     }
   }
 
+  /// 导出 PDF：排版全在服务端，客户端只把字节交给系统保存或分享。
+  Future<void> _exportPdf() async {
+    setState(() => _busy = true);
+    try {
+      final download = await ref.read(apiClientProvider).answerPdf(widget.answerId);
+      final path = await saveOrSharePdf(
+        bytes: download.bytes,
+        filename: download.filename ?? 'YAOpenEvidence-${widget.answerId}.pdf',
+      );
+      if (!mounted) return;
+      // Android 走分享面板，去向由用户在面板里决定，再提示路径只会误导。
+      if (path != null && !Platform.isAndroid) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('已保存到 $path')));
+      }
+    } on ApiError catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.userMessage)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('导出失败：$error')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   void _reuseFilters(Answer answer) {
     ref
         .read(askFiltersControllerProvider.notifier)
@@ -217,6 +248,7 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
         onOpenReader: _openReader,
         onCancel: _cancel,
         onDelete: _delete,
+        onExportPdf: _exportPdf,
         onReuse: () => _reuseFilters(answer),
         // 智能体的已完成回合才能续接，其余情况一律新建一轮。
         onSubmit:
@@ -283,6 +315,7 @@ class _AnswerContent extends ConsumerWidget {
     required this.onOpenReader,
     required this.onCancel,
     required this.onDelete,
+    required this.onExportPdf,
     required this.onReuse,
     required this.onSubmit,
   });
@@ -294,6 +327,7 @@ class _AnswerContent extends ConsumerWidget {
   final void Function(CitationRef ref) onOpenReader;
   final Future<void> Function() onCancel;
   final Future<void> Function() onDelete;
+  final Future<void> Function() onExportPdf;
   final VoidCallback onReuse;
   final void Function(String question) onSubmit;
 
@@ -329,6 +363,10 @@ class _AnswerContent extends ConsumerWidget {
                 thread: thread,
                 onReuse: onReuse,
                 onDelete: (busy || answer.status.isActive) ? null : onDelete,
+                onExportPdf:
+                    (busy || answer.status != AnswerStatus.ready)
+                    ? null
+                    : onExportPdf,
               ),
               const SizedBox(height: YaoeTokens.sectionSpacing),
               if (answer.status.isActive)
@@ -588,6 +626,7 @@ class _AnswerHeader extends StatelessWidget {
     required this.thread,
     required this.onReuse,
     required this.onDelete,
+    required this.onExportPdf,
   });
 
   final Answer answer;
@@ -596,6 +635,9 @@ class _AnswerHeader extends StatelessWidget {
 
   /// 为 null 时菜单里的删除项禁用（活动中或正忙）。
   final Future<void> Function()? onDelete;
+
+  /// 为 null 时菜单里的导出项禁用（答案未就绪或正忙）。
+  final Future<void> Function()? onExportPdf;
 
   @override
   Widget build(BuildContext context) {
@@ -627,7 +669,12 @@ class _AnswerHeader extends StatelessWidget {
                 ],
               ),
             ),
-            _AnswerMenu(answer: answer, onReuse: onReuse, onDelete: onDelete),
+            _AnswerMenu(
+              answer: answer,
+              onReuse: onReuse,
+              onDelete: onDelete,
+              onExportPdf: onExportPdf,
+            ),
           ],
         ),
         if (thread.length > 1) ...[
@@ -654,19 +701,23 @@ class _AnswerHeader extends StatelessWidget {
   }
 }
 
-enum _AnswerAction { reuse, queries, delete }
+enum _AnswerAction { reuse, queries, exportPdf, delete }
 
-/// 头部右侧「更多」菜单：重新提问 / 查看检索式 / 删除。
+/// 头部右侧「更多」菜单：重新提问 / 查看检索式 / 导出 PDF / 删除。
 class _AnswerMenu extends StatelessWidget {
   const _AnswerMenu({
     required this.answer,
     required this.onReuse,
     required this.onDelete,
+    required this.onExportPdf,
   });
 
   final Answer answer;
   final VoidCallback onReuse;
   final Future<void> Function()? onDelete;
+
+  /// 为 null 时菜单里的导出项禁用（答案未就绪或正忙）。
+  final Future<void> Function()? onExportPdf;
 
   @override
   Widget build(BuildContext context) {
@@ -681,6 +732,8 @@ class _AnswerMenu extends StatelessWidget {
             onReuse();
           case _AnswerAction.queries:
             showQueriesSheet(context, answer.queries);
+          case _AnswerAction.exportPdf:
+            onExportPdf?.call();
           case _AnswerAction.delete:
             onDelete?.call();
         }
@@ -695,6 +748,11 @@ class _AnswerMenu extends StatelessWidget {
           value: _AnswerAction.queries,
           enabled: answer.queries.isNotEmpty,
           child: const Text('查看检索式'),
+        ),
+        PopupMenuItem(
+          value: _AnswerAction.exportPdf,
+          enabled: onExportPdf != null,
+          child: const Text('导出 PDF'),
         ),
         const PopupMenuDivider(),
         PopupMenuItem(

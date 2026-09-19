@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
 import '../models/problem.dart';
 import 'api_error.dart';
+import 'content_disposition.dart';
 import 'query_encoding.dart';
 import 'sse.dart';
 
@@ -29,6 +31,14 @@ class ApiRequest {
 
   /// 除 2xx 之外也视为成功、需要按正常模型解码的状态码（如就绪探针的 503）。
   final Set<int> acceptStatuses;
+}
+
+/// 一次二进制下载的结果。[filename] 取自 `Content-Disposition`，缺失时为 null。
+class Download {
+  const Download({required this.bytes, this.filename});
+
+  final Uint8List bytes;
+  final String? filename;
 }
 
 /// 后端 REST + SSE 客户端。鉴权令牌由宿主提供，401 统一回调宿主清理会话。
@@ -84,6 +94,17 @@ class ApiClient {
 
   Future<void> noContent(ApiRequest request) async {
     await _send(request, accept: 'application/json');
+  }
+
+  /// 取回二进制附件（如导出的 PDF）。排版与文件名都由服务端决定，客户端只负责落盘。
+  Future<Download> download(ApiRequest request, {required String accept}) async {
+    final response = await _send(request, accept: accept);
+    return Download(
+      bytes: response.bodyBytes,
+      filename: filenameFromContentDisposition(
+        response.headers['content-disposition'],
+      ),
+    );
   }
 
   /// 订阅任务事件流。断线重连由调用方负责（传入上一次收到的 `Last-Event-ID`）。

@@ -36,6 +36,11 @@ dependencies:
   # 外链
   url_launcher: ^6.3.0
 
+  # 导出 PDF 的落盘去向：桌面另存为对话框、Android 分享面板（先写应用临时目录）
+  file_selector: ^1.1.0
+  path_provider: ^2.1.6
+  share_plus: ^13.3.0
+
   intl: any
 
 dev_dependencies:

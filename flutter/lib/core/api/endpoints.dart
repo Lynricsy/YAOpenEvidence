@@ -169,6 +169,11 @@ extension YaoeEndpoints on ApiClient {
   Future<String> answerMarkdown(String id) =>
       text(ApiRequest(path: '/answers/${encodePathComponent(id)}/markdown'));
 
+  Future<Download> answerPdf(String id) => download(
+    ApiRequest(path: '/answers/${encodePathComponent(id)}/pdf'),
+    accept: 'application/pdf',
+  );
+
   Future<AnswerPaperDetail> answerPaper({
     required String id,
     required int n,
