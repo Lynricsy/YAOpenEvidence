@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { AlertCircle } from 'lucide-react'
 import { FilterColumn, FilterSheet } from '@/components/ask/FilterPanel'
 import { ComposerDock } from '@/components/ask/ComposerDock'
@@ -29,6 +30,7 @@ import {
 } from '@/lib/filters'
 import {
   createAnswer,
+  downloadAnswerPdf,
   followupAnswer,
   queryClient,
   useAnswer,
@@ -106,6 +108,10 @@ export default function AskPage() {
   const followup = useMutation({
     mutationFn: followupAnswer,
     onSuccess: onCreated,
+  })
+  const exportPdf = useMutation({
+    mutationFn: downloadAnswerPdf,
+    onSuccess: () => toast.success('PDF 已导出'),
   })
   const fill = (text: string) => {
     setQuestion(text)
@@ -202,6 +208,8 @@ export default function AskPage() {
                     fill(answer.question)
                   }}
                   onDelete={() => setDeleteId(answer.id)}
+                  onExportPdf={() => exportPdf.mutate(answer.id)}
+                  exporting={exportPdf.isPending}
                 />
               )
             )}

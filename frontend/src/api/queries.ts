@@ -2,6 +2,7 @@ import { MutationCache, QueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api, dataOf, toFormData } from './client'
 import { ApiError, problemMessage } from './errors'
+import { filenameFromDisposition, saveBlob } from '@/lib/download'
 import type { components, paths } from './schema'
 
 type Schemas = components['schemas']
@@ -102,6 +103,21 @@ export function useAnswerMarkdown(id: string, enabled = true) {
         }),
       ),
   })
+}
+/** 下载服务端渲染的 PDF：三端共用同一份字节，前端只负责落盘。 */
+export async function downloadAnswerPdf(id: string): Promise<void> {
+  const { data, response } = await api.GET('/v1/answers/{answer_id}/pdf', {
+    params: { path: { answer_id: id } },
+    parseAs: 'blob',
+  })
+  // 生成类型把 application/pdf 记成 string，运行时 parseAs:'blob' 给的是 Blob
+  const blob = data as unknown as Blob | undefined
+  if (!blob) throw new Error('Missing response data')
+  saveBlob(
+    blob,
+    filenameFromDisposition(response.headers.get('content-disposition')) ??
+      `YAOpenEvidence-${id}.pdf`,
+  )
 }
 export function useAnswerThread(id: string, enabled: boolean) {
   return useQuery({

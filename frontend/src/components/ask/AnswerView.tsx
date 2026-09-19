@@ -2,6 +2,7 @@ import {
   AlertCircle,
   Ban,
   ChevronRight,
+  FileDown,
   Filter,
   MoreHorizontal,
   RotateCcw,
@@ -48,6 +49,8 @@ export function AnswerView({
   connection,
   onOpenPaper,
   onReask,
+  onExportPdf,
+  exporting,
   onDelete,
 }: {
   answer: components['schemas']['Answer']
@@ -55,6 +58,8 @@ export function AnswerView({
   connection: Connection
   onOpenPaper: (n: number, pid: number | null) => void
   onReask: () => void
+  onExportPdf: () => void
+  exporting: boolean
   onDelete: () => void
 }) {
   const active = answer.status === 'queued' || answer.status === 'running'
@@ -98,6 +103,13 @@ export function AnswerView({
             <DropdownMenuItem onSelect={onReask}>
               <RotateCcw />
               沿用此次筛选重新提问
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={answer.status !== 'ready' || exporting}
+              onSelect={onExportPdf}
+            >
+              <FileDown />
+              导出 PDF
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
