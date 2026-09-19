@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import YAOEKit
 
 struct AnswerScreen: View {
@@ -17,6 +18,7 @@ struct AnswerScreen: View {
     @State private var submitting = false
     @State private var showDeleteConfirm = false
     @State private var showQueries = false
+    @State private var exported: ExportedFile?
     @State private var collapse = ComposerCollapse()
 
     init(answerID: String) {
@@ -61,6 +63,22 @@ struct AnswerScreen: View {
             } message: {
                 Text("问答结果与本次阅读材料将被删除，共享文献库不受影响。此操作不可撤销。")
             }
+            #if os(iOS)
+                // iOS 没有保存面板：「存储到文件」是分享面板里的一项。
+                .sheet(item: $exported) { file in
+                    ShareSheet(items: [file.url])
+                }
+                .sensoryFeedback(.success, trigger: exported)
+            #else
+                .fileExporter(
+                    isPresented: Binding(get: { exported != nil }, set: { if !$0 { exported = nil } }),
+                    document: exported.map { PDFFileDocument(data: $0.data) },
+                    contentType: .pdf,
+                    defaultFilename: exported?.name
+                ) { result in
+                    if case .failure(let error) = result { errors.present(error) }
+                }
+            #endif
     }
 
     private var content: some View {
@@ -205,6 +223,10 @@ struct AnswerScreen: View {
                     }
                     Button("查看检索式") { showQueries = true }
                         .disabled(answer.queries.isEmpty)
+                    Button("导出 PDF") {
+                        Task { exported = await model.exportPDF() }
+                    }
+                    .disabled(answer.status != .ready || model.exporting)
                     Button("删除", role: .destructive) { showDeleteConfirm = true }
                         .disabled(answer.status.isActive || model.deleting)
                 }

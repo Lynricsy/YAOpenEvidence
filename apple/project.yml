@@ -47,6 +47,8 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+        # macOS 导出 PDF 走保存面板，落盘目标由用户选，沙盒需要这项授权。
+        com.apple.security.files.user-selected.read-write: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: plus.ling.YAOpenEvidence

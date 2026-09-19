@@ -109,6 +109,10 @@ public extension APIClient {
         try await text(Endpoint(path: "/answers/\(Endpoint.escape(id))/markdown"))
     }
 
+    func answerPDF(id: String) async throws(APIError) -> Download {
+        try await download(Endpoint(path: "/answers/\(Endpoint.escape(id))/pdf"), accept: "application/pdf")
+    }
+
     func answerPaper(id: String, n: Int) async throws(APIError) -> AnswerPaperDetail {
         try await json(Endpoint(path: "/answers/\(Endpoint.escape(id))/papers/\(n)"))
     }

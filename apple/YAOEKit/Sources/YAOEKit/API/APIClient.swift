@@ -42,6 +42,50 @@ public actor APIClient {
         _ = try await perform(endpoint, accept: "application/json")
     }
 
+    /// 二进制下载的结果。文件名来自服务端，客户端不自己拼。
+    public struct Download: Sendable {
+        public var data: Data
+        public var filename: String?
+
+        public init(data: Data, filename: String?) {
+            self.data = data
+            self.filename = filename
+        }
+    }
+
+    public func download(_ endpoint: Endpoint, accept: String) async throws(APIError) -> Download {
+        let (data, http) = try await perform(endpoint, accept: accept)
+        return Download(
+            data: data,
+            filename: Self.filename(fromContentDisposition: http.value(forHTTPHeaderField: "Content-Disposition"))
+        )
+    }
+
+    /// 附件文件名：优先 RFC 5987 的 `filename*=UTF-8''…`（服务端用它传中文，百分号解码失败按缺失处理），
+    /// 其次退回 ASCII 的 `filename="…"`；都没有返回 nil，由调用方兜底命名。
+    public static func filename(fromContentDisposition header: String?) -> String? {
+        guard let header else { return nil }
+        let range = NSRange(header.startIndex ..< header.endIndex, in: header)
+        if let match = extendedFilenameRegex.firstMatch(in: header, range: range) {
+            guard let value = Range(match.range(at: 1), in: header) else { return nil }
+            return String(header[value]).removingPercentEncoding
+        }
+        if let match = quotedFilenameRegex.firstMatch(in: header, range: range),
+           let value = Range(match.range(at: 1), in: header) {
+            return String(header[value])
+        }
+        return nil
+    }
+
+    private static let extendedFilenameRegex = try! NSRegularExpression(
+        pattern: #"filename\*\s*=\s*UTF-8''([^;]+)"#,
+        options: [.caseInsensitive]
+    )
+    private static let quotedFilenameRegex = try! NSRegularExpression(
+        pattern: #"filename\s*=\s*"([^"]+)""#,
+        options: [.caseInsensitive]
+    )
+
     private func perform(_ endpoint: Endpoint, accept: String) async throws(APIError) -> (Data, HTTPURLResponse) {
         let request = try makeRequest(endpoint, accept: accept)
         let data: Data

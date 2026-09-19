@@ -9,6 +9,15 @@ struct ReaderTarget: Identifiable, Hashable {
     var id: String { "\(n)#\(pid ?? 0)" }
 }
 
+/// 已导出的 PDF：iOS 分享面板要文件 URL，macOS 保存面板要字节，两者都带服务端给的文件名。
+struct ExportedFile: Identifiable, Hashable {
+    let url: URL
+    let data: Data
+    let name: String
+
+    var id: String { url.path }
+}
+
 @MainActor
 @Observable
 final class AnswerScreenModel {
@@ -25,6 +34,7 @@ final class AnswerScreenModel {
     var backgroundKb: BackgroundKb?
     var cancelRequested = false
     var deleting = false
+    var exporting = false
 
     private var session: SessionStore?
     private var app: AppModel?
@@ -257,6 +267,23 @@ final class AnswerScreenModel {
         } catch {
             errors?.present(error)
             return false
+        }
+    }
+
+    /// 排版全部在服务端完成，这里只把字节落到临时目录：分享面板与保存面板都要一个真实文件。
+    func exportPDF() async -> ExportedFile? {
+        guard let client = session?.client else { return nil }
+        exporting = true
+        defer { exporting = false }
+        do {
+            let download = try await client.answerPDF(id: answerID)
+            let name = download.filename ?? "YAOpenEvidence-\(answerID).pdf"
+            let url = FileManager.default.temporaryDirectory.appending(path: name)
+            try download.data.write(to: url, options: .atomic)
+            return ExportedFile(url: url, data: download.data, name: name)
+        } catch {
+            errors?.present(error)
+            return nil
         }
     }
 
