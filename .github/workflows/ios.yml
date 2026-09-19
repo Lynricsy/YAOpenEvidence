@@ -1,0 +1,76 @@
+name: iOS
+
+# apple/ 下的原生客户端：仓库不入库 .xcodeproj（由 XcodeGen 从 project.yml 生成），
+# 也没有签名证书，因此 CI 只产出未签名 IPA，供真机侧载或后续手动签名使用。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apple/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "apple/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # project.yml 要求 Xcode 26 / iOS 26 SDK，只有 macos-26 镜像满足
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 选择 Xcode 26
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成 Xcode 工程
+        working-directory: apple
+        run: xcodegen generate --spec project.yml
+
+      - name: 构建归档（未签名）
+        working-directory: apple
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project YAOpenEvidence.xcodeproj \
+            -scheme YAOpenEvidence \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/YAOpenEvidence.xcarchive" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY= \
+            CODE_SIGN_ENTITLEMENTS= \
+            ENABLE_USER_SCRIPT_SANDBOXING=NO
+
+      - name: 打包未签名 IPA
+        run: |
+          set -euo pipefail
+          APP="$(find "$RUNNER_TEMP/YAOpenEvidence.xcarchive/Products/Applications" -maxdepth 1 -name '*.app' | head -n1)"
+          test -n "$APP"
+          STAGE="$RUNNER_TEMP/ipa"
+          mkdir -p "$STAGE/Payload"
+          cp -R "$APP" "$STAGE/Payload/"
+          (cd "$STAGE" && zip -qry "$RUNNER_TEMP/YAOpenEvidence-unsigned.ipa" Payload)
+          ls -lh "$RUNNER_TEMP/YAOpenEvidence-unsigned.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YAOpenEvidence-unsigned-ipa
+          path: ${{ runner.temp }}/YAOpenEvidence-unsigned.ipa
+          if-no-files-found: error
