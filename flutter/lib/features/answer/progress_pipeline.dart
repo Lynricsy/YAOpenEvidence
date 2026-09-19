@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/tokens.dart';
+import '../../core/logic/ask_rail.dart';
 import '../../core/logic/job_live.dart';
 import '../../core/models/answers.dart';
 import '../../shared/widgets/badges.dart';
 import '../../shared/widgets/surface.dart';
 import 'job_live_monitor.dart';
+import 'stage_rail.dart';
 import 'trace_list.dart';
 
 /// 任务进度。标准引擎是阶段流水线 + 当前阶段进度 + 检索摘要；
@@ -14,16 +16,18 @@ class ProgressPipeline extends StatelessWidget {
   const ProgressPipeline({
     super.key,
     required this.state,
-    this.stages = StageKey.askPipeline,
     this.engine = AnswerEngine.ask,
+    required this.useKb,
     required this.onCandidateTap,
     this.onCancel,
     this.cancelRequested = false,
   });
 
   final JobLiveState state;
-  final List<StageKey> stages;
   final AnswerEngine engine;
+
+  /// 是否开启知识库：关掉时流水线末尾不出现「写入知识库」节点。
+  final bool useKb;
 
   /// 点击候选文献卡（进行中时材料可能还没生成）。
   final void Function(String pmid) onCandidateTap;
@@ -70,44 +74,19 @@ class ProgressPipeline extends StatelessWidget {
                 )
               : TraceList(calls: live.tools, live: true)
         else ...[
-          _StageRow(
-            stages: stages
-                .where(
-                  (stage) =>
-                      stage != StageKey.kb || live.stages.containsKey(stage),
-                )
-                .toList(),
-            live: live,
+          // 写库不在这条流水线里：答案交付后才排后台任务，
+          // 所以此刻它只是末尾一个「未开始」的节点。
+          StageRail(
+            nodes: askRailNodes(live, useKb: useKb),
+            progress: progress == null
+                ? null
+                : (
+                    label: progress.stage.label,
+                    current: progress.current,
+                    total: progress.total,
+                    detail: progress.title,
+                  ),
           ),
-          if (progress != null) ...[
-            const SizedBox(height: YaoeTokens.space3),
-            Text(
-              '${progress.stage.label}'
-              '${progress.total > 0 ? ' ${progress.current}/${progress.total}' : ''}',
-              style: theme.textTheme.labelMedium,
-            ),
-            const SizedBox(height: YaoeTokens.space1),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
-              child: LinearProgressIndicator(
-                minHeight: 6,
-                value: progress.total > 0
-                    ? (progress.current / progress.total).clamp(0.0, 1.0)
-                    : null,
-              ),
-            ),
-            if ((progress.title ?? '').isNotEmpty) ...[
-              const SizedBox(height: YaoeTokens.space1),
-              Text(
-                progress.title!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ],
           if (live.search != null) ...[
             const SizedBox(height: YaoeTokens.space4),
             _SearchSummaryView(
@@ -120,153 +99,6 @@ class ProgressPipeline extends StatelessWidget {
       ],
     );
   }
-}
-
-class _StageRow extends StatelessWidget {
-  const _StageRow({required this.stages, required this.live});
-
-  final List<StageKey> stages;
-  final JobLive live;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Wrap(
-      spacing: YaoeTokens.space2,
-      runSpacing: YaoeTokens.space2,
-      children: [
-        for (final stage in stages)
-          _StageChip(
-            label: stage.label,
-            state: live.stages[stage],
-            summary: live.stages[stage]?.status == StageStatus.finished
-                ? stageSummary(stage, live.stages[stage]!.detail)
-                : null,
-            textTheme: theme.textTheme,
-          ),
-      ],
-    );
-  }
-}
-
-class _StageChip extends StatelessWidget {
-  const _StageChip({
-    required this.label,
-    required this.state,
-    required this.summary,
-    required this.textTheme,
-  });
-
-  final String label;
-  final StageState? state;
-  final String? summary;
-  final TextTheme textTheme;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = context.yaoe;
-    final (Color color, Widget marker) = switch (state?.status) {
-      StageStatus.finished => (
-        colors.success,
-        Icon(Icons.check, size: 12, color: colors.success),
-      ),
-      StageStatus.running => (
-        theme.colorScheme.primary,
-        _PulsingDot(color: theme.colorScheme.primary),
-      ),
-      null => (
-        theme.colorScheme.onSurfaceVariant,
-        Icon(
-          Icons.circle_outlined,
-          size: 10,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: YaoeTokens.space2 + 2,
-        vertical: YaoeTokens.space1 + 2,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: YaoeTokens.tintFillAlpha),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: color.withValues(alpha: YaoeTokens.tintBorderAlpha),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          marker,
-          const SizedBox(width: YaoeTokens.space2),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: textTheme.labelMedium?.copyWith(color: color)),
-              if ((summary ?? '').isNotEmpty)
-                Text(
-                  summary!,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 进行中阶段的脉冲圆点。
-class _PulsingDot extends StatefulWidget {
-  const _PulsingDot({required this.color});
-
-  final Color color;
-
-  @override
-  State<_PulsingDot> createState() => _PulsingDotState();
-}
-
-class _PulsingDotState extends State<_PulsingDot>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 尊重系统「减弱动效」；MediaQuery 只能在依赖就绪后读。
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _controller.stop();
-    } else if (!_controller.isAnimating) {
-      _controller.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _controller,
-    builder: (context, _) => Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: widget.color.withValues(alpha: 0.4 + 0.6 * _controller.value),
-      ),
-    ),
-  );
 }
 
 class _SearchSummaryView extends StatelessWidget {

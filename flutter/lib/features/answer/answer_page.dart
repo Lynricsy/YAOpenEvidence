@@ -8,7 +8,9 @@ import '../../app/theme/tokens.dart';
 import '../../core/api/api_error.dart';
 import '../../core/api/endpoints.dart';
 import '../../core/logic/ask_filters.dart';
+import '../../core/logic/ask_rail.dart';
 import '../../core/logic/citations.dart';
+import '../../core/logic/job_live.dart';
 import '../../core/models/answers.dart';
 import '../../core/session/session_controller.dart';
 import '../../shared/format.dart';
@@ -26,9 +28,11 @@ import '../reader/reader_pane.dart';
 import '../reader/split_view.dart';
 import 'answer_body.dart';
 import 'answer_controller.dart';
+import 'background_kb.dart';
 import 'job_live_monitor.dart';
 import 'progress_pipeline.dart';
 import 'source_list.dart';
+import 'stage_rail.dart';
 import 'thread_nav.dart';
 import 'trace_list.dart';
 
@@ -311,6 +315,8 @@ class _AnswerContent extends ConsumerWidget {
         : const <AnswerSummary>[];
 
     final followUp = codex && answer.status == AnswerStatus.ready;
+    // 写库只对标准引擎生效，且答案交付后才排后台任务。
+    final useKb = !codex && answer.options['use_kb'] != false;
 
     return FloatingComposerHost(
       body: SingleChildScrollView(
@@ -332,6 +338,7 @@ class _AnswerContent extends ConsumerWidget {
                         child: ProgressPipeline(
                           state: liveState,
                           engine: answer.engine,
+                          useKb: useKb,
                           onCandidateTap: (pmid) =>
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -397,8 +404,10 @@ class _AnswerContent extends ConsumerWidget {
                     child: const Text('重新提问'),
                   ),
                 ),
-              if (answer.status == AnswerStatus.ready)
+              if (answer.status == AnswerStatus.ready) ...[
+                if (useKb && jobId != null) _BackgroundKbRail(jobId: jobId),
                 _ReadyBody(answer: answer, onOpenReader: onOpenReader),
+              ],
             ],
           ),
         ),
@@ -452,6 +461,42 @@ class _ReadyBody extends ConsumerWidget {
       bodyMd: bodyMd,
       structured: true,
       onOpenReader: onOpenReader,
+    );
+  }
+}
+
+/// 答案页的阶段节点条：答案已出，前序阶段一律算完成，末尾挂后台写库的实时状态。
+/// 重进页面时 SSE 状态是空的，所以走 `settled: true` 而不是等事件重放。
+class _BackgroundKbRail extends ConsumerWidget {
+  const _BackgroundKbRail({required this.jobId});
+
+  final String jobId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kb = ref.watch(backgroundKbWatcherProvider(jobId)).value;
+    // 还查不到后台任务时不占版面：答案本身已经交付，节点条只是补充信息。
+    if (kb == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: YaoeTokens.moduleSpacing),
+      child: YaoeCard(
+        child: StageRail(
+          nodes: askRailNodes(
+            JobLive.empty,
+            useKb: true,
+            kb: kb,
+            settled: true,
+          ),
+          progress: kb.status == KbStatus.running && kb.total > 0
+              ? (
+                  label: StageKey.kb.label,
+                  current: kb.current,
+                  total: kb.total,
+                  detail: null,
+                )
+              : null,
+        ),
+      ),
     );
   }
 }

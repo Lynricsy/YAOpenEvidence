@@ -29,13 +29,14 @@ enum StageKey {
     StageKey.reindex => '重建索引',
   };
 
-  /// 问答任务的阶段顺序（`reindex` 属于知识库任务，不在其中）。
+  /// 问答任务的阶段顺序。写库不在其中：API 侧 `defer_kb=True`，
+  /// 原子事实抽取排到答案交付之后的独立后台任务，问答流水线里不会有 kb 事件
+  /// （`reindex` 同理属于知识库任务）。
   static const askPipeline = <StageKey>[
     StageKey.queries,
     StageKey.search,
     StageKey.fulltext,
     StageKey.read,
-    StageKey.kb,
     StageKey.synthesize,
   ];
 
@@ -192,12 +193,9 @@ abstract class JobLive with _$JobLive {
             search: SearchSummary(
               candidates: _count(detail['candidates']),
               kept: _count(detail['kept']),
-              dropped: _objectValue(
-                detail['dropped'],
-              ).map((key, value) => MapEntry(key, _count(value))),
-              papers: [
-                ...?(detail['papers'] as List?)?.map(_candidate),
-              ],
+              dropped: _objectValue(detail['dropped'])
+                  .map((key, value) => MapEntry(key, _count(value))),
+              papers: [...?(detail['papers'] as List?)?.map(_candidate)],
             ),
           );
         }
