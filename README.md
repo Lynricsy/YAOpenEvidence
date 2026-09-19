@@ -156,7 +156,7 @@ mkdir -p var core/pdfs
 
 ### 2. 连接模型服务
 
-当前项目接入远端 **Qwen3.8-27B FP8**（服务模型名 `Qwen3.8-27B`，上下文上限 262144）。模型仅监听远端 `127.0.0.1:29913`，通过两跳 SSH 隧道接入，不向公网开放无鉴权 API。在 `.env` 设置：
+当前项目接入远端 **Qwen3.8-27B NVFP4**（服务模型名 `Qwen3.8-27B`，上下文上限 262144；2026-09-19 由 FP8 权重切换而来，见下文）。模型仅监听远端 `127.0.0.1:29913`，通过两跳 SSH 隧道接入，不向公网开放无鉴权 API。在 `.env` 设置：
 
 ```dotenv
 COMPOSE_FILE=compose.yaml:compose.qwen.yaml
@@ -196,6 +196,12 @@ A6000 侧的实测结果：`GPU KV cache size: 347,528 tokens, Maximum concurren
 隧道侧改了两处：`.llm-ssh/config` 的 `qwen-target` 指向 `10.107.231.181`；跳板上该专用公钥的 `permitopen` 由只允许 `10.107.231.69:22` 扩为同时允许 `10.107.231.181:22`（否则隧道报 `channel 0: open failed: administratively prohibited`），跳板 `authorized_keys` 备份为 `authorized_keys.pre-a6000-20260918`。A6000 上按同样的 `restrict,port-forwarding,command="/bin/false",permitopen="127.0.0.1:29913"` 登记了同一公钥，首连指纹 `SHA256:dkS36ZUg3B/OjLveBBl4JWvLHMv7i5u517xIdeRw5Kc`（ssh-ed25519）已写入 `.llm-ssh/known_hosts`。
 
 slave2 上的 unit 已 `stop` 并移除 `default.target.wants` 软链（`UnitFileState=linked`），文件、权重与备份全部保留；但该机两张 L20 现已被对方占满，**回滚需要先协调出一张空卡**，不是改回 `.llm-ssh/config` 就能生效。
+
+2026-09-19 生产权重由 **FP8 + MTP 单步** 切换为 **NVFP4 + DSpark 七步投机解码**。NVFP4 权重为 `RedHatAI/Qwen3.8-27B-NVFP4`（ModelScope，14 文件 23.44 GB，逐文件 SHA256 校验）放在 `models/Qwen3.8-27B-NVFP4`，草稿模型 `RadixArk/Qwen3.8-27B-DSpark` 放在 `performance/nvfp4-dspark-20260919/draft`。`serve.py` 改动三处：模型路径改读 `config.get("model", …FP8)`、`--kv-cache-dtype` 改读 `config.get("kv_cache_dtype", "fp8")`、新增可选 `--linear-backend`；`deployment.json` 增加 `model`、`kv_cache_dtype: "fp8"`、`linear_backend: "marlin"`，并把 `speculative_config` 换成 `{"method":"dspark","model":"…/draft","num_speculative_tokens":7}`。两份原文件备份为 `serve.py.fp8-mtp.bak` 与 `deployment.json.fp8-mtp.bak`，回滚即成对恢复后 `systemctl --user restart lings-qwen38-27b-29913.service` 并等待 `/health` 成功（同目录 `rollback_guard.sh` 会在健康检查失败时自动做这件事）。
+
+**`--linear-backend marlin` 是必需项，不是调优项**：auto 内核下 compressed-tensors 会给 NVFP4 权重选 W8A16 FP8 scheme，启动崩在 `humming_utils.py:489` 的 `AttributeError: 'ParallelLMHead' object has no attribute 'output_partition_sizes'`。另外 **nvfp4 KV cache 在本机不可用**——FlashInfer 的 `is_device_capability_family(100)` 只放行 Blackwell，A6000 为 sm_86，因此 KV 仍是 fp8。切换后实测 `Using MarlinNvFp4LinearKernel for NVFP4 GEMM`、`GPU KV cache size: 300,434 tokens, Maximum concurrency for 262,144 tokens per request: 1.15x`（FP8 时为 347,528 / 1.33x，仍大于单请求 262144 上下文，且 worker 串行执行）。
+
+切换依据是用生产真实 prompt 做的对照评测（3 道真实问题 × (2 篇 read + 1 次 synthesize) = 9 个任务，输入从 `core/answers/<id>_papers/` 存档逐字重建，与生产当时一致）：read 阶段 35.71 → 98.98 tok/s（2.77x），synthesize 阶段 37.91 → 101.43 tok/s（2.68x）。质量侧加跑了同配置第二轮作为采样噪声基线：引用原文核验率 fp8 0.979 / fp8 复跑 0.956 / nvfp4 0.943，跨配置差值小于配置自身波动；PICOS 六标题三轮均 6/6；综合阶段非法引用标记三轮均为 0；相关性判分 nvfp4 与存档生产 4/4 一致而 fp8 复跑反而出现 2 处不一致；盲评（A/B 正反序各一次）忠实度 3/3 平局、双方均无编造数字、结论方向 3/3 一致。**这是"未观察到超出采样噪声的劣化"，不是"证明无劣化"**：样本为 3 题 9 任务 3 轮，后续如发现答案质量回退，按上面的备份成对回滚即可。切换后端到端验收：真实问答任务 260 秒完成（切换前同类任务 297~610 秒），产出 7 篇论文、58 个引用标记全部合法、16/16 条引文核实通过。
 
 流水线保留现有逐阶段策略：检索、阅读、事实抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。检索、阅读、事实抽取（含单篇入库）和综合阶段均不发送 `thinking_token_budget` 或 `max_tokens`，不再设置应用层输出或独立思考额度，由 vLLM 按剩余上下文分配可生成额度；当前模型总上下文为 262144 tokens，输入、思考和正文共享，不能真正无限。综合请求取消生成读取超时，连接、写入和连接池等待仍保留 30 秒超时；其他阶段保留 600 秒读取超时。当前远端部署将 `YAOE_JOB_TIMEOUT_S` 设为 86400（24 小时），不要设为 0（队列会立即超时），也不要直接关闭队列超时而破坏运行锁的有效期。长思考可能占用单卡数小时并阻塞后续任务，现有取消机制在流水线阶段边界生效。空正文或 `finish_reason=length` 仍会使任务明确失败，不会保存为完成答案。放宽额度不保证回答更准确，也不代表已完成医学领域精度评估。
 
