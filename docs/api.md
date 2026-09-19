@@ -50,7 +50,7 @@ SSE 也只接受 Bearer 请求头；所有端点均不再接受 `?access_token=`
 
 ### 1.4 CORS 与限流
 
-CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization`、`Content-Type` 与 `Last-Event-ID`，响应暴露 `Location`、`Retry-After`、`WWW-Authenticate`。不用 Cookie，不需要浏览器 `credentials: "include"`。
+CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization`、`Content-Type` 与 `Last-Event-ID`，响应暴露 `Location`、`Retry-After`、`WWW-Authenticate`、`Content-Disposition`（PDF 导出的文件名靠它带出）。不用 Cookie，不需要浏览器 `credentials: "include"`。
 
 登录按归一化后的用户名使用 Redis 固定窗口限流，含成功登录：默认 300 秒最多 10 次，超出返回 `429 login_rate_limited` 及剩余秒数 `Retry-After`；窗口不因重试延长。配置为 `YAOE_LOGIN_MAX_ATTEMPTS`、`YAOE_LOGIN_WINDOW_S`。Redis 不可用时登录返回 `503 unavailable`，不绕过限流；已有会话仍由数据库验证。
 
@@ -140,6 +140,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 | `GET` | `/v1/answers/{answer_id}` | 登录 | 获取 answer 详情。 |
 | `DELETE` | `/v1/answers/{answer_id}` | 本人或 `admin` | 仅删除终态结果；活跃时返回 `409`。 |
 | `GET` | `/v1/answers/{answer_id}/markdown` | 登录 | 获取带链接的完整 Markdown 渲染稿。 |
+| `GET` | `/v1/answers/{answer_id}/pdf` | 登录 | 导出排版后的 PDF；服务端统一渲染，三端一致。 |
 | `GET` | `/v1/answers/{answer_id}/papers/{n}` | 登录 | 获取本次问答阅读的第 `n` 篇详情。 |
 | `GET` | `/v1/answers/{answer_id}/papers/{n}/markdown` | 登录 | 获取本次阅读原文快照，保留段落锚点。 |
 | `GET` | `/v1/jobs` | 登录 | 本人任务；`admin` 查看全部。 |
@@ -248,6 +249,12 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 无查询参数。answer 为 `ready` 时返回 `text/markdown; charset=utf-8` 的完整渲染稿，包含正文、参考文献和定位附录。与 CLI 文件稿不同，内部引用指向 `/v1/answers/{answer_id}/papers/{n}/markdown#p{pid}`，不会嵌入会话令牌。已有持久化稿与导入的 CLI 稿也按本次论文映射转换链接，不回写原文件。可能错误：`not_found`、`not_ready`、`internal_error`。
 
 这些 URL 同样只允许本人或管理员访问。浏览器应拦截内部引用，带 Bearer 请求原文，渲染 Markdown 后定位 `id="p{pid}"`；直接导航不会自动附加 Bearer。不得把凭证拼进引用 URL。答案与单篇 Markdown 响应使用 `Cache-Control: no-store`。
+
+#### `GET /v1/answers/{answer_id}/pdf`
+
+无查询参数。answer 为 `ready` 时返回 `application/pdf`，由服务端用 Chromium 打印同一份 HTML 生成——三端下载到的是同一份排版，不依赖客户端渲染能力。内容含正文分节（结论 / 证据 / PICOS / 局限）、参考文献、引用原文附录、知识库补充与检索式；`relevance == 0` 且正文未引用的「已阅读但未采用」文献不导出。正文引用芯片是页内链接：`[n¶pid]` 跳到附录条目，`[n]` 跳到参考文献条目。
+
+响应头 `Content-Disposition: attachment; filename="YAOpenEvidence-{answer_id}.pdf"; filename*=UTF-8''YAOpenEvidence-{日期}-{问题}.pdf`，中文名在 `filename*` 里，客户端应优先解码它；`Cache-Control: no-store`。渲染超时（60 秒）、Chromium 缺失或打印失败一律返回 `503 export_failed`，重试即可。可能错误：`not_found`、`not_ready`、`export_failed`、`internal_error`。
 
 #### `GET /v1/answers/{answer_id}/papers/{n}`
 

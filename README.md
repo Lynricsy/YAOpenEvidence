@@ -143,6 +143,14 @@ codex 运行时随 `openai-codex` 依赖一起进镜像（`openai-codex-cli-bin`
 
 服务端运行以 `sandbox=read-only` + `approval_mode=deny_all` 启动，工作目录是 `CODEX_HOME/work` 空目录而非代码树。注意这两项只挡住写入与升权批准：**read-only 不限制读取范围**，`cwd` 也只是工作目录，真正的租户隔离靠容器与运行用户，多租户对外开放前必须在容器/进程层面隔离。
 
+### 导出 PDF
+
+答案页（Web / Apple / Flutter）的「更多」菜单都有「导出 PDF」，三端拿到的是同一份文件：排版只在服务端做一次（`GET /v1/answers/{id}/pdf`，Chromium 打印 `backend/app/export/answer.html.j2`），客户端只负责保存或分享。三套 UI 排版引擎不可能产出一致的 PDF，所以不在客户端出稿。
+
+导出内容与界面同源：正文分节按 `backend/app/export/sections.py` 切（与 `frontend/src/lib/answerSections.ts` 等三份实现逐字同源，改规则要四处一起改），段落级引用渲染成彩色芯片并链到文末「引用原文」附录，另含参考文献、知识库补充与检索式；`relevance == 0` 且正文未引用的文献不导出。中文字形依赖 runtime 镜像里的 `fonts-noto-cjk` 与 `fonts-inter`，本机开发环境未装字体时只影响字形，不影响内容。
+
+iOS 走系统分享面板，macOS 与桌面端 Flutter 走保存面板，Android 走分享面板，Web 直接下载；文件名由服务端 `Content-Disposition` 的 `filename*` 决定（`YAOpenEvidence-<日期>-<问题>.pdf`）。
+
 ## 快速开始：Docker Compose
 
 需要 Docker、Docker Compose，以及可供容器访问、同时支持 Chat Completions 和 Responses API 的模型服务。
