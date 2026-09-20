@@ -24,8 +24,8 @@ _dummy_hash = _hasher.hash(secrets.token_urlsafe(32))
 
 
 def _hash_password(password: str) -> str:
-    if not 12 <= len(password) <= 128:
-        raise ValueError("密码长度须为12-128字符")
+    if not 6 <= len(password) <= 128:
+        raise ValueError("密码长度须为6-128字符")
     return _hasher.hash(password)
 
 

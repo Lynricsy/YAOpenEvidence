@@ -52,7 +52,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<User['role']>('user')
   const usernameValid = /^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$/.test(username)
-  const passwordValid = password.length >= 12 && password.length <= 128
+  const passwordValid = password.length >= 6 && password.length <= 128
   const create = useMutation({
     gcTime: 0,
     mutationFn: () => createUser({ username, password, role }),
@@ -121,7 +121,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
               type="password"
               autoComplete="new-password"
               required
-              minLength={12}
+              minLength={6}
               maxLength={128}
               value={password}
               disabled={create.isPending}
@@ -137,7 +137,7 @@ function CreateUserDialog({ onClose }: { onClose: () => void }) {
                   : 'text-xs text-muted-foreground'
               }
             >
-              密码须为 12–128 个字符
+              密码须为 6–128 个字符
             </p>
           </div>
           <div className="space-y-2">
@@ -193,7 +193,7 @@ function ResetPasswordDialog({
   onClose: () => void
 }) {
   const [password, setPassword] = useState('')
-  const valid = password.length >= 12 && password.length <= 128
+  const valid = password.length >= 6 && password.length <= 128
   const reset = useMutation({
     gcTime: 0,
     mutationFn: () =>
@@ -236,7 +236,7 @@ function ResetPasswordDialog({
               type="password"
               autoComplete="new-password"
               required
-              minLength={12}
+              minLength={6}
               maxLength={128}
               value={password}
               disabled={reset.isPending}
@@ -252,7 +252,7 @@ function ResetPasswordDialog({
                   : 'text-xs text-muted-foreground'
               }
             >
-              密码须为 12–128 个字符
+              密码须为 6–128 个字符
             </p>
           </div>
           <DialogFooter>

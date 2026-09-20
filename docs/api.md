@@ -22,7 +22,7 @@
 Authorization: Bearer <access_token>
 ```
 
-仅支持 `user` 和 `admin` 两种角色，不开放注册。用户名 3-64 字符，匹配 `^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$`，统一小写；密码为 12-128 字符，不修剪空白。密码以 Argon2id 哈希保存，随机会话令牌只存 SHA-256 摘要。登录响应含 `access_token`、`token_type: "bearer"`、`expires_at` 和 `user`；会话默认固定有效期 7 天，不自动续期，不提供刷新令牌。
+仅支持 `user` 和 `admin` 两种角色，不开放注册。用户名 3-64 字符，匹配 `^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$`，统一小写；密码为 6-128 字符，不修剪空白。密码以 Argon2id 哈希保存，随机会话令牌只存 SHA-256 摘要。登录响应含 `access_token`、`token_type: "bearer"`、`expires_at` 和 `user`；会话默认固定有效期 7 天，不自动续期，不提供刷新令牌。
 
 令牌缺失、无效、过期、被撤销，或账号已禁用时返回 `401 unauthenticated`，并带 `WWW-Authenticate: Bearer`。注销仅撤销当前会话；修改/重置密码、禁用账号撤销全部会话；重新启用不会恢复旧令牌。生产环境必须使用 HTTPS。
 

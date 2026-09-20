@@ -3880,7 +3880,7 @@
           "password": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12,
+            "minLength": 6,
             "format": "password",
             "title": "Password",
             "writeOnly": true
@@ -4750,7 +4750,7 @@
           "password": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12,
+            "minLength": 6,
             "format": "password",
             "title": "Password",
             "writeOnly": true
@@ -5078,7 +5078,7 @@
           "current_password": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12,
+            "minLength": 6,
             "format": "password",
             "title": "Current Password",
             "writeOnly": true
@@ -5086,7 +5086,7 @@
           "new_password": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12,
+            "minLength": 6,
             "format": "password",
             "title": "New Password",
             "writeOnly": true
@@ -5104,7 +5104,7 @@
           "new_password": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12,
+            "minLength": 6,
             "format": "password",
             "title": "New Password",
             "writeOnly": true

@@ -65,7 +65,7 @@ def _read_password(args: argparse.Namespace) -> str:
         if not value:
             raise ValueError("标准输入未提供密码")
         return value
-    value = getpass.getpass("密码（12-128 字符）: ")
+    value = getpass.getpass("密码（6-128 字符）: ")
     if value != getpass.getpass("再次输入密码: "):
         raise ValueError("两次输入的密码不一致")
     return value

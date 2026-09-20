@@ -209,9 +209,9 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                           decoration: const InputDecoration(hintText: '新密码'),
                           validator: (value) =>
                               value == null ||
-                                  value.runes.length < 12 ||
+                                  value.runes.length < 6 ||
                                   value.runes.length > 128
-                              ? '密码须为 12–128 个字符'
+                              ? '密码须为 6–128 个字符'
                               : null,
                         ),
                         const SizedBox(height: PicoSeekTokens.space3),

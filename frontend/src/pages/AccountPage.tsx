@@ -20,7 +20,7 @@ export default function AccountPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [loggingOut, setLoggingOut] = useState(false)
-  const passwordValid = newPassword.length >= 12 && newPassword.length <= 128
+  const passwordValid = newPassword.length >= 6 && newPassword.length <= 128
   const matches = confirmation === newPassword
   const passwordChange = useMutation({
     gcTime: 0,
@@ -115,7 +115,7 @@ export default function AccountPage() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  minLength={12}
+                  minLength={6}
                   maxLength={128}
                   disabled={busy}
                   value={newPassword}
@@ -131,7 +131,7 @@ export default function AccountPage() {
                       : 'text-xs text-muted-foreground'
                   }
                 >
-                  密码须为 12–128 个字符
+                  密码须为 6–128 个字符
                 </p>
               </div>
               <div className="space-y-2">
@@ -142,7 +142,7 @@ export default function AccountPage() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  minLength={12}
+                  minLength={6}
                   maxLength={128}
                   disabled={busy}
                   value={confirmation}

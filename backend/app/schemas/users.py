@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 from .common import UtcDateTime
 
-Password = Annotated[SecretStr, Field(min_length=12, max_length=128)]
+Password = Annotated[SecretStr, Field(min_length=6, max_length=128)]
 USERNAME_PATTERN = r"[A-Za-z0-9][A-Za-z0-9_.-]{2,63}"
 
 

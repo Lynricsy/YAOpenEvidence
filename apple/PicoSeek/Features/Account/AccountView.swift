@@ -104,7 +104,7 @@ struct ChangePasswordView: View {
     @State private var pending = false
     @State private var message: String?
 
-    private var lengthValid: Bool { (12 ... 128).contains(next.count) }
+    private var lengthValid: Bool { (6 ... 128).contains(next.count) }
     private var matches: Bool { next == confirm }
     private var canSubmit: Bool { !pending && !current.isEmpty && lengthValid && matches }
 
@@ -116,7 +116,7 @@ struct ChangePasswordView: View {
                 SecureField("确认新密码", text: $confirm)
             } footer: {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("密码须为 12–128 个字符")
+                    Text("密码须为 6–128 个字符")
                     if !next.isEmpty, !confirm.isEmpty, !matches {
                         Text("两次输入的新密码不一致").foregroundStyle(.red)
                     }

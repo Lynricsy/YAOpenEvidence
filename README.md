@@ -324,7 +324,7 @@ uv run --directory backend picoseek create-admin admin
 uv run --directory backend picoseek reset-password admin
 ```
 
-两条命令默认交互读取并确认密码；自动化可用 `--password-stdin` 从标准输入读取，不接受明文密码命令行参数。用户名为 3-64 位 ASCII 字母数字、下划线、横线或点，以字母数字开头，统一转小写且不区分大小写；密码为 12-128 字符，以 Argon2id 哈希保存。
+两条命令默认交互读取并确认密码；自动化可用 `--password-stdin` 从标准输入读取，不接受明文密码命令行参数。用户名为 3-64 位 ASCII 字母数字、下划线、横线或点，以字母数字开头，统一转小写且不区分大小写；密码为 6-128 字符，以 Argon2id 哈希保存。
 
 | 角色 | 权限边界 |
 |---|---|

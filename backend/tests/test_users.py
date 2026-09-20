@@ -30,9 +30,9 @@ def test_bad_credentials_and_validation_do_not_leak_secrets(client):
     assert existing.status_code == unknown.status_code == 401
     assert existing.json() == unknown.json()
     assert wrong not in existing.text
-    invalid = login(client, password="private")
+    invalid = login(client, password="tiny")
     assert invalid.status_code == 422
-    assert "private" not in invalid.text
+    assert "tiny" not in invalid.text
     assert client.get("/v1/auth/me", params={"access_token": USER_TOKEN}).status_code == 401
 
 

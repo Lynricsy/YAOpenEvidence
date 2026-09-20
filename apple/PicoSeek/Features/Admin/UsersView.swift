@@ -243,7 +243,7 @@ struct CreateUserSheet: View {
         username.range(of: #"^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$"#, options: .regularExpression) != nil
     }
 
-    private var passwordValid: Bool { (12 ... 128).contains(password.count) }
+    private var passwordValid: Bool { (6 ... 128).contains(password.count) }
 
     var body: some View {
         NavigationStack {
@@ -263,7 +263,7 @@ struct CreateUserSheet: View {
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("3–64 个字符，以字母或数字开头，仅含字母、数字、下划线、点或连字符")
-                        Text("密码须为 12–128 个字符")
+                        Text("密码须为 6–128 个字符")
                     }
                 }
             }
@@ -299,7 +299,7 @@ struct ResetPasswordSheet: View {
     @State private var confirm = ""
     @State private var pending = false
 
-    private var valid: Bool { (12 ... 128).contains(password.count) && password == confirm }
+    private var valid: Bool { (6 ... 128).contains(password.count) && password == confirm }
 
     var body: some View {
         NavigationStack {
@@ -311,7 +311,7 @@ struct ResetPasswordSheet: View {
                     Text("用户：\(user.username)。重置后，该用户所有会话将失效。")
                 } footer: {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("密码须为 12–128 个字符")
+                        Text("密码须为 6–128 个字符")
                         if !password.isEmpty, !confirm.isEmpty, password != confirm {
                             Text("两次输入的新密码不一致").foregroundStyle(.red)
                         }
