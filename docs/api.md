@@ -1,6 +1,6 @@
-# YAOpenEvidence API v1 协议
+# PicoSeek API v1 协议
 
-本文面向浏览器前端、其他客户端与公开 API 用户，描述 YAOpenEvidence 当前实现的 HTTP wire contract。端点与模型的机器可读定义以仓库中的 [`backend/openapi.json`](../backend/openapi.json) 为准。
+本文面向浏览器前端、其他客户端与公开 API 用户，描述 PicoSeek 当前实现的 HTTP wire contract。端点与模型的机器可读定义以仓库中的 [`backend/openapi.json`](../backend/openapi.json) 为准。
 
 ## 1. 通用约定
 
@@ -50,11 +50,11 @@ SSE 也只接受 Bearer 请求头；所有端点均不再接受 `?access_token=`
 
 ### 1.4 CORS 与限流
 
-CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization`、`Content-Type` 与 `Last-Event-ID`，响应暴露 `Location`、`Retry-After`、`WWW-Authenticate`、`Content-Disposition`（PDF 导出的文件名靠它带出）。不用 Cookie，不需要浏览器 `credentials: "include"`。
+CORS 由 `PICOSEEK_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行中间件。启用后允许所有 HTTP 方法，请求头允许 `Authorization`、`Content-Type` 与 `Last-Event-ID`，响应暴露 `Location`、`Retry-After`、`WWW-Authenticate`、`Content-Disposition`（PDF 导出的文件名靠它带出）。不用 Cookie，不需要浏览器 `credentials: "include"`。
 
-登录按归一化后的用户名使用 Redis 固定窗口限流，含成功登录：默认 300 秒最多 10 次，超出返回 `429 login_rate_limited` 及剩余秒数 `Retry-After`；窗口不因重试延长。配置为 `YAOE_LOGIN_MAX_ATTEMPTS`、`YAOE_LOGIN_WINDOW_S`。Redis 不可用时登录返回 `503 unavailable`，不绕过限流；已有会话仍由数据库验证。
+登录按归一化后的用户名使用 Redis 固定窗口限流，含成功登录：默认 300 秒最多 10 次，超出返回 `429 login_rate_limited` 及剩余秒数 `Retry-After`；窗口不因重试延长。配置为 `PICOSEEK_LOGIN_MAX_ATTEMPTS`、`PICOSEEK_LOGIN_WINDOW_S`。Redis 不可用时登录返回 `503 unavailable`，不绕过限流；已有会话仍由数据库验证。
 
-业务接口没有通用请求速率限制。每个用户的 `queued` 与 `running` job 合计达到 `YAOE_MAX_ACTIVE_JOBS_PER_USER`（默认 `2`）后，`POST /v1/answers`、`POST /v1/papers/upload` 与 `POST /v1/papers/ingest` 返回 `429 too_many_jobs`；同一用户的多个会话共享额度。
+业务接口没有通用请求速率限制。每个用户的 `queued` 与 `running` job 合计达到 `PICOSEEK_MAX_ACTIVE_JOBS_PER_USER`（默认 `2`）后，`POST /v1/answers`、`POST /v1/papers/upload` 与 `POST /v1/papers/ingest` 返回 `429 too_many_jobs`；同一用户的多个会话共享额度。
 
 ## 2. 错误模型
 
@@ -62,7 +62,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `type` | `string` | 错误类型 URI，形式为 `urn:yaoe:error:{code}`。 |
+| `type` | `string` | 错误类型 URI，形式为 `urn:picoseek:error:{code}`。 |
 | `title` | `string` | HTTP 状态的标准英文短语。 |
 | `status` | `integer` | HTTP 状态码。 |
 | `detail` | `string` | 面向人的具体错误说明。 |
@@ -74,7 +74,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 
 ```json
 {
-  "type": "urn:yaoe:error:not_found",
+  "type": "urn:picoseek:error:not_found",
   "title": "Not Found",
   "status": 404,
   "detail": "answer 'abc' not found",
@@ -98,7 +98,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 | `last_admin` | 409 | 必须保留活跃管理员 | 禁用最后一个活跃管理员。 |
 | `validation_error` | 422 | 参数或请求体校验失败 | 参数越界、年份规则冲突、期刊查询没有 `issn` 与 `title`。框架级校验失败另带 `errors` 数组。 |
 | `too_many_jobs` | 429 | 当前用户活跃任务达到上限 | 同一用户所有会话合计的 `queued`/`running` 数达到配置值。 |
-| `payload_too_large` | 413 | 上传内容超过大小上限 | `POST /v1/papers/upload` 的 PDF 超过 `YAOE_UPLOAD_MAX_MB`；`PUT /v1/paywall/state` 的单份 JSON 超过 5 MB。 |
+| `payload_too_large` | 413 | 上传内容超过大小上限 | `POST /v1/papers/upload` 的 PDF 超过 `PICOSEEK_UPLOAD_MAX_MB`；`PUT /v1/paywall/state` 的单份 JSON 超过 5 MB。 |
 | `login_rate_limited` | 429 | 登录窗口内请求过多 | 同一用户名达到限额；读取 `Retry-After` 后再试。 |
 | `upstream_unavailable` | 502 | Redis、PubMed、Semantic Scholar 或 Europe PMC 等上游不可用 | 入队失败、上游超时、上游限流或返回错误。`detail` 会指出来源。 |
 | `unavailable` | 503 | 服务依赖不可用 | HTTP 层产生 503 时的默认错误码。就绪探针自身会以其健康响应形状直接返回 503。 |
@@ -108,7 +108,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 
 ```json
 {
-  "type": "urn:yaoe:error:validation_error",
+  "type": "urn:picoseek:error:validation_error",
   "title": "Unprocessable Content",
   "status": 422,
   "detail": "Input should be less than or equal to 30",
@@ -190,7 +190,7 @@ CORS 由 `YAOE_CORS_ORIGINS` 配置，默认空列表，即不添加跨域放行
 | `PATCH /v1/users/{user_id}` | `{"is_active":false}`；不允许其他字段 | `200 UserRead` |
 | `POST /v1/users/{user_id}/password` | `{"new_password":"..."}` | `204`；全部会话失效 |
 
-不支持公开注册、修改用户名/角色或删除账号。禁止禁用自己或最后一个活跃管理员。禁用不会删除问答或取消已提交任务；账号状态每次请求重新检查。首次管理员与遗失管理员密码的恢复在可信服务器终端执行 `yaoe create-admin <username>` / `yaoe reset-password <username>`，交互读取密码；自动化支持 `--password-stdin`。
+不支持公开注册、修改用户名/角色或删除账号。禁止禁用自己或最后一个活跃管理员。禁用不会删除问答或取消已提交任务；账号状态每次请求重新检查。首次管理员与遗失管理员密码的恢复在可信服务器终端执行 `picoseek create-admin <username>` / `picoseek reset-password <username>`，交互读取密码；自动化支持 `--password-stdin`。
 
 ### 4.1 Answers
 
@@ -254,7 +254,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 无查询参数。answer 为 `ready` 时返回 `application/pdf`，由服务端用 Chromium 打印同一份 HTML 生成——三端下载到的是同一份排版，不依赖客户端渲染能力。内容含正文分节（结论 / 证据 / PICOS / 局限）、参考文献、引用原文附录、知识库补充与检索式；`relevance == 0` 且正文未引用的「已阅读但未采用」文献不导出。正文引用芯片是页内链接：`[n¶pid]` 跳到附录条目，`[n]` 跳到参考文献条目。
 
-响应头 `Content-Disposition: attachment; filename="YAOpenEvidence-{answer_id}.pdf"; filename*=UTF-8''YAOpenEvidence-{日期}-{问题}.pdf`，中文名在 `filename*` 里，客户端应优先解码它；`Cache-Control: no-store`。渲染超时（60 秒）、Chromium 缺失或打印失败一律返回 `503 export_failed`，重试即可。可能错误：`not_found`、`not_ready`、`export_failed`、`internal_error`。
+响应头 `Content-Disposition: attachment; filename="PicoSeek-{answer_id}.pdf"; filename*=UTF-8''PicoSeek-{日期}-{问题}.pdf`，中文名在 `filename*` 里，客户端应优先解码它；`Cache-Control: no-store`。渲染超时（60 秒）、Chromium 缺失或打印失败一律返回 `503 export_failed`，重试即可。可能错误：`not_found`、`not_ready`、`export_failed`、`internal_error`。
 
 #### `GET /v1/answers/{answer_id}/papers/{n}`
 
@@ -352,7 +352,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 #### `POST /v1/papers/upload`
 
-`multipart/form-data`，任意登录用户可用。字段 `file`（必填，首 5 字节须为 `%PDF-`，大小上限 `YAOE_UPLOAD_MAX_MB`，默认 50 MB）、`title`（必填，`1..300`）、`doi`、`journal`、`year`、`authors`（选填）。
+`multipart/form-data`，任意登录用户可用。字段 `file`（必填，首 5 字节须为 `%PDF-`，大小上限 `PICOSEEK_UPLOAD_MAX_MB`，默认 50 MB）、`title`（必填，`1..300`）、`doi`、`journal`、`year`、`authors`（选填）。
 
 给了 `doi` 时会先向上游解析补全元数据，解析失败不阻塞入库，退回用户填写的字段。返回 `202 Accepted` 与 `kind="paper_ingest"` 的 `Job`。可能错误：`validation_error`（不是 PDF；或标题去空白后为空、为 `.`、`..` —— 这类标题无法作为文献库条目名）、`payload_too_large`、`too_many_jobs`、`upstream_unavailable`、`internal_error`。
 
@@ -360,7 +360,7 @@ answer 与关联 job 在同一数据库事务中提交后才入队。Redis 入�
 
 JSON 请求体 `{"doi": "10.…"}`（须匹配 `^10\.\S+$`，长度 `>=4`）。要求机构访问已配置且服务端装了 playwright，否则 `409 conflict`。返回 `202 Accepted` 与 `kind="paper_ingest"` 的 `Job`。可能错误：`validation_error`、`conflict`、`too_many_jobs`、`not_found`、`upstream_unavailable`、`internal_error`。
 
-两个入口共用 `YAOE_MAX_ACTIVE_JOBS_PER_USER` 额度（与问答任务同一闸门）。任务阶段为 `fulltext`（下载 + 解析）→ `kb`（抽事实 + 入库），成功事件与 `job.result` 为 `{"key", "n_paragraphs", "n_facts", "items"}`，`key` 即 `GET /v1/papers/{key}` 的键。失败码：`pdf_unreadable`、`fulltext_unavailable`、`llm_unavailable`、`timeout`、`internal_error`。
+两个入口共用 `PICOSEEK_MAX_ACTIVE_JOBS_PER_USER` 额度（与问答任务同一闸门）。任务阶段为 `fulltext`（下载 + 解析）→ `kb`（抽事实 + 入库），成功事件与 `job.result` 为 `{"key", "n_paragraphs", "n_facts", "items"}`，`key` 即 `GET /v1/papers/{key}` 的键。失败码：`pdf_unreadable`、`fulltext_unavailable`、`llm_unavailable`、`timeout`、`internal_error`。
 
 ### 4.4 Knowledge Base
 
@@ -399,7 +399,7 @@ JSON 请求体 `{"doi": "10.…"}`（须匹配 `^10\.\S+$`，长度 `>=4`）。�
 
 ### 4.6 Paywall
 
-机构订阅登录态是 `paywall_fetch` 用的浏览器快照，落在 `PICOSGPT_DATA/var/sd_state.json`（可用 `SD_STATE_PATH` 覆盖），另有 `.session_storage.json` 与 `.context.json` 两份伴随文件。产品面只做**只读观测 + 管理员上传**，不在应用内代理登录；也不提供下载端点——cookie 快照等同凭据。
+机构订阅登录态是 `paywall_fetch` 用的浏览器快照，落在 `PICOSEEK_DATA/var/sd_state.json`（可用 `SD_STATE_PATH` 覆盖），另有 `.session_storage.json` 与 `.context.json` 两份伴随文件。产品面只做**只读观测 + 管理员上传**，不在应用内代理登录；也不提供下载端点——cookie 快照等同凭据。
 
 #### `GET /v1/paywall/status`
 
@@ -1057,13 +1057,13 @@ curl -s -X POST -H 'Authorization: Bearer <admin_access_token>' \
 
 ## 10. 契约迁移
 
-- 用户体系迁移 `0002`：停 API/worker 并备份后迁移，执行 `yaoe create-admin`。旧任务和答案保留，`user_id=null`，仅管理员可见；不会把旧 Key ID 猜测为用户。已有本地 Key 文件不读取、不删除。
+- 用户体系迁移 `0002`：停 API/worker 并备份后迁移，执行 `picoseek create-admin`。旧任务和答案保留，`user_id=null`，仅管理员可见；不会把旧 Key ID 猜测为用户。已有本地 Key 文件不读取、不删除。
 - 答案会话迁移 `0003`：`answers` 增加 `parent_id`（自引用外键，`ON DELETE SET NULL`）、`thread_id` 与 `trace`（`NOT NULL DEFAULT '[]'`）。老行 `trace` 为 `[]`、`thread_id` 为 `null`，在列表里原样返回，不参与会话折叠。
 - codex 引擎的工具调用由 `log` 事件（`mcp: <server>/<tool> (<status>)` 文本）改为结构化 `tool` 事件与 `Answer.trace`；`job.result` 不再带 `tool_calls`（改为 `Answer.trace`），只保留 `answer_id` 与 `thread_id`。依赖旧日志文案解析工具调用的客户端必须改读 `tool` 事件。
 - codex 答案的 `filters_label` 不再是 `codex · N 次工具调用`，改为与 `ask` 同源的筛选描述。
 - `GET /v1/answers` 现在按 codex 会话折叠到最新一轮：单条会话不再占多行，`total` 也按折叠计数。需要完整回合列表时用 `GET /v1/answers/{id}/thread`。
-- 静态 API Key、`YAOE_API_KEYS_FILE`、`YAOE_AUTH_DISABLED` 和 SSE 查询令牌已移除；客户端统一登录后使用 Bearer，原生 `EventSource` 改为带请求头的流客户端。
-- `Job.api_key_id` 改为 `user_id`；`YAOE_MAX_ACTIVE_JOBS_PER_KEY` 改为 `YAOE_MAX_ACTIVE_JOBS_PER_USER`。原来全局可读的答案及所有子资源现在仅本人或管理员可见。
+- 静态 API Key、`PICOSEEK_API_KEYS_FILE`、`PICOSEEK_AUTH_DISABLED` 和 SSE 查询令牌已移除；客户端统一登录后使用 Bearer，原生 `EventSource` 改为带请求头的流客户端。
+- `Job.api_key_id` 改为 `user_id`；`PICOSEEK_MAX_ACTIVE_JOBS_PER_KEY` 改为 `PICOSEEK_MAX_ACTIVE_JOBS_PER_USER`。原来全局可读的答案及所有子资源现在仅本人或管理员可见。
 - 原 `DELETE /v1/jobs/{job_id}` 已移除，取消改用 `POST /v1/jobs/{job_id}/cancel`，成功接受状态由 `204` 改为 `202`，通过 `Location` 观察任务。
 - 原对活跃 answer 调用 `DELETE` 的取消行为已移除。先取 `Answer.job_id` 请求取消；`DELETE /v1/answers/{answer_id}` 只用于删除终态答案。
 - 原 `/v1/literature/{ident}` 及其操作后缀路径已移除。详情使用 `/resolve?ident=...`，其余使用 `/fulltext`、`/citations`、`/references`、`/recommendations` 加 `ident` 查询参数。不保留兼容别名。

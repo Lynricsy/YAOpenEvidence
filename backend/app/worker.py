@@ -33,7 +33,7 @@ from .services import events, jobs
 from .services.answer_kb import dispatch_answer_kb, process_answer_kb
 from .services.answers import describe_filters, to_answer_paper, to_ask_options, to_codex_prompt
 
-logger = logging.getLogger("yaoe.worker")
+logger = logging.getLogger("picoseek.worker")
 
 
 def _publish(ctx: dict, job_id: str, event: dict) -> str:

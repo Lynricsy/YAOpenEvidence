@@ -8,9 +8,9 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "picosgpt-core",
-    "yaoe-backend",
-    "yaopenevidence",
+    "picoseek-core",
+    "picoseek-backend",
+    "picoseek",
 ]
 
 [[package]]
@@ -610,7 +610,7 @@ wheels = [
 ]
 
 [[package]]
-name = "picosgpt-core"
+name = "picoseek-core"
 version = "0.1.0"
 source = { editable = "core" }
 dependencies = [
@@ -1351,7 +1351,7 @@ wheels = [
 ]
 
 [[package]]
-name = "yaoe-backend"
+name = "picoseek-backend"
 version = "0.1.0"
 source = { editable = "backend" }
 dependencies = [
@@ -1362,7 +1362,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "markdown-it-py" },
     { name = "openai-codex" },
-    { name = "picosgpt-core", extra = ["embed", "paywall"] },
+    { name = "picoseek-core", extra = ["embed", "paywall"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-multipart" },
@@ -1381,7 +1381,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1" },
     { name = "markdown-it-py", specifier = ">=3" },
     { name = "openai-codex", specifier = ">=0.147" },
-    { name = "picosgpt-core", extras = ["embed", "paywall"], editable = "core" },
+    { name = "picoseek-core", extras = ["embed", "paywall"], editable = "core" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-settings", specifier = ">=2.7" },
     { name = "python-multipart", specifier = ">=0.0.20" },
@@ -1392,7 +1392,7 @@ requires-dist = [
 ]
 
 [[package]]
-name = "yaopenevidence"
+name = "picoseek"
 version = "0.1.0"
 source = { virtual = "." }
 

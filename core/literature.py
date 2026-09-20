@@ -30,8 +30,8 @@ S2_API_KEY = os.environ.get("S2_API_KEY", "").strip()
 NCBI_API_KEY = os.environ.get("NCBI_API_KEY", "").strip()
 TIMEOUT = float(os.environ.get("S2_TIMEOUT", "30"))
 
-CONTACT_TOOL = "PICOSGpt-medlit-codex"
-CONTACT_EMAIL = "picosgpt@example.com"
+CONTACT_TOOL = "PicoSeek-medlit-codex"
+CONTACT_EMAIL = "picoseek@example.com"
 
 PAPER_FIELDS = (
     "paperId,title,year,venue,authors,abstract,tldr,citationCount,"
@@ -67,7 +67,7 @@ class UpstreamNotFound(UpstreamError):
 
 # ---------------------------------------------------------------- Semantic Scholar
 def headers() -> dict[str, str]:
-    h = {"User-Agent": "PICOSGpt-medlit-codex/1.0"}
+    h = {"User-Agent": "PicoSeek-medlit-codex/1.0"}
     if S2_API_KEY:
         h["x-api-key"] = S2_API_KEY
     return h

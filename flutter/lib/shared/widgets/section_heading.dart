@@ -39,7 +39,7 @@ extension AnswerModuleStyle on AnswerModule {
     AnswerModule.conclusion ||
     AnswerModule.evidence ||
     AnswerModule.picos => Theme.of(context).colorScheme.primary,
-    AnswerModule.caveats => context.yaoe.warning,
+    AnswerModule.caveats => context.picoseek.warning,
     AnswerModule.sources ||
     AnswerModule.kb => Theme.of(context).colorScheme.onSurfaceVariant,
   };
@@ -79,13 +79,13 @@ class SectionHeading extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: tone.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
+                borderRadius: BorderRadius.circular(PicoSeekTokens.radiusLg),
               ),
               child: Icon(module.icon, size: 16, color: tone),
             ),
             const SizedBox(width: 10),
             Text(module.title, style: theme.textTheme.titleMedium),
-            const SizedBox(width: YaoeTokens.space2),
+            const SizedBox(width: PicoSeekTokens.space2),
             Expanded(
               child: Text(
                 module.eyebrow,
@@ -96,14 +96,14 @@ class SectionHeading extends StatelessWidget {
             ),
             if (count != null)
               Padding(
-                padding: const EdgeInsets.only(left: YaoeTokens.space2),
+                padding: const EdgeInsets.only(left: PicoSeekTokens.space2),
                 child: Text(count, style: muted?.merge(monoStyle)),
               ),
           ],
         ),
         if (rule)
           const Padding(
-            padding: EdgeInsets.only(top: YaoeTokens.space3),
+            padding: EdgeInsets.only(top: PicoSeekTokens.space3),
             child: Divider(height: 1),
           ),
       ],

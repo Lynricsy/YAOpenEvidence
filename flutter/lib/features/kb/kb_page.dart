@@ -85,7 +85,7 @@ class _KbPageState extends ConsumerState<KbPage> {
             AsyncValueView<KbStats>(
               value: stats,
               onRetry: () => ref.invalidate(kbStatsProvider),
-              builder: (data) => YaoeCard(
+              builder: (data) => PicoSeekCard(
                 padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -118,10 +118,10 @@ class _KbPageState extends ConsumerState<KbPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: YaoeTokens.space3),
+                    const SizedBox(height: PicoSeekTokens.space3),
                     Wrap(
-                      spacing: YaoeTokens.space2,
-                      runSpacing: YaoeTokens.space2,
+                      spacing: PicoSeekTokens.space2,
+                      runSpacing: PicoSeekTokens.space2,
                       children: [
                         for (final entry in data.byKind.entries)
                           if (_kindLabel(entry.key) case final String label)
@@ -134,7 +134,7 @@ class _KbPageState extends ConsumerState<KbPage> {
                     if (isAdmin) ...[
                       const Padding(
                         padding: EdgeInsets.symmetric(
-                          vertical: YaoeTokens.space3,
+                          vertical: PicoSeekTokens.space3,
                         ),
                         child: Divider(height: 1),
                       ),
@@ -150,14 +150,14 @@ class _KbPageState extends ConsumerState<KbPage> {
                       ),
                     ],
                     if (job != null) ...[
-                      const SizedBox(height: YaoeTokens.space4),
+                      const SizedBox(height: PicoSeekTokens.space4),
                       _ReindexProgress(key: ValueKey(job.id), jobId: job.id),
                     ],
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: YaoeTokens.sectionSpacing),
+            const SizedBox(height: PicoSeekTokens.sectionSpacing),
             TextField(
               controller: _query,
               textInputAction: TextInputAction.search,
@@ -167,10 +167,10 @@ class _KbPageState extends ConsumerState<KbPage> {
               ),
               onSubmitted: (_) => _search(),
             ),
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             Wrap(
-              spacing: YaoeTokens.space3,
-              runSpacing: YaoeTokens.space3,
+              spacing: PicoSeekTokens.space3,
+              runSpacing: PicoSeekTokens.space3,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 SegmentedButton<KbKind?>(
@@ -190,18 +190,18 @@ class _KbPageState extends ConsumerState<KbPage> {
                 ),
               ],
             ),
-            const SizedBox(height: YaoeTokens.space4),
+            const SizedBox(height: PicoSeekTokens.space4),
             AsyncValueView<KbSearchResult?>(
               value: result,
               onRetry: _search,
               builder: (data) {
                 if (data == null) {
-                  return YaoeCard(
-                    tint: context.yaoe.info,
+                  return PicoSeekCard(
+                    tint: context.picoseek.info,
                     child: Text(
                       '首次检索需要预热，约 15 秒',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: context.yaoe.info,
+                        color: context.picoseek.info,
                       ),
                     ),
                   );
@@ -218,7 +218,7 @@ class _KbPageState extends ConsumerState<KbPage> {
                     for (final hit in data.items)
                       Padding(
                         padding: const EdgeInsets.only(
-                          bottom: YaoeTokens.space3,
+                          bottom: PicoSeekTokens.space3,
                         ),
                         child: _HitCard(hit: hit),
                       ),
@@ -248,8 +248,8 @@ class _HitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return YaoeCard(
-      padding: const EdgeInsets.all(YaoeTokens.space4),
+    return PicoSeekCard(
+      padding: const EdgeInsets.all(PicoSeekTokens.space4),
       onTap: hit.pmid.isEmpty
           ? null
           : () => context.go(
@@ -260,17 +260,17 @@ class _HitCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
-            spacing: YaoeTokens.space2,
-            runSpacing: YaoeTokens.space2,
+            spacing: PicoSeekTokens.space2,
+            runSpacing: PicoSeekTokens.space2,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Pill(text: hit.kind.label, color: theme.colorScheme.primary),
               if (hit.verified != null) VerifiedPill(verified: hit.verified!),
             ],
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           Text(hit.textZh ?? hit.text, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           Text(
             [
               hit.title,
@@ -356,7 +356,7 @@ class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('重建索引', style: theme.textTheme.labelLarge),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         LinearProgressIndicator(
           value: reindexProgress != null && reindexProgress.total > 0
               ? (reindexProgress.current / reindexProgress.total).clamp(
@@ -366,7 +366,7 @@ class _ReindexProgressState extends ConsumerState<_ReindexProgress> {
               : null,
         ),
         if (reindexProgress?.title case final String title) ...[
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Text(title, style: theme.textTheme.bodySmall),
         ],
       ],

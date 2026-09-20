@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/logic/answer_sections.dart';
+import 'package:picoseek/core/logic/answer_sections.dart';
 
 List<AnswerSectionKind> _kinds(List<AnswerSection> sections) =>
     sections.map((section) => section.kind).toList();

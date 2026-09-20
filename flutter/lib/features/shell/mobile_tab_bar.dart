@@ -29,7 +29,7 @@ class MobileTabBar extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: context.yaoe.sidebar.withValues(alpha: 0.86),
+            color: context.picoseek.sidebar.withValues(alpha: 0.86),
             border: Border(
               top: BorderSide(
                 color: scheme.outlineVariant.withValues(alpha: 0.6),

@@ -32,9 +32,9 @@ class PicosCardList extends StatelessWidget {
       children: [
         for (final row in rows)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
-            child: YaoeCard(
-              padding: const EdgeInsets.all(YaoeTokens.space3),
+            padding: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
+            child: PicoSeekCard(
+              padding: const EdgeInsets.all(PicoSeekTokens.space3),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -45,12 +45,12 @@ class PicosCardList extends StatelessWidget {
                       citationSpanBuilder: citationSpanBuilder,
                     ),
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: YaoeTokens.space2),
+                    padding: EdgeInsets.symmetric(vertical: PicoSeekTokens.space2),
                     child: Divider(height: 1),
                   ),
                   for (var i = 1; i < math.min(header.length, row.length); i++)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+                      padding: const EdgeInsets.only(bottom: PicoSeekTokens.space2),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

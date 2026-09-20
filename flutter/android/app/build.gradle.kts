@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "plus.ling.yaopenevidence"
+    namespace = "plus.ling.picoseek"
     // 依赖(flutter_secure_storage 等)已发布为 compileSdk 37 的 AAR,
     // 模板默认的 flutter.compileSdkVersion(36) 会在 checkDebugAarMetadata 失败。
     compileSdk = 37
@@ -17,7 +17,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "plus.ling.yaopenevidence"
+        applicationId = "plus.ling.picoseek"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION

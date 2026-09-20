@@ -1,4 +1,4 @@
-# YAOpenEvidence Flutter 客户端
+# PicoSeek Flutter 客户端
 
 面向 Android / Linux / Windows 的原生客户端，与 `frontend/`（浏览器）和 `apple/`（iPhone / iPad / Mac）功能对等：登录、提问与筛选、答案页实时流水线进度（SSE）+ 段落级引用 + 原文阅读器、问答历史、文献库与文献详情、知识库检索与重建、上游文献检索与全文预览、账号设置、管理员用户管理。
 
@@ -55,7 +55,7 @@ python tools/generate_brand_assets.py     # 需要 rsvg-convert
 
 Android 侧：`mipmap-anydpi-v26/ic_launcher.xml` 与 `mipmap-night-anydpi-v26/ic_launcher.xml` 给出浅/深自适应图标（背景取 `@color/brand_canvas`，浅 `#F7FAF9` / 深 `#182C30`）；`drawable/launch_background.xml` 与 `drawable-night/launch_background.xml` 是 API 31 以下的启动窗口背景；`values-v31/styles.xml` 与 `values-night-v31/styles.xml` 用 `windowSplashScreenBackground` + `windowSplashScreenAnimatedIcon` 接管 Android 12+ 的系统启动画面，避免冷启动闪默认图标。night 限定符的优先级高于版本限定符，因此深色下 `drawable-night` 会盖掉同名的浅色资源。
 
-桌面侧：Windows 由 `Runner.rc` 把 ICO 编进可执行文件，窗口类图标沿用 `IDI_APP_ICON`。Linux 用 `gtk_window_set_default_icon_from_file()` 读 bundle 内的 `data/flutter_assets/assets/brand/app-icon.png`（按 `/proc/self/exe` 定位，不依赖工作目录；读不到只告警，不影响启动）。构建还会在 bundle 的 `share/applications/` 与 `share/icons/hicolor/512x512/apps/` 输出 `.desktop` 和应用图标，应用 ID 均为 `plus.ling.yaopenevidence`，供 Wayland/GNOME 等桌面匹配；打包方需将这些目录安装到系统或用户的标准位置，并让 `yaopenevidence` 可执行文件处于 `PATH` 中。构建本身不会修改系统桌面配置。Android 应用标签及 Windows/Linux 窗口标题统一显示 `YAOpenEvidence`，包名与可执行文件名不变。
+桌面侧：Windows 由 `Runner.rc` 把 ICO 编进可执行文件，窗口类图标沿用 `IDI_APP_ICON`。Linux 用 `gtk_window_set_default_icon_from_file()` 读 bundle 内的 `data/flutter_assets/assets/brand/app-icon.png`（按 `/proc/self/exe` 定位，不依赖工作目录；读不到只告警，不影响启动）。构建还会在 bundle 的 `share/applications/` 与 `share/icons/hicolor/512x512/apps/` 输出 `.desktop` 和应用图标，应用 ID 均为 `plus.ling.picoseek`，供 Wayland/GNOME 等桌面匹配；打包方需将这些目录安装到系统或用户的标准位置，并让 `picoseek` 可执行文件处于 `PATH` 中。构建本身不会修改系统桌面配置。Android 应用标签及 Windows/Linux 窗口标题统一显示 `PicoSeek`，包名与可执行文件名不变。
 
 ## 代码生成
 
@@ -86,15 +86,15 @@ fvm flutter test                     # 单元测试
 - `test/features/answer/`：SSE 断线重连退避与探活（`fake_async`）。
 - `test/shared/widgets/`：滚动收起状态机（向下滚隐藏 / 向上滚与触顶触底恢复 / 短页面不收起）与悬浮提问框（内容底部避让、收起时滑出视口）。
 
-`test/core/` 的用例集与 `apple/YAOEKit/Tests/` 同源，改动纯逻辑时两边应同步；`test/shared/`、`test/features/` 下的是 Flutter 独有的组件行为回归。
+`test/core/` 的用例集与 `apple/PicoSeekKit/Tests/` 同源，改动纯逻辑时两边应同步；`test/shared/`、`test/features/` 下的是 Flutter 独有的组件行为回归。
 
 ## 设计系统
 
-视觉基准是 iOS 版的 `apple/YAOpenEvidence/Components/Surface.swift`；令牌集中在 `lib/app/theme/tokens.dart`，组件外观集中在 `lib/app/theme/app_theme.dart` 的 `buildTheme`，页面不再手写 `Container + BoxDecoration`。
+视觉基准是 iOS 版的 `apple/PicoSeek/Components/Surface.swift`；令牌集中在 `lib/app/theme/tokens.dart`，组件外观集中在 `lib/app/theme/app_theme.dart` 的 `buildTheme`，页面不再手写 `Container + BoxDecoration`。
 
 | 原语 | 位置 | 用途 |
 |---|---|---|
-| `YaoeCard` | `shared/widgets/surface.dart` | 内容卡：圆角 16、无描边、两层柔和阴影；`tint` 参数给语义提示卡（底 10% + 描边 28%、无阴影），`elevated: false` 给次级卡 |
+| `PicoSeekCard` | `shared/widgets/surface.dart` | 内容卡：圆角 16、无描边、两层柔和阴影；`tint` 参数给语义提示卡（底 10% + 描边 28%、无阴影），`elevated: false` 给次级卡 |
 | `GlassPanel` | 同上 | 悬浮控件层材质：`BackdropFilter` 模糊 + 半透明卡片色 + 悬浮阴影 |
 | `FilterGroup` | 同上 | 筛选面板的一组控件（一张卡） |
 | `PageBody` | `shared/widgets/page_header.dart` | 页面统一约束：最大宽 720、水平内边距 16，并只消费一次底部保留区 |
@@ -131,9 +131,9 @@ APK 产物在 `build/app/outputs/flutter-apk/`。Windows 目录随 `flutter crea
 
 ```bash
 fvm flutter test integration_test/e2e_smoke_test.dart -d linux \
-  --dart-define=YAOE_E2E_API=http://127.0.0.1:18766 \
-  --dart-define=YAOE_E2E_USER=admin \
-  --dart-define=YAOE_E2E_PASSWORD=***
+  --dart-define=PICOSEEK_E2E_API=http://127.0.0.1:18766 \
+  --dart-define=PICOSEEK_E2E_USER=admin \
+  --dart-define=PICOSEEK_E2E_PASSWORD=***
 ```
 
 流程：登录 → 提问（`papers=1`，关闭知识库）→ 等待终态（≤ 10 分钟）→ 断言正文出现引用芯片 → 点击芯片 → 断言阅读器显示带高亮的段落。

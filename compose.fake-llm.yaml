@@ -1,7 +1,7 @@
 services:
   fake-llm:
     build: { context: ., target: test }
-    image: yaoe:test
+    image: picoseek:test
     command: ["python", "-m", "tests.fake_llm", "--port", "4000"]
     working_dir: /app/backend
 

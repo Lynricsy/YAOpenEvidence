@@ -7,16 +7,16 @@ part 'prefs.g.dart';
 
 /// 本地偏好键名（与 Apple 端一致，便于同一后端下的行为对齐）。
 abstract final class PrefKeys {
-  static const serverUrl = 'yaoe.serverURL';
-  static const tokenExpiresAt = 'yaoe.tokenExpiresAt';
-  static const user = 'yaoe.user';
-  static const filters = 'yaoe.filters';
-  static const theme = 'yaoe.theme';
-  static const sidebar = 'yaoe.sidebar';
-  static const readerLayout = 'yaoe.reader-layout';
+  static const serverUrl = 'picoseek.serverURL';
+  static const tokenExpiresAt = 'picoseek.tokenExpiresAt';
+  static const user = 'picoseek.user';
+  static const filters = 'picoseek.filters';
+  static const theme = 'picoseek.theme';
+  static const sidebar = 'picoseek.sidebar';
+  static const readerLayout = 'picoseek.reader-layout';
 
   /// 平台无安全存储时的令牌回退位置（明文，账号页会提示）。
-  static const insecureToken = 'yaoe.token-insecure';
+  static const insecureToken = 'picoseek.token-insecure';
 
   static const all = <String>{
     serverUrl,

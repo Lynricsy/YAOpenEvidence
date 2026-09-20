@@ -52,7 +52,7 @@ class _FloatingComposerHostState extends State<FloatingComposerHost> {
 
     final chrome = ScrollChrome.of(context);
     final reduce = MediaQuery.disableAnimationsOf(context);
-    final duration = reduce ? Duration.zero : YaoeTokens.motionMedium;
+    final duration = reduce ? Duration.zero : PicoSeekTokens.motionMedium;
 
     return LayoutBuilder(
       builder: (context, _) {
@@ -72,7 +72,7 @@ class _FloatingComposerHostState extends State<FloatingComposerHost> {
                   bottom:
                       reserved +
                       _composerHeight +
-                      YaoeTokens.composerInsetBottom,
+                      PicoSeekTokens.composerInsetBottom,
                 ),
               ),
               child: widget.body,
@@ -88,22 +88,22 @@ class _FloatingComposerHostState extends State<FloatingComposerHost> {
                   child: AnimatedSlide(
                     offset: chrome.hidden ? const Offset(0, 1.2) : Offset.zero,
                     duration: duration,
-                    curve: YaoeTokens.motionCurve,
+                    curve: PicoSeekTokens.motionCurve,
                     child: AnimatedOpacity(
                       opacity: chrome.hidden ? 0 : 1,
                       duration: duration,
-                      curve: YaoeTokens.motionCurve,
+                      curve: PicoSeekTokens.motionCurve,
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(
-                          YaoeTokens.composerInsetH,
+                          PicoSeekTokens.composerInsetH,
                           0,
-                          YaoeTokens.composerInsetH,
-                          reserved + YaoeTokens.composerInsetBottom,
+                          PicoSeekTokens.composerInsetH,
+                          reserved + PicoSeekTokens.composerInsetBottom,
                         ),
                         child: Center(
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(
-                              maxWidth: YaoeTokens.contentMaxWidth,
+                              maxWidth: PicoSeekTokens.contentMaxWidth,
                             ),
                             child: Focus(
                               onFocusChange: (focused) {

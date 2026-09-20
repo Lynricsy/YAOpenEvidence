@@ -51,8 +51,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final isCompact = width < YaoeTokens.compactMaxWidth;
-    final isExpanded = width >= YaoeTokens.expandedMinWidth;
+    final isCompact = width < PicoSeekTokens.compactMaxWidth;
+    final isExpanded = width >= PicoSeekTokens.expandedMinWidth;
     final branch = widget.navigationShell.currentIndex;
     final isAdmin = ref.watch(isAdminProvider);
 
@@ -65,7 +65,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           ? '问答'
           : isPaper
           ? '文献详情'
-          : navItemForBranch(branch)?.label ?? 'YAOpenEvidence';
+          : navItemForBranch(branch)?.label ?? 'PicoSeek';
 
       return Scaffold(
         // 内容延伸到导航栏底下，玻璃才有东西可透。
@@ -84,9 +84,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                   },
                 )
               : const Padding(
-                  padding: EdgeInsets.only(left: YaoeTokens.space3),
+                  padding: EdgeInsets.only(left: PicoSeekTokens.space3),
                   child: Center(
-                    child: BrandLogo(size: 22, semanticLabel: 'YAOpenEvidence'),
+                    child: BrandLogo(size: 22, semanticLabel: 'PicoSeek'),
                   ),
                 ),
           title: Text(title),
@@ -107,8 +107,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             final reduce = MediaQuery.disableAnimationsOf(context);
             return AnimatedSlide(
               offset: hidden ? const Offset(0, 1) : Offset.zero,
-              duration: reduce ? Duration.zero : YaoeTokens.motionMedium,
-              curve: YaoeTokens.motionCurve,
+              duration: reduce ? Duration.zero : PicoSeekTokens.motionMedium,
+              curve: PicoSeekTokens.motionCurve,
               child: MobileTabBar(
                 currentBranch: branch,
                 onSelect: _goBranch,

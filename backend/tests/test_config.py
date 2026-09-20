@@ -15,15 +15,15 @@ from app.config import Settings, settings
     '["http://localhost:3000", "http://localhost:5173"]',
 ])
 def test_cors_environment_formats(monkeypatch, raw):
-    monkeypatch.setenv("YAOE_CORS_ORIGINS", raw)
+    monkeypatch.setenv("PICOSEEK_CORS_ORIGINS", raw)
     configured = Settings(_env_file=None)
     assert configured.cors_origins == ["http://localhost:3000", "http://localhost:5173"]
 
 
 def test_cors_dotenv_comma_separated(monkeypatch, tmp_path):
-    monkeypatch.delenv("YAOE_CORS_ORIGINS", raising=False)
+    monkeypatch.delenv("PICOSEEK_CORS_ORIGINS", raising=False)
     dotenv = tmp_path / ".env"
-    dotenv.write_text("YAOE_CORS_ORIGINS=http://localhost:3000,http://localhost:5173\n")
+    dotenv.write_text("PICOSEEK_CORS_ORIGINS=http://localhost:3000,http://localhost:5173\n")
     configured = Settings(_env_file=dotenv)
     assert configured.cors_origins == ["http://localhost:3000", "http://localhost:5173"]
 

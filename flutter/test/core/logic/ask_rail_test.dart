@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/api/sse.dart';
-import 'package:yaopenevidence/core/logic/ask_rail.dart';
-import 'package:yaopenevidence/core/logic/job_live.dart';
+import 'package:picoseek/core/api/sse.dart';
+import 'package:picoseek/core/logic/ask_rail.dart';
+import 'package:picoseek/core/logic/job_live.dart';
 
 AskRailNode kbNode(BackgroundKb? kb, {bool settled = true}) =>
     askRailNodes(JobLive.empty, useKb: true, kb: kb, settled: settled).last;

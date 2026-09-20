@@ -95,7 +95,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(YaoeTokens.space5),
+          padding: const EdgeInsets.all(PicoSeekTokens.space5),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Form(
@@ -105,15 +105,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   // BrandLockup 只支持横排，这里要竖排（Logo 在上、标题在下）。
                   const Center(
-                    child: BrandLogo(size: 72, semanticLabel: 'YAOpenEvidence'),
+                    child: BrandLogo(size: 72, semanticLabel: 'PicoSeek'),
                   ),
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   Text(
-                    'YAOpenEvidence',
+                    'PicoSeek',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineMedium,
                   ),
-                  const SizedBox(height: YaoeTokens.space2),
+                  const SizedBox(height: PicoSeekTokens.space2),
                   Text(
                     '基于文献证据的临床问答',
                     textAlign: TextAlign.center,
@@ -132,7 +132,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                     validator: (value) => validateServerUrl(value ?? ''),
                   ),
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   _FieldLabel('用户名'),
                   TextFormField(
                     controller: _username,
@@ -142,7 +142,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     validator: (value) =>
                         (value ?? '').trim().isEmpty ? '请输入用户名' : null,
                   ),
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   _FieldLabel('密码'),
                   TextFormField(
                     controller: _password,
@@ -166,7 +166,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         (value ?? '').isEmpty ? '请输入密码' : null,
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: YaoeTokens.space3),
+                    const SizedBox(height: PicoSeekTokens.space3),
                     Text(
                       _error!,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -174,7 +174,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: YaoeTokens.space5),
+                  const SizedBox(height: PicoSeekTokens.space5),
                   FilledButton(
                     onPressed: (_submitting || _cooldown > 0) ? null : _submit,
                     style: FilledButton.styleFrom(
@@ -188,7 +188,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           )
                         : Text(_cooldown > 0 ? '$_cooldown 秒后重试' : '登录'),
                   ),
-                  const SizedBox(height: YaoeTokens.space4),
+                  const SizedBox(height: PicoSeekTokens.space4),
                   Text(
                     '本应用输出仅供医学专业人员参考，不构成诊疗建议。',
                     textAlign: TextAlign.center,
@@ -216,7 +216,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: YaoeTokens.space1),
+      padding: const EdgeInsets.only(bottom: PicoSeekTokens.space1),
       child: Text(
         text,
         style: theme.textTheme.labelMedium?.copyWith(

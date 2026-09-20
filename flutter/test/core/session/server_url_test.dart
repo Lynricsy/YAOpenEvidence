@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/session/server_url.dart';
+import 'package:picoseek/core/session/server_url.dart';
 
 void main() {
   test('本地网络允许明文 http', () {

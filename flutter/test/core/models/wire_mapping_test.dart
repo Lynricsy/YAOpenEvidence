@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/models/answers.dart';
-import 'package:yaopenevidence/core/models/jobs.dart';
-import 'package:yaopenevidence/core/models/literature.dart';
-import 'package:yaopenevidence/core/models/meta.dart';
-import 'package:yaopenevidence/core/models/page.dart';
-import 'package:yaopenevidence/core/models/problem.dart';
-import 'package:yaopenevidence/core/models/tool_call.dart';
+import 'package:picoseek/core/models/answers.dart';
+import 'package:picoseek/core/models/jobs.dart';
+import 'package:picoseek/core/models/literature.dart';
+import 'package:picoseek/core/models/meta.dart';
+import 'package:picoseek/core/models/page.dart';
+import 'package:picoseek/core/models/problem.dart';
+import 'package:picoseek/core/models/tool_call.dart';
 
 void main() {
   test('snake_case + 默认值 + 未知来源回落', () {

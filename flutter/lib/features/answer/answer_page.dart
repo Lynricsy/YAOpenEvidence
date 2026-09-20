@@ -62,8 +62,8 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
   void _openReader(CitationRef ref_) {
     final width = MediaQuery.sizeOf(context).width;
     ref.read(readerTargetProvider(widget.answerId).notifier).open(ref_);
-    if (width >= YaoeTokens.expandedMinWidth) return; // 并排布局直接更新
-    if (width < YaoeTokens.compactMaxWidth) {
+    if (width >= PicoSeekTokens.expandedMinWidth) return; // 并排布局直接更新
+    if (width < PicoSeekTokens.compactMaxWidth) {
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
@@ -81,7 +81,7 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
       barrierLabel: '关闭阅读器',
       transitionDuration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
-          : YaoeTokens.motionFast,
+          : PicoSeekTokens.motionFast,
       pageBuilder: (context, animation, secondary) => Align(
         alignment: Alignment.centerRight,
         child: Material(
@@ -99,7 +99,7 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
                 .animate(
                   CurvedAnimation(
                     parent: animation,
-                    curve: YaoeTokens.motionCurve,
+                    curve: PicoSeekTokens.motionCurve,
                   ),
                 ),
             child: child,
@@ -201,7 +201,7 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
       final download = await ref.read(apiClientProvider).answerPdf(widget.answerId);
       final path = await saveOrSharePdf(
         bytes: download.bytes,
-        filename: download.filename ?? 'YAOpenEvidence-${widget.answerId}.pdf',
+        filename: download.filename ?? 'PicoSeek-${widget.answerId}.pdf',
       );
       if (!mounted) return;
       // Android 走分享面板，去向由用户在面板里决定，再提示路径只会误导。
@@ -233,7 +233,7 @@ class _AnswerPageState extends ConsumerState<AnswerPage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final wide = width >= YaoeTokens.expandedMinWidth;
+    final wide = width >= PicoSeekTokens.expandedMinWidth;
     final target = ref.watch(readerTargetProvider(widget.answerId));
     final answerAsync = ref.watch(answerControllerProvider(widget.answerId));
 
@@ -368,11 +368,11 @@ class _AnswerContent extends ConsumerWidget {
                     ? null
                     : onExportPdf,
               ),
-              const SizedBox(height: YaoeTokens.sectionSpacing),
+              const SizedBox(height: PicoSeekTokens.sectionSpacing),
               if (answer.status.isActive)
                 liveState == null
                     ? const LoadingView()
-                    : YaoeCard(
+                    : PicoSeekCard(
                         child: ProgressPipeline(
                           state: liveState,
                           engine: answer.engine,
@@ -394,7 +394,7 @@ class _AnswerContent extends ConsumerWidget {
                       ),
               // 失败只给中文错误标题：后端 message 是排障信息，不给用户看。
               if (answer.status == AnswerStatus.failed)
-                YaoeCard(
+                PicoSeekCard(
                   tint: theme.colorScheme.error,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,7 +407,7 @@ class _AnswerContent extends ConsumerWidget {
                             size: 18,
                             color: theme.colorScheme.error,
                           ),
-                          const SizedBox(width: YaoeTokens.space3),
+                          const SizedBox(width: PicoSeekTokens.space3),
                           Expanded(
                             child: Text(
                               jobErrorMessage(
@@ -420,7 +420,7 @@ class _AnswerContent extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: YaoeTokens.space3),
+                      const SizedBox(height: PicoSeekTokens.space3),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: OutlinedButton(
@@ -434,7 +434,7 @@ class _AnswerContent extends ConsumerWidget {
               if (answer.status == AnswerStatus.cancelled)
                 _NoticeCard(
                   icon: Icons.stop_circle_outlined,
-                  color: context.yaoe.warning,
+                  color: context.picoseek.warning,
                   title: '任务已取消',
                   body: '可以调整筛选后重新提问。',
                   action: OutlinedButton(
@@ -516,8 +516,8 @@ class _BackgroundKbRail extends ConsumerWidget {
     // 还查不到后台任务时不占版面：答案本身已经交付，节点条只是补充信息。
     if (kb == null) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: YaoeTokens.moduleSpacing),
-      child: YaoeCard(
+      padding: const EdgeInsets.only(bottom: PicoSeekTokens.moduleSpacing),
+      child: PicoSeekCard(
         child: StageRail(
           nodes: askRailNodes(
             JobLive.empty,
@@ -564,8 +564,8 @@ class _AgentBody extends StatelessWidget {
           structured: false,
         ),
         if (answer.trace.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.moduleSpacing),
-          YaoeCard(
+          const SizedBox(height: PicoSeekTokens.moduleSpacing),
+          PicoSeekCard(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             child: ExpansionTile(
               childrenPadding: const EdgeInsets.only(bottom: 10),
@@ -578,7 +578,7 @@ class _AgentBody extends StatelessWidget {
           ),
         ],
         if (answer.kbHits.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.moduleSpacing),
+          const SizedBox(height: PicoSeekTokens.moduleSpacing),
           KbSupplementList(hits: answer.kbHits),
         ],
       ],
@@ -609,10 +609,10 @@ class _BodyWithSources extends StatelessWidget {
         onCitationTap: onOpenReader,
         structured: structured,
       ),
-      const SizedBox(height: YaoeTokens.moduleSpacing),
+      const SizedBox(height: PicoSeekTokens.moduleSpacing),
       SourceList(papers: answer.papers, bodyMd: bodyMd, onOpen: onOpenReader),
       if (answer.kbHits.isNotEmpty) ...[
-        const SizedBox(height: YaoeTokens.moduleSpacing),
+        const SizedBox(height: PicoSeekTokens.moduleSpacing),
         KbSupplementList(hits: answer.kbHits),
       ],
     ],
@@ -642,7 +642,7 @@ class _AnswerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final wide = MediaQuery.sizeOf(context).width >= YaoeTokens.compactMaxWidth;
+    final wide = MediaQuery.sizeOf(context).width >= PicoSeekTokens.compactMaxWidth;
     final caption = theme.textTheme.labelSmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
@@ -672,7 +672,7 @@ class _AnswerHeader extends StatelessWidget {
             // 导出是主动作：塞进「更多」菜单没人找得到，就绪时独立成按钮
             if (answer.status == AnswerStatus.ready)
               Padding(
-                padding: const EdgeInsets.only(right: YaoeTokens.space2),
+                padding: const EdgeInsets.only(right: PicoSeekTokens.space2),
                 child: OutlinedButton.icon(
                   onPressed: onExportPdf,
                   icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
@@ -687,10 +687,10 @@ class _AnswerHeader extends StatelessWidget {
           ],
         ),
         if (thread.length > 1) ...[
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           ThreadNav(turns: thread, currentId: answer.id),
         ],
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         SelectableText(
           answer.question,
           style: wide
@@ -698,7 +698,7 @@ class _AnswerHeader extends StatelessWidget {
               : theme.textTheme.headlineSmall,
         ),
         if ((answer.filtersLabel ?? '').isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Pill(
             text: answer.filtersLabel!,
             color: theme.colorScheme.onSurfaceVariant,
@@ -769,7 +769,7 @@ void showQueriesSheet(BuildContext context, List<String> queries) {
   final lines = [
     for (final query in queries)
       Padding(
-        padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+        padding: const EdgeInsets.only(bottom: PicoSeekTokens.space2),
         child: SelectableText(
           query,
           style: theme.textTheme.labelSmall?.merge(monoStyle),
@@ -777,7 +777,7 @@ void showQueriesSheet(BuildContext context, List<String> queries) {
       ),
   ];
 
-  if (MediaQuery.sizeOf(context).width < YaoeTokens.compactMaxWidth) {
+  if (MediaQuery.sizeOf(context).width < PicoSeekTokens.compactMaxWidth) {
     showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
@@ -788,10 +788,10 @@ void showQueriesSheet(BuildContext context, List<String> queries) {
         maxChildSize: 0.9,
         builder: (context, controller) => ListView(
           controller: controller,
-          padding: const EdgeInsets.all(YaoeTokens.pageInset),
+          padding: const EdgeInsets.all(PicoSeekTokens.pageInset),
           children: [
             Text('检索式', style: theme.textTheme.titleMedium),
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             ...lines,
           ],
         ),
@@ -844,14 +844,14 @@ class _NoticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return YaoeCard(
+    return PicoSeekCard(
       tint: color,
-      padding: const EdgeInsets.all(YaoeTokens.space4),
+      padding: const EdgeInsets.all(PicoSeekTokens.space4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 18, color: color),
-          const SizedBox(width: YaoeTokens.space3),
+          const SizedBox(width: PicoSeekTokens.space3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,11 +861,11 @@ class _NoticeCard extends StatelessWidget {
                   style: theme.textTheme.labelLarge?.copyWith(color: color),
                 ),
                 if (body != null) ...[
-                  const SizedBox(height: YaoeTokens.space1),
+                  const SizedBox(height: PicoSeekTokens.space1),
                   Text(body!, style: theme.textTheme.bodySmall),
                 ],
                 if (action != null) ...[
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   Align(alignment: Alignment.centerLeft, child: action!),
                 ],
               ],

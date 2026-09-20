@@ -19,7 +19,7 @@ class PageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: YaoeTokens.sectionSpacing),
+      padding: const EdgeInsets.only(bottom: PicoSeekTokens.sectionSpacing),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -29,7 +29,7 @@ class PageHeader extends StatelessWidget {
               children: [
                 Text(title, style: theme.textTheme.headlineSmall),
                 if (description != null) ...[
-                  const SizedBox(height: YaoeTokens.space1),
+                  const SizedBox(height: PicoSeekTokens.space1),
                   Text(
                     description!,
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -41,7 +41,7 @@ class PageHeader extends StatelessWidget {
             ),
           ),
           if (actions.isNotEmpty)
-            Wrap(spacing: YaoeTokens.space2, children: actions),
+            Wrap(spacing: PicoSeekTokens.space2, children: actions),
         ],
       ),
     );
@@ -53,7 +53,7 @@ class PageBody extends StatelessWidget {
   const PageBody({
     super.key,
     required this.child,
-    this.maxWidth = YaoeTokens.contentMaxWidth,
+    this.maxWidth = PicoSeekTokens.contentMaxWidth,
   });
 
   final Widget child;
@@ -66,10 +66,10 @@ class PageBody extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          YaoeTokens.pageInset,
-          YaoeTokens.space5,
-          YaoeTokens.pageInset,
-          YaoeTokens.space5 + MediaQuery.paddingOf(context).bottom,
+          PicoSeekTokens.pageInset,
+          PicoSeekTokens.space5,
+          PicoSeekTokens.pageInset,
+          PicoSeekTokens.space5 + MediaQuery.paddingOf(context).bottom,
         ),
         // 底部保留区只消费一次，防止内部 ListView 再叠一遍。
         child: MediaQuery.removePadding(

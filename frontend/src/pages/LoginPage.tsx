@@ -47,7 +47,7 @@ export default function LoginPage() {
         <div className="flex items-center gap-2.5">
           <BrandLogo size={32} />
           <span className="font-serif text-lg font-semibold tracking-tight">
-            YAOpenEvidence
+            PicoSeek
           </span>
         </div>
         <m.div variants={fadeUp} initial="hidden" animate="show">
@@ -57,7 +57,7 @@ export default function LoginPage() {
             都能回到原文。
           </h1>
           <p className="mt-5 max-w-md text-[15px] leading-7 text-muted-foreground">
-            YAOpenEvidence 从 PubMed / Europe PMC
+            PicoSeek 从 PubMed / Europe PMC
             检索并逐篇核实，生成带段落级引用定位的循证综述。
           </p>
           <ul className="mt-8 space-y-3 text-sm">
@@ -89,7 +89,7 @@ export default function LoginPage() {
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
             <BrandLogo size={32} />
             <span className="font-serif text-base font-semibold tracking-tight">
-              YAOpenEvidence
+              PicoSeek
             </span>
           </div>
           <p className="section-label">循证医学文献问答</p>

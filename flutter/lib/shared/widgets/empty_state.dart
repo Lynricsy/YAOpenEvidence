@@ -22,17 +22,17 @@ class EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: YaoeTokens.pageInset,
-        vertical: YaoeTokens.space6,
+        horizontal: PicoSeekTokens.pageInset,
+        vertical: PicoSeekTokens.space6,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 36, color: theme.colorScheme.outline),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           Text(title, style: theme.textTheme.titleMedium),
           if (description != null) ...[
-            const SizedBox(height: YaoeTokens.space1),
+            const SizedBox(height: PicoSeekTokens.space1),
             Text(
               description!,
               textAlign: TextAlign.center,
@@ -42,7 +42,7 @@ class EmptyState extends StatelessWidget {
             ),
           ],
           if (action != null) ...[
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             action!,
           ],
         ],

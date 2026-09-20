@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/models/answers.dart';
-import 'package:yaopenevidence/core/models/page.dart' as models;
-import 'package:yaopenevidence/core/models/papers.dart';
-import 'package:yaopenevidence/features/library/library_controller.dart';
-import 'package:yaopenevidence/features/library/library_page.dart';
+import 'package:picoseek/core/models/answers.dart';
+import 'package:picoseek/core/models/page.dart' as models;
+import 'package:picoseek/core/models/papers.dart';
+import 'package:picoseek/features/library/library_controller.dart';
+import 'package:picoseek/features/library/library_page.dart';
 
 /// 库里有一半条目只入了摘要（`source: abstract`），列表上却没有任何线索，
 /// 点进去的「全文」标签页其实只有摘要。这组用例锁住「每行都标出取全文还是仅摘要」，

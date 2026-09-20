@@ -16,12 +16,12 @@ class QuoteHighlight extends StatelessWidget {
     if (text.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: YaoeTokens.space2,
-        vertical: YaoeTokens.space1,
+        horizontal: PicoSeekTokens.space2,
+        vertical: PicoSeekTokens.space1,
       ),
       decoration: BoxDecoration(
-        color: context.yaoe.highlight,
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
+        color: context.picoseek.highlight,
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusSm),
       ),
       child: Text(
         '“$text”',

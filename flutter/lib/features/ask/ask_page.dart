@@ -77,7 +77,7 @@ class _AskPageState extends ConsumerState<AskPage> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final wide = width >= YaoeTokens.expandedMinWidth;
+    final wide = width >= PicoSeekTokens.expandedMinWidth;
     // 草稿可能被答案页的「沿用筛选重新提问」改写。
     ref.listen(askDraftProvider, (previous, next) {
       if (next != _controller.text) _controller.text = next;
@@ -97,7 +97,7 @@ class _AskPageState extends ConsumerState<AskPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const AskHero(),
-              const SizedBox(height: YaoeTokens.moduleSpacing),
+              const SizedBox(height: PicoSeekTokens.moduleSpacing),
               AskExamples(onExample: _useExample),
             ],
           ),

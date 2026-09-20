@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-logger = logging.getLogger("yaoe.errors")
+logger = logging.getLogger("picoseek.errors")
 
 PROBLEM_MEDIA_TYPE = "application/problem+json"
 
@@ -47,7 +47,7 @@ class ApiError(Exception):
 def problem(request: Request, status: int, code: str, detail: str,
             extra: dict | None = None, headers: dict[str, str] | None = None) -> JSONResponse:
     body = {
-        "type": f"urn:yaoe:error:{code}",
+        "type": f"urn:picoseek:error:{code}",
         "title": http.HTTPStatus(status).phrase,
         "status": status,
         "detail": detail,

@@ -130,7 +130,7 @@ class _PaperPageState extends ConsumerState<PaperPage>
       return const EmptyState(icon: Icons.description_outlined, title: '暂无全文');
     }
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: YaoeTokens.space4),
+      padding: const EdgeInsets.symmetric(vertical: PicoSeekTokens.space4),
       child: MarkdownDocumentView(
         blocks: _blocks,
         anchorKeys: _anchorKeys,
@@ -152,16 +152,16 @@ class _PaperPageState extends ConsumerState<PaperPage>
           AsyncValueView(
             value: meta,
             onRetry: () => ref.invalidate(paperMetaProvider(widget.paperKey)),
-            builder: (paper) => YaoeCard(
-              padding: const EdgeInsets.all(YaoeTokens.space4),
+            builder: (paper) => PicoSeekCard(
+              padding: const EdgeInsets.all(PicoSeekTokens.space4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(paper.title, style: theme.textTheme.headlineSmall),
-                  const SizedBox(height: YaoeTokens.space2),
+                  const SizedBox(height: PicoSeekTokens.space2),
                   Wrap(
-                    spacing: YaoeTokens.space2,
-                    runSpacing: YaoeTokens.space2,
+                    spacing: PicoSeekTokens.space2,
+                    runSpacing: PicoSeekTokens.space2,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
@@ -174,10 +174,10 @@ class _PaperPageState extends ConsumerState<PaperPage>
                       SourceBadge(source: paper.source),
                     ],
                   ),
-                  const SizedBox(height: YaoeTokens.space2),
+                  const SizedBox(height: PicoSeekTokens.space2),
                   Wrap(
-                    spacing: YaoeTokens.space3,
-                    runSpacing: YaoeTokens.space1,
+                    spacing: PicoSeekTokens.space3,
+                    runSpacing: PicoSeekTokens.space1,
                     children: [
                       MonoLabel(label: 'PMID', value: paper.pmid),
                       MonoLabel(label: 'DOI', value: paper.doi),
@@ -193,7 +193,7 @@ class _PaperPageState extends ConsumerState<PaperPage>
               ),
             ),
           ),
-          const SizedBox(height: YaoeTokens.space4),
+          const SizedBox(height: PicoSeekTokens.space4),
           Align(
             child: SegmentedButton<int>(
               showSelectedIcon: false,
@@ -226,21 +226,21 @@ class _PaperPageState extends ConsumerState<PaperPage>
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.symmetric(
-                            vertical: YaoeTokens.space4,
+                            vertical: PicoSeekTokens.space4,
                           ),
                           itemCount: items.length,
                           separatorBuilder: (_, _) =>
-                              const SizedBox(height: YaoeTokens.space3),
+                              const SizedBox(height: PicoSeekTokens.space3),
                           itemBuilder: (context, index) {
                             final fact = items[index];
-                            return YaoeCard(
-                              padding: const EdgeInsets.all(YaoeTokens.space4),
+                            return PicoSeekCard(
+                              padding: const EdgeInsets.all(PicoSeekTokens.space4),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Wrap(
-                                    spacing: YaoeTokens.space2,
-                                    runSpacing: YaoeTokens.space2,
+                                    spacing: PicoSeekTokens.space2,
+                                    runSpacing: PicoSeekTokens.space2,
                                     crossAxisAlignment:
                                         WrapCrossAlignment.center,
                                     children: [
@@ -262,14 +262,14 @@ class _PaperPageState extends ConsumerState<PaperPage>
                                         ),
                                     ],
                                   ),
-                                  const SizedBox(height: YaoeTokens.space2),
+                                  const SizedBox(height: PicoSeekTokens.space2),
                                   SelectableText(
                                     fact.factZh.trim().isNotEmpty
                                         ? fact.factZh
                                         : fact.fact,
                                   ),
                                   if (fact.quote.isNotEmpty) ...[
-                                    const SizedBox(height: YaoeTokens.space2),
+                                    const SizedBox(height: PicoSeekTokens.space2),
                                     QuoteHighlight(quote: fact.quote),
                                   ],
                                 ],

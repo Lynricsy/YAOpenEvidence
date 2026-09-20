@@ -6,7 +6,7 @@ import '../../core/session/prefs.dart';
 
 part 'split_view.g.dart';
 
-/// 分栏比例（答案区占比，0.40–0.60），持久化到 `yaoe.reader-layout`。
+/// 分栏比例（答案区占比，0.40–0.60），持久化到 `picoseek.reader-layout`。
 @Riverpod(keepAlive: true)
 class ReaderLayout extends _$ReaderLayout {
   static const minAnswerFraction = 0.40;

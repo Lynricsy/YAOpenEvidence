@@ -24,12 +24,12 @@ CustomTransitionPage<void> _page(String key, Widget child) =>
     CustomTransitionPage<void>(
       key: ValueKey(key),
       child: child,
-      transitionDuration: YaoeTokens.motionFast,
-      reverseTransitionDuration: YaoeTokens.motionFast,
+      transitionDuration: PicoSeekTokens.motionFast,
+      reverseTransitionDuration: PicoSeekTokens.motionFast,
       transitionsBuilder: (context, animation, secondary, child) {
         final curved = CurvedAnimation(
           parent: animation,
-          curve: YaoeTokens.motionCurve,
+          curve: PicoSeekTokens.motionCurve,
         );
         return FadeTransition(
           opacity: curved,

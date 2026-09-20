@@ -134,7 +134,7 @@ class _ReaderPaneState extends ConsumerState<ReaderPane>
                 onParagraph: _goToParagraph,
               ),
               ReaderMarkdownOnly(:final markdown) => SingleChildScrollView(
-                padding: const EdgeInsets.all(YaoeTokens.space4),
+                padding: const EdgeInsets.all(PicoSeekTokens.space4),
                 child: ParagraphMarkdown(
                   markdown: markdown,
                   pid: widget.target.pid,
@@ -142,7 +142,7 @@ class _ReaderPaneState extends ConsumerState<ReaderPane>
                 ),
               ),
               ReaderMissing() => Padding(
-                padding: const EdgeInsets.all(YaoeTokens.space4),
+                padding: const EdgeInsets.all(PicoSeekTokens.space4),
                 child: (answer?.status.isActive ?? false)
                     ? const EmptyState(
                         icon: Icons.hourglass_empty,
@@ -198,7 +198,7 @@ class _Header extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CitationSquare(n: n),
-          const SizedBox(width: YaoeTokens.space3),
+          const SizedBox(width: PicoSeekTokens.space3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +208,7 @@ class _Header extends StatelessWidget {
                   style: theme.textTheme.titleSmall,
                 ),
                 if (paper != null) ...[
-                  const SizedBox(height: YaoeTokens.space1),
+                  const SizedBox(height: PicoSeekTokens.space1),
                   Text(
                     [
                       paper!.journal,
@@ -218,10 +218,10 @@ class _Header extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: YaoeTokens.space2),
+                  const SizedBox(height: PicoSeekTokens.space2),
                   Wrap(
-                    spacing: YaoeTokens.space2,
-                    runSpacing: YaoeTokens.space1,
+                    spacing: PicoSeekTokens.space2,
+                    runSpacing: PicoSeekTokens.space1,
                     children: [
                       RankBadge(
                         quartile: paper!.quartile,
@@ -230,7 +230,7 @@ class _Header extends StatelessWidget {
                       SourceBadge(source: paper!.source),
                     ],
                   ),
-                  const SizedBox(height: YaoeTokens.space1),
+                  const SizedBox(height: PicoSeekTokens.space1),
                   ExternalLinkRow(
                     pmid: paper!.pmid,
                     doi: paper!.doi,
@@ -283,7 +283,7 @@ class _DetailTabs extends StatelessWidget {
             controller: tabs,
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.all(YaoeTokens.space4),
+                padding: const EdgeInsets.all(PicoSeekTokens.space4),
                 child: ParagraphMarkdown(
                   markdown: detail.fulltextMd,
                   pid: pid,
@@ -291,7 +291,7 @@ class _DetailTabs extends StatelessWidget {
                 ),
               ),
               SingleChildScrollView(
-                padding: const EdgeInsets.all(YaoeTokens.space4),
+                padding: const EdgeInsets.all(PicoSeekTokens.space4),
                 child: detail.notesMd.trim().isEmpty
                     ? const EmptyState(
                         icon: Icons.notes_outlined,
@@ -327,23 +327,23 @@ class _QuoteList extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(YaoeTokens.pageInset),
+      padding: const EdgeInsets.all(PicoSeekTokens.pageInset),
       itemCount: quotes.length,
       separatorBuilder: (context, index) =>
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
       itemBuilder: (context, index) {
         final quote = quotes[index];
         final pid = quote.pid ?? quote.claimedPid;
-        return YaoeCard(
+        return PicoSeekCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   VerifiedPill(verified: quote.verified),
-                  const SizedBox(width: YaoeTokens.space2),
+                  const SizedBox(width: PicoSeekTokens.space2),
                   if (quote.keyFinding)
-                    Icon(Icons.star, size: 14, color: context.yaoe.warning),
+                    Icon(Icons.star, size: 14, color: context.picoseek.warning),
                   const Spacer(),
                   if (pid > 0)
                     TextButton.icon(
@@ -360,10 +360,10 @@ class _QuoteList extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: YaoeTokens.space1),
+              const SizedBox(height: PicoSeekTokens.space1),
               QuoteHighlight(quote: quote.quote),
               if ((quote.noteSection ?? '').isNotEmpty) ...[
-                const SizedBox(height: YaoeTokens.space1),
+                const SizedBox(height: PicoSeekTokens.space1),
                 Text(
                   quote.noteSection!,
                   style: theme.textTheme.labelSmall?.copyWith(
@@ -392,21 +392,21 @@ class _FactList extends StatelessWidget {
       return const EmptyState(icon: Icons.lightbulb_outline, title: '没有抽取到事实');
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(YaoeTokens.pageInset),
+      padding: const EdgeInsets.all(PicoSeekTokens.pageInset),
       itemCount: facts.length,
       separatorBuilder: (context, index) =>
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
       itemBuilder: (context, index) {
         final fact = facts[index];
         final text = fact.factZh.isNotEmpty ? fact.factZh : fact.fact;
-        return YaoeCard(
+        return PicoSeekCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Pill(text: fact.kindLabel, color: theme.colorScheme.primary),
-                  const SizedBox(width: YaoeTokens.space2),
+                  const SizedBox(width: PicoSeekTokens.space2),
                   VerifiedPill(verified: fact.verified),
                   const Spacer(),
                   if (fact.pid != null)
@@ -424,10 +424,10 @@ class _FactList extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: YaoeTokens.space1),
+              const SizedBox(height: PicoSeekTokens.space1),
               Text(text, style: theme.textTheme.bodySmall),
               if (fact.quote.isNotEmpty) ...[
-                const SizedBox(height: YaoeTokens.space1),
+                const SizedBox(height: PicoSeekTokens.space1),
                 QuoteHighlight(quote: fact.quote, maxLines: 3),
               ],
             ],

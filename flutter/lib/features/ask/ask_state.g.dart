@@ -8,15 +8,15 @@ part of 'ask_state.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 提问筛选条件，持久化到 `yaoe.filters`（写入前先 `normalized()`）。
+/// 提问筛选条件，持久化到 `picoseek.filters`（写入前先 `normalized()`）。
 
 @ProviderFor(AskFiltersController)
 final askFiltersControllerProvider = AskFiltersControllerProvider._();
 
-/// 提问筛选条件，持久化到 `yaoe.filters`（写入前先 `normalized()`）。
+/// 提问筛选条件，持久化到 `picoseek.filters`（写入前先 `normalized()`）。
 final class AskFiltersControllerProvider
     extends $NotifierProvider<AskFiltersController, AskFilters> {
-  /// 提问筛选条件，持久化到 `yaoe.filters`（写入前先 `normalized()`）。
+  /// 提问筛选条件，持久化到 `picoseek.filters`（写入前先 `normalized()`）。
   AskFiltersControllerProvider._()
     : super(
         from: null,
@@ -47,7 +47,7 @@ final class AskFiltersControllerProvider
 String _$askFiltersControllerHash() =>
     r'3bf562440393ec37a62c06c20ffc03dc6569739f';
 
-/// 提问筛选条件，持久化到 `yaoe.filters`（写入前先 `normalized()`）。
+/// 提问筛选条件，持久化到 `picoseek.filters`（写入前先 `normalized()`）。
 
 abstract class _$AskFiltersController extends $Notifier<AskFilters> {
   AskFilters build();

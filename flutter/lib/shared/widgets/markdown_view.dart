@@ -64,8 +64,8 @@ class _BlockView extends StatelessWidget {
         };
         return Padding(
           padding: const EdgeInsets.only(
-            top: YaoeTokens.space4,
-            bottom: YaoeTokens.space2,
+            top: PicoSeekTokens.space4,
+            bottom: PicoSeekTokens.space2,
           ),
           child: Text.rich(
             _spans(context, runs, style),
@@ -76,7 +76,7 @@ class _BlockView extends StatelessWidget {
       case MdParagraph(:final runs, :final anchor):
         final base = view.baseStyle ?? theme.textTheme.bodyMedium;
         final paragraph = Padding(
-          padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+          padding: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
           child: Text.rich(_spans(context, runs, base), style: base),
         );
         if (anchor == null) return paragraph;
@@ -90,8 +90,8 @@ class _BlockView extends StatelessWidget {
 
       case MdBlockQuote(:final blocks):
         return Container(
-          margin: const EdgeInsets.only(bottom: YaoeTokens.space3),
-          padding: const EdgeInsets.only(left: YaoeTokens.space3),
+          margin: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
+          padding: const EdgeInsets.only(left: PicoSeekTokens.space3),
           decoration: BoxDecoration(
             border: Border(
               left: BorderSide(color: theme.colorScheme.primary, width: 3),
@@ -108,13 +108,13 @@ class _BlockView extends StatelessWidget {
 
       case MdList(:final ordered, :final start, :final items):
         return Padding(
-          padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+          padding: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (var index = 0; index < items.length; index++)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: YaoeTokens.space1),
+                  padding: const EdgeInsets.only(bottom: PicoSeekTokens.space1),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -146,11 +146,11 @@ class _BlockView extends StatelessWidget {
       case MdCodeBlock(:final code):
         return Container(
           width: double.infinity,
-          margin: const EdgeInsets.only(bottom: YaoeTokens.space3),
-          padding: const EdgeInsets.all(YaoeTokens.space3),
+          margin: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
+          padding: const EdgeInsets.all(PicoSeekTokens.space3),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+            borderRadius: BorderRadius.circular(PicoSeekTokens.radiusMd),
             border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: SingleChildScrollView(
@@ -164,9 +164,9 @@ class _BlockView extends StatelessWidget {
 
       case MdTable(:final header, :final rows):
         return Container(
-          margin: const EdgeInsets.only(bottom: YaoeTokens.space3),
+          margin: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+            borderRadius: BorderRadius.circular(PicoSeekTokens.radiusMd),
             border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: SingleChildScrollView(
@@ -209,13 +209,13 @@ class _BlockView extends StatelessWidget {
 
       case MdThematicBreak():
         return const Padding(
-          padding: EdgeInsets.symmetric(vertical: YaoeTokens.space3),
+          padding: EdgeInsets.symmetric(vertical: PicoSeekTokens.space3),
           child: Divider(),
         );
 
       case MdHtml(:final raw):
         return Padding(
-          padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+          padding: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
           child: Text(
             raw,
             style: theme.textTheme.bodySmall
@@ -277,8 +277,8 @@ class _TableCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(
-      horizontal: YaoeTokens.space3,
-      vertical: YaoeTokens.space2,
+      horizontal: PicoSeekTokens.space3,
+      vertical: PicoSeekTokens.space2,
     ),
     child: MarkdownInlineText(
       runs: runs,
@@ -331,7 +331,7 @@ InlineSpan _runSpan(
     );
   }
   if (run.style.has(InlineStyle.highlight)) {
-    style = style.copyWith(backgroundColor: context.yaoe.highlight);
+    style = style.copyWith(backgroundColor: context.picoseek.highlight);
   }
   final link = run.link;
   if (link != null) {
@@ -366,7 +366,7 @@ class _AnchoredParagraph extends StatelessWidget {
       builder: (context, value, child) => DecoratedBox(
         decoration: BoxDecoration(
           color: theme.colorScheme.primary.withValues(alpha: 0.14 * value),
-          borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
+          borderRadius: BorderRadius.circular(PicoSeekTokens.radiusSm),
         ),
         child: child,
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/logic/ask_filters.dart';
-import 'package:yaopenevidence/core/models/answers.dart';
+import 'package:picoseek/core/logic/ask_filters.dart';
+import 'package:picoseek/core/models/answers.dart';
 
 void main() {
   const defaults = AskFilters();

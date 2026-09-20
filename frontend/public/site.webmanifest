@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "YAOpenEvidence · 循证医学文献问答",
-  "short_name": "YAOpenEvidence",
+  "name": "PicoSeek · 循证医学文献问答",
+  "short_name": "PicoSeek",
   "description": "从 PubMed / Europe PMC 检索并逐篇核实，生成可回溯到原文段落的循证综述。",
   "lang": "zh-CN",
   "dir": "ltr",

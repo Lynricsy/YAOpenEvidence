@@ -19,17 +19,17 @@ REPO = Path(__file__).resolve().parent
 CORE = REPO / "core"
 FIXTURES = CORE / "tests" / "fixtures"
 
-_TMP = tempfile.mkdtemp(prefix="yaoe-test-")
+_TMP = tempfile.mkdtemp(prefix="picoseek-test-")
 
-os.environ["PICOSGPT_DATA"] = _TMP
+os.environ["PICOSEEK_DATA"] = _TMP
 os.environ["EMBED_MODEL"] = "/nonexistent"          # 强制 Embedder 退化为 hash-bow（无需 2G 权重）
-os.environ.setdefault("YAOE_REDIS_URL", "redis://127.0.0.1:6379/15")
+os.environ.setdefault("PICOSEEK_REDIS_URL", "redis://127.0.0.1:6379/15")
 
 
 def assert_test_redis(url: str) -> str:
     """测试会 FLUSHDB，所以只允许打本机的高位 db。
 
-    `YAOE_REDIS_URL` 是从环境继承的：如果开发机上它指着真实实例（几乎总是
+    `PICOSEEK_REDIS_URL` 是从环境继承的：如果开发机上它指着真实实例（几乎总是
     db 0），无条件 flush 就把别人的数据清了。宁可让测试启动失败。
     """
     parsed = urlparse(url)
@@ -41,12 +41,12 @@ def assert_test_redis(url: str) -> str:
     if host not in ("127.0.0.1", "localhost", "::1", "redis") or db < 10:
         raise RuntimeError(
             f"refusing to run tests against {url!r}: 测试会 FLUSHDB，"
-            "请把 YAOE_REDIS_URL 指向本机的 db>=10（例如 redis://127.0.0.1:6379/15）")
+            "请把 PICOSEEK_REDIS_URL 指向本机的 db>=10（例如 redis://127.0.0.1:6379/15）")
     return url
 
 
-os.environ["YAOE_REDIS_URL"] = assert_test_redis(os.environ["YAOE_REDIS_URL"])
-os.environ["YAOE_DATABASE_URL"] = f"sqlite:///{_TMP}/var/test.sqlite3"
+os.environ["PICOSEEK_REDIS_URL"] = assert_test_redis(os.environ["PICOSEEK_REDIS_URL"])
+os.environ["PICOSEEK_DATABASE_URL"] = f"sqlite:///{_TMP}/var/test.sqlite3"
 os.environ.setdefault("LLM_BASE", "http://127.0.0.1:4999/v1")   # 不存在的端口：测试不该真调 LLM
 
 @pytest.fixture(scope="session")
@@ -56,7 +56,7 @@ def data_root() -> Path:
 
 @pytest.fixture(scope="session", autouse=True)
 def _prepare_data_root() -> Path:
-    """在临时 PICOSGPT_DATA 下搭一份最小但真实的数据：1 篇文献 + 分区表 + 可搜的 kb。"""
+    """在临时 PICOSEEK_DATA 下搭一份最小但真实的数据：1 篇文献 + 分区表 + 可搜的 kb。"""
     root = Path(_TMP)
     for sub in ("answers", "library", "kb", "var", "pdfs", "data/journal_ranks"):
         (root / sub).mkdir(parents=True, exist_ok=True)
@@ -94,7 +94,7 @@ def _prepare_data_root() -> Path:
 
     import redis
 
-    client = redis.Redis.from_url(os.environ["YAOE_REDIS_URL"])
+    client = redis.Redis.from_url(os.environ["PICOSEEK_REDIS_URL"])
     client.flushdb()
     client.close()
     return root

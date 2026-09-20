@@ -1,7 +1,7 @@
 import 'dart:ui' show Color;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/logic/citations.dart';
+import 'package:picoseek/core/logic/citations.dart';
 
 void main() {
   test('解析渲染稿引用链接', () {

@@ -63,7 +63,7 @@ class ProgressPipeline extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         if (codex)
           // 轨迹本身就是进展，不用文字复述系统在干什么；
           // 还没有轨迹时只给一个转圈表示在跑。
@@ -88,7 +88,7 @@ class ProgressPipeline extends StatelessWidget {
                   ),
           ),
           if (live.search != null) ...[
-            const SizedBox(height: YaoeTokens.space4),
+            const SizedBox(height: PicoSeekTokens.space4),
             _SearchSummaryView(
               summary: live.search!,
               detail: live.stages[StageKey.search]?.detail ?? const {},
@@ -125,10 +125,10 @@ class _SearchSummaryView extends StatelessWidget {
           ),
         ),
         if (summary.papers.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Wrap(
-            spacing: YaoeTokens.space2,
-            runSpacing: YaoeTokens.space2,
+            spacing: PicoSeekTokens.space2,
+            runSpacing: PicoSeekTokens.space2,
             children: [
               for (final paper in summary.papers)
                 _CandidateCard(paper: paper, onTap: onCandidateTap),
@@ -152,9 +152,9 @@ class _CandidateCard extends StatelessWidget {
     final pmid = paper.pmid ?? '';
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 320),
-      child: YaoeCard(
+      child: PicoSeekCard(
         onTap: pmid.isEmpty ? null : () => onTap(pmid),
-        padding: const EdgeInsets.all(YaoeTokens.space3),
+        padding: const EdgeInsets.all(PicoSeekTokens.space3),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -162,7 +162,7 @@ class _CandidateCard extends StatelessWidget {
               children: [
                 if (paper.n != null) ...[
                   CitationSquare(n: paper.n!, size: 18),
-                  const SizedBox(width: YaoeTokens.space2),
+                  const SizedBox(width: PicoSeekTokens.space2),
                 ],
                 Expanded(
                   child: Text(
@@ -174,7 +174,7 @@ class _CandidateCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: YaoeTokens.space1),
+            const SizedBox(height: PicoSeekTokens.space1),
             Text(
               [
                 paper.journal ?? '',

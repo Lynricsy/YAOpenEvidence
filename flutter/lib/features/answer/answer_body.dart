@@ -73,7 +73,7 @@ class AnswerBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var index = 0; index < sections.length; index++) ...[
-            if (index > 0) const SizedBox(height: YaoeTokens.space6),
+            if (index > 0) const SizedBox(height: PicoSeekTokens.space6),
             _section(context, sections[index], spanBuilder),
           ],
         ],
@@ -102,7 +102,7 @@ class AnswerBody extends StatelessWidget {
 
     switch (section.kind) {
       case AnswerSectionKind.conclusion:
-        return YaoeCard(
+        return PicoSeekCard(
           tint: theme.colorScheme.primary,
           padding: const EdgeInsets.all(18),
           child: Column(
@@ -112,7 +112,7 @@ class AnswerBody extends StatelessWidget {
                 module: AnswerModule.conclusion,
                 rule: false,
               ),
-              const SizedBox(height: YaoeTokens.space3),
+              const SizedBox(height: PicoSeekTokens.space3),
               document(blocks),
             ],
           ),
@@ -128,14 +128,14 @@ class AnswerBody extends StatelessWidget {
                   ? AnswerModule.evidence
                   : AnswerModule.caveats,
             ),
-            const SizedBox(height: YaoeTokens.space4),
+            const SizedBox(height: PicoSeekTokens.space4),
             document(blocks),
           ],
         );
 
       case AnswerSectionKind.picos:
         final compact =
-            MediaQuery.sizeOf(context).width < YaoeTokens.compactMaxWidth;
+            MediaQuery.sizeOf(context).width < PicoSeekTokens.compactMaxWidth;
         final rows = blocks.whereType<MdTable>().firstOrNull?.rows.length ?? 0;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,7 +144,7 @@ class AnswerBody extends StatelessWidget {
               module: AnswerModule.picos,
               count: rows > 0 ? '$rows 篇' : null,
             ),
-            const SizedBox(height: YaoeTokens.space4),
+            const SizedBox(height: PicoSeekTokens.space4),
             for (final block in blocks)
               if (block is MdTable && compact)
                 PicosCardList(

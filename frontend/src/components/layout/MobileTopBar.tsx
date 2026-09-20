@@ -8,11 +8,11 @@ export function MobileTopBar() {
       <Link
         to="/"
         className="flex min-w-0 items-center gap-2"
-        aria-label="YAOpenEvidence 首页"
+        aria-label="PicoSeek 首页"
       >
         <BrandLogo size={24} />
         <span className="truncate font-serif text-sm font-semibold tracking-tight">
-          YAOpenEvidence
+          PicoSeek
         </span>
       </Link>
       <div className="w-9 shrink-0">

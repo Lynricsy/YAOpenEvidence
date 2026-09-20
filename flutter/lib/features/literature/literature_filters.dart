@@ -60,7 +60,7 @@ class LiteratureFilterPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(YaoeTokens.pageInset),
+      padding: const EdgeInsets.all(PicoSeekTokens.pageInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -69,7 +69,7 @@ class LiteratureFilterPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('返回条数', style: theme.textTheme.labelLarge),
-                const SizedBox(height: YaoeTokens.space2),
+                const SizedBox(height: PicoSeekTokens.space2),
                 SegmentedButton<int>(
                   showSelectedIcon: false,
                   segments: const [
@@ -83,9 +83,9 @@ class LiteratureFilterPanel extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           FilterGroup(
-            child: YaoeYearPicker(
+            child: PicoSeekYearPicker(
               mode: filters.yearMode,
               years: filters.years,
               yearFrom: filters.yearFrom,
@@ -99,7 +99,7 @@ class LiteratureFilterPanel extends StatelessWidget {
               errorText: filters.rangeError,
             ),
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           FilterGroup(
             child: QuartilePicker(
               quartiles: filters.quartiles,
@@ -107,16 +107,16 @@ class LiteratureFilterPanel extends StatelessWidget {
                   onChanged(filters.copyWith(quartiles: value)),
             ),
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           FilterGroup(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('文献类型', style: theme.textTheme.labelLarge),
-                const SizedBox(height: YaoeTokens.space2),
+                const SizedBox(height: PicoSeekTokens.space2),
                 Wrap(
-                  spacing: YaoeTokens.space2,
-                  runSpacing: YaoeTokens.space2,
+                  spacing: PicoSeekTokens.space2,
+                  runSpacing: PicoSeekTokens.space2,
                   children: [
                     for (final entry in _typeLabels.entries)
                       FilterChip(
@@ -137,7 +137,7 @@ class LiteratureFilterPanel extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           FilterGroup(
             child: JournalPicker(
               journals: filters.journals,
@@ -145,7 +145,7 @@ class LiteratureFilterPanel extends StatelessWidget {
                   onChanged(filters.copyWith(journals: value)),
             ),
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           FilterGroup(
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,

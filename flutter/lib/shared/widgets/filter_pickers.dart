@@ -5,8 +5,8 @@ import '../../app/theme/tokens.dart';
 import '../../core/logic/ask_filters.dart';
 
 /// 年份筛选：任意 / 近 N 年 / 自定义区间。提问页与查文献页共用。
-class YaoeYearPicker extends StatelessWidget {
-  const YaoeYearPicker({
+class PicoSeekYearPicker extends StatelessWidget {
+  const PicoSeekYearPicker({
     super.key,
     required this.mode,
     required this.years,
@@ -41,7 +41,7 @@ class YaoeYearPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('年份', style: theme.textTheme.labelLarge),
-        const SizedBox(height: YaoeTokens.space2),
+        const SizedBox(height: PicoSeekTokens.space2),
         SegmentedButton<YearMode>(
           showSelectedIcon: false,
           segments: const [
@@ -53,7 +53,7 @@ class YaoeYearPicker extends StatelessWidget {
           onSelectionChanged: (selection) => onModeChanged(selection.first),
         ),
         if (mode == YearMode.recent) ...[
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Row(
             children: [
               Expanded(
@@ -74,7 +74,7 @@ class YaoeYearPicker extends StatelessWidget {
           ),
         ],
         if (mode == YearMode.range) ...[
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Row(
             children: [
               Expanded(
@@ -89,7 +89,7 @@ class YaoeYearPicker extends StatelessWidget {
                   onChanged: (value) => onRangeChanged(value, yearTo),
                 ),
               ),
-              const SizedBox(width: YaoeTokens.space2),
+              const SizedBox(width: PicoSeekTokens.space2),
               Expanded(
                 child: DropdownButtonFormField<int?>(
                   initialValue: yearTo,
@@ -107,7 +107,7 @@ class YaoeYearPicker extends StatelessWidget {
           ),
           if (errorText != null)
             Padding(
-              padding: const EdgeInsets.only(top: YaoeTokens.space1),
+              padding: const EdgeInsets.only(top: PicoSeekTokens.space1),
               child: Text(
                 errorText!,
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -169,7 +169,7 @@ class _JournalPickerState extends State<JournalPicker> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('期刊关键词', style: theme.textTheme.labelLarge),
-        const SizedBox(height: YaoeTokens.space2),
+        const SizedBox(height: PicoSeekTokens.space2),
         TextField(
           controller: _controller,
           autocorrect: false,
@@ -182,10 +182,10 @@ class _JournalPickerState extends State<JournalPicker> {
           onSubmitted: _add,
         ),
         if (widget.journals.isNotEmpty) ...[
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Wrap(
-            spacing: YaoeTokens.space2,
-            runSpacing: YaoeTokens.space1,
+            spacing: PicoSeekTokens.space2,
+            runSpacing: PicoSeekTokens.space1,
             children: [
               for (final journal in widget.journals)
                 InputChip(
@@ -196,10 +196,10 @@ class _JournalPickerState extends State<JournalPicker> {
           ),
         ],
         if (widget.showPresets) ...[
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Wrap(
-            spacing: YaoeTokens.space2,
-            runSpacing: YaoeTokens.space1,
+            spacing: PicoSeekTokens.space2,
+            runSpacing: PicoSeekTokens.space1,
             children: [
               for (final (label, value) in AskFilters.journalPresets)
                 ActionChip(
@@ -245,20 +245,20 @@ class QuartilePicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('期刊分区', style: theme.textTheme.labelLarge),
-        const SizedBox(height: YaoeTokens.space2),
+        const SizedBox(height: PicoSeekTokens.space2),
         if (warning != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+            padding: const EdgeInsets.only(bottom: PicoSeekTokens.space2),
             child: Text(
               warning!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: context.yaoe.warning,
+                color: context.picoseek.warning,
               ),
             ),
           )
         else if (caption != null)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+            padding: const EdgeInsets.only(bottom: PicoSeekTokens.space2),
             child: Text(
               caption!,
               style: theme.textTheme.bodySmall?.copyWith(

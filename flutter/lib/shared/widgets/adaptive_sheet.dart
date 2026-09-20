@@ -11,7 +11,7 @@ Future<T?> showAdaptiveSheet<T>(
   required String title,
   required Widget child,
 }) {
-  if (MediaQuery.sizeOf(context).width < YaoeTokens.compactMaxWidth) {
+  if (MediaQuery.sizeOf(context).width < PicoSeekTokens.compactMaxWidth) {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
@@ -28,7 +28,7 @@ Future<T?> showAdaptiveSheet<T>(
     barrierLabel: '关闭$title',
     transitionDuration: MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
-        : YaoeTokens.motionFast,
+        : PicoSeekTokens.motionFast,
     pageBuilder: (context, animation, secondary) => Align(
       alignment: Alignment.centerRight,
       child: Material(
@@ -48,7 +48,7 @@ Future<T?> showAdaptiveSheet<T>(
               .animate(
                 CurvedAnimation(
                   parent: animation,
-                  curve: YaoeTokens.motionCurve,
+                  curve: PicoSeekTokens.motionCurve,
                 ),
               ),
           child: child,
@@ -74,9 +74,9 @@ class _SheetFrame extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
-            YaoeTokens.pageInset,
-            YaoeTokens.space3,
-            YaoeTokens.space2,
+            PicoSeekTokens.pageInset,
+            PicoSeekTokens.space3,
+            PicoSeekTokens.space2,
             0,
           ),
           child: Row(

@@ -1,7 +1,7 @@
 """文献库端点：只读浏览 + 单篇入库（上传 PDF / 按 DOI 取全文）。
 
 入库对任意登录用户开放，并发闸门沿用 `services.jobs.ensure_capacity`
-（YAOE_MAX_ACTIVE_JOBS_PER_USER），和问答任务共享同一个额度。
+（PICOSEEK_MAX_ACTIVE_JOBS_PER_USER），和问答任务共享同一个额度。
 """
 from __future__ import annotations
 

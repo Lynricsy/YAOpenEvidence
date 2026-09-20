@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=PicoSeek
+Comment=Medical literature evidence workspace
+Comment[zh_CN]=医学文献证据问答工作台
+Exec=picoseek
+Icon=plus.ling.picoseek
+Terminal=false
+Categories=Science;MedicalSoftware;
+StartupWMClass=plus.ling.picoseek

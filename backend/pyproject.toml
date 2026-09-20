@@ -1,10 +1,10 @@
 [project]
-name = "yaoe-backend"
+name = "picoseek-backend"
 version = "0.1.0"
-description = "YAOpenEvidence REST/SSE 后端（FastAPI + arq worker）"
+description = "PicoSeek REST/SSE 后端（FastAPI + arq worker）"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-  "picosgpt-core[embed,paywall]",
+  "picoseek-core[embed,paywall]",
   "fastapi>=0.115",
   "uvicorn[standard]>=0.30",
   "pydantic>=2.7",
@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [project.scripts]
-yaoe = "app.cli:main"
+picoseek = "app.cli:main"
 
 [build-system]
 requires = ["hatchling"]

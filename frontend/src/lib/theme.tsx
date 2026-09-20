@@ -17,7 +17,7 @@ const Context = createContext<{
 } | null>(null)
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('yaoe.theme')
+    const saved = localStorage.getItem('picoseek.theme')
     return saved === 'light' || saved === 'dark' ? saved : 'system'
   })
   const [systemDark, setSystemDark] = useState(
@@ -39,7 +39,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         .querySelector('meta[name="theme-color"]')
         ?.setAttribute('content', THEME_COLOR[resolved])
     }
-    localStorage.setItem('yaoe.theme', theme)
+    localStorage.setItem('picoseek.theme', theme)
     // 仅在明暗真正切换时做视图过渡；首帧与同色重渲染直接落地，避免无谓的整页快照。
     const changed =
       lastResolved.current !== null && lastResolved.current !== resolved

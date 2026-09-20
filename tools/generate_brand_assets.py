@@ -167,7 +167,7 @@ def main() -> None:
     for name, size in [("apple-touch-icon", 180), ("icon-192", 192), ("icon-512", 512)]:
         save_png(f"{web}/{name}.png", light_icon, size, opaque=True)
 
-    apple = "apple/YAOpenEvidence/Resources/Assets.xcassets"
+    apple = "apple/PicoSeek/Resources/Assets.xcassets"
     for name, svg in [("light", light_svg), ("dark", dark_svg)]:
         for suffix, size in [("", 256), ("@2x", 512), ("@3x", 768)]:
             save_png(f"{apple}/BrandLogo.imageset/logo-{name}{suffix}.png", svg, size)

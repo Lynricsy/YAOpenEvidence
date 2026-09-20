@@ -14,7 +14,7 @@ COPY conftest.py ./
 FROM base AS runtime
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --all-packages --no-dev
 # CODEX_HOME 落在挂载卷里：codex 会话与登录态要跨容器重启存活（provider/MCP 走内联配置，不读 config.toml）
-ENV PATH=/app/.venv/bin:$PATH PICOSGPT_DATA=/data PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+ENV PATH=/app/.venv/bin:$PATH PICOSEEK_DATA=/data PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     CODEX_HOME=/data/var/codex
 # 机构订阅取全文与 SCImago 分区表下载都要真浏览器；缺它这两条路径只能报 fulltext_unavailable
 RUN playwright install --with-deps chromium
@@ -22,10 +22,10 @@ RUN playwright install --with-deps chromium
 RUN apt-get update && apt-get install -y --no-install-recommends fonts-noto-cjk fonts-inter \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/backend
-CMD ["yaoe", "serve", "--host", "0.0.0.0", "--port", "8765"]
+CMD ["picoseek", "serve", "--host", "0.0.0.0", "--port", "8765"]
 
 FROM base AS test
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --all-packages
-ENV PATH=/app/.venv/bin:$PATH PICOSGPT_DATA=/data
+ENV PATH=/app/.venv/bin:$PATH PICOSEEK_DATA=/data
 WORKDIR /app
 CMD ["pytest", "-q"]

@@ -18,13 +18,13 @@ class AskHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final wide = MediaQuery.sizeOf(context).width >= YaoeTokens.compactMaxWidth;
+    final wide = MediaQuery.sizeOf(context).width >= PicoSeekTokens.compactMaxWidth;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const BrandLogo(size: 40, semanticLabel: 'YAOpenEvidence'),
-        const SizedBox(height: YaoeTokens.space3),
+        const BrandLogo(size: 40, semanticLabel: 'PicoSeek'),
+        const SizedBox(height: PicoSeekTokens.space3),
         Text(
           '请提出您的临床或科研问题',
           style:
@@ -33,7 +33,7 @@ class AskHero extends StatelessWidget {
                       : theme.textTheme.headlineMedium)
                   ?.copyWith(height: 1.2),
         ),
-        const SizedBox(height: YaoeTokens.space2),
+        const SizedBox(height: PicoSeekTokens.space2),
         Text(
           '从 PubMed / Europe PMC 检索并逐篇核实，生成可回溯到原文段落的循证综述。',
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -64,11 +64,11 @@ class AskExamples extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: YaoeTokens.space2),
+        const SizedBox(height: PicoSeekTokens.space2),
         for (final example in askExamples)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2 + 2),
-            child: YaoeCard(
+            padding: const EdgeInsets.only(bottom: PicoSeekTokens.space2 + 2),
+            child: PicoSeekCard(
               onTap: () => onExample(example),
               child: Row(
                 children: [

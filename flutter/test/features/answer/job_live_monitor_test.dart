@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:yaopenevidence/core/api/api_client.dart';
-import 'package:yaopenevidence/core/logic/job_live.dart';
-import 'package:yaopenevidence/core/session/session_controller.dart';
-import 'package:yaopenevidence/features/answer/job_live_monitor.dart';
+import 'package:picoseek/core/api/api_client.dart';
+import 'package:picoseek/core/logic/job_live.dart';
+import 'package:picoseek/core/session/session_controller.dart';
+import 'package:picoseek/features/answer/job_live_monitor.dart';
 
 /// 记录每次事件流请求发生的时刻，用于校验退避节奏。
 class _Recorder {

@@ -35,10 +35,10 @@ class SourceList extends StatelessWidget {
           module: AnswerModule.sources,
           count: '${papers.length} 篇',
         ),
-        const SizedBox(height: YaoeTokens.space4),
+        const SizedBox(height: PicoSeekTokens.space4),
         for (final paper in papers)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
+            padding: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
             child: SourceCard(
               paper: paper,
               markerCount: counts[paper.n] ?? 0,
@@ -65,9 +65,9 @@ class SourceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return YaoeCard(
+    return PicoSeekCard(
       onTap: onOpen,
-      padding: const EdgeInsets.all(YaoeTokens.space3),
+      padding: const EdgeInsets.all(PicoSeekTokens.space3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -75,7 +75,7 @@ class SourceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CitationSquare(n: paper.n),
-              const SizedBox(width: YaoeTokens.space3),
+              const SizedBox(width: PicoSeekTokens.space3),
               Expanded(
                 child: Text(
                   paper.title.isEmpty ? '（无标题）' : paper.title,
@@ -84,7 +84,7 @@ class SourceCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Text(
             [
               paper.journal,
@@ -94,10 +94,10 @@ class SourceCard extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Wrap(
-            spacing: YaoeTokens.space2,
-            runSpacing: YaoeTokens.space1,
+            spacing: PicoSeekTokens.space2,
+            runSpacing: PicoSeekTokens.space1,
             children: [
               RankBadge(quartile: paper.quartile, label: paper.rankLabel),
               SourceBadge(source: paper.source),
@@ -105,8 +105,8 @@ class SourceCard extends StatelessWidget {
                 Pill(
                   text: '已核实 ${paper.nCitationsVerified}/${paper.nCitations}',
                   color: paper.nCitationsVerified == paper.nCitations
-                      ? context.yaoe.success
-                      : context.yaoe.warning,
+                      ? context.picoseek.success
+                      : context.picoseek.warning,
                 ),
               if (markerCount > 0)
                 Pill(
@@ -115,12 +115,12 @@ class SourceCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Row(
             children: [
               Expanded(
                 child: Wrap(
-                  spacing: YaoeTokens.space3,
+                  spacing: PicoSeekTokens.space3,
                   children: [
                     MonoLabel(label: 'PMID', value: paper.pmid),
                     MonoLabel(label: 'DOI', value: paper.doi),
@@ -154,12 +154,12 @@ class KbSupplementList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeading(module: AnswerModule.kb, count: '${hits.length} 条'),
-        const SizedBox(height: YaoeTokens.space4),
+        const SizedBox(height: PicoSeekTokens.space4),
         for (final hit in hits)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space3),
-            child: YaoeCard(
-              padding: const EdgeInsets.all(YaoeTokens.space3),
+            padding: const EdgeInsets.only(bottom: PicoSeekTokens.space3),
+            child: PicoSeekCard(
+              padding: const EdgeInsets.all(PicoSeekTokens.space3),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -169,21 +169,21 @@ class KbSupplementList extends StatelessWidget {
                         text: hit.kind.label,
                         color: theme.colorScheme.primary,
                       ),
-                      const SizedBox(width: YaoeTokens.space2),
+                      const SizedBox(width: PicoSeekTokens.space2),
                       if (hit.verified != null)
                         VerifiedPill(verified: hit.verified!),
                     ],
                   ),
-                  const SizedBox(height: YaoeTokens.space2),
+                  const SizedBox(height: PicoSeekTokens.space2),
                   Text(
                     hit.textZh ?? hit.text,
                     style: theme.textTheme.bodySmall,
                   ),
                   if ((hit.quote ?? '').isNotEmpty) ...[
-                    const SizedBox(height: YaoeTokens.space2),
+                    const SizedBox(height: PicoSeekTokens.space2),
                     QuoteHighlight(quote: hit.quote!, maxLines: 3),
                   ],
-                  const SizedBox(height: YaoeTokens.space2),
+                  const SizedBox(height: PicoSeekTokens.space2),
                   Text(
                     [
                       hit.title,

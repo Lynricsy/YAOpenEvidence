@@ -7,8 +7,8 @@ import '../../app/theme/tokens.dart';
 /// 内容卡片：圆角 16、无描边、柔和阴影（对齐 iOS `Surface.swift` 的 `card()`）。
 ///
 /// 可点按时 `Material` 位于 `InkWell` 之上，水波不会被卡片底色遮住。
-class YaoeCard extends StatelessWidget {
-  const YaoeCard({
+class PicoSeekCard extends StatelessWidget {
+  const PicoSeekCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(14),
@@ -24,7 +24,7 @@ class YaoeCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
-  /// 底色，默认 `context.yaoe.card`。
+  /// 底色，默认 `context.picoseek.card`。
   final Color? color;
 
   /// 语义色提示卡：底色与描边取自该色的低透明度版本，且不带阴影。
@@ -37,11 +37,11 @@ class YaoeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tint = this.tint;
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(YaoeTokens.radiusCard),
+      borderRadius: BorderRadius.circular(PicoSeekTokens.radiusCard),
       side: tint == null
           ? BorderSide.none
           : BorderSide(
-              color: tint.withValues(alpha: YaoeTokens.tintBorderAlpha),
+              color: tint.withValues(alpha: PicoSeekTokens.tintBorderAlpha),
             ),
     );
     final content = Padding(padding: padding, child: child);
@@ -49,14 +49,14 @@ class YaoeCard extends StatelessWidget {
       decoration: ShapeDecoration(
         shape: shape,
         shadows: (elevated && tint == null)
-            ? context.yaoe.cardShadow
+            ? context.picoseek.cardShadow
             : const [],
       ),
       child: Material(
         color:
-            tint?.withValues(alpha: YaoeTokens.tintFillAlpha) ??
+            tint?.withValues(alpha: PicoSeekTokens.tintFillAlpha) ??
             color ??
-            context.yaoe.card,
+            context.picoseek.card,
         shape: shape,
         clipBehavior: Clip.antiAlias,
         child: (onTap == null && onLongPress == null)
@@ -72,7 +72,7 @@ class GlassPanel extends StatelessWidget {
   const GlassPanel({
     super.key,
     required this.child,
-    this.radius = YaoeTokens.radiusComposer,
+    this.radius = PicoSeekTokens.radiusComposer,
     this.padding = EdgeInsets.zero,
     this.shadow = true,
   });
@@ -86,8 +86,8 @@ class GlassPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final alpha = theme.brightness == Brightness.dark
-        ? YaoeTokens.glassAlphaDark
-        : YaoeTokens.glassAlphaLight;
+        ? PicoSeekTokens.glassAlphaDark
+        : PicoSeekTokens.glassAlphaLight;
     final borderRadius = BorderRadius.circular(radius);
     return DecoratedBox(
       decoration: ShapeDecoration(
@@ -97,17 +97,17 @@ class GlassPanel extends StatelessWidget {
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
           ),
         ),
-        shadows: shadow ? context.yaoe.floatShadow : const [],
+        shadows: shadow ? context.picoseek.floatShadow : const [],
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: YaoeTokens.glassBlur,
-            sigmaY: YaoeTokens.glassBlur,
+            sigmaX: PicoSeekTokens.glassBlur,
+            sigmaY: PicoSeekTokens.glassBlur,
           ),
           child: ColoredBox(
-            color: context.yaoe.card.withValues(alpha: alpha),
+            color: context.picoseek.card.withValues(alpha: alpha),
             child: Material(
               type: MaterialType.transparency,
               child: Padding(padding: padding, child: child),
@@ -127,5 +127,5 @@ class FilterGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      YaoeCard(padding: const EdgeInsets.all(14), child: child);
+      PicoSeekCard(padding: const EdgeInsets.all(14), child: child);
 }

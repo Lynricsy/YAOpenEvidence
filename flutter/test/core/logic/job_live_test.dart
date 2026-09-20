@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/api/sse.dart';
-import 'package:yaopenevidence/core/logic/job_live.dart';
-import 'package:yaopenevidence/core/models/tool_call.dart';
+import 'package:picoseek/core/api/sse.dart';
+import 'package:picoseek/core/logic/job_live.dart';
+import 'package:picoseek/core/models/tool_call.dart';
 
 SseEvent event(String name, String json) => SseEvent(event: name, data: json);
 

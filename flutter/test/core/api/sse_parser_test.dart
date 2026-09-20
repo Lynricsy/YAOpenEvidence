@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/api/sse.dart';
+import 'package:picoseek/core/api/sse.dart';
 
 /// 把完整的 SSE 报文整块喂进解析器。
 List<SseEvent> parse(String stream) {

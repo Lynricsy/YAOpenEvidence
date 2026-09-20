@@ -71,8 +71,8 @@ def test_highlight_skips_overlapping_and_repeated_quotes():
 
 def test_export_filename_sanitizes_and_truncates():
     ascii_name, utf8_name = export_filename(_row(question='a/b:c?*"<>|  d'))
-    assert utf8_name.startswith("YAOpenEvidence-") and utf8_name.endswith("-a b c d.pdf")
-    assert ascii_name == "YAOpenEvidence-a1.pdf"
+    assert utf8_name.startswith("PicoSeek-") and utf8_name.endswith("-a b c d.pdf")
+    assert ascii_name == "PicoSeek-a1.pdf"
 
     long_name = export_filename(_row(question="问" * 50))[1]
     assert long_name.endswith("-" + "问" * 40 + ".pdf")
@@ -100,7 +100,7 @@ def test_pdf_endpoint_serves_an_attachment_to_the_owner(client, monkeypatch):
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("application/pdf")
     assert r.content.startswith(b"%PDF-")
-    assert "filename*=UTF-8''YAOpenEvidence-" in r.headers["content-disposition"]
+    assert "filename*=UTF-8''PicoSeek-" in r.headers["content-disposition"]
     assert r.headers["cache-control"] == "no-store"
 
 

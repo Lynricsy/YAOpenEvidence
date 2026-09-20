@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/logic/job_live.dart';
-import 'package:yaopenevidence/core/models/answers.dart';
-import 'package:yaopenevidence/core/models/jobs.dart';
-import 'package:yaopenevidence/features/kb/kb_controller.dart';
+import 'package:picoseek/core/logic/job_live.dart';
+import 'package:picoseek/core/models/answers.dart';
+import 'package:picoseek/core/models/jobs.dart';
+import 'package:picoseek/features/kb/kb_controller.dart';
 
 Job _job(JobStatus status, {Map<String, dynamic>? result, JobError? error}) =>
     Job(

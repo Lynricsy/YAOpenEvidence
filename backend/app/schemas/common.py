@@ -37,7 +37,7 @@ class Page(BaseModel, Generic[T]):
 class Problem(BaseModel):
     """RFC 9457 Problem Details。`code` 是稳定枚举，`detail` 仅供人读。"""
 
-    type: str = Field(examples=["urn:yaoe:error:not_found"])
+    type: str = Field(examples=["urn:picoseek:error:not_found"])
     title: str = Field(examples=["Not Found"])
     status: int = Field(examples=[404])
     detail: str = Field(examples=["answer 'abc' not found"])

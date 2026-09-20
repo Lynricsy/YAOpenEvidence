@@ -29,7 +29,7 @@ Page<T> _page<T>(Object? raw, T Function(Map<String, Object?>) fromJson) =>
     Page<T>.fromJson(_obj(raw), (e) => fromJson(e! as Map<String, Object?>));
 
 /// 后端每个端点一个方法。路径不含 `/v1`（由 [ApiClient] 拼接）。
-extension YaoeEndpoints on ApiClient {
+extension PicoSeekEndpoints on ApiClient {
   // MARK: 鉴权与账号
 
   Future<LoginResponse> login({

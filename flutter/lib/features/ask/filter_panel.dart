@@ -48,7 +48,7 @@ class FilterPanel extends ConsumerWidget {
         ),
         if (codex)
           Padding(
-            padding: const EdgeInsets.only(top: YaoeTokens.space2),
+            padding: const EdgeInsets.only(top: PicoSeekTokens.space2),
             child: Text(
               '智能体模式下，字符预算、知识库命中数与机构访问不生效；'
               '筛选条件会作为检索要求交给模型。',
@@ -57,9 +57,9 @@ class FilterPanel extends ConsumerWidget {
               ),
             ),
           ),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         FilterGroup(
-          child: YaoeYearPicker(
+          child: PicoSeekYearPicker(
             mode: filters.yearMode,
             years: filters.years,
             yearFrom: filters.yearFrom,
@@ -82,7 +82,7 @@ class FilterPanel extends ConsumerWidget {
                 : '结束年不得早于起始年',
           ),
         ),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         FilterGroup(
           child: QuartilePicker(
             quartiles: filters.quartiles,
@@ -97,7 +97,7 @@ class FilterPanel extends ConsumerWidget {
             warning: rankWarning,
           ),
         ),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         FilterGroup(
           child: JournalPicker(
             journals: filters.journals,
@@ -105,7 +105,7 @@ class FilterPanel extends ConsumerWidget {
                 controller.set(filters.copyWith(journals: journals)),
           ),
         ),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         FilterGroup(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +138,7 @@ class FilterPanel extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         FilterGroup(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,13 +196,13 @@ class FilterPanel extends ConsumerWidget {
           ),
         ),
         if (!codex) ...[
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           FilterGroup(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('单篇字符预算', style: theme.textTheme.labelLarge),
-                const SizedBox(height: YaoeTokens.space2),
+                const SizedBox(height: PicoSeekTokens.space2),
                 DropdownButtonFormField<int>(
                   initialValue:
                       AskFilters.maxCharsOptions.contains(filters.maxChars)
@@ -220,7 +220,7 @@ class FilterPanel extends ConsumerWidget {
                     filters.copyWith(maxChars: value ?? filters.maxChars),
                   ),
                 ),
-                const SizedBox(height: YaoeTokens.space2),
+                const SizedBox(height: PicoSeekTokens.space2),
                 Text(
                   '每篇全文送入模型的字数上限，越大越全但更慢',
                   style: theme.textTheme.labelSmall?.copyWith(
@@ -230,10 +230,10 @@ class FilterPanel extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           const FilterGroup(child: _PaywallRow()),
         ],
-        const SizedBox(height: YaoeTokens.space3),
+        const SizedBox(height: PicoSeekTokens.space3),
         Center(
           child: TextButton(
             onPressed: () => controller.reset(),
@@ -245,11 +245,11 @@ class FilterPanel extends ConsumerWidget {
 
     return scrollable
         ? SingleChildScrollView(
-            padding: const EdgeInsets.all(YaoeTokens.pageInset),
+            padding: const EdgeInsets.all(PicoSeekTokens.pageInset),
             child: content,
           )
         : Padding(
-            padding: const EdgeInsets.all(YaoeTokens.pageInset),
+            padding: const EdgeInsets.all(PicoSeekTokens.pageInset),
             child: content,
           );
   }
@@ -286,7 +286,7 @@ class _PaywallRow extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('机构访问', style: theme.textTheme.labelLarge),
-        const SizedBox(width: YaoeTokens.space3),
+        const SizedBox(width: PicoSeekTokens.space3),
         Expanded(
           child: Text(
             text,
@@ -311,7 +311,7 @@ class FilterColumn extends StatelessWidget {
     return Container(
       width: 320,
       decoration: BoxDecoration(
-        color: context.yaoe.sidebar,
+        color: context.picoseek.sidebar,
         border: Border(
           left: BorderSide(color: theme.colorScheme.outlineVariant),
         ),

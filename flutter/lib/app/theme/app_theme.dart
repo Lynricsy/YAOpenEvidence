@@ -31,38 +31,38 @@ ThemeData buildTheme(Brightness brightness) {
   final dark = brightness == Brightness.dark;
   final scheme =
       ColorScheme.fromSeed(
-        seedColor: dark ? YaoeTokens.primaryDark : YaoeTokens.primaryLight,
+        seedColor: dark ? PicoSeekTokens.primaryDark : PicoSeekTokens.primaryLight,
         brightness: brightness,
       ).copyWith(
-        primary: dark ? YaoeTokens.primaryDark : YaoeTokens.primaryLight,
-        onPrimary: dark ? YaoeTokens.onPrimaryDark : YaoeTokens.onPrimaryLight,
-        surface: dark ? YaoeTokens.surfaceDark : YaoeTokens.surfaceLight,
+        primary: dark ? PicoSeekTokens.primaryDark : PicoSeekTokens.primaryLight,
+        onPrimary: dark ? PicoSeekTokens.onPrimaryDark : PicoSeekTokens.onPrimaryLight,
+        surface: dark ? PicoSeekTokens.surfaceDark : PicoSeekTokens.surfaceLight,
         surfaceContainerLowest: dark
-            ? YaoeTokens.cardDark
-            : YaoeTokens.cardLight,
-        surfaceContainerLow: dark ? YaoeTokens.cardDark : YaoeTokens.cardLight,
+            ? PicoSeekTokens.cardDark
+            : PicoSeekTokens.cardLight,
+        surfaceContainerLow: dark ? PicoSeekTokens.cardDark : PicoSeekTokens.cardLight,
         surfaceContainer: dark
-            ? YaoeTokens.sidebarDark
-            : YaoeTokens.sidebarLight,
+            ? PicoSeekTokens.sidebarDark
+            : PicoSeekTokens.sidebarLight,
         surfaceContainerHigh: dark
-            ? YaoeTokens.mutedDark
-            : YaoeTokens.mutedLight,
+            ? PicoSeekTokens.mutedDark
+            : PicoSeekTokens.mutedLight,
         surfaceContainerHighest: dark
-            ? YaoeTokens.mutedDark
-            : YaoeTokens.mutedLight,
+            ? PicoSeekTokens.mutedDark
+            : PicoSeekTokens.mutedLight,
         onSurface: dark
-            ? YaoeTokens.foregroundDark
-            : YaoeTokens.foregroundLight,
+            ? PicoSeekTokens.foregroundDark
+            : PicoSeekTokens.foregroundLight,
         onSurfaceVariant:
-            (dark ? YaoeTokens.foregroundDark : YaoeTokens.foregroundLight)
+            (dark ? PicoSeekTokens.foregroundDark : PicoSeekTokens.foregroundLight)
                 .withValues(alpha: 0.68),
-        outlineVariant: dark ? YaoeTokens.borderDark : YaoeTokens.borderLight,
-        outline: (dark ? YaoeTokens.borderDark : YaoeTokens.borderLight),
-        error: dark ? YaoeTokens.errorDark : YaoeTokens.errorLight,
-        onError: dark ? YaoeTokens.onPrimaryDark : YaoeTokens.onPrimaryLight,
+        outlineVariant: dark ? PicoSeekTokens.borderDark : PicoSeekTokens.borderLight,
+        outline: (dark ? PicoSeekTokens.borderDark : PicoSeekTokens.borderLight),
+        error: dark ? PicoSeekTokens.errorDark : PicoSeekTokens.errorLight,
+        onError: dark ? PicoSeekTokens.onPrimaryDark : PicoSeekTokens.onPrimaryLight,
       );
 
-  final extension = dark ? YaoeColors.dark : YaoeColors.light;
+  final extension = dark ? PicoSeekColors.dark : PicoSeekColors.light;
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
   final text = _textTheme(base.textTheme, scheme);
 
@@ -100,15 +100,15 @@ ThemeData buildTheme(Brightness brightness) {
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusField),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusField),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusField),
         borderSide: BorderSide(color: scheme.primary, width: 1.6),
       ),
     ),
@@ -166,7 +166,7 @@ ThemeData buildTheme(Brightness brightness) {
         ),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusMenu),
+            borderRadius: BorderRadius.circular(PicoSeekTokens.radiusMenu),
             side: BorderSide(
               color: scheme.outlineVariant.withValues(alpha: 0.6),
             ),
@@ -191,7 +191,7 @@ ThemeData buildTheme(Brightness brightness) {
       elevation: 8,
       shadowColor: scheme.onSurface.withValues(alpha: 0.25),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusMenu),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusMenu),
         side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
       ),
       textStyle: text.bodyMedium,
@@ -203,7 +203,7 @@ ThemeData buildTheme(Brightness brightness) {
     ),
     listTileTheme: ListTileThemeData(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusField),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14),
     ),
@@ -216,7 +216,7 @@ ThemeData buildTheme(Brightness brightness) {
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: scheme.inverseSurface,
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusLg),
       ),
       textStyle: text.bodySmall?.copyWith(color: scheme.onInverseSurface),
     ),
@@ -227,14 +227,14 @@ ThemeData buildTheme(Brightness brightness) {
         color: scheme.onInverseSurface,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusField),
       ),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: extension.card,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusCard + 4),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusCard + 4),
       ),
     ),
     bottomSheetTheme: BottomSheetThemeData(
@@ -245,7 +245,7 @@ ThemeData buildTheme(Brightness brightness) {
       clipBehavior: Clip.antiAlias,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(YaoeTokens.radiusCard + 4),
+          top: Radius.circular(PicoSeekTokens.radiusCard + 4),
         ),
       ),
     ),
@@ -288,7 +288,7 @@ TextTheme _textTheme(TextTheme base, ColorScheme scheme) {
 /// 答案状态色。
 Color answerStatusColor(BuildContext context, AnswerStatus status) {
   final scheme = Theme.of(context).colorScheme;
-  final colors = context.yaoe;
+  final colors = context.picoseek;
   return switch (status) {
     AnswerStatus.queued => scheme.onSurfaceVariant,
     AnswerStatus.running => colors.info,
@@ -301,7 +301,7 @@ Color answerStatusColor(BuildContext context, AnswerStatus status) {
 /// 任务状态色（与答案状态一致的语义映射）。
 Color jobStatusColor(BuildContext context, JobStatus status) {
   final scheme = Theme.of(context).colorScheme;
-  final colors = context.yaoe;
+  final colors = context.picoseek;
   return switch (status) {
     JobStatus.queued => scheme.onSurfaceVariant,
     JobStatus.running => colors.info,

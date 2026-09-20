@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// 设计令牌：颜色取自 Web 端 OKLCH 令牌换算后的 sRGB 值，主色对齐 Apple 端 AccentColor。
-abstract final class YaoeTokens {
+abstract final class PicoSeekTokens {
   // 浅色
   static const primaryLight = Color(0xFF1F7583);
   static const onPrimaryLight = Color(0xFFFDFCF8);
@@ -107,8 +107,8 @@ abstract final class YaoeTokens {
 
 /// 主题扩展色：Material 3 配色方案里没有的语义色与分区色。
 @immutable
-class YaoeColors extends ThemeExtension<YaoeColors> {
-  const YaoeColors({
+class PicoSeekColors extends ThemeExtension<PicoSeekColors> {
+  const PicoSeekColors({
     required this.info,
     required this.success,
     required this.warning,
@@ -142,17 +142,17 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
   /// 悬浮层阴影（提问框等控件层）。
   final List<BoxShadow> floatShadow;
 
-  static const light = YaoeColors(
-    info: YaoeTokens.infoLight,
-    success: YaoeTokens.successLight,
-    warning: YaoeTokens.warningLight,
-    q1: YaoeTokens.q1Light,
-    q2: YaoeTokens.q2Light,
-    q3: YaoeTokens.q3Light,
-    q4: YaoeTokens.q4Light,
+  static const light = PicoSeekColors(
+    info: PicoSeekTokens.infoLight,
+    success: PicoSeekTokens.successLight,
+    warning: PicoSeekTokens.warningLight,
+    q1: PicoSeekTokens.q1Light,
+    q2: PicoSeekTokens.q2Light,
+    q3: PicoSeekTokens.q3Light,
+    q4: PicoSeekTokens.q4Light,
     highlight: Color(0x59FFD54F),
-    card: YaoeTokens.cardLight,
-    sidebar: YaoeTokens.sidebarLight,
+    card: PicoSeekTokens.cardLight,
+    sidebar: PicoSeekTokens.sidebarLight,
     cardShadow: [
       BoxShadow(color: Color(0x0A261D16), offset: Offset(0, 1), blurRadius: 2),
       BoxShadow(color: Color(0x0F261D16), offset: Offset(0, 4), blurRadius: 14),
@@ -167,17 +167,17 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     ],
   );
 
-  static const dark = YaoeColors(
-    info: YaoeTokens.infoDark,
-    success: YaoeTokens.successDark,
-    warning: YaoeTokens.warningDark,
-    q1: YaoeTokens.q1Dark,
-    q2: YaoeTokens.q2Dark,
-    q3: YaoeTokens.q3Dark,
-    q4: YaoeTokens.q4Dark,
+  static const dark = PicoSeekColors(
+    info: PicoSeekTokens.infoDark,
+    success: PicoSeekTokens.successDark,
+    warning: PicoSeekTokens.warningDark,
+    q1: PicoSeekTokens.q1Dark,
+    q2: PicoSeekTokens.q2Dark,
+    q3: PicoSeekTokens.q3Dark,
+    q4: PicoSeekTokens.q4Dark,
     highlight: Color(0x59B58900),
-    card: YaoeTokens.cardDark,
-    sidebar: YaoeTokens.sidebarDark,
+    card: PicoSeekTokens.cardDark,
+    sidebar: PicoSeekTokens.sidebarDark,
     cardShadow: [
       BoxShadow(color: Color(0x40000000), offset: Offset(0, 1), blurRadius: 2),
       BoxShadow(color: Color(0x4D000000), offset: Offset(0, 6), blurRadius: 18),
@@ -202,7 +202,7 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
   };
 
   @override
-  YaoeColors copyWith({
+  PicoSeekColors copyWith({
     Color? info,
     Color? success,
     Color? warning,
@@ -215,7 +215,7 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
     Color? sidebar,
     List<BoxShadow>? cardShadow,
     List<BoxShadow>? floatShadow,
-  }) => YaoeColors(
+  }) => PicoSeekColors(
     info: info ?? this.info,
     success: success ?? this.success,
     warning: warning ?? this.warning,
@@ -231,9 +231,9 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
   );
 
   @override
-  YaoeColors lerp(YaoeColors? other, double t) {
+  PicoSeekColors lerp(PicoSeekColors? other, double t) {
     if (other == null) return this;
-    return YaoeColors(
+    return PicoSeekColors(
       info: Color.lerp(info, other.info, t)!,
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
@@ -251,7 +251,7 @@ class YaoeColors extends ThemeExtension<YaoeColors> {
 }
 
 /// 便捷取扩展色。
-extension YaoeColorsOf on BuildContext {
-  YaoeColors get yaoe =>
-      Theme.of(this).extension<YaoeColors>() ?? YaoeColors.light;
+extension PicoSeekColorsOf on BuildContext {
+  PicoSeekColors get picoseek =>
+      Theme.of(this).extension<PicoSeekColors>() ?? PicoSeekColors.light;
 }

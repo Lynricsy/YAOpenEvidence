@@ -81,13 +81,13 @@ class _FulltextSheetState extends ConsumerState<_FulltextSheet> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(YaoeTokens.space4),
+                padding: const EdgeInsets.all(PicoSeekTokens.space4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Wrap(
-                      spacing: YaoeTokens.space2,
-                      runSpacing: YaoeTokens.space2,
+                      spacing: PicoSeekTokens.space2,
+                      runSpacing: PicoSeekTokens.space2,
                       children: [
                         ChoiceChip(
                           label: const Text('目录与摘要'),
@@ -107,7 +107,7 @@ class _FulltextSheetState extends ConsumerState<_FulltextSheet> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: YaoeTokens.space4),
+                    const SizedBox(height: PicoSeekTokens.space4),
                     if (error is ApiError &&
                         error.code == 'fulltext_unavailable')
                       const EmptyState(
@@ -130,7 +130,7 @@ class _FulltextSheetState extends ConsumerState<_FulltextSheet> {
                                   result.citation,
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
-                                const SizedBox(height: YaoeTokens.space3),
+                                const SizedBox(height: PicoSeekTokens.space3),
                               ],
                               if (text.trim().isEmpty)
                                 EmptyState(
@@ -142,10 +142,10 @@ class _FulltextSheetState extends ConsumerState<_FulltextSheet> {
                                   blocks: parseMarkdown(text),
                                 ),
                               if (result.truncated) ...[
-                                const SizedBox(height: YaoeTokens.space4),
+                                const SizedBox(height: PicoSeekTokens.space4),
                                 Text(
                                   '内容过长，已截取前半部分',
-                                  style: TextStyle(color: context.yaoe.warning),
+                                  style: TextStyle(color: context.picoseek.warning),
                                 ),
                               ],
                             ],

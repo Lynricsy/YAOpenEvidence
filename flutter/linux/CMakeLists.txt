@@ -4,10 +4,10 @@ project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "yaopenevidence")
+set(BINARY_NAME "picoseek")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "plus.ling.yaopenevidence")
+set(APPLICATION_ID "plus.ling.picoseek")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -98,11 +98,11 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
   COMPONENT Runtime)
 
 # 随 bundle 提供桌面集成资源，供系统打包安装到 applications 与图标主题目录。
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/plus.ling.yaopenevidence.desktop"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/plus.ling.picoseek.desktop"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications" COMPONENT Runtime)
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/brand/app-icon.png"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/512x512/apps"
-  RENAME "plus.ling.yaopenevidence.png" COMPONENT Runtime)
+  RENAME "plus.ling.picoseek.png" COMPONENT Runtime)
 
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)

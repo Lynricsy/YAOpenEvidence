@@ -93,7 +93,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const PageHeader(title: '账号'),
-            YaoeCard(
+            PicoSeekCard(
               child: Row(
                 children: [
                   Expanded(
@@ -109,8 +109,8 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 ],
               ),
             ),
-            const SizedBox(height: YaoeTokens.sectionSpacing),
-            YaoeCard(
+            const SizedBox(height: PicoSeekTokens.sectionSpacing),
+            PicoSeekCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -120,7 +120,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: YaoeTokens.space1),
+                  const SizedBox(height: PicoSeekTokens.space1),
                   SelectableText(
                     hostPort,
                     style: theme.textTheme.bodyMedium?.merge(monoStyle),
@@ -128,13 +128,13 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 ],
               ),
             ),
-            const SizedBox(height: YaoeTokens.sectionSpacing),
-            YaoeCard(
+            const SizedBox(height: PicoSeekTokens.sectionSpacing),
+            PicoSeekCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text('外观', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   SegmentedButton<ThemeMode>(
                     showSelectedIcon: false,
                     segments: const [
@@ -155,35 +155,35 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 ],
               ),
             ),
-            const SizedBox(height: YaoeTokens.sectionSpacing),
-            YaoeCard(
+            const SizedBox(height: PicoSeekTokens.sectionSpacing),
+            PicoSeekCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (insecure) ...[
-                    YaoeCard(
-                      tint: context.yaoe.warning,
-                      padding: const EdgeInsets.all(YaoeTokens.space3),
+                    PicoSeekCard(
+                      tint: context.picoseek.warning,
+                      padding: const EdgeInsets.all(PicoSeekTokens.space3),
                       child: Row(
                         children: [
                           Icon(
                             Icons.warning_amber_outlined,
-                            color: context.yaoe.warning,
+                            color: context.picoseek.warning,
                           ),
-                          const SizedBox(width: YaoeTokens.space2),
+                          const SizedBox(width: PicoSeekTokens.space2),
                           Expanded(
                             child: Text(
                               '当前平台无安全存储，令牌以明文保存',
-                              style: TextStyle(color: context.yaoe.warning),
+                              style: TextStyle(color: context.picoseek.warning),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: YaoeTokens.space3),
+                    const SizedBox(height: PicoSeekTokens.space3),
                   ],
                   Text('修改密码', style: theme.textTheme.labelLarge),
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   Form(
                     key: _form,
                     child: Column(
@@ -199,7 +199,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                           validator: (value) =>
                               value == null || value.isEmpty ? '请输入当前密码' : null,
                         ),
-                        const SizedBox(height: YaoeTokens.space3),
+                        const SizedBox(height: PicoSeekTokens.space3),
                         TextFormField(
                           controller: _password,
                           enabled: !_busy,
@@ -214,7 +214,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                               ? '密码须为 12–128 个字符'
                               : null,
                         ),
-                        const SizedBox(height: YaoeTokens.space3),
+                        const SizedBox(height: PicoSeekTokens.space3),
                         TextFormField(
                           controller: _confirmation,
                           enabled: !_busy,
@@ -229,13 +229,13 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                           },
                         ),
                         if (_error != null) ...[
-                          const SizedBox(height: YaoeTokens.space2),
+                          const SizedBox(height: PicoSeekTokens.space2),
                           Text(
                             _error!,
                             style: TextStyle(color: theme.colorScheme.error),
                           ),
                         ],
-                        const SizedBox(height: YaoeTokens.space3),
+                        const SizedBox(height: PicoSeekTokens.space3),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: FilledButton.icon(
@@ -250,7 +250,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 ],
               ),
             ),
-            const SizedBox(height: YaoeTokens.sectionSpacing),
+            const SizedBox(height: PicoSeekTokens.sectionSpacing),
             Center(
               child: FilledButton.tonalIcon(
                 onPressed: _busy ? null : _logout,
@@ -261,7 +261,7 @@ class _AccountPageState extends ConsumerState<AccountPage> {
                 label: const Text('退出登录'),
               ),
             ),
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             Text(
               '本应用输出仅供医学专业人员参考，不构成诊疗建议。',
               textAlign: TextAlign.center,

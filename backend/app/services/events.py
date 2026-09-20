@@ -23,11 +23,11 @@ TERMINAL = frozenset({"succeeded", "failed", "cancelled"})
 
 
 def stream_key(job_id: str) -> str:
-    return f"yaoe:job:{job_id}:events"
+    return f"picoseek:job:{job_id}:events"
 
 
 def cancel_key(job_id: str) -> str:
-    return f"yaoe:job:{job_id}:cancel"
+    return f"picoseek:job:{job_id}:cancel"
 
 
 def publish(r: redis.Redis, job_id: str, event: dict, *, maxlen: int, ttl_s: int) -> str:

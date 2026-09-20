@@ -2,7 +2,7 @@
 
 启动时把「进程级、创建代价高」的东西一次性建好挂到 app.state：
 arq 连接池、Redis 客户端、KB 服务、期刊分区表。请求路径上只取用，不新建。
-迁移不在启动时自动跑（多副本会打架），用 `yaoe migrate`。
+迁移不在启动时自动跑（多副本会打架），用 `picoseek migrate`。
 """
 from __future__ import annotations
 
@@ -21,10 +21,10 @@ from .routers import answers, auth, health, jobs, journals, kb, literature, pape
 from .schemas.common import Problem
 from .schemas.events import event_schemas
 
-logger = logging.getLogger("yaoe")
+logger = logging.getLogger("picoseek")
 
 DESCRIPTION = """\
-YAOpenEvidence 医学文献证据问答 API。
+PicoSeek 医学文献证据问答 API。
 
 - 问答任务异步执行：`POST /v1/answers` 返回 202，进度走 `GET /v1/jobs/{id}/events`（SSE）
 - 鉴权：管理员创建账号，登录后使用 `Authorization: Bearer <access_token>`（包括 SSE）
@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="YAOpenEvidence API",
+        title="PicoSeek API",
         version=__version__,
         description=DESCRIPTION,
         openapi_url="/v1/openapi.json",

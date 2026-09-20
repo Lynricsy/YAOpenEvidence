@@ -150,11 +150,11 @@ export function describeFilters(f: FilterState): string {
 }
 export function loadFilters(): FilterState {
   try {
-    return normalize(JSON.parse(localStorage.getItem('yaoe.filters') ?? '{}'))
+    return normalize(JSON.parse(localStorage.getItem('picoseek.filters') ?? '{}'))
   } catch {
     return { ...DEFAULT_FILTERS }
   }
 }
 export function saveFilters(f: FilterState) {
-  localStorage.setItem('yaoe.filters', JSON.stringify(f))
+  localStorage.setItem('picoseek.filters', JSON.stringify(f))
 }

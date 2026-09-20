@@ -1,5 +1,5 @@
-name: yaopenevidence
-description: "YAOpenEvidence 移动/桌面客户端：基于文献证据的临床问答。"
+name: picoseek
+description: "PicoSeek 移动/桌面客户端：基于文献证据的临床问答。"
 publish_to: 'none'
 version: 1.0.0+1
 

@@ -1,6 +1,6 @@
 本文是 CLI 内核的详细文档；项目整体定位、HTTP API 与部署见仓库根目录的 [README](../README.md)，协议见 [API 文档](../docs/api.md)。
 
-# PICOSGpt — 本地大模型医学文献问答 Demo
+# PicoSeek — 本地大模型医学文献问答 Demo
 
 **问一个临床问题 → 自动检索 PubMed / Europe PMC → 下载全文 → 模型逐篇阅读 → 输出带编号引用、可核对的答案。**
 全程在本地 GPU 上运行（Qwen3-14B），不依赖任何云端大模型。
@@ -19,9 +19,9 @@ Codex CLI ──(Responses API)──> LiteLLM :4000 ──> vLLM :8000
 
 ```bash
 cd <项目根>              # 本仓库为 core/
-./PICOSGpt start          # 启动 vLLM + LiteLLM（tmux 后台，模型加载约 1–3 分钟）
-./PICOSGpt status         # 等到 vLLM 和 LiteLLM 都列出模型名
-./PICOSGpt ask "SGLT2抑制剂对HFpEF患者有什么获益？"
+./PicoSeek start          # 启动 vLLM + LiteLLM（tmux 后台，模型加载约 1–3 分钟）
+./PicoSeek status         # 等到 vLLM 和 LiteLLM 都列出模型名
+./PicoSeek ask "SGLT2抑制剂对HFpEF患者有什么获益？"
 ```
 
 约 2–4 分钟后终端打印答案，并保存到 `answers/<时间戳>.md`。答案结构：
@@ -35,29 +35,29 @@ cd <项目根>              # 本仓库为 core/
 
 常用参数：
 ```bash
-./PICOSGpt ask --papers 12 "..."      # 多读几篇（默认 8 篇）
-./PICOSGpt ask --no-paywall "..."     # 不使用机构订阅下载
-./PICOSGpt ask --no-kb "..."          # 不做原子知识抽取 / 向量入库（更快）
-./PICOSGpt stop                       # 演示结束后停止服务
+./PicoSeek ask --papers 12 "..."      # 多读几篇（默认 8 篇）
+./PicoSeek ask --no-paywall "..."     # 不使用机构订阅下载
+./PicoSeek ask --no-kb "..."          # 不做原子知识抽取 / 向量入库（更快）
+./PicoSeek stop                       # 演示结束后停止服务
 ```
 
 ### 1.1 文献筛选（类 Google Scholar）
 
 ```bash
-./PICOSGpt ask --years 3 "..."                       # 近三年
-./PICOSGpt ask --year 2018-2023 "..."                # 自定义年份区间（或单年 --year 2022）
-./PICOSGpt ask --quartile Q1,Q2 "..."                # 只要一区/二区期刊（也可写 --zone 1-3、"一区,二区"）
-./PICOSGpt ask --journal "Nature,Lancet,JAMA" "..."  # 期刊名包含关键字（Nature 子刊 = Nature Medicine 等都会命中）
-./PICOSGpt ask --years 3 --quartile 1-2 --journal Nature "..."   # 可组合
-./PICOSGpt ask --quartile Q1 --keep-unranked "..."   # 分区表里查不到的期刊也保留（默认丢弃）
+./PicoSeek ask --years 3 "..."                       # 近三年
+./PicoSeek ask --year 2018-2023 "..."                # 自定义年份区间（或单年 --year 2022）
+./PicoSeek ask --quartile Q1,Q2 "..."                # 只要一区/二区期刊（也可写 --zone 1-3、"一区,二区"）
+./PicoSeek ask --journal "Nature,Lancet,JAMA" "..."  # 期刊名包含关键字（Nature 子刊 = Nature Medicine 等都会命中）
+./PicoSeek ask --years 3 --quartile 1-2 --journal Nature "..."   # 可组合
+./PicoSeek ask --quartile Q1 --keep-unranked "..."   # 分区表里查不到的期刊也保留（默认丢弃）
 ```
 
 - 分区数据来自 `data/journal_ranks/scimagojr_<年>.csv`（SCImago SJR Best Quartile，Q1–Q4 ≈ 一区–四区），
-  按 ISSN 匹配、刊名兜底。更新：`./PICOSGpt rank download 2025`；查询：`./PICOSGpt rank lookup "Lancet"`。
+  按 ISSN 匹配、刊名兜底。更新：`./PicoSeek rank download 2025`；查询：`./PicoSeek rank lookup "Lancet"`。
 - 要用**中科院分区**：把分区表导出的 CSV 放到 `data/journal_ranks/cas_2025.csv`（需含 ISSN 或刊名列 + 含“分区”的列，
   Top 列可选），会自动加载并覆盖 SCImago 的结果。
 - 分区表按文件签名（文件名 / mtime / 大小）热重载：换表或新表落盘后，长驻进程（API、worker）在下一次 `journal_rank.load()` /
-  `lookup()` 时自动感知，不用重启。`./PICOSGpt rank stats` 打印当前加载了哪几张表与索引规模。
+  `lookup()` 时自动感知，不用重启。`./PicoSeek rank stats` 打印当前加载了哪几张表与索引规模。
 - 筛选时会自动扩大候选池（每条 query 取 30+25 条）再过滤，日志里能看到各条件淘汰了多少篇。
 - 答案开头与每条参考文献都标注分区，如 `〔Q1 SJR 6.90〕`。
 
@@ -80,34 +80,34 @@ cd <项目根>              # 本仓库为 core/
 
 索引保存为单个 `kb/index.npz` 快照，旧三文件索引会在下次入库时迁移。CLI 与 HTTP worker 共用 `kb.lock`，串行执行增量写入和重建；重建期间检索仍可读取完整的旧代。共享目录与文件锁的部署要求见[项目说明](../README.md#cli-与-api-共存)。
 
-本机 `PICOSGpt ask` 保持同步抽取与入库。通过 API 执行的 `ask` 则先交付答案，另建持久的 `answer_kb` 任务后台入库，不让事实抽取与嵌入计算阻塞答案阅读；关闭 `use_kb` 时不会创建该任务。后台依赖逐篇原文快照、事实检查点与数据库游标恢复，不会在重试时重写已经交付的答案，详见[项目架构说明](../README.md#架构)。
+本机 `PicoSeek ask` 保持同步抽取与入库。通过 API 执行的 `ask` 则先交付答案，另建持久的 `answer_kb` 任务后台入库，不让事实抽取与嵌入计算阻塞答案阅读；关闭 `use_kb` 时不会创建该任务。后台依赖逐篇原文快照、事实检查点与数据库游标恢复，不会在重试时重写已经交付的答案，详见[项目架构说明](../README.md#架构)。
 
 ```bash
-./PICOSGpt kb search "SGLT2 HFpEF 心衰住院"     # 语义检索（中英文均可）
-./PICOSGpt kb search "..." --kind paragraph      # 只搜原文段落
-./PICOSGpt kb stats / reindex                    # 统计 / 从 library/ 重建索引
-./PICOSGpt ask --kb-hits 5 "..."                 # 答案末尾附上知识库中相关的旧事实
+./PicoSeek kb search "SGLT2 HFpEF 心衰住院"     # 语义检索（中英文均可）
+./PicoSeek kb search "..." --kind paragraph      # 只搜原文段落
+./PicoSeek kb stats / reindex                    # 统计 / 从 library/ 重建索引
+./PicoSeek ask --kb-hits 5 "..."                 # 答案末尾附上知识库中相关的旧事实
 ```
 Codex 模式下对应工具：`kb_search`。
 
-## 2. 命令一览（`./PICOSGpt help`）
+## 2. 命令一览（`./PicoSeek help`）
 
 | 命令 | 作用 |
 |---|---|
-| `./PICOSGpt start [14b\|4b] [GPU]` | 启动 vLLM + LiteLLM，默认 Qwen3-14B 在 GPU 2；显存紧张用 `./PICOSGpt start 4b 1` |
-| `./PICOSGpt stop` / `status` / `logs` | 停止 / 查看状态 / 打开 tmux 看服务日志 |
-| `./PICOSGpt ask "问题"` | **一键流水线**（推荐演示用，每次都真实检索 + 读全文，结果确定） |
-| `./PICOSGpt codex ["问题"]` | Codex 交互式 agent：模型自己决定调哪些工具，适合追问（"把 [2] 的摘要贴出来"、"读一下 [3] 的 Results"） |
-| `./PICOSGpt paywall get DOI` | 用机构订阅登录态下载付费墙全文到 `pdfs/` |
-| `./PICOSGpt verify` | 核对最近一次 Codex 回答里的 PMID/DOI 是否都来自工具返回（防编造） |
-| `./PICOSGpt test` | 不经过模型，直接测试检索工具是否可用 |
+| `./PicoSeek start [14b\|4b] [GPU]` | 启动 vLLM + LiteLLM，默认 Qwen3-14B 在 GPU 2；显存紧张用 `./PicoSeek start 4b 1` |
+| `./PicoSeek stop` / `status` / `logs` | 停止 / 查看状态 / 打开 tmux 看服务日志 |
+| `./PicoSeek ask "问题"` | **一键流水线**（推荐演示用，每次都真实检索 + 读全文，结果确定） |
+| `./PicoSeek codex ["问题"]` | Codex 交互式 agent：模型自己决定调哪些工具，适合追问（"把 [2] 的摘要贴出来"、"读一下 [3] 的 Results"） |
+| `./PicoSeek paywall get DOI` | 用机构订阅登录态下载付费墙全文到 `pdfs/` |
+| `./PicoSeek verify` | 核对最近一次 Codex 回答里的 PMID/DOI 是否都来自工具返回（防编造） |
+| `./PicoSeek test` | 不经过模型，直接测试检索工具是否可用 |
 
 ## 3. 目录结构
 
 ```
-PICOSGpt/
-├── PICOSGpt                      统一入口脚本（上表所有命令）
-├── scripts/                 由 PICOSGpt start 调用的底层启动脚本
+PicoSeek/
+├── PicoSeek                      统一入口脚本（上表所有命令）
+├── scripts/                 由 PicoSeek start 调用的底层启动脚本
 │   ├── vllm.sh                vLLM 服务（:8000）
 │   └── litellm.sh             LiteLLM 代理（:4000）
 ├── ask.py                   一键流水线主程序（筛选 / 段落定位 / 知识抽取）
@@ -135,7 +135,7 @@ PICOSGpt/
 ## 4. 怎么证明答案不是编的
 
 1. `answers/<ts>_papers/` 里每篇都有原文和模型笔记，引用可逐条溯源。
-2. Codex 模式下，运行输出里必须有 `mcp: semantic_scholar/xxx (completed)`；之后跑 `./PICOSGpt verify`，不在工具返回里的 PMID/DOI 会标 `SUSPECT`。
+2. Codex 模式下，运行输出里必须有 `mcp: semantic_scholar/xxx (completed)`；之后跑 `./PicoSeek verify`，不在工具返回里的 PMID/DOI 会标 `SUSPECT`。
 3. 追问核对具体数字："把 [2] 的摘要原文贴出来" 或 "用 pubmed_fetch 36041474"。
 4. 完整原始记录（含工具返回全文）：`~/.codex/sessions/<date>/rollout-*.jsonl`。
 
@@ -157,18 +157,18 @@ python paywall_fetch.py login --url https://www.sciencedirect.com/
 # 浏览器弹出 → 机构登录（OpenAthens / Shibboleth / CARSI）→ 打开一篇付费文章确认能看全文 → 回终端按 Enter
 scp sd_state.json* tx@10.107.231.69:/data1/qyy/smk/
 # 服务器上验证：
-./PICOSGpt paywall get 10.1016/j.jacc.2023.10.021
+./PicoSeek paywall get 10.1016/j.jacc.2023.10.021
 ```
-之后 `./PICOSGpt ask` 自动启用（每次最多下载 `PAYWALL_MAX_PER_RUN`=5 篇，串行、间隔 4–9 秒）。
+之后 `./PicoSeek ask` 自动启用（每次最多下载 `PAYWALL_MAX_PER_RUN`=5 篇，串行、间隔 4–9 秒）。
 注意：登录态可能与出口 IP 绑定；请只按需下载，遵守出版社许可。
 
 ## 6. 环境与配置
 
-- Python 环境：默认 `<项目根>/.venv`，用 `PICOSGPT_ENV` 可指向任意 conda/venv 目录（`PICOSGpt` 与 `scripts/*.sh` 共用此变量，缺失时直接报错退出）
-- `vendor/` 由 `PICOSGpt` 统一加进 `PYTHONPATH`，无需在环境里另装 pypdf / playwright
-- Qwen3 权重：默认 `<项目根>/models/Qwen/Qwen3-14B`、`.../Qwen3-4B`，可用 `QWEN3_14B` / `QWEN3_4B` 覆盖；`vllm`、`litellm` 需装在 `PICOSGPT_ENV` 指向的环境里（vLLM 需 NVIDIA GPU）
+- Python 环境：默认 `<项目根>/.venv`，用 `PICOSEEK_ENV` 可指向任意 conda/venv 目录（`PicoSeek` 与 `scripts/*.sh` 共用此变量，缺失时直接报错退出）
+- `vendor/` 由 `PicoSeek` 统一加进 `PYTHONPATH`，无需在环境里另装 pypdf / playwright
+- Qwen3 权重：默认 `<项目根>/models/Qwen/Qwen3-14B`、`.../Qwen3-4B`，可用 `QWEN3_14B` / `QWEN3_4B` 覆盖；`vllm`、`litellm` 需装在 `PICOSEEK_ENV` 指向的环境里（vLLM 需 NVIDIA GPU）
 - Codex CLI 在 `~/.local/bin/codex`
-- `LOCAL_QWEN_KEY` 需等于 `litellm_config.yaml` 的 `master_key`（`PICOSGpt` 已默认设置）
+- `LOCAL_QWEN_KEY` 需等于 `litellm_config.yaml` 的 `master_key`（`PicoSeek` 已默认设置）
 - 可选 API key：`S2_API_KEY`（Semantic Scholar，无 key 时基本 429，会自动退到 PubMed）、`NCBI_API_KEY`（PubMed 3→10 req/s）
 - Codex 配置 `~/.codex/config.toml` 要点：
   - `model = "qwen3-14b"`, `model_provider = "local-qwen"`, `base_url = http://127.0.0.1:4000/v1`, `wire_api = "responses"`
@@ -200,7 +200,7 @@ python knowledge_store.py stats
 python knowledge_store.py search "SGLT2 HFpEF 心衰住院"
 ```
 
-> 装在默认的 `<项目根>/.venv` 时，`./PICOSGpt kb ...` 直接可用；装在别处则设 `PICOSGPT_ENV=<环境目录>`。
+> 装在默认的 `<项目根>/.venv` 时，`./PicoSeek kb ...` 直接可用；装在别处则设 `PICOSEEK_ENV=<环境目录>`。
 
 > **本节及下面两节的命令都不会读 `.env`。** `knowledge_store.py` 只认 `os.environ`，
 > 没有 dotenv 加载；所以直接 `python knowledge_store.py ...` 拿到的是各变量的默认值
@@ -276,7 +276,7 @@ export_dynamic_quantized_onnx_model(m, 'avx512_vnni', ks.EMBED_MODEL)
 ```bash
 # a) 跑着 compose 栈：交给已经按 env_file 配好环境的 worker（需管理员，返回 202 + job）
 curl -X POST -H "Authorization: Bearer <管理员 token>" \
-  "http://127.0.0.1:${YAOE_PORT:-8765}/v1/kb/reindex"
+  "http://127.0.0.1:${PICOSEEK_PORT:-8765}/v1/kb/reindex"
 # 是异步任务，进度看 GET /v1/jobs/<返回的 id>；3063 条 / 64 篇实测约 7.6 分钟
 
 # b) 本机直接跑 core/：得自己把 .env 带进这条命令。knowledge_store.py 只读
@@ -294,9 +294,9 @@ query，每一次 `/v1/kb/search` 都会撞 `EmbedderMismatch`（在加上这道
 
 | 现象 | 处理 |
 |---|---|
-| `./PICOSGpt status` 显示 not ready | 等 1–3 分钟；`./PICOSGpt logs` 看 vLLM 是否还在加载 / 显存不足 |
-| 显存不够 | `./PICOSGpt stop && ./PICOSGpt start 4b <空闲GPU>` |
-| 检索无结果 / 429 | `./PICOSGpt test` 直接测工具；配置 `S2_API_KEY` |
+| `./PicoSeek status` 显示 not ready | 等 1–3 分钟；`./PicoSeek logs` 看 vLLM 是否还在加载 / 显存不足 |
+| 显存不够 | `./PicoSeek stop && ./PicoSeek start 4b <空闲GPU>` |
+| 检索无结果 / 429 | `./PicoSeek test` 直接测工具；配置 `S2_API_KEY` |
 | Codex 回答没有 `mcp:` 行 | 检查 `~/.codex/config.toml` 的 `default_tools_approval_mode = "approve"` |
 | 手动验证代理 | `curl -H "Authorization: Bearer sk-123456" http://127.0.0.1:4000/v1/models` 应列出 `qwen3-14b` |
 

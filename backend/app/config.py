@@ -17,7 +17,7 @@ from picos_paths import VAR_DIR
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="YAOE_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="PICOSEEK_", env_file=".env", extra="ignore")
 
     redis_url: str = "redis://127.0.0.1:6379/0"
     database_url: str = ""                      # 空 -> sqlite:///{VAR_DIR}/api.sqlite3
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
-        """允许 `YAOE_CORS_ORIGINS=http://a,http://b`，不必写 JSON 数组。"""
+        """允许 `PICOSEEK_CORS_ORIGINS=http://a,http://b`，不必写 JSON 数组。"""
         if isinstance(v, str):
             if v.strip().startswith("["):
                 return json.loads(v)

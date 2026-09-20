@@ -36,7 +36,7 @@ class AsyncValueView<T> extends StatelessWidget {
 }
 
 class LoadingView extends StatelessWidget {
-  const LoadingView({super.key, this.padding = YaoeTokens.space6});
+  const LoadingView({super.key, this.padding = PicoSeekTokens.space6});
 
   final double padding;
 
@@ -64,7 +64,7 @@ class ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(YaoeTokens.space5),
+      padding: const EdgeInsets.all(PicoSeekTokens.space5),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -73,14 +73,14 @@ class ErrorView extends StatelessWidget {
             color: theme.colorScheme.error,
             size: 28,
           ),
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Text(
             errorMessageOf(error),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium,
           ),
           if (onRetry != null) ...[
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             FilledButton.tonalIcon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh, size: 16),

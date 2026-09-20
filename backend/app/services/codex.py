@@ -32,7 +32,7 @@ MCP_SCRIPT = os.path.join(CORE_DIR, "semantic_scholar_mcp.py")
 MCP_STARTUP_TIMEOUT_S = int(os.environ.get("CODEX_MCP_STARTUP_TIMEOUT_S", "60"))
 MCP_TOOL_TIMEOUT_S = int(os.environ.get("CODEX_MCP_TOOL_TIMEOUT_S", "180"))
 # MCP 子进程只继承这些变量：codex 不会把 worker 的整个环境透传给工具服务
-MCP_ENV_PASSTHROUGH = ("S2_API_KEY", "NCBI_API_KEY", "UNPAYWALL_EMAIL", "PICOSGPT_DATA",
+MCP_ENV_PASSTHROUGH = ("S2_API_KEY", "NCBI_API_KEY", "UNPAYWALL_EMAIL", "PICOSEEK_DATA",
                        "SD_STATE_PATH", "HOME", "PATH")
 
 

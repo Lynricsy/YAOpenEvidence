@@ -1,6 +1,6 @@
-"""`yaoe` 命令行：运行服务、迁移、离线账号管理与 OpenAPI 导出。
+"""`picoseek` 命令行：运行服务、迁移、离线账号管理与 OpenAPI 导出。
 
-重依赖（uvicorn、alembic）都在子命令内部导入，避免 `yaoe --help` 也要付
+重依赖（uvicorn、alembic）都在子命令内部导入，避免 `picoseek --help` 也要付
 导入成本。alembic 的路径按本文件定位，因此在任意 cwd 下都能跑。
 """
 from __future__ import annotations
@@ -113,7 +113,7 @@ def cmd_export_openapi(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(prog="yaoe", description="YAOpenEvidence backend")
+    ap = argparse.ArgumentParser(prog="picoseek", description="PicoSeek backend")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("serve", help="run the HTTP API")

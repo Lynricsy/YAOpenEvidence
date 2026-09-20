@@ -61,7 +61,7 @@ export default function AskPage() {
   // 只有两个面板 id 都是 0–100 的有限数才采用，否则退回库的默认布局。
   const [readerLayout] = useState<Layout | undefined>(() => {
     try {
-      const saved = localStorage.getItem('yaoe.reader-layout')
+      const saved = localStorage.getItem('picoseek.reader-layout')
       if (!saved) return undefined
       const parsed: unknown = JSON.parse(saved)
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
@@ -165,7 +165,7 @@ export default function AskPage() {
         onLayoutChanged={(layout, meta) => {
           if (!meta.isUserInteraction) return
           if (!('answer' in layout) || !('reader' in layout)) return
-          localStorage.setItem('yaoe.reader-layout', JSON.stringify(layout))
+          localStorage.setItem('picoseek.reader-layout', JSON.stringify(layout))
         }}
       >
         <Panel id="answer" minSize="40%" className="flex h-full flex-col">

@@ -19,7 +19,7 @@ class App extends ConsumerWidget {
     // 会话检查中：先渲染启动页，避免路由在未知状态下把用户弹到登录页。
     if (session.isLoading && !session.hasValue) {
       return MaterialApp(
-        title: 'YAOpenEvidence',
+        title: 'PicoSeek',
         debugShowCheckedModeBanner: false,
         themeMode: themeMode,
         theme: buildTheme(Brightness.light),
@@ -36,7 +36,7 @@ class App extends ConsumerWidget {
     }
 
     return MaterialApp.router(
-      title: 'YAOpenEvidence',
+      title: 'PicoSeek',
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       theme: buildTheme(Brightness.light),

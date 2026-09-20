@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:yaopenevidence/core/api/api_client.dart';
-import 'package:yaopenevidence/core/logic/ask_rail.dart';
-import 'package:yaopenevidence/core/session/session_controller.dart';
-import 'package:yaopenevidence/features/answer/background_kb.dart';
+import 'package:picoseek/core/api/api_client.dart';
+import 'package:picoseek/core/logic/ask_rail.dart';
+import 'package:picoseek/core/session/session_controller.dart';
+import 'package:picoseek/features/answer/background_kb.dart';
 
 String _job(String id, String kind, String status, {String body = ''}) =>
     jsonEncode({

@@ -104,7 +104,7 @@ export default function InstitutionPage() {
           <div>
             <h2 className="text-sm font-medium">上传登录态</h2>
             <p className="metadata mt-2">
-              在有桌面的机器上运行 <code>core/PICOSGpt paywall login</code>
+              在有桌面的机器上运行 <code>core/PicoSeek paywall login</code>
               ，把生成的 <code>sd_state.json</code>、
               <code>sd_state.json.session_storage.json</code>、
               <code>sd_state.json.context.json</code>{' '}

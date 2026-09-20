@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/api/content_disposition.dart';
+import 'package:picoseek/core/api/content_disposition.dart';
 
 void main() {
   test('同时给出 filename 与 filename* 时取后者并解出中文', () {
     expect(
       filenameFromContentDisposition(
-        'attachment; filename="YAOpenEvidence-x.pdf"; '
-        "filename*=UTF-8''YAOpenEvidence-20260919-%E9%97%AE%E9%A2%98.pdf",
+        'attachment; filename="PicoSeek-x.pdf"; '
+        "filename*=UTF-8''PicoSeek-20260919-%E9%97%AE%E9%A2%98.pdf",
       ),
-      'YAOpenEvidence-20260919-问题.pdf',
+      'PicoSeek-20260919-问题.pdf',
     );
   });
 

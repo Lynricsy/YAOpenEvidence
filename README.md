@@ -1,13 +1,13 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg" />
-    <img src="docs/assets/logo.svg" width="112" height="112" alt="YAOpenEvidence：书页与证据核验勾" />
+    <img src="docs/assets/logo.svg" width="112" height="112" alt="PicoSeek：书页与证据核验勾" />
   </picture>
 </p>
 
-# YAOpenEvidence
+# PicoSeek
 
-YAOpenEvidence 是一套医学文献证据问答系统：从临床或科研问题出发，由 LLM 生成检索式，经 PubMed 与 Europe PMC 检索并获取全文，再按 PICOS 框架逐篇阅读、把引文逐条回到原文核实，生成带段落级引用定位的综述。API 优先交付答案，再可靠地后台提取原子知识并入库；本机 CLI 保持同步入库。系统提供浏览器工作台、本机使用的 `core/PICOSGpt` CLI，以及 `/v1` REST + SSE API。
+PicoSeek 是一套医学文献证据问答系统：从临床或科研问题出发，由 LLM 生成检索式，经 PubMed 与 Europe PMC 检索并获取全文，再按 PICOS 框架逐篇阅读、把引文逐条回到原文核实，生成带段落级引用定位的综述。API 优先交付答案，再可靠地后台提取原子知识并入库；本机 CLI 保持同步入库。系统提供浏览器工作台、本机使用的 `core/PicoSeek` CLI，以及 `/v1` REST + SSE API。
 
 API 的请求、响应、错误与事件协议见 [API 协议文档](docs/api.md)；CLI 内核的详细用法见 [core/README.md](core/README.md)。
 
@@ -33,10 +33,10 @@ python tools/generate_brand_assets.py
 
 ```text
 .
-├── core/                    # picosgpt-core：检索、全文解析、PICOS 阅读、知识库与本机 CLI
-├── backend/                 # yaoe-backend：FastAPI、数据库迁移、arq worker 与后端测试
+├── core/                    # picoseek-core：检索、全文解析、PICOS 阅读、知识库与本机 CLI
+├── backend/                 # picoseek-backend：FastAPI、数据库迁移、arq worker 与后端测试
 ├── frontend/                # React 19、Vite、TypeScript、Tailwind 与 shadcn/ui 浏览器前端
-├── apple/                   # SwiftUI 多平台客户端（iPhone / iPad / Mac）与本地 YAOEKit 包
+├── apple/                   # SwiftUI 多平台客户端（iPhone / iPad / Mac）与本地 PicoSeekKit 包
 ├── flutter/                 # Flutter 客户端（Android / Linux / Windows）
 ├── docs/                    # 面向 API 使用者的协议文档
 ├── compose.yaml             # nginx web、Redis、迁移、API、worker 与 test profile
@@ -45,9 +45,9 @@ python tools/generate_brand_assets.py
 └── var/                     # API SQLite 数据库等运行期状态，不入库
 ```
 
-根 `pyproject.toml` 定义 uv workspace，成员为 `core/` 的 `picosgpt-core` 与 `backend/` 的 `yaoe-backend`。HTTP 层复用内核包，不另写一套检索或问答逻辑。
+根 `pyproject.toml` 定义 uv workspace，成员为 `core/` 的 `picoseek-core` 与 `backend/` 的 `picoseek-backend`。HTTP 层复用内核包，不另写一套检索或问答逻辑。
 
-前端开发：在 `frontend/` 执行 `pnpm install`、`pnpm gen:api`、`pnpm typecheck`、`pnpm dev`。Vite 默认监听 `http://localhost:5173`，将 `/v1` 同源代理到本机 API 的 `8765` 端口，设置 `YAOE_API_PROXY` 可改写该代理目标（例如指向 Compose 映射出的端口）；生成的 API 类型随代码入库。生产构建使用 `pnpm build`。
+前端开发：在 `frontend/` 执行 `pnpm install`、`pnpm gen:api`、`pnpm typecheck`、`pnpm dev`。Vite 默认监听 `http://localhost:5173`，将 `/v1` 同源代理到本机 API 的 `8765` 端口，设置 `PICOSEEK_API_PROXY` 可改写该代理目标（例如指向 Compose 映射出的端口）；生成的 API 类型随代码入库。生产构建使用 `pnpm build`。
 
 浏览器工作台包含文献筛选与实时问答、段落级引用和原文阅读、问答历史、账号设置、管理员用户管理，以及文献库、知识库和上游文献检索。界面为「学术编辑风」：可折叠的全局左侧导航栏、提问页筛选列、大屏答案与原文并排分栏，标题与正文数字使用自托管的 Noto Serif SC 与 Inter（经 `@fontsource-variable` 随构建产物分发，运行时不请求第三方 CDN）。鉴权采用 Bearer 会话；问答仅本人和管理员可见，文献与衍生知识库仍共享，不应提交敏感患者信息。
 
@@ -55,20 +55,20 @@ python tools/generate_brand_assets.py
 
 ## Apple 客户端（SwiftUI）
 
-`apple/` 是与浏览器工作台功能对等的原生客户端：单一多平台 target 覆盖 iPhone、iPad 与 Mac，最低 iOS 26 / macOS 26，Swift 6 语言模式 + 严格并发。`apple/YAOEKit/` 是本地 SwiftPM 包，承载 Codable 模型、`APIClient` actor、SSE 解析与全部纯逻辑（筛选归一化、引用标记、任务事件归约、Markdown 解析），可脱离 App 用 `swift test` 验证；`apple/YAOpenEvidence/` 只放 SwiftUI 视图与页面模型。
+`apple/` 是与浏览器工作台功能对等的原生客户端：单一多平台 target 覆盖 iPhone、iPad 与 Mac，最低 iOS 26 / macOS 26，Swift 6 语言模式 + 严格并发。`apple/PicoSeekKit/` 是本地 SwiftPM 包，承载 Codable 模型、`APIClient` actor、SSE 解析与全部纯逻辑（筛选归一化、引用标记、任务事件归约、Markdown 解析），可脱离 App 用 `swift test` 验证；`apple/PicoSeek/` 只放 SwiftUI 视图与页面模型。
 
 ```bash
 brew install xcodegen
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer   # 或已切换的 xcode-select
-cd apple && xcodegen generate                                          # 生成 YAOpenEvidence.xcodeproj，不入库
-xcodebuild -project YAOpenEvidence.xcodeproj -scheme YAOpenEvidence -destination 'platform=macOS' build
-xcodebuild -project YAOpenEvidence.xcodeproj -scheme YAOpenEvidence -destination 'platform=iOS Simulator,name=iPhone 17' build
-cd YAOEKit && swift test
+cd apple && xcodegen generate                                          # 生成 PicoSeek.xcodeproj，不入库
+xcodebuild -project PicoSeek.xcodeproj -scheme PicoSeek -destination 'platform=macOS' build
+xcodebuild -project PicoSeek.xcodeproj -scheme PicoSeek -destination 'platform=iOS Simulator,name=iPhone 17' build
+cd PicoSeekKit && swift test
 ```
 
-工程描述集中在 `apple/project.yml`（XcodeGen），Bundle ID 为 `plus.ling.YAOpenEvidence`；仓库内没有开发者账号，默认使用 ad-hoc 签名（`CODE_SIGN_IDENTITY = "-"`），换成自己的团队时改这三行签名设置即可。App 沙箱只申请 `network.client`，ATS 仅放开本地网络：明文 `http://` 服务器地址必须是 localhost 或私有网段，公网主机需使用 https。
+工程描述集中在 `apple/project.yml`（XcodeGen），Bundle ID 为 `plus.ling.PicoSeek`；仓库内没有开发者账号，默认使用 ad-hoc 签名（`CODE_SIGN_IDENTITY = "-"`），换成自己的团队时改这三行签名设置即可。App 沙箱只申请 `network.client`，ATS 仅放开本地网络：明文 `http://` 服务器地址必须是 localhost 或私有网段，公网主机需使用 https。
 
-没有 Mac 时用 GitHub Actions 出包：`.github/workflows/ios.yml` 在 `macos-26` 镜像（Xcode 26.6 / iOS 26 SDK）上跑 XcodeGen + `xcodebuild archive`，关闭签名后手工组 `Payload/` 结构，产出未签名 IPA 作为构建产物 `YAOpenEvidence-unsigned-ipa`。推送 `apple/**` 自动触发，也可 `gh workflow run ios.yml`；取包用 `gh run download <run-id> -n YAOpenEvidence-unsigned-ipa`。产物未签名，装真机前需自行签名（如 `codesign` + 自己的证书描述文件，或 AltStore / Sideloadly 侧载时重签）。
+没有 Mac 时用 GitHub Actions 出包：`.github/workflows/ios.yml` 在 `macos-26` 镜像（Xcode 26.6 / iOS 26 SDK）上跑 XcodeGen + `xcodebuild archive`，关闭签名后手工组 `Payload/` 结构，产出未签名 IPA 作为构建产物 `PicoSeek-unsigned-ipa`。推送 `apple/**` 自动触发，也可 `gh workflow run ios.yml`；取包用 `gh run download <run-id> -n PicoSeek-unsigned-ipa`。产物未签名，装真机前需自行签名（如 `codesign` + 自己的证书描述文件，或 AltStore / Sideloadly 侧载时重签）。
 
 客户端首屏要求填写服务器地址（默认 `http://localhost:8765`）与账号密码；令牌存 Keychain，`expires_at`、用户资料与服务器地址存 UserDefaults，任何受保护端点返回 401 即清会话回登录页。问答进度走 `GET /v1/jobs/{id}/events` 的 SSE：1 秒起指数退避重连（上限 10 秒）、重连前用 `/v1/auth/me` 探活、SSE 未连通时每 5 秒兜底轮询答案。界面遵循 Apple HIG（系统字体与语义色、`sidebarAdaptable` 侧栏、regular 宽度用检查器展示原文阅读器），只保留品牌深青 accent、8 色引用色板与 Q1–Q4 分区色。
 
@@ -88,11 +88,11 @@ fvm flutter analyze && fvm flutter test
 fvm flutter run -d linux         # 或 -d <android-device>
 ```
 
-分层：`lib/core/`（模型、`ApiClient` + SSE、纯逻辑）、`lib/app/`（主题令牌、路由、会话无关的全局状态）、`lib/features/`（按页面分包）、`lib/shared/`（跨页组件与格式化）。纯逻辑与 API 层逐字对照 `apple/YAOEKit/`，测试用例集同源移植，可用 `fvm flutter test` 单独验证。
+分层：`lib/core/`（模型、`ApiClient` + SSE、纯逻辑）、`lib/app/`（主题令牌、路由、会话无关的全局状态）、`lib/features/`（按页面分包）、`lib/shared/`（跨页组件与格式化）。纯逻辑与 API 层逐字对照 `apple/PicoSeekKit/`，测试用例集同源移植，可用 `fvm flutter test` 单独验证。
 
 界面沿用 web 的「学术编辑风」：暖纸色背景 + 深青主色、衬线标题（自带裁剪版 Noto Serif SC）、正文数字用 Inter、8 色引用色板与 Q1–Q4 分区色。布局三档自适应：`< 768` 底部导航 + 「更多」表单、`768–1279` 折叠图标侧栏、`≥ 1280` 240 px 可折叠侧栏（`Ctrl/Cmd+B`）并支持答案与原文并排分栏（分隔条可拖拽，比例持久化）。令牌存系统安全存储（Android EncryptedSharedPreferences、Linux libsecret、Windows DPAPI）；平台无安全存储时回退为明文偏好并在账号页显式提示。明文 `http://` 服务器地址同样只允许本地网络，公网必须 https。
 
-视觉基准与 iOS 版对齐（`apple/YAOpenEvidence/Components/Surface.swift` 的 `Metrics`）：卡片圆角 16、页面内边距 16、阅读列 720、区块间距 20/28；内容层是无描边的卡片 + 两层柔和阴影（Flutter 的页面底色与卡片色差极小，靠阴影而非描边分层），玻璃只用于悬浮控件层——提问与追问是 `BackdropFilter` 模糊的大圆角悬浮输入框（发送键在框内、引擎与筛选摘要作胶囊），向下滚动时它和手机底部导航栏一起滑出、向上滚动 / 触顶触底 / 聚焦时恢复；答案页的操作收进头部「⋯」菜单（重新提问 / 查看检索式 / 删除），检索式单独成面不占正文。面向用户的界面同样刻意不展示 SSE 连接状态、运行日志、检索式、相似度打分、嵌入模型与维度这类开发者信息。
+视觉基准与 iOS 版对齐（`apple/PicoSeek/Components/Surface.swift` 的 `Metrics`）：卡片圆角 16、页面内边距 16、阅读列 720、区块间距 20/28；内容层是无描边的卡片 + 两层柔和阴影（Flutter 的页面底色与卡片色差极小，靠阴影而非描边分层），玻璃只用于悬浮控件层——提问与追问是 `BackdropFilter` 模糊的大圆角悬浮输入框（发送键在框内、引擎与筛选摘要作胶囊），向下滚动时它和手机底部导航栏一起滑出、向上滚动 / 触顶触底 / 聚焦时恢复；答案页的操作收进头部「⋯」菜单（重新提问 / 查看检索式 / 删除），检索式单独成面不占正文。面向用户的界面同样刻意不展示 SSE 连接状态、运行日志、检索式、相似度打分、嵌入模型与维度这类开发者信息。
 
 构建：Linux 桌面需要 `clang`、`cmake`、`ninja`、`gtk3`、`libsecret`；Android 需要 Android SDK 与 JDK 17（`fvm flutter config --android-sdk ... --jdk-dir ...`）。Windows 目录随模板入库，但只能在 Windows 主机上构建。
 
@@ -121,7 +121,7 @@ flowchart LR
     Worker --> Sources
 ```
 
-问答流水线通常运行数分钟，因此 API 只负责接收请求、持久化任务并入队，独立 worker 执行耗时工作；`YAOE_WORKER_MAX_JOBS` 默认为 `1`，适合单 GPU 串行执行。任务事件使用 Redis Stream 而非 Pub/Sub，因为 SSE 客户端断线后需要携带 `Last-Event-ID` 续传历史事件。取消采用协作式机制：API 写入取消标记，worker 在阶段边界和逐篇处理边界检查；已经开始的单次 LLM 调用不会被强行中断。
+问答流水线通常运行数分钟，因此 API 只负责接收请求、持久化任务并入队，独立 worker 执行耗时工作；`PICOSEEK_WORKER_MAX_JOBS` 默认为 `1`，适合单 GPU 串行执行。任务事件使用 Redis Stream 而非 Pub/Sub，因为 SSE 客户端断线后需要携带 `Last-Event-ID` 续传历史事件。取消采用协作式机制：API 写入取消标记，worker 在阶段边界和逐篇处理边界检查；已经开始的单次 LLM 调用不会被强行中断。
 
 `ask` 引擎开启 `use_kb` 时，API 将 `Answer.ready`、问答任务成功及独立的 `answer_kb` 后台任务在同一数据库事务中保存；问答的 `job.result.kb_job_id` 指向后台任务。答案和逐篇原文此时已经可读，后台失败或取消不会改写、撤回答案。Web 答案页单独显示入库状态；三端不再把未执行的 `kb` 阶段显示为前台等待步骤。`use_kb=false` 不创建后台任务；`kb_hits` 仍只引用既有知识，不等待本次文献入库。
 
@@ -134,7 +134,7 @@ flowchart LR
 | | `ask`（默认） | `codex` |
 |---|---|---|
 | 执行方式 | 固定流水线：检索 → 取全文 → 逐篇阅读 → 综合 | Codex agent 自己决定调哪些工具 |
-| 工具面 | 流水线内部直接调 `core/literature.py` 等 | core 的 `semantic_scholar` MCP（与 `./PICOSGpt codex` 同一套） |
+| 工具面 | 流水线内部直接调 `core/literature.py` 等 | core 的 `semantic_scholar` MCP（与 `./PicoSeek codex` 同一套） |
 | 产出 | `body_md` 分节 + 逐篇原文快照 + 段落级引用 | 整篇 `answer_md` + `trace`（结构化工具调用轨迹），无原文快照 |
 | 生效筛选 | 全部字段，服务端硬过滤 | 年份/分区/期刊等翻成检索要求交给模型 |
 | 多轮 | 每次提问独立 | 同一 codex 会话可 `POST /v1/answers/{id}/followup` 续接追问 |
@@ -149,7 +149,7 @@ codex 运行时随 `openai-codex` 依赖一起进镜像（`openai-codex-cli-bin`
 
 导出内容与界面同源：正文分节按 `backend/app/export/sections.py` 切（与 `frontend/src/lib/answerSections.ts` 等三份实现逐字同源，改规则要四处一起改），段落级引用渲染成彩色芯片并链到文末「引用原文」附录，另含参考文献、知识库补充与检索式；`relevance == 0` 且正文未引用的文献不导出。中文字形依赖 runtime 镜像里的 `fonts-noto-cjk` 与 `fonts-inter`，本机开发环境未装字体时只影响字形，不影响内容。
 
-iOS 走系统分享面板，macOS 与桌面端 Flutter 走保存面板，Android 走分享面板，Web 直接下载；文件名由服务端 `Content-Disposition` 的 `filename*` 决定（`YAOpenEvidence-<日期>-<问题>.pdf`）。
+iOS 走系统分享面板，macOS 与桌面端 Flutter 走保存面板，Android 走分享面板，Web 直接下载；文件名由服务端 `Content-Disposition` 的 `filename*` 决定（`PicoSeek-<日期>-<问题>.pdf`）。
 
 ## 快速开始：Docker Compose
 
@@ -173,7 +173,7 @@ COMPOSE_FILE=compose.yaml:compose.qwen.yaml
 LLM_BASE=http://llm-tunnel:29913/v1
 LLM_MODEL=Qwen3.8-27B
 LOCAL_QWEN_KEY=EMPTY
-YAOE_JOB_TIMEOUT_S=86400
+PICOSEEK_JOB_TIMEOUT_S=86400
 ```
 
 `.llm-ssh/` 保存专用 `id_ed25519`、固定主机指纹的 `known_hosts` 和 OpenSSH `config`，均不提交，也不进入镜像构建上下文。密钥仅挂载到隧道容器，不放入 API、worker 可读取的 `var/` 卷。目录权限为 `700`，私钥和配置为 `600`。配置中的 `qwen-target` 经 `qwen-jump` 连接；两者都指定 `/ssh/id_ed25519`、`IdentitiesOnly yes`、`BatchMode yes`、`StrictHostKeyChecking yes` 和 `UserKnownHostsFile /ssh/known_hosts`。具体地址与用户名只写入本地配置。
@@ -213,23 +213,23 @@ slave2 上的 unit 已 `stop` 并移除 `default.target.wants` 软链（`UnitFil
 
 切换依据是用生产真实 prompt 做的对照评测（3 道真实问题 × (2 篇 read + 1 次 synthesize) = 9 个任务，输入从 `core/answers/<id>_papers/` 存档逐字重建，与生产当时一致）：read 阶段 35.71 → 98.98 tok/s（2.77x），synthesize 阶段 37.91 → 101.43 tok/s（2.68x）。质量侧加跑了同配置第二轮作为采样噪声基线：引用原文核验率 fp8 0.979 / fp8 复跑 0.956 / nvfp4 0.943，跨配置差值小于配置自身波动；PICOS 六标题三轮均 6/6；综合阶段非法引用标记三轮均为 0；相关性判分 nvfp4 与存档生产 4/4 一致而 fp8 复跑反而出现 2 处不一致；盲评（A/B 正反序各一次）忠实度 3/3 平局、双方均无编造数字、结论方向 3/3 一致。**这是"未观察到超出采样噪声的劣化"，不是"证明无劣化"**：样本为 3 题 9 任务 3 轮，后续如发现答案质量回退，按上面的备份成对回滚即可。切换后端到端验收：真实问答任务 260 秒完成（切换前同类任务 297~610 秒），产出 7 篇论文、58 个引用标记全部合法、16/16 条引文核实通过。
 
-流水线保留现有逐阶段策略：检索、阅读、事实抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。检索、阅读、事实抽取（含单篇入库）和综合阶段均不发送 `thinking_token_budget` 或 `max_tokens`，不再设置应用层输出或独立思考额度，由 vLLM 按剩余上下文分配可生成额度；当前模型总上下文为 262144 tokens，输入、思考和正文共享，不能真正无限。综合请求取消生成读取超时，连接、写入和连接池等待仍保留 30 秒超时；其他阶段保留 600 秒读取超时。当前远端部署将 `YAOE_JOB_TIMEOUT_S` 设为 86400（24 小时），不要设为 0（队列会立即超时），也不要直接关闭队列超时而破坏运行锁的有效期。长思考可能占用单卡数小时并阻塞后续任务，现有取消机制在流水线阶段边界生效。空正文或 `finish_reason=length` 仍会使任务明确失败，不会保存为完成答案。放宽额度不保证回答更准确，也不代表已完成医学领域精度评估。
+流水线保留现有逐阶段策略：检索、阅读、事实抽取显式关闭思考，综合阶段开启思考；Codex 使用服务端默认思考。检索、阅读、事实抽取（含单篇入库）和综合阶段均不发送 `thinking_token_budget` 或 `max_tokens`，不再设置应用层输出或独立思考额度，由 vLLM 按剩余上下文分配可生成额度；当前模型总上下文为 262144 tokens，输入、思考和正文共享，不能真正无限。综合请求取消生成读取超时，连接、写入和连接池等待仍保留 30 秒超时；其他阶段保留 600 秒读取超时。当前远端部署将 `PICOSEEK_JOB_TIMEOUT_S` 设为 86400（24 小时），不要设为 0（队列会立即超时），也不要直接关闭队列超时而破坏运行锁的有效期。长思考可能占用单卡数小时并阻塞后续任务，现有取消机制在流水线阶段边界生效。空正文或 `finish_reason=length` 仍会使任务明确失败，不会保存为完成答案。放宽额度不保证回答更准确，也不代表已完成医学领域精度评估。
 
 固定流水线的模型调用每次尝试都会输出 `llm_metrics {JSON}` 日志，沿用现有 `log` 事件，不改变 SSE 事件类型或 `llm()` 返回值。字段包含 `stage`、`operation`、`request_id`、`attempt`、`model`、`response_id`、`success`、`elapsed_s`、`finish_reason`，以及服务端返回的 `prompt_tokens`、`completion_tokens`、`reasoning_tokens`、`cached_tokens`；缺失用量为 `null`，不是零。`elapsed_s` 是客户端单次调用总耗时，不能据此拆分服务端排队、预填充与解码时间。日志不包含提示词、回答正文或密钥；这些度量用于分析耗时，不改变生成额度、思考策略或上下文长度。后台事实抽取的日志归属于 `answer_kb` 任务，而非已经完成的问答任务。
 
-如使用其他兼容端点，移除 `COMPOSE_FILE` 并设置其地址、模型名和密钥即可；基础 Compose 默认仍访问宿主机 `http://host.docker.internal:4000/v1`。`core/PICOSGpt start` 是旧版宿主机本地模型启动方案，不用于上述远端部署。
+如使用其他兼容端点，移除 `COMPOSE_FILE` 并设置其地址、模型名和密钥即可；基础 Compose 默认仍访问宿主机 `http://host.docker.internal:4000/v1`。`core/PicoSeek start` 是旧版宿主机本地模型启动方案，不用于上述远端部署。
 
 ### 3. 启动工作台与后端
 
 ```bash
 docker compose up -d --build
-docker compose exec api yaoe create-admin admin
+docker compose exec api picoseek create-admin admin
 curl http://localhost:8765/v1/health/ready
 ```
 
 `migrate` 服务先执行 Alembic 迁移；迁移成功后 `api` 和 `worker` 才启动。应用不会在进程启动时自行迁移数据库。
 
-浏览器打开 `http://localhost:39109`，使用管理员创建的账号登录。默认使用选定的高位端口 39109，`YAOE_WEB_PORT` 可覆盖为其他空闲端口。nginx 将 `/v1/` 同源代理到 API，关闭代理缓冲以即时传输 SSE，并支持 `/a/<id>`、`/library/<key>` 等深链刷新；无需配置 CORS。生产环境应在入口启用 HTTPS。
+浏览器打开 `http://localhost:39109`，使用管理员创建的账号登录。默认使用选定的高位端口 39109，`PICOSEEK_WEB_PORT` 可覆盖为其他空闲端口。nginx 将 `/v1/` 同源代理到 API，关闭代理缓冲以即时传输 SSE，并支持 `/a/<id>`、`/library/<key>` 等深链刷新；无需配置 CORS。生产环境应在入口启用 HTTPS。
 
 `create-admin` 会交互读取并确认密码，没有默认账号或密码。通过管理员登录取得 `access_token`：
 
@@ -282,13 +282,13 @@ docker compose -f compose.yaml -f compose.fake-llm.yaml up -d --build
 
 ```bash
 uv sync --all-packages
-docker run -d --name yaoe-redis -p 6379:6379 redis:7-alpine
+docker run -d --name picoseek-redis -p 6379:6379 redis:7-alpine
 
-uv run --directory backend yaoe migrate
-uv run --directory backend yaoe create-admin admin
-uv run --directory backend yaoe serve
+uv run --directory backend picoseek migrate
+uv run --directory backend picoseek create-admin admin
+uv run --directory backend picoseek serve
 # 另开终端
-uv run --directory backend yaoe worker
+uv run --directory backend picoseek worker
 ```
 
 `serve` 默认监听 `127.0.0.1:8765`。先迁移数据库，再创建管理员；同一数据库只需首次建号，不要在每次启动时重复执行。
@@ -299,7 +299,7 @@ uv run --directory backend yaoe worker
 uv run pytest -q
 ```
 
-测试会对 Redis 执行 `FLUSHDB`。未显式设置时测试配置使用 `redis://127.0.0.1:6379/15`；如果设置了 `YAOE_REDIS_URL`，它必须指向本机且数据库编号不小于 `10`，否则测试会直接报错并拒绝运行。
+测试会对 Redis 执行 `FLUSHDB`。未显式设置时测试配置使用 `redis://127.0.0.1:6379/15`；如果设置了 `PICOSEEK_REDIS_URL`，它必须指向本机且数据库编号不小于 `10`，否则测试会直接报错并拒绝运行。
 
 ### Amp orbs
 
@@ -320,8 +320,8 @@ docker compose --profile test run --rm test
 系统只有 `user` 和 `admin` 两种角色，不开放注册。管理员通过 `POST /v1/users` 创建用户，或通过本机命令创建管理员：
 
 ```bash
-uv run --directory backend yaoe create-admin admin
-uv run --directory backend yaoe reset-password admin
+uv run --directory backend picoseek create-admin admin
+uv run --directory backend picoseek reset-password admin
 ```
 
 两条命令默认交互读取并确认密码；自动化可用 `--password-stdin` 从标准输入读取，不接受明文密码命令行参数。用户名为 3-64 位 ASCII 字母数字、下划线、横线或点，以字母数字开头，统一转小写且不区分大小写；密码为 12-128 字符，以 Argon2id 哈希保存。
@@ -341,71 +341,71 @@ uv run --directory backend yaoe reset-password admin
 
 ### 从静态 API Key 升级
 
-先停止 API 和 worker 并备份数据库及结果目录，再执行迁移、创建管理员，最后启动服务。迁移 `0002` 保留旧任务、答案和关联关系；旧 Key 及 CLI 导入数据不猜测用户归属，`user_id` 为 `null`，仅管理员可见。旧 `api_key_id` 字段、静态 Key 鉴权、`YAOE_API_KEYS_FILE` 和 `YAOE_AUTH_DISABLED` 已移除；所有客户端必须先登录。已有本地 `backend/api_keys.toml` 不读取、不随迁移删除，仍被版本控制和镜像构建排除。
+先停止 API 和 worker 并备份数据库及结果目录，再执行迁移、创建管理员，最后启动服务。迁移 `0002` 保留旧任务、答案和关联关系；旧 Key 及 CLI 导入数据不猜测用户归属，`user_id` 为 `null`，仅管理员可见。旧 `api_key_id` 字段、静态 Key 鉴权、`PICOSEEK_API_KEYS_FILE` 和 `PICOSEEK_AUTH_DISABLED` 已移除；所有客户端必须先登录。已有本地 `backend/api_keys.toml` 不读取、不随迁移删除，仍被版本控制和镜像构建排除。
 
-`YAOE_MAX_ACTIVE_JOBS_PER_KEY` 改为 `YAOE_MAX_ACTIVE_JOBS_PER_USER`，同一用户的多个令牌共享额度。完整请求体、错误码和 SSE 接入方式见 [API 协议文档](docs/api.md)。
+`PICOSEEK_MAX_ACTIVE_JOBS_PER_KEY` 改为 `PICOSEEK_MAX_ACTIVE_JOBS_PER_USER`，同一用户的多个令牌共享额度。完整请求体、错误码和 SSE 接入方式见 [API 协议文档](docs/api.md)。
 
 ## 环境变量
 
-### 后端：`YAOE_*`
+### 后端：`PICOSEEK_*`
 
 下表与 `backend/app/config.py` 的 `Settings` 字段一一对应；Compose 会覆盖其中部分默认值。
 
 | 变量 | 代码默认值 | 作用 |
 |---|---|---|
-| `YAOE_REDIS_URL` | `redis://127.0.0.1:6379/0` | arq 队列、任务事件流与取消标记使用的 Redis |
-| `YAOE_DATABASE_URL` | 空；随后解析为 `sqlite:///<PICOSGPT_DATA>/var/api.sqlite3` | SQLAlchemy 数据库 URL；包含 `%` 时按原 URL 填写，无需为迁移命令额外转义 |
-| `YAOE_SESSION_TTL_S` | `604800` | 登录会话固定有效期（秒），必须大于 0 |
-| `YAOE_LOGIN_MAX_ATTEMPTS` | `10` | 单个用户名在登录窗口内的最大请求数，含成功登录，必须大于 0 |
-| `YAOE_LOGIN_WINDOW_S` | `300` | 登录限流窗口（秒），必须大于 0 |
-| `YAOE_CORS_ORIGINS` | `[]` | 允许的 CORS origin；可用逗号分隔或 JSON 数组 |
-| `YAOE_HOST` | `127.0.0.1` | `yaoe serve` 默认监听地址 |
-| `YAOE_PORT` | `8765` | `yaoe serve` 默认端口；Compose 也用它设置宿主机映射端口 |
-| `YAOE_WORKER_MAX_JOBS` | `1` | 单个 worker 同时执行的最大任务数 |
-| `YAOE_JOB_TIMEOUT_S` | `1800` | worker 任务超时秒数；当前远端 Qwen 部署设为 `86400`（24 小时） |
-| `YAOE_MAX_ACTIVE_JOBS_PER_USER` | `2` | 每个用户允许的 queued/running 任务上限，多个会话共享，必须大于 0 |
-| `YAOE_EVENTS_TTL_S` | `604800` | Redis 任务事件流与取消标记的保留秒数，默认 7 天 |
-| `YAOE_EVENTS_MAXLEN` | `2000` | 每个任务 Redis Stream 的近似最大事件数 |
-| `YAOE_UPLOAD_MAX_MB` | `50` | `POST /v1/papers/upload` 单个 PDF 的大小上限（MB），必须大于 0 |
+| `PICOSEEK_REDIS_URL` | `redis://127.0.0.1:6379/0` | arq 队列、任务事件流与取消标记使用的 Redis |
+| `PICOSEEK_DATABASE_URL` | 空；随后解析为 `sqlite:///<PICOSEEK_DATA>/var/api.sqlite3` | SQLAlchemy 数据库 URL；包含 `%` 时按原 URL 填写，无需为迁移命令额外转义 |
+| `PICOSEEK_SESSION_TTL_S` | `604800` | 登录会话固定有效期（秒），必须大于 0 |
+| `PICOSEEK_LOGIN_MAX_ATTEMPTS` | `10` | 单个用户名在登录窗口内的最大请求数，含成功登录，必须大于 0 |
+| `PICOSEEK_LOGIN_WINDOW_S` | `300` | 登录限流窗口（秒），必须大于 0 |
+| `PICOSEEK_CORS_ORIGINS` | `[]` | 允许的 CORS origin；可用逗号分隔或 JSON 数组 |
+| `PICOSEEK_HOST` | `127.0.0.1` | `picoseek serve` 默认监听地址 |
+| `PICOSEEK_PORT` | `8765` | `picoseek serve` 默认端口；Compose 也用它设置宿主机映射端口 |
+| `PICOSEEK_WORKER_MAX_JOBS` | `1` | 单个 worker 同时执行的最大任务数 |
+| `PICOSEEK_JOB_TIMEOUT_S` | `1800` | worker 任务超时秒数；当前远端 Qwen 部署设为 `86400`（24 小时） |
+| `PICOSEEK_MAX_ACTIVE_JOBS_PER_USER` | `2` | 每个用户允许的 queued/running 任务上限，多个会话共享，必须大于 0 |
+| `PICOSEEK_EVENTS_TTL_S` | `604800` | Redis 任务事件流与取消标记的保留秒数，默认 7 天 |
+| `PICOSEEK_EVENTS_MAXLEN` | `2000` | 每个任务 Redis Stream 的近似最大事件数 |
+| `PICOSEEK_UPLOAD_MAX_MB` | `50` | `POST /v1/papers/upload` 单个 PDF 的大小上限（MB），必须大于 0 |
 
-Compose 固定容器内的 Redis 为 `redis://redis:6379/0`、数据库为 `sqlite:////data/var/api.sqlite3`；`.env` 中的 `YAOE_PORT` 控制宿主机端口映射。
+Compose 固定容器内的 Redis 为 `redis://redis:6379/0`、数据库为 `sqlite:////data/var/api.sqlite3`；`.env` 中的 `PICOSEEK_PORT` 控制宿主机端口映射。
 
 ### 内核与上游服务
 
 | 变量 | 默认值 | 作用 |
 |---|---|---|
-| `PICOSGPT_DATA` | `core/` | 数据根目录；容器中设为 `/data` |
+| `PICOSEEK_DATA` | `core/` | 数据根目录；容器中设为 `/data` |
 | `LLM_BASE` | `http://127.0.0.1:4000/v1` | OpenAI 兼容 LLM API 根地址 |
 | `LLM_MODEL` | `qwen3-14b` | 模型名；就绪检查也验证该模型是否由网关提供 |
 | `LOCAL_QWEN_KEY` | `sk-123456` | 调用 LLM 网关的 Bearer key |
-| `EMBED_MODEL` | `<PICOSGPT_DATA>/models/BAAI/bge-m3` | sentence-transformers embedding 模型路径 |
+| `EMBED_MODEL` | `<PICOSEEK_DATA>/models/BAAI/bge-m3` | sentence-transformers embedding 模型路径 |
 | `NCBI_API_KEY` | 空 | NCBI/PubMed API key，可选 |
 | `S2_API_KEY` | 空 | Semantic Scholar API key，可选 |
-| `SD_STATE_PATH` | `<PICOSGPT_DATA>/var/sd_state.json` | 机构订阅下载器的登录状态文件；另有同名的 `.session_storage.json` 与 `.context.json` 两份伴随文件 |
+| `SD_STATE_PATH` | `<PICOSEEK_DATA>/var/sd_state.json` | 机构订阅下载器的登录状态文件；另有同名的 `.session_storage.json` 与 `.context.json` 两份伴随文件 |
 | `PAYWALL_MAX_PER_RUN` | `5` | 每次问答最多尝试的机构订阅下载数 |
 | `S2_TIMEOUT` | `30` | 文献上游 HTTP 请求超时秒数 |
-| `CODEX_HOME` | `<PICOSGPT_DATA>/var/codex` | codex 会话与运行状态目录；镜像内已设为 `/data/var/codex` |
+| `CODEX_HOME` | `<PICOSEEK_DATA>/var/codex` | codex 会话与运行状态目录；镜像内已设为 `/data/var/codex` |
 | `CODEX_MCP_STARTUP_TIMEOUT_S` | `60` | codex 引擎等待 MCP 工具服务启动的秒数 |
 | `CODEX_MCP_TOOL_TIMEOUT_S` | `180` | codex 引擎单次 MCP 工具调用的超时秒数 |
 
-`PICOSGPT_DATA` 决定所有运行期数据的位置。本地未设置时以 `core/` 为根，容器内为 `/data`。其下的 `answers/` 保存问答输出，`library/` 保存逐篇文献材料，`kb/` 保存知识库索引，`data/journal_ranks/` 保存期刊分区表，`models/` 保存 embedding 模型，`pdfs/` 保存本地 PDF（入库任务落在 `pdfs/ingest/`），`var/` 保存 API 数据库、机构登录态等运行状态。
+`PICOSEEK_DATA` 决定所有运行期数据的位置。本地未设置时以 `core/` 为根，容器内为 `/data`。其下的 `answers/` 保存问答输出，`library/` 保存逐篇文献材料，`kb/` 保存知识库索引，`data/journal_ranks/` 保存期刊分区表，`models/` 保存 embedding 模型，`pdfs/` 保存本地 PDF（入库任务落在 `pdfs/ingest/`），`var/` 保存 API 数据库、机构登录态等运行状态。
 
 ## CLI 与 API 共存
 
-`core/PICOSGpt` 和 HTTP worker 调用同一套 `core/` 代码，并可通过 `PICOSGPT_DATA` 使用同一份 `answers`、`library` 与 `kb` 数据。现有 CLI 的行为和命令保持不变，详细说明见 [CLI 内核文档](core/README.md)。
+`core/PicoSeek` 和 HTTP worker 调用同一套 `core/` 代码，并可通过 `PICOSEEK_DATA` 使用同一份 `answers`、`library` 与 `kb` 数据。现有 CLI 的行为和命令保持不变，详细说明见 [CLI 内核文档](core/README.md)。
 
 知识库通过同一数据根目录下的 `kb.lock` 协调 CLI 与 worker 写入，要求 POSIX 系统及支持 `flock`、原子文件替换的共享数据卷。重建从读取 `library/` 到发布索引全程持有写锁，新增入库会等待；搜索不持写锁，并在单次检索内固定使用同一代向量与元数据。重建在等待锁、逐篇处理和最终发布前检查取消标记，取消或超时后未发布的快照会被丢弃。运行期间不要删除锁文件，也不要混用不遵循该锁协议的旧版写者。
 
 API 不会在启动时自动扫描 CLI 时代的 `answers/<时间戳>.md`。部署迁移完成后，可执行一次：
 
 ```bash
-docker compose run --rm api yaoe import-answers
+docker compose run --rm api picoseek import-answers
 ```
 
 本地等价命令为：
 
 ```bash
-uv run --directory backend yaoe import-answers
+uv run --directory backend picoseek import-answers
 ```
 
 该命令幂等地把尚未登记的 Markdown 答案导入数据库，使其可通过 API 浏览；它不会把旧答案补造成结构化逐篇 paper 数据。
@@ -430,11 +430,11 @@ uv run --directory backend yaoe import-answers
 
 - **改了 `core/` 或 `backend/` 源码但线上行为没变**：Dockerfile 是把源码 `COPY` 进镜像，不是挂载，容器跑的是构建时的副本，重启容器不生效。必须重建后重启：`docker compose up -d --build api worker`。改了 `frontend/` 则重建 `web`。
 - **验证重建是否真的上线**：不要只看容器 `Up`。先经浏览器同源地址探活 `curl http://localhost:39109/v1/health/ready`（走 nginx，可一并验证代理层是否通），再用 `docker compose exec worker python -c "import ask; ..."` 确认容器内的代码确实是新版本。`nginx.conf` 已改为经 Docker DNS 动态解析 `api`，因此单独重建 API 不再需要连带重启 `web`。
-- **KB 索引与 embedder 不一致**：使用 admin key 调用 `POST /v1/kb/reindex`，或在 `core/` 下运行 `./PICOSGpt kb reindex`。不要用一套 embedding 维度读取另一套索引。
+- **KB 索引与 embedder 不一致**：使用 admin key 调用 `POST /v1/kb/reindex`，或在 `core/` 下运行 `./PicoSeek kb reindex`。不要用一套 embedding 维度读取另一套索引。
 - **首次 KB 检索较慢**：bge-m3 首次请求会惰性加载，实测约需 15 秒并占用约 2 GiB 内存。
-- **机构订阅下载在容器内不可用**：runtime 镜像已装 Playwright Chromium（`playwright install --with-deps chromium`）。先看 `GET /v1/paywall/status`：`playwright_available=false` 说明镜像里没装成浏览器，`configured=false` 说明还没上传登录态——在有桌面的机器上跑 `core/PICOSGpt paywall login`，再经 `/admin/institution` 上传三份文件。
+- **机构订阅下载在容器内不可用**：runtime 镜像已装 Playwright Chromium（`playwright install --with-deps chromium`）。先看 `GET /v1/paywall/status`：`playwright_available=false` 说明镜像里没装成浏览器，`configured=false` 说明还没上传登录态——在有桌面的机器上跑 `core/PicoSeek paywall login`，再经 `/admin/institution` 上传三份文件。
 - **Semantic Scholar 返回 429**：`source=auto` 的文献搜索会在 Semantic Scholar 上游失败时自动回退 PubMed，并在响应中给出回退原因。
-- **任务看似串行**：单 worker 的 `YAOE_WORKER_MAX_JOBS` 默认为 `1`，这是单 GPU 的预期配置。扩展多个 worker 副本时，所有副本必须挂载同一份数据卷。
+- **任务看似串行**：单 worker 的 `PICOSEEK_WORKER_MAX_JOBS` 默认为 `1`，这是单 GPU 的预期配置。扩展多个 worker 副本时，所有副本必须挂载同一份数据卷。
 - **GPU 版 PyTorch**：workspace 当前把 `torch` 固定到 CPU wheel 索引。GPU 部署需将根 `pyproject.toml` 的 `pytorch-cpu` 索引改为对应 CUDA 索引，再运行 `uv lock`。
 
 ## 开发约定
@@ -442,7 +442,7 @@ uv run --directory backend yaoe import-answers
 后端保持清晰分层：`backend/app/routers/` 只负责 HTTP 校验、鉴权和序列化，`backend/app/services/` 承担业务逻辑，`core/` 不感知 HTTP 的存在。协议发生有意变更后，重新导出 OpenAPI：
 
 ```bash
-uv run --directory backend yaoe export-openapi
+uv run --directory backend picoseek export-openapi
 ```
 
 导出的 `backend/openapi.json` 应随代码入库，供各前端 codegen 使用；面向人的 wire 协议同步维护在 [docs/api.md](docs/api.md)。

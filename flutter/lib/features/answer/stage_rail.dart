@@ -21,23 +21,23 @@ class StageRail extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: YaoeTokens.space2,
-          runSpacing: YaoeTokens.space2,
+          spacing: PicoSeekTokens.space2,
+          runSpacing: PicoSeekTokens.space2,
           children: [
             for (final node in nodes)
               _StageChip(node: node, textTheme: theme.textTheme),
           ],
         ),
         if (progress != null) ...[
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           Text(
             '${progress.label}'
             '${progress.total > 0 ? ' ${progress.current}/${progress.total}' : ''}',
             style: theme.textTheme.labelMedium,
           ),
-          const SizedBox(height: YaoeTokens.space1),
+          const SizedBox(height: PicoSeekTokens.space1),
           ClipRRect(
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
+            borderRadius: BorderRadius.circular(PicoSeekTokens.radiusSm),
             child: LinearProgressIndicator(
               minHeight: 6,
               value: progress.total > 0
@@ -46,7 +46,7 @@ class StageRail extends StatelessWidget {
             ),
           ),
           if ((progress.detail ?? '').isNotEmpty) ...[
-            const SizedBox(height: YaoeTokens.space1),
+            const SizedBox(height: PicoSeekTokens.space1),
             Text(
               progress.detail!,
               maxLines: 2,
@@ -71,7 +71,7 @@ class _StageChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = context.yaoe;
+    final colors = context.picoseek;
     final muted = theme.colorScheme.onSurfaceVariant;
     final (Color color, Widget marker) = switch (node.status) {
       RailStatus.done => (
@@ -103,21 +103,21 @@ class _StageChip extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: YaoeTokens.space2 + 2,
-        vertical: YaoeTokens.space1 + 2,
+        horizontal: PicoSeekTokens.space2 + 2,
+        vertical: PicoSeekTokens.space1 + 2,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: YaoeTokens.tintFillAlpha),
+        color: color.withValues(alpha: PicoSeekTokens.tintFillAlpha),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: color.withValues(alpha: YaoeTokens.tintBorderAlpha),
+          color: color.withValues(alpha: PicoSeekTokens.tintBorderAlpha),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           marker,
-          const SizedBox(width: YaoeTokens.space2),
+          const SizedBox(width: PicoSeekTokens.space2),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -20,14 +20,14 @@ Future<void> showMoreSheet(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: YaoeTokens.space2),
+            const SizedBox(height: PicoSeekTokens.space2),
             for (final item in items)
               ListTile(
                 leading: Icon(item.icon, size: 20),
                 title: Text(item.label),
                 onTap: () => Navigator.of(context).pop(item.branch),
               ),
-            const SizedBox(height: YaoeTokens.space2),
+            const SizedBox(height: PicoSeekTokens.space2),
           ],
         ),
       );

@@ -55,7 +55,7 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
                 if (canSearch) unawaited(controller.search());
               },
             ),
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             Row(
               children: [
                 Expanded(
@@ -76,7 +76,7 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: YaoeTokens.space2),
+                const SizedBox(width: PicoSeekTokens.space2),
                 FilledButton.icon(
                   onPressed: canSearch
                       ? () => unawaited(controller.search())
@@ -86,7 +86,7 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
                 ),
               ],
             ),
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
@@ -119,7 +119,7 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
                 ),
               ),
             ),
-            const SizedBox(height: YaoeTokens.space4),
+            const SizedBox(height: PicoSeekTokens.space4),
             AsyncValueView<LiteratureSearchResult?>(
               value: value,
               onRetry: () => unawaited(controller.search()),
@@ -135,20 +135,20 @@ class _LiteraturePageState extends ConsumerState<LiteraturePage> {
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     if ((result.fallbackReason ?? '').isNotEmpty) ...[
-                      const SizedBox(height: YaoeTokens.space3),
-                      YaoeCard(
-                        tint: context.yaoe.warning,
+                      const SizedBox(height: PicoSeekTokens.space3),
+                      PicoSeekCard(
+                        tint: context.picoseek.warning,
                         child: const Text('所选来源暂不可用，已改用 PubMed'),
                       ),
                     ],
-                    const SizedBox(height: YaoeTokens.space3),
+                    const SizedBox(height: PicoSeekTokens.space3),
                     if (result.items.isEmpty)
                       const EmptyState(icon: Icons.search_off, title: '未找到文献')
                     else
                       for (final record in result.items)
                         Padding(
                           padding: const EdgeInsets.only(
-                            bottom: YaoeTokens.space3,
+                            bottom: PicoSeekTokens.space3,
                           ),
                           child: _LiteratureCard(
                             key: ValueKey('${record.source.name}:${record.id}'),
@@ -190,14 +190,14 @@ class _LiteratureCardState extends State<_LiteratureCard> {
       record.journal,
       record.year,
     ].whereType<String>().where((value) => value.isNotEmpty).join(' · ');
-    return YaoeCard(
-      padding: const EdgeInsets.all(YaoeTokens.space4),
+    return PicoSeekCard(
+      padding: const EdgeInsets.all(PicoSeekTokens.space4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(record.title, style: theme.textTheme.titleSmall),
           if (record.authors.isNotEmpty) ...[
-            const SizedBox(height: YaoeTokens.space2),
+            const SizedBox(height: PicoSeekTokens.space2),
             Text(
               formatAuthors(record.authors),
               style: theme.textTheme.bodySmall,
@@ -205,10 +205,10 @@ class _LiteratureCardState extends State<_LiteratureCard> {
           ],
           if (metadata.isNotEmpty)
             Text(metadata, style: theme.textTheme.bodySmall),
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Wrap(
-            spacing: YaoeTokens.space2,
-            runSpacing: YaoeTokens.space2,
+            spacing: PicoSeekTokens.space2,
+            runSpacing: PicoSeekTokens.space2,
             children: [
               RankBadge(
                 quartile: record.rank?.quartile ?? '',
@@ -222,7 +222,7 @@ class _LiteratureCardState extends State<_LiteratureCard> {
             ],
           ),
           if (summary.isNotEmpty) ...[
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             Text(
               summary,
               maxLines: _expanded ? null : 3,
@@ -239,10 +239,10 @@ class _LiteratureCardState extends State<_LiteratureCard> {
               ),
             ),
           ],
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           Wrap(
-            spacing: YaoeTokens.space3,
-            runSpacing: YaoeTokens.space2,
+            spacing: PicoSeekTokens.space3,
+            runSpacing: PicoSeekTokens.space2,
             children: [
               if (record.pmid?.isNotEmpty == true)
                 MonoLabel(label: 'PMID', value: record.pmid!),
@@ -252,14 +252,14 @@ class _LiteratureCardState extends State<_LiteratureCard> {
                 MonoLabel(label: 'PMCID', value: record.pmcid!),
             ],
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           ExternalLinkRow(
             pmid: record.pmid,
             doi: record.doi,
             pmcid: record.pmcid,
             pdf: record.openAccessPdf,
           ),
-          const SizedBox(height: YaoeTokens.space3),
+          const SizedBox(height: PicoSeekTokens.space3),
           Align(
             alignment: Alignment.centerLeft,
             child: Tooltip(

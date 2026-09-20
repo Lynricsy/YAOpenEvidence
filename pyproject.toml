@@ -1,7 +1,7 @@
 [project]
-name = "yaopenevidence"
+name = "picoseek"
 version = "0.1.0"
-description = "YAOpenEvidence — 医学文献证据问答（CLI 内核 + REST/SSE 后端）"
+description = "PicoSeek — 医学文献证据问答（CLI 内核 + REST/SSE 后端）"
 requires-python = ">=3.12,<3.13"
 dependencies = []
 
@@ -9,8 +9,8 @@ dependencies = []
 members = ["core", "backend"]
 
 [tool.uv.sources]
-picosgpt-core = { workspace = true }
-yaoe-backend = { workspace = true }
+picoseek-core = { workspace = true }
+picoseek-backend = { workspace = true }
 torch = { index = "pytorch-cpu" }
 
 [[tool.uv.index]]

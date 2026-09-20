@@ -17,10 +17,10 @@ class ThreadNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final at = turns.indexWhere((t) => t.id == currentId);
-    return YaoeCard(
+    return PicoSeekCard(
       color: theme.colorScheme.surfaceContainerHigh,
       elevated: false,
-      padding: const EdgeInsets.all(YaoeTokens.space3),
+      padding: const EdgeInsets.all(PicoSeekTokens.space3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -30,7 +30,7 @@ class ThreadNav extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           for (final (index, turn) in turns.indexed)
             _TurnRow(index: index, turn: turn, current: turn.id == currentId),
         ],
@@ -58,9 +58,9 @@ class _TurnRow extends StatelessWidget {
         : theme.colorScheme.onSurfaceVariant;
     return InkWell(
       onTap: current ? null : () => context.go('/a/${turn.id}'),
-      borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
+      borderRadius: BorderRadius.circular(PicoSeekTokens.radiusSm),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: YaoeTokens.space1),
+        padding: const EdgeInsets.symmetric(vertical: PicoSeekTokens.space1),
         child: Row(
           children: [
             Container(
@@ -76,7 +76,7 @@ class _TurnRow extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(color: color),
               ),
             ),
-            const SizedBox(width: YaoeTokens.space2),
+            const SizedBox(width: PicoSeekTokens.space2),
             Expanded(
               child: Text(
                 turn.question,
@@ -89,7 +89,7 @@ class _TurnRow extends StatelessWidget {
               ),
             ),
             if (turn.status != AnswerStatus.ready) ...[
-              const SizedBox(width: YaoeTokens.space2),
+              const SizedBox(width: PicoSeekTokens.space2),
               StatusBadge(status: turn.status),
             ],
           ],

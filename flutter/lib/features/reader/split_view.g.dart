@@ -8,15 +8,15 @@ part of 'split_view.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 分栏比例（答案区占比，0.40–0.60），持久化到 `yaoe.reader-layout`。
+/// 分栏比例（答案区占比，0.40–0.60），持久化到 `picoseek.reader-layout`。
 
 @ProviderFor(ReaderLayout)
 final readerLayoutProvider = ReaderLayoutProvider._();
 
-/// 分栏比例（答案区占比，0.40–0.60），持久化到 `yaoe.reader-layout`。
+/// 分栏比例（答案区占比，0.40–0.60），持久化到 `picoseek.reader-layout`。
 final class ReaderLayoutProvider
     extends $NotifierProvider<ReaderLayout, double> {
-  /// 分栏比例（答案区占比，0.40–0.60），持久化到 `yaoe.reader-layout`。
+  /// 分栏比例（答案区占比，0.40–0.60），持久化到 `picoseek.reader-layout`。
   ReaderLayoutProvider._()
     : super(
         from: null,
@@ -46,7 +46,7 @@ final class ReaderLayoutProvider
 
 String _$readerLayoutHash() => r'6e29cba7ed1598172eaa72f380430bc27153d3d1';
 
-/// 分栏比例（答案区占比，0.40–0.60），持久化到 `yaoe.reader-layout`。
+/// 分栏比例（答案区占比，0.40–0.60），持久化到 `picoseek.reader-layout`。
 
 abstract class _$ReaderLayout extends $Notifier<double> {
   double build();

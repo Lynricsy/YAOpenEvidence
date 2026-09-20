@@ -46,7 +46,7 @@ PAYWALL_MAX = int(os.environ.get("PAYWALL_MAX_PER_RUN", "5"))
 LLM_BASE = os.environ.get("LLM_BASE", "http://127.0.0.1:4000/v1")
 LLM_KEY = os.environ.get("LOCAL_QWEN_KEY", "sk-123456")
 LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3-14b")
-UNPAYWALL_EMAIL = os.environ.get("UNPAYWALL_EMAIL", "picosgpt@example.com")
+UNPAYWALL_EMAIL = os.environ.get("UNPAYWALL_EMAIL", "picoseek@example.com")
 
 
 # ------------------------------------------------------------------ 事件与异常
@@ -339,7 +339,7 @@ def fetch_fulltext(p: dict, outdir: str, max_chars: int, *, emit: Emit = print_e
             fn = os.path.join(outdir, f"{pmid or 'paper'}.pdf")
             try:
                 with httpx.stream("GET", url, follow_redirects=True, timeout=60,
-                                  headers={"User-Agent": "Mozilla/5.0 PICOSGpt-medlit"}) as r:
+                                  headers={"User-Agent": "Mozilla/5.0 PicoSeek-medlit"}) as r:
                     if r.status_code == 200 and "pdf" in r.headers.get("content-type", "").lower():
                         with open(fn, "wb") as f:
                             for chunk in r.iter_bytes():

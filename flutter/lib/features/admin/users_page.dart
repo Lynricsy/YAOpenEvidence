@@ -92,14 +92,14 @@ class UsersPage extends ConsumerWidget {
                     for (final user in page.items)
                       Padding(
                         padding: const EdgeInsets.only(
-                          bottom: YaoeTokens.space3,
+                          bottom: PicoSeekTokens.space3,
                         ),
-                        child: YaoeCard(
-                          padding: const EdgeInsets.all(YaoeTokens.space3),
+                        child: PicoSeekCard(
+                          padding: const EdgeInsets.all(PicoSeekTokens.space3),
                           child: Row(
                             children: [
                               UserAvatar(name: user.username, radius: 16),
-                              const SizedBox(width: YaoeTokens.space3),
+                              const SizedBox(width: PicoSeekTokens.space3),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +127,7 @@ class UsersPage extends ConsumerWidget {
                           ),
                         ),
                       ),
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   Pager(
                     total: page.total,
                     limit: page.limit,
@@ -234,10 +234,10 @@ class _UserDialogState extends ConsumerState<_UserDialog> {
                           ? null
                           : '3–64 位，以字母或数字开头，可含 _ . -',
                     ),
-                    const SizedBox(height: YaoeTokens.space3),
+                    const SizedBox(height: PicoSeekTokens.space3),
                   ] else ...[
                     Text(widget.user!.username),
-                    const SizedBox(height: YaoeTokens.space3),
+                    const SizedBox(height: PicoSeekTokens.space3),
                   ],
                   TextFormField(
                     controller: _password,
@@ -255,7 +255,7 @@ class _UserDialogState extends ConsumerState<_UserDialog> {
                         ? '密码须为 12–128 个字符'
                         : null,
                   ),
-                  const SizedBox(height: YaoeTokens.space3),
+                  const SizedBox(height: PicoSeekTokens.space3),
                   if (widget.user != null)
                     TextFormField(
                       controller: _confirmation,

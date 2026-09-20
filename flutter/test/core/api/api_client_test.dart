@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:yaopenevidence/core/api/api_client.dart';
-import 'package:yaopenevidence/core/api/api_error.dart';
-import 'package:yaopenevidence/core/api/endpoints.dart';
-import 'package:yaopenevidence/core/models/kb.dart';
+import 'package:picoseek/core/api/api_client.dart';
+import 'package:picoseek/core/api/api_error.dart';
+import 'package:picoseek/core/api/endpoints.dart';
+import 'package:picoseek/core/models/kb.dart';
 
 ApiClient clientFor(
   MockClient mock, {
@@ -78,7 +78,7 @@ void main() {
     final client = clientFor(
       MockClient(
         (request) async => jsonResponse(
-          '{"type":"urn:yaoe:error:conflict","title":"Conflict",'
+          '{"type":"urn:picoseek:error:conflict","title":"Conflict",'
           '"status":409,"detail":"answer is active","code":"conflict"}',
           status: 409,
           contentType: 'application/problem+json',

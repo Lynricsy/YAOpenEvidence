@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/shared/widgets/floating_composer.dart';
-import 'package:yaopenevidence/shared/widgets/scroll_chrome.dart';
+import 'package:picoseek/shared/widgets/floating_composer.dart';
+import 'package:picoseek/shared/widgets/scroll_chrome.dart';
 
 Offset _slideOffset(WidgetTester tester) =>
     tester.widget<AnimatedSlide>(find.byType(AnimatedSlide)).offset;

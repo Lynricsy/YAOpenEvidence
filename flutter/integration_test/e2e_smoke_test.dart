@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:yaopenevidence/app/app.dart';
-import 'package:yaopenevidence/core/logic/ask_filters.dart';
-import 'package:yaopenevidence/core/session/prefs.dart';
-import 'package:yaopenevidence/features/answer/answer_page.dart';
-import 'package:yaopenevidence/features/answer/citation_chip.dart';
-import 'package:yaopenevidence/features/ask/ask_page.dart';
-import 'package:yaopenevidence/features/ask/ask_state.dart';
-import 'package:yaopenevidence/features/reader/reader_pane.dart';
+import 'package:picoseek/app/app.dart';
+import 'package:picoseek/core/logic/ask_filters.dart';
+import 'package:picoseek/core/session/prefs.dart';
+import 'package:picoseek/features/answer/answer_page.dart';
+import 'package:picoseek/features/answer/citation_chip.dart';
+import 'package:picoseek/features/ask/ask_page.dart';
+import 'package:picoseek/features/ask/ask_state.dart';
+import 'package:picoseek/features/reader/reader_pane.dart';
 
 /// 通过 `--dart-define` 提供后端与账号后才执行，否则整体跳过。
-const api = String.fromEnvironment('YAOE_E2E_API');
-const user = String.fromEnvironment('YAOE_E2E_USER');
-const password = String.fromEnvironment('YAOE_E2E_PASSWORD');
+const api = String.fromEnvironment('PICOSEEK_E2E_API');
+const user = String.fromEnvironment('PICOSEEK_E2E_USER');
+const password = String.fromEnvironment('PICOSEEK_E2E_PASSWORD');
 
 const question = 'SGLT2抑制剂对HFpEF患者有什么获益？';
 

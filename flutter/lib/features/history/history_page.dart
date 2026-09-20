@@ -42,10 +42,10 @@ class HistoryPage extends ConsumerWidget {
               ),
               onChanged: controller.setQuery,
             ),
-            const SizedBox(height: YaoeTokens.space3),
+            const SizedBox(height: PicoSeekTokens.space3),
             Wrap(
-              spacing: YaoeTokens.space2,
-              runSpacing: YaoeTokens.space2,
+              spacing: PicoSeekTokens.space2,
+              runSpacing: PicoSeekTokens.space2,
               children: [
                 ChoiceChip(
                   label: const Text('全部'),
@@ -60,7 +60,7 @@ class HistoryPage extends ConsumerWidget {
                   ),
               ],
             ),
-            const SizedBox(height: YaoeTokens.space4),
+            const SizedBox(height: PicoSeekTokens.space4),
             AsyncValueView<models.Page<AnswerSummary>>(
               value: page,
               onRetry: () => unawaited(controller.reload()),
@@ -77,7 +77,7 @@ class HistoryPage extends ConsumerWidget {
                     for (final summary in data.items)
                       Padding(
                         padding: const EdgeInsets.only(
-                          bottom: YaoeTokens.space3,
+                          bottom: PicoSeekTokens.space3,
                         ),
                         child: _HistoryCard(
                           key: ValueKey(summary.id),
@@ -165,9 +165,9 @@ class _HistoryCardState extends ConsumerState<_HistoryCard> {
     final summary = widget.summary;
     final theme = Theme.of(context);
     final active = summary.status.isActive;
-    return YaoeCard(
+    return PicoSeekCard(
       onTap: () => context.go('/a/${summary.id}'),
-      padding: const EdgeInsets.all(YaoeTokens.space4),
+      padding: const EdgeInsets.all(PicoSeekTokens.space4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -186,10 +186,10 @@ class _HistoryCardState extends ConsumerState<_HistoryCard> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          const SizedBox(height: YaoeTokens.space2),
+          const SizedBox(height: PicoSeekTokens.space2),
           Wrap(
-            spacing: YaoeTokens.space3,
-            runSpacing: YaoeTokens.space2,
+            spacing: PicoSeekTokens.space3,
+            runSpacing: PicoSeekTokens.space2,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               // 完成态不挂徽标：卡片本身就是「已完成」的常态。
@@ -216,7 +216,7 @@ class _HistoryCardState extends ConsumerState<_HistoryCard> {
             ],
           ),
           if (summary.status == AnswerStatus.failed) ...[
-            const SizedBox(height: YaoeTokens.space2),
+            const SizedBox(height: PicoSeekTokens.space2),
             Text(
               jobErrorMessage(summary.error?.code ?? 'internal_error'),
               style: theme.textTheme.bodySmall?.copyWith(

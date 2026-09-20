@@ -6,11 +6,11 @@ let user: User | null = null
 let token: string | null = null
 try {
   const expires = Date.parse(
-    localStorage.getItem('yaoe.token_expires_at') ?? '',
+    localStorage.getItem('picoseek.token_expires_at') ?? '',
   )
   if (expires > Date.now()) {
-    token = localStorage.getItem('yaoe.token')
-    user = JSON.parse(localStorage.getItem('yaoe.user') ?? 'null')
+    token = localStorage.getItem('picoseek.token')
+    user = JSON.parse(localStorage.getItem('picoseek.user') ?? 'null')
   }
 } catch {
   /* 损坏或不可用的浏览器存储按未登录处理。 */
@@ -30,26 +30,26 @@ export const authStore = {
   save(session: components['schemas']['LoginResponse']) {
     token = session.access_token
     user = session.user
-    localStorage.setItem('yaoe.token', token)
-    localStorage.setItem('yaoe.token_expires_at', session.expires_at)
-    localStorage.setItem('yaoe.user', JSON.stringify(user))
+    localStorage.setItem('picoseek.token', token)
+    localStorage.setItem('picoseek.token_expires_at', session.expires_at)
+    localStorage.setItem('picoseek.user', JSON.stringify(user))
     notify()
   },
   setUser(value: User) {
     user = value
-    localStorage.setItem('yaoe.user', JSON.stringify(value))
+    localStorage.setItem('picoseek.user', JSON.stringify(value))
     notify()
   },
   clear() {
     token = null
     user = null
-    for (const key of ['yaoe.token', 'yaoe.token_expires_at', 'yaoe.user'])
+    for (const key of ['picoseek.token', 'picoseek.token_expires_at', 'picoseek.user'])
       localStorage.removeItem(key)
     notify()
   },
 }
 if (!token) authStore.clear()
 window.addEventListener('storage', (event) => {
-  if (event.key === 'yaoe.token' && event.newValue !== token)
+  if (event.key === 'picoseek.token' && event.newValue !== token)
     window.location.reload()
 })

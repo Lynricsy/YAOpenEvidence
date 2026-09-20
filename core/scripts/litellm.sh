@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 由 ./PICOSGpt start 调用。LiteLLM 代理，4000 端口（Codex / ask.py 连这里）。
+# 由 ./PicoSeek start 调用。LiteLLM 代理，4000 端口（Codex / ask.py 连这里）。
 set -e
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV="${PICOSGPT_ENV:-$ROOT/.venv}"
-[ -x "$ENV/bin/litellm" ] || { echo "找不到 litellm: $ENV/bin/litellm（pip install 'litellm[proxy]'，或设 PICOSGPT_ENV）"; exit 1; }
+ENV="${PICOSEEK_ENV:-$ROOT/.venv}"
+[ -x "$ENV/bin/litellm" ] || { echo "找不到 litellm: $ENV/bin/litellm（pip install 'litellm[proxy]'，或设 PICOSEEK_ENV）"; exit 1; }
 export PATH="$ENV/bin:$PATH"
 mkdir -p "$ROOT/logs"
 cd "$ROOT"

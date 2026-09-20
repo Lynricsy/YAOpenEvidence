@@ -5,7 +5,7 @@ import '../../core/session/prefs.dart';
 
 part 'ask_state.g.dart';
 
-/// 提问筛选条件，持久化到 `yaoe.filters`（写入前先 `normalized()`）。
+/// 提问筛选条件，持久化到 `picoseek.filters`（写入前先 `normalized()`）。
 @Riverpod(keepAlive: true)
 class AskFiltersController extends _$AskFiltersController {
   @override

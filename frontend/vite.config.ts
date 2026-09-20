@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/v1': {
-        target: process.env.YAOE_API_PROXY ?? 'http://127.0.0.1:8765',
+        target: process.env.PICOSEEK_API_PROXY ?? 'http://127.0.0.1:8765',
         changeOrigin: false,
       },
     },

@@ -95,12 +95,12 @@ export function AppSidebar({
         <Link
           to="/"
           className="flex min-w-0 items-center gap-2"
-          aria-label="YAOpenEvidence 首页"
+          aria-label="PicoSeek 首页"
         >
           <BrandLogo size={28} />
           {!collapsed && (
             <span className="truncate font-serif text-[15px] font-semibold tracking-tight">
-              YAOpenEvidence
+              PicoSeek
             </span>
           )}
         </Link>

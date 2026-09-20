@@ -33,7 +33,7 @@ class LibraryPage extends ConsumerWidget {
               prefixIcon: Icon(Icons.search_outlined),
             ),
           ),
-          const SizedBox(height: YaoeTokens.space4),
+          const SizedBox(height: PicoSeekTokens.space4),
           Expanded(
             child: AsyncValueView(
               value: page,
@@ -56,7 +56,7 @@ class LibraryPage extends ConsumerWidget {
                 return ListView.separated(
                   itemCount: data.items.length + (showPager ? 1 : 0),
                   separatorBuilder: (_, _) =>
-                      const SizedBox(height: YaoeTokens.space3),
+                      const SizedBox(height: PicoSeekTokens.space3),
                   itemBuilder: (context, index) {
                     if (index == data.items.length) {
                       return Pager(
@@ -67,19 +67,19 @@ class LibraryPage extends ConsumerWidget {
                       );
                     }
                     final meta = data.items[index];
-                    return YaoeCard(
+                    return PicoSeekCard(
                       onTap: () => context.go(
                         '/library/${Uri.encodeComponent(meta.key)}',
                       ),
-                      padding: const EdgeInsets.all(YaoeTokens.space4),
+                      padding: const EdgeInsets.all(PicoSeekTokens.space4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(meta.title, style: theme.textTheme.titleMedium),
-                          const SizedBox(height: YaoeTokens.space2),
+                          const SizedBox(height: PicoSeekTokens.space2),
                           Wrap(
-                            spacing: YaoeTokens.space2,
-                            runSpacing: YaoeTokens.space2,
+                            spacing: PicoSeekTokens.space2,
+                            runSpacing: PicoSeekTokens.space2,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
@@ -102,7 +102,7 @@ class LibraryPage extends ConsumerWidget {
                                 ),
                             ],
                           ),
-                          const SizedBox(height: YaoeTokens.space2),
+                          const SizedBox(height: PicoSeekTokens.space2),
                           if (meta.indexedAt != null)
                             Text(
                               '入库于 ${relativeTime(meta.indexedAt!)}',

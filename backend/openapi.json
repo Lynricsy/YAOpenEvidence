@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "YAOpenEvidence API",
-    "description": "YAOpenEvidence 医学文献证据问答 API。\n\n- 问答任务异步执行：`POST /v1/answers` 返回 202，进度走 `GET /v1/jobs/{id}/events`（SSE）\n- 鉴权：管理员创建账号，登录后使用 `Authorization: Bearer <access_token>`（包括 SSE）\n- 错误：RFC 9457 Problem Details（`application/problem+json`），按 `code` 分支\n",
+    "title": "PicoSeek API",
+    "description": "PicoSeek 医学文献证据问答 API。\n\n- 问答任务异步执行：`POST /v1/answers` 返回 202，进度走 `GET /v1/jobs/{id}/events`（SSE）\n- 鉴权：管理员创建账号，登录后使用 `Authorization: Bearer <access_token>`（包括 SSE）\n- 错误：RFC 9457 Problem Details（`application/problem+json`），按 `code` 分支\n",
     "version": "0.1.0"
   },
   "paths": {
@@ -5623,7 +5623,7 @@
         "properties": {
           "type": {
             "examples": [
-              "urn:yaoe:error:not_found"
+              "urn:picoseek:error:not_found"
             ],
             "title": "Type",
             "type": "string"

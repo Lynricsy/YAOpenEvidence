@@ -95,8 +95,8 @@ class _ParagraphMarkdownState extends State<ParagraphMarkdown> {
         alignment: 0.3,
         duration: MediaQuery.disableAnimationsOf(this.context)
             ? Duration.zero
-            : YaoeTokens.motionMedium,
-        curve: YaoeTokens.motionCurve,
+            : PicoSeekTokens.motionMedium,
+        curve: PicoSeekTokens.motionCurve,
       );
       setState(() => _flash = pid);
     });

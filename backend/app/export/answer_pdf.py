@@ -66,7 +66,7 @@ _HEADER = """
 <div style="width:100%;margin:0 18mm;padding-bottom:3mm;border-bottom:0.5px solid #E1DDD7;
  font:400 7.5pt/1.2 Inter,system-ui,sans-serif;color:#6B6157;display:flex;align-items:center;gap:4px">
   <img src="{logo}" style="width:10px;height:10px">
-  <span style="font-weight:600;color:#1F7583">YAOpenEvidence</span>
+  <span style="font-weight:600;color:#1F7583">PicoSeek</span>
   <span style="margin-left:auto;text-align:right">{question}</span>
 </div>
 """
@@ -242,7 +242,7 @@ def export_filename(row: Answer) -> tuple[str, str]:
     """`(ascii 文件名, utf-8 文件名)`：前者给 `filename=`，后者给 `filename*=`。"""
     slug = " ".join(FILENAME_BAD_RE.sub(" ", row.question).split())[:40].strip()
     date = _stamp(row).strftime("%Y%m%d")
-    return f"YAOpenEvidence-{row.id}.pdf", f"YAOpenEvidence-{date}-{slug or row.id}.pdf"
+    return f"PicoSeek-{row.id}.pdf", f"PicoSeek-{date}-{slug or row.id}.pdf"
 
 
 async def _render(html: str, question: str) -> bytes:

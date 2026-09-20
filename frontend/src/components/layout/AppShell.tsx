@@ -10,13 +10,13 @@ import { PageTransition } from './PageTransition'
 export function AppShell() {
   // 未手动设置过时按视口决定：≥xl 展开，md–xl 折叠为图标栏。
   const [collapsed, setCollapsed] = useState(() => {
-    const saved = localStorage.getItem('yaoe.sidebar')
+    const saved = localStorage.getItem('picoseek.sidebar')
     return saved ? saved === 'collapsed' : !matchMedia(BREAKPOINTS.xl).matches
   })
   const toggle = useCallback(
     () =>
       setCollapsed((current) => {
-        localStorage.setItem('yaoe.sidebar', current ? 'expanded' : 'collapsed')
+        localStorage.setItem('picoseek.sidebar', current ? 'expanded' : 'collapsed')
         return !current
       }),
     [],

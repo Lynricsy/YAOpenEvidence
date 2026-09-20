@@ -1,4 +1,4 @@
-name: YAOpenEvidence
+name: PicoSeek
 options:
   bundleIdPrefix: plus.ling
   xcodeVersion: "26.0"
@@ -7,24 +7,24 @@ options:
     iOS: "26.0"
     macOS: "26.0"
 packages:
-  YAOEKit:
-    path: YAOEKit
+  PicoSeekKit:
+    path: PicoSeekKit
 targets:
-  YAOpenEvidence:
+  PicoSeek:
     type: application
     supportedDestinations: [iOS, macOS]
     deploymentTarget:
       iOS: "26.0"
       macOS: "26.0"
     sources:
-      - path: YAOpenEvidence
+      - path: PicoSeek
     dependencies:
-      - package: YAOEKit
-        product: YAOEKit
+      - package: PicoSeekKit
+        product: PicoSeekKit
     info:
-      path: YAOpenEvidence/Info.plist
+      path: PicoSeek/Info.plist
       properties:
-        CFBundleDisplayName: YAOpenEvidence
+        CFBundleDisplayName: PicoSeek
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSAppTransportSecurity:
@@ -43,7 +43,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         LSApplicationCategoryType: public.app-category.medical
     entitlements:
-      path: YAOpenEvidence/YAOpenEvidence.entitlements
+      path: PicoSeek/PicoSeek.entitlements
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
@@ -51,7 +51,7 @@ targets:
         com.apple.security.files.user-selected.read-write: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: plus.ling.YAOpenEvidence
+        PRODUCT_BUNDLE_IDENTIFIER: plus.ling.PicoSeek
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"
@@ -65,8 +65,8 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 schemes:
-  YAOpenEvidence:
+  PicoSeek:
     build:
-      targets: { YAOpenEvidence: all }
+      targets: { PicoSeek: all }
     run:
       config: Debug

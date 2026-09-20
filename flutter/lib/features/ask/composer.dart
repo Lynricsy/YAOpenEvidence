@@ -144,7 +144,7 @@ class _ComposerState extends ConsumerState<Composer> {
                 locked: widget.mode == ComposerMode.followUp,
               ),
               if (showFilterChip) ...[
-                const SizedBox(width: YaoeTokens.space2),
+                const SizedBox(width: PicoSeekTokens.space2),
                 Flexible(
                   child: FilterSummaryChip(
                     summary: filters.summary,
@@ -155,7 +155,7 @@ class _ComposerState extends ConsumerState<Composer> {
               const Spacer(),
               if (length >= _countThreshold)
                 Padding(
-                  padding: const EdgeInsets.only(right: YaoeTokens.space2),
+                  padding: const EdgeInsets.only(right: PicoSeekTokens.space2),
                   child: Text(
                     '$length/$maxLength',
                     style: theme.textTheme.labelSmall

@@ -80,23 +80,23 @@ class UserMenu extends ConsumerWidget {
       ],
       child: compact
           ? Padding(
-              padding: const EdgeInsets.all(YaoeTokens.space2),
+              padding: const EdgeInsets.all(PicoSeekTokens.space2),
               child: avatar,
             )
           : DecoratedBox(
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+                borderRadius: BorderRadius.circular(PicoSeekTokens.radiusField),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: YaoeTokens.space3,
-                  vertical: YaoeTokens.space2,
+                  horizontal: PicoSeekTokens.space3,
+                  vertical: PicoSeekTokens.space2,
                 ),
                 child: Row(
                   children: [
                     avatar,
-                    const SizedBox(width: YaoeTokens.space2),
+                    const SizedBox(width: PicoSeekTokens.space2),
                     Expanded(
                       child: Text(
                         user.username,
@@ -104,7 +104,7 @@ class UserMenu extends ConsumerWidget {
                         style: theme.textTheme.labelLarge,
                       ),
                     ),
-                    const SizedBox(width: YaoeTokens.space2),
+                    const SizedBox(width: PicoSeekTokens.space2),
                     Pill(
                       text: user.role.label,
                       color: theme.colorScheme.primary,

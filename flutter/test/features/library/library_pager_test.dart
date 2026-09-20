@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/models/page.dart' as models;
-import 'package:yaopenevidence/core/models/papers.dart';
-import 'package:yaopenevidence/features/library/library_controller.dart';
-import 'package:yaopenevidence/features/library/library_page.dart';
-import 'package:yaopenevidence/shared/widgets/pagination.dart';
+import 'package:picoseek/core/models/page.dart' as models;
+import 'package:picoseek/core/models/papers.dart';
+import 'package:picoseek/features/library/library_controller.dart';
+import 'package:picoseek/features/library/library_page.dart';
+import 'package:picoseek/shared/widgets/pagination.dart';
 
 /// 换页器曾经是文献库的固定底栏，永久占掉一条屏幕高度。它只有翻到列表尽头才有用，
 /// 所以现在跟着列表滚动——这组用例锁住「首屏不出现、翻到尽头才出现」。

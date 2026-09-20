@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "plus.ling" "\0"
-            VALUE "FileDescription", "YAOpenEvidence" "\0"
+            VALUE "FileDescription", "PicoSeek" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "yaopenevidence" "\0"
+            VALUE "InternalName", "picoseek" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 plus.ling. All rights reserved." "\0"
-            VALUE "OriginalFilename", "yaopenevidence.exe" "\0"
-            VALUE "ProductName", "YAOpenEvidence" "\0"
+            VALUE "OriginalFilename", "picoseek.exe" "\0"
+            VALUE "ProductName", "PicoSeek" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/logic/inline_highlight.dart';
-import 'package:yaopenevidence/core/logic/markdown_document.dart';
+import 'package:picoseek/core/logic/inline_highlight.dart';
+import 'package:picoseek/core/logic/markdown_document.dart';
 
 void main() {
   test('命中引文时拆分 run 并加高亮', () {

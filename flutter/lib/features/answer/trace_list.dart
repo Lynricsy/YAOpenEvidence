@@ -22,7 +22,7 @@ class TraceList extends StatelessWidget {
       children: [
         for (final call in calls)
           Padding(
-            padding: const EdgeInsets.only(bottom: YaoeTokens.space2),
+            padding: const EdgeInsets.only(bottom: PicoSeekTokens.space2),
             child: _TraceRow(call: call, live: live),
           ),
       ],
@@ -48,7 +48,7 @@ class _TraceRow extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(YaoeTokens.radiusMd),
+            borderRadius: BorderRadius.circular(PicoSeekTokens.radiusMd),
           ),
           child: Icon(
             toolIcon(call.tool),
@@ -56,7 +56,7 @@ class _TraceRow extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(width: YaoeTokens.space2),
+        const SizedBox(width: PicoSeekTokens.space2),
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -67,7 +67,7 @@ class _TraceRow extends StatelessWidget {
                 style: theme.textTheme.bodyMedium,
               ),
               if (args.isNotEmpty) ...[
-                const SizedBox(width: YaoeTokens.space1),
+                const SizedBox(width: PicoSeekTokens.space1),
                 Expanded(
                   child: Text(
                     args,
@@ -82,7 +82,7 @@ class _TraceRow extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: YaoeTokens.space2),
+        const SizedBox(width: PicoSeekTokens.space2),
         _TraceStatus(call: call, live: live),
       ],
     );
@@ -112,8 +112,8 @@ class _TraceStatus extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check, size: 14, color: context.yaoe.success),
-            const SizedBox(width: YaoeTokens.space1),
+            Icon(Icons.check, size: 14, color: context.picoseek.success),
+            const SizedBox(width: PicoSeekTokens.space1),
             Text(
               formatDuration(call.durationMs),
               style: theme.textTheme.labelSmall?.merge(monoStyle).copyWith(
@@ -129,7 +129,7 @@ class _TraceStatus extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.close, size: 14, color: theme.colorScheme.error),
-              const SizedBox(width: YaoeTokens.space1),
+              const SizedBox(width: PicoSeekTokens.space1),
               Flexible(
                 child: Text(
                   call.error ?? '失败',

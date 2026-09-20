@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/logic/tool_labels.dart';
+import 'package:picoseek/core/logic/tool_labels.dart';
 
 void main() {
   test('已登记工具取中文动作，未登记的退回 server/tool', () {

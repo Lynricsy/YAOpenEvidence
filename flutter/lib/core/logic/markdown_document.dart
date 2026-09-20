@@ -134,7 +134,7 @@ String plainTextOf(Iterable<InlineRun> runs) => runs.map((r) => r.text).join();
 /// 转义方括号占位标签：package:markdown 在 `_combineAdjacentText` 里把相邻文本节点合并，
 /// `\[1]` 转义后与后文并成一个 `A[1] B` 文本节点，事后扫描无法再区分转义。
 /// 因此用一个自定义行内语法把 `\[` 变成独立元素节点，扫描时不参与标记识别。
-const _escapedBracketTag = 'yaoe-escaped-bracket';
+const _escapedBracketTag = 'picoseek-escaped-bracket';
 
 class _EscapedBracketSyntax extends md.InlineSyntax {
   _EscapedBracketSyntax() : super(r'\\\[', startCharacter: 0x5c);

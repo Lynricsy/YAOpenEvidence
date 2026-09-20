@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:yaopenevidence/core/logic/citations.dart';
-import 'package:yaopenevidence/core/logic/markdown_document.dart';
+import 'package:picoseek/core/logic/citations.dart';
+import 'package:picoseek/core/logic/markdown_document.dart';
 
 List<InlineRun> runsOf(MarkdownBlock? block) => switch (block) {
   MdParagraph(:final runs) => runs,

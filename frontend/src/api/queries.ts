@@ -116,7 +116,7 @@ export async function downloadAnswerPdf(id: string): Promise<void> {
   saveBlob(
     blob,
     filenameFromDisposition(response.headers.get('content-disposition')) ??
-      `YAOpenEvidence-${id}.pdf`,
+      `PicoSeek-${id}.pdf`,
   )
 }
 export function useAnswerThread(id: string, enabled: boolean) {

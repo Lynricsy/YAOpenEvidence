@@ -11,7 +11,7 @@ def test_missing_token_returns_problem_json_with_challenge(client):
     assert r.headers["www-authenticate"] == "Bearer"
     body = r.json()
     assert body["code"] == "unauthenticated"
-    assert body["type"] == "urn:yaoe:error:unauthenticated"
+    assert body["type"] == "urn:picoseek:error:unauthenticated"
     assert body["instance"] == "/v1/answers"
 
 

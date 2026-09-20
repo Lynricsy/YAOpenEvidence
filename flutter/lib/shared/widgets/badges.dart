@@ -96,7 +96,7 @@ class RankBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color =
-        context.yaoe.quartile(quartile) ?? theme.colorScheme.onSurfaceVariant;
+        context.picoseek.quartile(quartile) ?? theme.colorScheme.onSurfaceVariant;
     final text = (label ?? '').isNotEmpty
         ? label!
         : (quartile.isEmpty ? '未收录' : quartile.toUpperCase());
@@ -113,7 +113,7 @@ class SourceBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = context.yaoe;
+    final colors = context.picoseek;
     final color = switch (source) {
       PaperSource.pmc || PaperSource.pdf || PaperSource.upload =>
         colors.success,
@@ -132,7 +132,7 @@ class VerifiedPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.yaoe;
+    final colors = context.picoseek;
     return Pill(
       text: verified ? '已核实' : '未核实',
       color: verified ? colors.success : colors.warning,
@@ -159,7 +159,7 @@ class CitationSquare extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusSm),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusSm),
         border: Border.all(color: color.withValues(alpha: 0.32)),
       ),
       child: Text(

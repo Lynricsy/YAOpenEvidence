@@ -5,7 +5,7 @@ import '../../core/session/prefs.dart';
 
 part 'theme_controller.g.dart';
 
-/// 主题模式，持久化到 `yaoe.theme`。
+/// 主题模式，持久化到 `picoseek.theme`。
 @Riverpod(keepAlive: true)
 class ThemeController extends _$ThemeController {
   @override

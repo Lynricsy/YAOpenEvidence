@@ -38,7 +38,7 @@ class Pager extends StatelessWidget {
     final hasNext = last < total;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: YaoeTokens.space3),
+      padding: const EdgeInsets.symmetric(vertical: PicoSeekTokens.space3),
       child: Center(
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -52,7 +52,7 @@ class Pager extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: YaoeTokens.space3,
+                horizontal: PicoSeekTokens.space3,
               ),
               child: Text(
                 '第 $first–$last 条 / 共 ${formatCount(total)} 条',

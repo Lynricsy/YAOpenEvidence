@@ -1900,7 +1900,7 @@ export interface components {
         Problem: {
             /**
              * Type
-             * @example urn:yaoe:error:not_found
+             * @example urn:picoseek:error:not_found
              */
             type: string;
             /**

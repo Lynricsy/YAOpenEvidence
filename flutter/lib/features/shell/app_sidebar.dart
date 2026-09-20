@@ -70,15 +70,15 @@ class AppSidebar extends ConsumerWidget {
         .toList();
 
     final width = collapsed
-        ? YaoeTokens.sidebarCollapsedWidth
-        : YaoeTokens.sidebarExpandedWidth;
+        ? PicoSeekTokens.sidebarCollapsedWidth
+        : PicoSeekTokens.sidebarExpandedWidth;
 
     return AnimatedContainer(
-      duration: YaoeTokens.motionFast,
-      curve: YaoeTokens.motionCurve,
+      duration: PicoSeekTokens.motionFast,
+      curve: PicoSeekTokens.motionCurve,
       width: width,
       decoration: BoxDecoration(
-        color: context.yaoe.sidebar,
+        color: context.picoseek.sidebar,
         border: Border(
           right: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
@@ -98,7 +98,7 @@ class AppSidebar extends ConsumerWidget {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(
-                  vertical: YaoeTokens.space2,
+                  vertical: PicoSeekTokens.space2,
                 ),
                 children: [
                   for (final group in NavGroup.values)
@@ -107,7 +107,7 @@ class AppSidebar extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(YaoeTokens.space2),
+              padding: const EdgeInsets.all(PicoSeekTokens.space2),
               child: UserMenu(compact: collapsed),
             ),
           ],
@@ -129,9 +129,9 @@ class AppSidebar extends ConsumerWidget {
       if (!collapsed)
         Padding(
           padding: const EdgeInsets.only(
-            left: YaoeTokens.space4,
-            top: YaoeTokens.space3,
-            bottom: YaoeTokens.space1,
+            left: PicoSeekTokens.space4,
+            top: PicoSeekTokens.space3,
+            bottom: PicoSeekTokens.space1,
           ),
           child: Text(
             group.label,
@@ -175,15 +175,15 @@ class _Header extends StatelessWidget {
       // 折叠宽度只有 64：品牌标识与折叠按钮竖排，横排必然溢出。
       return Padding(
         padding: const EdgeInsets.fromLTRB(
-          YaoeTokens.space2,
-          YaoeTokens.space4,
-          YaoeTokens.space2,
-          YaoeTokens.space2,
+          PicoSeekTokens.space2,
+          PicoSeekTokens.space4,
+          PicoSeekTokens.space2,
+          PicoSeekTokens.space2,
         ),
         child: Column(
           children: [
-            const BrandLogo(size: 24, semanticLabel: 'YAOpenEvidence'),
-            const SizedBox(height: YaoeTokens.space2),
+            const BrandLogo(size: 24, semanticLabel: 'PicoSeek'),
+            const SizedBox(height: PicoSeekTokens.space2),
             toggle,
           ],
         ),
@@ -192,10 +192,10 @@ class _Header extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        YaoeTokens.space3,
-        YaoeTokens.space4,
-        YaoeTokens.space2,
-        YaoeTokens.space2,
+        PicoSeekTokens.space3,
+        PicoSeekTokens.space4,
+        PicoSeekTokens.space2,
+        PicoSeekTokens.space2,
       ),
       child: Row(
         children: [
@@ -236,14 +236,14 @@ class _SidebarTile extends StatelessWidget {
           ? theme.colorScheme.primary.withValues(alpha: 0.12)
           : Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(YaoeTokens.radiusField),
+        borderRadius: BorderRadius.circular(PicoSeekTokens.radiusField),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: collapsed ? 0 : YaoeTokens.space3,
+            horizontal: collapsed ? 0 : PicoSeekTokens.space3,
             vertical: 10,
           ),
           child: Row(
@@ -259,7 +259,7 @@ class _SidebarTile extends StatelessWidget {
                     : theme.colorScheme.onSurfaceVariant,
               ),
               if (!collapsed) ...[
-                const SizedBox(width: YaoeTokens.space3),
+                const SizedBox(width: PicoSeekTokens.space3),
                 Expanded(
                   child: Text(
                     label,
@@ -279,7 +279,7 @@ class _SidebarTile extends StatelessWidget {
     );
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: YaoeTokens.space2,
+        horizontal: PicoSeekTokens.space2,
         vertical: 2,
       ),
       child: collapsed ? Tooltip(message: label, child: tile) : tile,
@@ -301,9 +301,9 @@ class _RecentAnswers extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(
-            left: YaoeTokens.space4,
-            top: YaoeTokens.space3,
-            bottom: YaoeTokens.space1,
+            left: PicoSeekTokens.space4,
+            top: PicoSeekTokens.space3,
+            bottom: PicoSeekTokens.space1,
           ),
           child: Text(
             '最近问答',
@@ -315,16 +315,16 @@ class _RecentAnswers extends ConsumerWidget {
         for (final answer in items)
           Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: YaoeTokens.space2,
+              horizontal: PicoSeekTokens.space2,
               vertical: 1,
             ),
             child: InkWell(
               onTap: () => context.go('/a/${answer.id}'),
-              borderRadius: BorderRadius.circular(YaoeTokens.radiusLg),
+              borderRadius: BorderRadius.circular(PicoSeekTokens.radiusLg),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: YaoeTokens.space3,
-                  vertical: YaoeTokens.space2,
+                  horizontal: PicoSeekTokens.space3,
+                  vertical: PicoSeekTokens.space2,
                 ),
                 child: Row(
                   children: [
@@ -336,7 +336,7 @@ class _RecentAnswers extends ConsumerWidget {
                         color: answerStatusColor(context, answer.status),
                       ),
                     ),
-                    const SizedBox(width: YaoeTokens.space2),
+                    const SizedBox(width: PicoSeekTokens.space2),
                     Expanded(
                       child: Text(
                         answer.question,

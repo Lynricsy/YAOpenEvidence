@@ -43,8 +43,8 @@ apple/**/xcuserdata/
 apple/**/.build/
 apple/**/.swiftpm/
 apple/**/DerivedData/
-apple/YAOpenEvidence/Info.plist
-apple/YAOpenEvidence/YAOpenEvidence.entitlements
+apple/PicoSeek/Info.plist
+apple/PicoSeek/PicoSeek.entitlements
 
 # Flutter 客户端构建产物与本地工具链状态
 flutter/build/

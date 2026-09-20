@@ -31,7 +31,7 @@ export function Hero({
         custom={0}
         className="flex items-center gap-3"
       >
-        <BrandLogo size={40} label="YAOpenEvidence" />
+        <BrandLogo size={40} label="PicoSeek" />
         <p className="text-xs font-medium tracking-wide text-primary">
           循证医学文献问答
         </p>

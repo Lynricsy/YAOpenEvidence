@@ -19,7 +19,7 @@ from ..db import SessionLocal
 from ..models import Job, utcnow
 from . import events
 
-logger = logging.getLogger("yaoe.worker.answer_kb")
+logger = logging.getLogger("picoseek.worker.answer_kb")
 MAX_ATTEMPTS = 3
 
 

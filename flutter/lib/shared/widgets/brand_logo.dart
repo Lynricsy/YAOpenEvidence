@@ -31,7 +31,7 @@ class BrandLogo extends StatelessWidget {
   }
 }
 
-/// 品牌组合标记：标识 + 「YAOpenEvidence」文字。语义由文字承载。
+/// 品牌组合标记：标识 + 「PicoSeek」文字。语义由文字承载。
 class BrandLockup extends StatelessWidget {
   const BrandLockup({
     super.key,
@@ -56,11 +56,11 @@ class BrandLockup extends StatelessWidget {
       mainAxisAlignment: mainAxisAlignment,
       children: [
         BrandLogo(size: logoSize),
-        const SizedBox(width: YaoeTokens.space2),
+        const SizedBox(width: PicoSeekTokens.space2),
         // 宽度不足时省略号收尾：折叠动画与窄侧栏都不能溢出。
         Flexible(
           child: Text(
-            'YAOpenEvidence',
+            'PicoSeek',
             overflow: TextOverflow.ellipsis,
             softWrap: false,
             style: textStyle ?? theme.textTheme.titleSmall,
